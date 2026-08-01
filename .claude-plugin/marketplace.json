@@ -1,0 +1,12 @@
+{
+  "name": "maddog",
+  "owner": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
+  "description": "Personal marketplace for the maddog-skills advisor-executor hierarchy.",
+  "plugins": [
+    {
+      "name": "maddog-skills",
+      "source": "./",
+      "description": "Advisor-executor hierarchy: 3 tiered executor agents plus advisor-mode, grind, and grind-pro skills."
+    }
+  ]
+}

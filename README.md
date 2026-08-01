@@ -41,12 +41,25 @@ Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`
 
 ## Install
 
+**As a plugin (recommended)** — inside any Claude Code session:
+
+```
+/plugin marketplace add Harish-here/maddog-skills
+/plugin install maddog-skills@maddog
+```
+
+Skills arrive namespaced (`/maddog-skills:advisor-mode`, `/maddog-skills:grind`, …). Update later with `/plugin marketplace update maddog`.
+
+**As plain files (symlink mode)** — if you'd rather own the files in `~/.claude/` and hack on them:
+
 ```bash
 git clone https://github.com/Harish-here/maddog-skills.git
 cd maddog-skills && ./install.sh
 ```
 
-`install.sh` symlinks `agents/*` and `skills/*` into `~/.claude/`, so the clone stays the single source of truth — edit here, commit here, every session reads the latest. Existing real files at the target are backed up to `<name>.bak`, never deleted. Restart Claude Code sessions to pick up changes (the agent registry snapshots at session start).
+`install.sh` symlinks `agents/*` and `skills/*` into `~/.claude/`, so the clone stays the single source of truth — edit here, commit here, every session reads the latest. Existing real files at the target are backed up to `<name>.bak`, never deleted. Skills are un-namespaced in this mode (`/advisor-mode`, `/grind`).
+
+Pick one mode, not both — installing both ways gives you duplicate agents. Restart Claude Code sessions after installing (the agent registry snapshots at session start).
 
 ## Usage
 
