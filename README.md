@@ -35,6 +35,10 @@ skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
+workflows/
+  sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
+scripts/
+  tg-notify.sh        # fire-and-forget Telegram checkpoint pings (used by the loop)
 ```
 
 Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
@@ -70,3 +74,13 @@ Pick one mode, not both — installing both ways gives you duplicate agents. Res
 ```
 
 Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*.
+
+## The sdd-task-loop workflow
+
+`workflows/sdd-task-loop.js` is the Advisor's unattended execution engine (Claude Code `Workflow` tool): once a plan's briefs are **frozen** (all design decisions closed), it runs a brief-lint entry gate, one fresh implementer per task (dependency-aware parallelism opt-in), immediate reviews for flagged tasks, an end-of-plan review wave (dimension readers + adversarial Opus synthesis on big diffs), one fix round with scoped re-review, and an optional ship tail (push + PR — never merge).
+
+Intelligence is budgeted, never inherited: every `agent()` call pins its model — Haiku for lint/dossier/ship mechanics, Sonnet for implementation and dimension reviews, Opus only for adversarial synthesis and re-reviews. Checkpoints ping Telegram through `scripts/tg-notify.sh` (template `🔁 <run> · ✅ 7/11 task-7 done (sha) · gate ✓`), riding on agents already running — zero extra agents. The launcher's duties (watchdog cron before launch, run-start/complete pings, one auto-`resumeFromRunId` on harness death) are spelled out in the script's `whenToUse` header.
+
+`tg-notify.sh` reads `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` from `~/.claude/channels/telegram/.env` (never versioned) and always exits 0 — a dead network can't fail a run.
+
+**Note:** workflows install in **symlink mode only** — the plugin/marketplace mechanism doesn't ship `workflows/`.

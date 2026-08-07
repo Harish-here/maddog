@@ -1,5 +1,6 @@
 ---
 name: executor-smart
+model: sonnet
 description: >
   Runs delegated tasks needing SOME local judgment but not full Advisor reasoning,
   on a mid-tier model: refactors that must match existing patterns, tricky or

@@ -1,5 +1,6 @@
 ---
 name: executor-lead
+model: opus
 description: >
   Orchestrates ONE complex work package on a high-tier model: decomposes it,
   makes the within-package design calls, and dispatches executor-fast /
