@@ -13,9 +13,15 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
      try ONE resumeFromRunId (cached replay is free) before paging the human.
   3. Doc-sync stays advisor-supervised dispatch (it touches .claude/**, protected here).
   4. CI watch is a cron; merge is a separate deliberate invocation. Never bundle them.
-  5. On a session-limit pause: besides the in-session wake cron, write ~/.claude/watchdogs/resume.state
-     (resume_at/cwd/prompt) and delete it on in-session resume — the watchdog-resume LaunchAgent (10-min interval) launches a
-     detached-tmux interactive session (tmux attach -t jobbunny-resume) as the sleeping-user fallback.`,
+  5. Unattended runs are hosted in the jobbunny-resume tmux session. At run START write
+     ~/.claude/watchdogs/resume.state with mode=standing, resume_at=0, cwd, and a generic
+     resume prompt pointing at the run-state memory file — a host restart then self-heals
+     within 10 min of login (the watchdog-resume LaunchAgent relaunches; while the session
+     lives, has-session keeps it silent). On a session-limit pause: bump resume_at to the
+     reset epoch (plus the in-session wake cron); bump back to 0 on resume. DELETE the file
+     at run close-out. Runs hosted outside that tmux session must NOT write a standing file
+     (invisible to the has-session guard → duplicate sessions); they get the pause-time
+     one-shot only.`,
   phases: [
     { title: 'Brief lint', detail: 'cheap preflight: reject unfrozen briefs before any work', model: 'haiku' },
     { title: 'Implement', detail: 'one fresh implementer per brief; parallel where deps allow' },

@@ -24,6 +24,7 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 resume_at=$(sed -n 's/^resume_at=//p' "$STATE" | head -1)
 cwd=$(sed -n 's/^cwd=//p' "$STATE" | head -1)
 prompt=$(sed -n 's/^prompt=//p' "$STATE" | head -1)
+mode=$(sed -n 's/^mode=//p' "$STATE" | head -1)     # 'standing' = persists for a whole run; anything else = one-shot
 [ -n "$resume_at" ] && [ -n "$cwd" ] && [ -n "$prompt" ] || { echo "$(date) malformed state" >> "$LOG"; exit 0; }
 [ "$(date +%s)" -ge "$resume_at" ] || exit 0
 
@@ -34,12 +35,17 @@ command -v tmux  >/dev/null || { echo "$(date) tmux not found" >> "$LOG"; bash "
 command -v claude >/dev/null || { echo "$(date) claude not found" >> "$LOG"; bash "$NOTIFY" "🤖 watchdog-resume: FAILED — claude not on PATH"; exit 0; }
 
 if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then   # a resume is already live
-  echo "$(date) session already exists — not launching" >> "$LOG"
-  bash "$NOTIFY" "🤖 watchdog-resume: $TMUX_SESSION already running — attach with: tmux attach -t $TMUX_SESSION"
-  exit 0
+  exit 0                       # run alive — silent (standing files fire every 10 min; the launch ping is the signal)
 fi
 
-mv "$STATE" "$STATE.launched"                               # single-shot: never double-launch
+LAST="$DIR/resume.lastlaunch"
+if [ "$mode" = "standing" ] && [ -f "$LAST" ] && [ $(( $(date +%s) - $(cat "$LAST") )) -lt 3600 ]; then
+  mv "$STATE" "$STATE.crashloop"                            # relaunched <1h ago and died again — stop churning
+  bash "$NOTIFY" "🤖 watchdog-resume: CRASH LOOP — relaunch died within the hour; state quarantined (resume.state.crashloop), needs you"
+  exit 0
+fi
+date +%s > "$LAST"
+[ "$mode" = "standing" ] || mv "$STATE" "$STATE.launched"   # one-shot files are consumed; standing files persist
 echo "=== $(date) launching tmux session: $prompt" >> "$LOG"
 tmux new-session -d -s "$TMUX_SESSION" -c "$cwd" "/bin/zsh -lic claude"   # interactive login shell: full user env (auth) regardless of cron's stripped env
 sleep 5                                                     # let the REPL come up
