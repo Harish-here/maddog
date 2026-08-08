@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Install: cp to ~/Library/LaunchAgents/ then: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist -->
+<!-- Template: install.sh substitutes __HOME__ and writes the result to
+     ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist, then:
+     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>Label</key><string>com.maddog.watchdog-resume</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/bin/sh</string>
-    <string>/Users/harishamutha/.claude/watchdogs/watchdog-resume.sh</string>
+    <string>/bin/bash</string>
+    <string>__HOME__/.claude/watchdogs/watchdog-resume.sh</string>
   </array>
   <key>StartInterval</key><integer>600</integer>
   <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>__HOME__/.claude/watchdogs/launchd.out.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/.claude/watchdogs/launchd.err.log</string>
 </dict>
 </plist>

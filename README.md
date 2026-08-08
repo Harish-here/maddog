@@ -38,7 +38,9 @@ skills/
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
 scripts/
-  tg-notify.sh        # fire-and-forget Telegram checkpoint pings (used by the loop)
+  tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
+  watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
+  com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
 ```
 
 Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
@@ -79,8 +81,42 @@ Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*
 
 `workflows/sdd-task-loop.js` is the Advisor's unattended execution engine (Claude Code `Workflow` tool): once a plan's briefs are **frozen** (all design decisions closed), it runs a brief-lint entry gate, one fresh implementer per task (dependency-aware parallelism opt-in), immediate reviews for flagged tasks, an end-of-plan review wave (dimension readers + adversarial Opus synthesis on big diffs), one fix round with scoped re-review, and an optional ship tail (push + PR — never merge).
 
-Intelligence is budgeted, never inherited: every `agent()` call pins its model — Haiku for lint/dossier/ship mechanics, Sonnet for implementation and dimension reviews, Opus only for adversarial synthesis and re-reviews. Checkpoints ping Telegram through `scripts/tg-notify.sh` (template `🔁 <run> · ✅ 7/11 task-7 done (sha) · gate ✓`), riding on agents already running — zero extra agents. The launcher's duties (watchdog cron before launch, run-start/complete pings, one auto-`resumeFromRunId` on harness death) are spelled out in the script's `whenToUse` header.
+Intelligence is budgeted, never inherited: every `agent()` call pins its model — Haiku for lint/dossier/ship mechanics, Sonnet for implementation and dimension reviews, Opus only for adversarial synthesis and re-reviews. Checkpoints ping Telegram through `scripts/tg-notify.sh` (template `🔁 <run> · ✅ 7/11 task-7 done (sha) · gate ✓`), riding on agents already running — zero extra agents. The launcher's duties (writing `resume.state` for `watchdog-resume.sh`'s LaunchAgent before launch, run-start/complete pings, one auto-`resumeFromRunId` on harness death) are spelled out in the script's `whenToUse` header.
 
 `tg-notify.sh` reads `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` from `~/.claude/channels/telegram/.env` (never versioned) and always exits 0 — a dead network can't fail a run.
 
 **Note:** workflows install in **symlink mode only** — the plugin/marketplace mechanism doesn't ship `workflows/`.
+
+## Unattended runs
+
+`watchdog-resume.sh` relaunches a paused unattended Claude session once its resume
+time passes — inside detached tmux, so permission prompts still wait for a human
+(Telegram pages you) while everything else proceeds unattended.
+
+It runs as a **LaunchAgent, not cron**: launchd `gui/` sessions reach the login
+keychain, cron does not (live-tested 2026-08-08: cron → `Not logged in`; LaunchAgent
+→ authenticated, prompt answered). `install.sh` symlinks the script into
+`~/.claude/watchdogs/` and generates the LaunchAgent plist from
+`scripts/com.maddog.watchdog-resume.plist` (its `__HOME__` placeholder gets
+substituted with your `$HOME`); it prints the `launchctl bootstrap` command as a
+next step rather than running it for you.
+
+**`resume.state` contract** (one `key=value` per line, written by the agent at pause
+time, consumed on a verified relaunch):
+
+- `mode=standing|<anything else>` — `standing` persists across relaunches (e.g. a
+  crash-loop guard, not a one-shot resume); anything else is one-shot.
+- `resume_at=<epoch seconds>` — must be all-digits or the run is treated as malformed.
+- `cwd=<path>` — working directory for the relaunched session.
+- `prompt=<text>` — **must be a single line**; it's sent verbatim via
+  `tmux send-keys -l`, so a newline would submit early.
+- `session=<tmux session name>` — optional, defaults to `claude-resume`.
+
+Attach to a relaunched session with `tmux attach -t <session>` (from Ghostty, SSH,
+or your phone).
+
+**Workflow/launch-contract changes need a session restart.** A running Claude Code
+session snapshots `workflows/sdd-task-loop.js` and its launch contract at session
+start — editing the workflow mid-run doesn't reach the live session. Use the
+workflow's `scriptPath` option to launch same-session edits instead of relying on a
+running session to pick up a rewritten workflow file.
