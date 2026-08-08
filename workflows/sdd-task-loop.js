@@ -21,7 +21,12 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
      reset epoch (plus the in-session wake cron); bump back to 0 on resume. DELETE the file
      at run close-out. Runs hosted outside that tmux session must NOT write a standing file
      (invisible to the has-session guard → duplicate sessions); they get the pause-time
-     one-shot only.`,
+     one-shot only.
+  6. Verbatim-brief file artifacts: when a brief's steps CREATE new files with fully-specified
+     source, the lead saves that source as real files under <briefsDir>/task-N-files/<repo-relative-path>
+     and the brief's steps say copy-then-verify (TDD/gate/deviation steps unchanged). Modification
+     edits keep fenced-block style (drift tolerance). Copy-then-verify briefs are prime haiku
+     candidates via tasks[].model.`,
   phases: [
     { title: 'Brief lint', detail: 'cheap preflight: reject unfrozen briefs before any work', model: 'haiku' },
     { title: 'Implement', detail: 'one fresh implementer per brief; parallel where deps allow' },
@@ -155,7 +160,7 @@ const LINT = {
 }
 const lint = await agent(
   `Lint these task briefs for execution-readiness — read each file fully: ${A.tasks.map((t) => `${A.briefsDir}/task-${t.n}-brief.md`).join(', ')}.
-A brief is frozen ONLY if ALL hold: (1) self-contained — global constraints + the task, no reference to unstated decisions; (2) has an explicit DONE-WHEN; (3) states the gate command; (4) states the commit message; (5) contains NO open questions — flag any "TBD", "decide later", "TODO(decide)", unresolved "?" or "or maybe" phrasing, or placeholder text. Do NOT judge design quality — only readiness. Return one entry per task.`,
+A brief is frozen ONLY if ALL hold: (1) self-contained — global constraints + the task, no reference to unstated decisions; (2) has an explicit DONE-WHEN; (3) states the gate command; (4) states the commit message; (5) contains NO open questions — flag any "TBD", "decide later", "TODO(decide)", unresolved "?" or "or maybe" phrasing, or placeholder text. Briefs may ship verbatim source as real files under ${A.briefsDir}/task-<n>-files/ referenced by copy-then-verify steps — verify every referenced artifact file EXISTS (list the directory); a missing referenced artifact file makes the brief NOT frozen. Do NOT judge design quality — only readiness. Return one entry per task.`,
   { label: 'brief-lint', phase: 'Brief lint', model: 'haiku', effort: 'low', schema: LINT },
 )
 const unfrozen = (lint?.briefs ?? []).filter((b) => !b.frozen)
