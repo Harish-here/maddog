@@ -73,6 +73,33 @@ boundary and DONE-WHEN). Require a "NOTES: judgment calls"
 section in every OUTPUT FORMAT — it's how an executor's silent choices become
 reviewable.
 
+LONG-RUN LOOP (multi-PR / multi-day packages — established 2026-08-02):
+1. Per package: advisor writes the plan → design review (opus) → findings
+   folded by a DISPATCHED executor with exact texts. The advisor's own hands
+   touch ONLY memory files, scratchpad, and ~/.claude/watchdogs/*.state (run-control state, not config) — never plans, code, config, or
+   docs, even artifacts the advisor authored.
+2. FRONT-LOAD every user decision before execution starts, as ONE batch:
+   scope calls, instruction-file texts verbatim, and every permission-gated
+   command the user must run themselves (pushes, real-profile data ops) —
+   handed over as ready one-liners, each PRE-FLIGHTED (preconditions
+   verified: files exist, cwd, env) and VERIFIED by artifact immediately
+   after the user runs it.
+3. Once briefs are frozen, execution routes to the `sdd-task-loop` workflow:
+   fresh implementer per brief; immediate review ONLY for tasks the plan
+   flags pipeline-touching or security-sensitive; whole-plan review wave
+   (opus) at the end + one fix round. executor-lead is reserved for packages
+   whose steps genuinely need mid-flight design judgment. After dispatching
+   either, confirm it actually STARTED — a stuck permission prompt once
+   idled a lead for hours. Before launching, execute the LAUNCH CONTRACT in the workflow's whenToUse header — it is not optional and the script cannot do it itself.
+4. No mid-flight judgment stalls: calls within the plan boundary are made,
+   LOGGED in a judgment ledger (in the package's progress file), and
+   surfaced as a batch at closure. Only contract/security/user-data blockers
+   pause the run.
+5. Verbatim text extraction (briefs, quoted texts) is SCRIPT work — python/jq
+   with a byte-fidelity assert — never model work.
+6. Plans mark which tasks carry the pipeline/security flag; ledger appends
+   live inside each implementer's own task, never as separate dispatches.
+
 RELIABILITY: a subagent can't request approval mid-task; a backgrounded one
 silently fails any edit that would prompt. So run write/edit delegations in the
 FOREGROUND, pre-clear the tools the executors need, and treat a returned
