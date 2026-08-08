@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: `Advisor-mode plan execution once briefs are frozen and all design decisions are closed.
 NOT for packages needing mid-flight design judgment — those go to executor-lead.
 LAUNCH CONTRACT (advisor duties the script cannot do itself):
-  1. BEFORE launching an unattended run, create the heartbeat/watchdog cron (progress ping +
+  1. BEFORE launching an unattended run, create the heartbeat/watchdog LaunchAgent (progress ping +
      stall detection), send the run-start ping, and send the run-complete/aborted ping when
      the workflow returns — all via the same notifyCmd script the in-loop checkpoints use
      (default: ~/.claude/channels/telegram/notify.sh).
@@ -13,17 +13,18 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
      try ONE resumeFromRunId (cached replay is free) before paging the human.
   3. Doc-sync stays advisor-supervised dispatch (it touches .claude/**, protected here).
   4. CI watch is a cron; merge is a separate deliberate invocation. Never bundle them.
-  5. Unattended runs are hosted in the jobbunny-resume tmux session. At run START write
-     ~/.claude/watchdogs/resume.state with mode=standing, resume_at=0, cwd, and a generic
-     resume prompt pointing at the run-state memory file — a host restart then self-heals
-     within 10 min of login (the watchdog-resume LaunchAgent relaunches; while the session
-     lives, has-session keeps it silent). On a session-limit pause: bump resume_at to the
-     reset epoch (plus the in-session wake cron); bump back to 0 on resume. DELETE the file
-     at run close-out. Runs hosted outside that tmux session must NOT write a standing file
-     (invisible to the has-session guard → duplicate sessions); they get the pause-time
-     one-shot only.
+  5. Unattended runs are hosted in a tmux session (name from an optional session= line in
+     resume.state; default claude-resume). At run START write ~/.claude/watchdogs/resume.state
+     with mode=standing, resume_at=0, cwd, and a generic resume prompt pointing at the run-state
+     memory file. The standing file heals HOST/SESSION DEATH: a restart relaunches the session
+     within 10 min of login via the watchdog-resume LaunchAgent. An in-session limit pause is
+     instead healed by the in-session wake timer — the watchdog stays silent while the tmux
+     session lives. On a session-limit pause: bump resume_at to the reset epoch (plus the
+     in-session wake cron); bump back to 0 on resume. DELETE the file at run close-out. Runs
+     hosted outside that tmux session must NOT write a standing file (invisible to the
+     has-session guard → duplicate sessions); they get the pause-time one-shot only.
   6. Verbatim-brief file artifacts: when a brief's steps CREATE new files with fully-specified
-     source, the lead saves that source as real files under <briefsDir>/task-N-files/<repo-relative-path>
+     source, the brief author saves that source as real files under <briefsDir>/task-N-files/<repo-relative-path>
      and the brief's steps say copy-then-verify (TDD/gate/deviation steps unchanged). Modification
      edits keep fenced-block style (drift tolerance). Copy-then-verify briefs are prime haiku
      candidates via tasks[].model.`,
@@ -47,6 +48,9 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 //              embedded source, no interface judgment. Flagged tasks refuse haiku.
 //              deps = task numbers that must be DONE first. Omitted deps = depends on
 //              every earlier task (the v1 sequential behavior, always safe).
+//              Note this inverts advisor-mode's fast-tier default: a loop implementer
+//              commits, runs gates, and must STOP on contract contradiction — sonnet is
+//              the floor, haiku the earned exception for zero-deviation briefs.
 //   gate:      shell command that must exit 0 after every task (e.g. 'bash -c "npm run check"')
 //   baseRef:   git ref to diff against for the end review (e.g. 'main-everything-db')
 //   parallelize: optional bool (default false) — run dependency-free tasks concurrently in
@@ -54,6 +58,8 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 //              are file-disjoint by design; the merge gate re-runs after every pick.
 //   ship:      optional { prTitle, prBase } — push the branch and raise a PR at the end.
 //              Merge is NEVER part of this workflow.
+//   implementerAgent: optional agentType for implementers/fix agents (default 'executor-smart').
+//              Set to your repo's OWN executor agent if it defines one (it self-enforces repo rules).
 //   protectedPaths: optional string[] — paths agents must never edit (default: CLAUDE.md + .claude**)
 //   runName:   optional short label for checkpoint pings (default 'sdd-loop'), e.g. 'phase4'
 //   notifyCmd: optional shell command for checkpoint pings (default:
@@ -69,14 +75,34 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 //
 // MODEL BUDGET (pinned here, never inherited — the 2026-08-05 session burned ~538k
 // top-tier tokens because unpinned agents inherited the session model):
-//   haiku  — brief lint, dossier, ship mechanics
+//   haiku  — dossier, ship mechanics, merge/cherry-pick agent
 //            + implementers explicitly pinned per task via tasks[].model (see above)
-//   sonnet — implementers, fix rounds, task reviews, dimension reviews
+//   sonnet — brief lint (once-per-run gate protecting the whole run; now does filesystem
+//            verification, not just pattern-matching), implementers, fix rounds, task
+//            reviews, dimension reviews, escalated haiku→sonnet implementer retries
 //   opus   — adversarial synthesis, whole-plan review, scoped re-reviews (the only
 //            places top intelligence is spent inside the loop)
 
+// Per-task implementer tier: explicit, bounded, never inherited. Flagged
+// (pipeline/security) tasks always get sonnet — the STOP-on-contradiction
+// judgment is the whole point of the tier.
+const TASK_MODELS = new Set(['haiku', 'sonnet'])
+function taskModel(t) {
+  if (t.model === undefined) return 'sonnet'
+  if (!TASK_MODELS.has(t.model)) throw new Error(`task ${t.n}: model '${t.model}' not in [haiku, sonnet]`)
+  if (t.flagged && t.model === 'haiku') throw new Error(`task ${t.n}: flagged tasks cannot run on haiku`)
+  return t.model
+}
+
 const A = typeof args === 'string' ? JSON.parse(args) : args
 if (!A || !Array.isArray(A.tasks)) throw new Error('bad args: tasks missing after normalization')
+for (const key of ['worktree', 'briefsDir', 'gate', 'baseRef']) {
+  if (typeof A[key] !== 'string' || A[key].length === 0) throw new Error(`bad args: ${key} missing or not a non-empty string`)
+}
+for (const t of A.tasks) taskModel(t)
+if (A.parallelize && A.briefsDir.startsWith(A.worktree)) {
+  throw new Error('briefsDir must not live inside worktree when parallelize is true (path substitution + artifact reads would break in isolated worktrees)')
+}
 
 const TASK_RESULT = {
   type: 'object',
@@ -114,25 +140,15 @@ const REVIEW = {
 
 const NOTIFY = A.notifyCmd ?? 'bash "$HOME/.claude/channels/telegram/notify.sh"'
 const RUN = A.runName ?? 'sdd-loop'
+const IMPL_AGENT = A.implementerAgent ?? 'executor-smart'
 // Agents send these themselves — keep messages free of quotes/backticks.
 const ping = (msg) => `${NOTIFY} "${msg}"`
 
-const discipline = `Worktree: ${A.worktree}. Run npm via bash -c wrappers; verify exits with echo EXIT:$?.
+const discipline = (W) => `Worktree: ${W}. Run npm via bash -c wrappers; verify exits with echo EXIT:$?.
 TDD per the brief's steps. Commit per the brief's message — NO co-author/attribution trailers.
 Append your ledger line to ${A.briefsDir}/progress.md and write ${A.briefsDir}/task-<n>-report.md yourself (no separate bookkeeping).
 If reality contradicts the brief (wrong line numbers are fine to resolve; contract/security/user-data mismatches are not), STOP and return status blocked with what you found.
 NEVER edit these paths — if a finding or brief demands it, leave them untouched and put the proposed text in your report/notes instead: ${(A.protectedPaths ?? ['CLAUDE.md', '.claude/**', '**/AGENTS.md']).join(', ')}.`
-
-// Per-task implementer tier: explicit, bounded, never inherited. Flagged
-// (pipeline/security) tasks always get sonnet — the STOP-on-contradiction
-// judgment is the whole point of the tier.
-const TASK_MODELS = new Set(['haiku', 'sonnet'])
-function taskModel(t) {
-  if (t.model === undefined) return 'sonnet'
-  if (!TASK_MODELS.has(t.model)) throw new Error(`task ${t.n}: model '${t.model}' not in [haiku, sonnet]`)
-  if (t.flagged && t.model === 'haiku') throw new Error(`task ${t.n}: flagged tasks cannot run on haiku`)
-  return t.model
-}
 
 // ---------------------------------------------------------------------------
 // Phase 0 — brief lint. The loop's entry contract is FROZEN BRIEFS; this is the
@@ -161,19 +177,23 @@ const LINT = {
 const lint = await agent(
   `Lint these task briefs for execution-readiness — read each file fully: ${A.tasks.map((t) => `${A.briefsDir}/task-${t.n}-brief.md`).join(', ')}.
 A brief is frozen ONLY if ALL hold: (1) self-contained — global constraints + the task, no reference to unstated decisions; (2) has an explicit DONE-WHEN; (3) states the gate command; (4) states the commit message; (5) contains NO open questions — flag any "TBD", "decide later", "TODO(decide)", unresolved "?" or "or maybe" phrasing, or placeholder text. Briefs may ship verbatim source as real files under ${A.briefsDir}/task-<n>-files/ referenced by copy-then-verify steps — verify every referenced artifact file EXISTS (list the directory); a missing referenced artifact file makes the brief NOT frozen. Do NOT judge design quality — only readiness. Return one entry per task.`,
-  { label: 'brief-lint', phase: 'Brief lint', model: 'haiku', effort: 'low', schema: LINT },
+  { label: 'brief-lint', phase: 'Brief lint', agentType: 'executor-fast', model: 'sonnet', effort: 'low', schema: LINT },
 )
+if (!lint || !Array.isArray(lint.briefs) || lint.briefs.length !== A.tasks.length) {
+  log('brief lint inconclusive — aborting')
+  return { aborted: 'brief-lint-inconclusive', lint }
+}
 const unfrozen = (lint?.briefs ?? []).filter((b) => !b.frozen)
 if (unfrozen.length > 0) {
   log(`brief lint rejected ${unfrozen.length} brief(s) — aborting before any implementation`)
   return { aborted: 'brief-lint', unfrozen }
 }
 
-function implementerPrompt(t, worktree) {
+function implementerPrompt(t, worktree, tag = '') {
   return `You are a fresh implementer for ONE task. Your brief: ${A.briefsDir}/task-${t.n}-brief.md — read it fully; it is self-contained (global constraints + your task).
-${worktree === A.worktree ? discipline : discipline.replaceAll(A.worktree, worktree)}
+${discipline(worktree)}
 DONE-WHEN: every step's expected result achieved, "${A.gate}" exits 0, commit exists.
-CHECKPOINT PING (last action, fire-and-forget, ignore failures): on success run ${ping(`🔁 ${RUN} · ✅ ${t.n}/${A.tasks.length} task-${t.n} done (<short-sha>) · gate ✓`)} with <short-sha> replaced; on blocked run ${ping(`🔁 ${RUN} · ⚠️ BLOCKED task-${t.n} — <reason, ten words max>`)}.
+CHECKPOINT PING (last action, fire-and-forget, ignore failures): on success run ${ping(`🔁 ${RUN} · ✅ ${tag}${t.n}/${A.tasks.length} task-${t.n} done (<short-sha>) · gate ✓`)} with <short-sha> replaced; on blocked run ${ping(`🔁 ${RUN} · ⚠️ ${tag}BLOCKED task-${t.n} — <reason, ten words max>`)}.
 Return: task=${t.n}, status, commit hash, gateSummary (test counts + exits), deviations, notes (judgment calls).`
 }
 
@@ -183,11 +203,11 @@ Brief: ${A.briefsDir}/task-${t.n}-brief.md. Implementer report: ${A.briefsDir}/t
 Check spec compliance, blast radius, failure modes, test honesty (no mocks-asserting-mocks). Verdict approved or needs-fixes with concrete findings.`
 }
 
-function fixPrompt(t, rev, scope) {
-  return `Fix round (${scope}). Worktree ${A.worktree}. Apply ONLY these findings, nothing else:
+function fixPrompt(t, rev, scope, worktree = A.worktree) {
+  return `Fix round (${scope}). Worktree ${worktree}. Apply ONLY these findings, nothing else:
 ${rev.findings.map((f) => `- [${f.severity}] ${f.file ?? ''}: ${f.summary}${f.fix ? ' — fix: ' + f.fix : ''}`).join('\n')}
 For [critical] findings: FIRST write a failing test that reproduces the failure against the REAL components/code path (red), then fix it (green). A test built on synthetic fixtures the app never actually produces does not count as verification.
-${discipline}
+${discipline(worktree)}
 DONE-WHEN: findings addressed, "${A.gate}" exits 0, one commit.
 CHECKPOINT PING (last action, ignore failures): ${ping(`🔁 ${RUN} · 🔧 fix (${scope}): <k> findings addressed (<short-sha>)`)} with placeholders filled.`
 }
@@ -197,17 +217,20 @@ async function flaggedGate(t, r, results) {
     label: `review-task-${t.n}`, phase: 'Flagged review', schema: REVIEW,
     agentType: 'executor-smart', model: 'sonnet',
   })
+  if (!rev) return { failed: { verdict: 'needs-fixes', findings: [], note: 'flagged review returned null' } }
   if (rev.verdict !== 'approved') {
     const fix = await agent(fixPrompt(t, rev, `task ${t.n}`), {
       label: `fix-task-${t.n}`, phase: 'Flagged review', schema: TASK_RESULT,
-      agentType: 'executor', model: 'sonnet',
+      agentType: IMPL_AGENT, model: 'sonnet',
     })
+    // A made commit must be reported even if re-review fails below.
+    results.push(fix)
     const rerev = await agent(taskReviewPrompt(t, fix), {
       label: `rereview-task-${t.n}`, phase: 'Flagged review', schema: REVIEW,
       agentType: 'executor-smart', model: 'sonnet',
     })
+    if (!rerev) return { failed: { verdict: 'needs-fixes', findings: [], note: 'flagged review returned null' } }
     if (rerev.verdict !== 'approved') return { failed: rerev }
-    results.push(fix)
   }
   return { failed: null }
 }
@@ -228,18 +251,25 @@ async function runSequential(t) {
   const tier = taskModel(t)
   let r = await agent(implementerPrompt(t, A.worktree), {
     label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-    agentType: 'executor', model: tier,
+    // haiku implementers get executor-fast's stop-don't-guess persona.
+    agentType: tier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: tier,
   })
-  if ((!r || r.status !== 'done') && tier === 'haiku') {
-    // Escalation-on-red: one shot, haiku -> sonnet, same brief verbatim. Sequential path
-    // only (the parallel branch keeps static tiers). A sonnet failure aborts as before.
+  // Escalation trigger: only a genuine 'blocked' verdict escalates. Infrastructure
+  // death (null result — crash, timeout, harness failure) skips escalation; abort→resume
+  // is the right path there, not a wasted sonnet retry on a dead agent.
+  if (r && r.status === 'blocked' && tier === 'haiku') {
+    // One rung only: a blocked haiku is usually a capability failure (retry helps); a
+    // blocked sonnet is usually a brief failure — retrying papers over it; the lint gate
+    // + advisor abort are the right response. Escalated tasks deliberately do NOT get
+    // promoted into flaggedGate; the end-of-plan review sees the diff regardless.
     log(`task ${t.n}: haiku implementer blocked — escalating to sonnet`)
     const reason = (r && r.notes ? String(r.notes) : 'no result').slice(0, 200)
     r = await agent(
-      `${implementerPrompt(t, A.worktree)}
-ESCALATION CONTEXT: a cheaper prior attempt at this exact brief returned blocked/failed (reason, possibly truncated: ${reason}). Before Step 1: run git status in the worktree; if it is dirty with that attempt's uncommitted partials, reset to the last commit (git reset --hard + a git clean -fd scoped to the brief's own paths) and start from the last good commit. Include the word ESCALATED in your checkpoint ping.`,
-      { label: `task-${t.n}-escalated`, phase: 'Implement', schema: TASK_RESULT, agentType: 'executor', model: 'sonnet' },
+      `${implementerPrompt(t, A.worktree, 'ESCALATED ')}
+ESCALATION CONTEXT: a cheaper prior attempt at this exact brief returned blocked/failed (reason, possibly truncated: ${reason}). Before Step 1: run git status in the worktree; if it is dirty with that attempt's uncommitted partials, reset to the last commit (git reset --hard + a git clean -fd scoped to the brief's own paths) and start from the last good commit.`,
+      { label: `task-${t.n}-escalated`, phase: 'Implement', schema: TASK_RESULT, agentType: IMPL_AGENT, model: 'sonnet' },
     )
+    if (r) r = { ...r, notes: 'ESCALATED haiku→sonnet. ' + r.notes }
   }
   if (!r || r.status !== 'done') return { blocked: r ?? null }
   results.push(r)
@@ -269,13 +299,29 @@ if (!A.parallelize) {
       if (out.failedReview) return { aborted: `task ${ready[0].n} failed re-review`, results, review: out.failedReview }
     } else {
       log(`running tasks ${ready.map((t) => t.n).join(', ')} in parallel (isolated worktrees)`)
-      const batch = await parallel(ready.map((t) => () =>
-        agent(implementerPrompt(t, '<your isolated worktree — you are checked out on a private copy>'), {
+      const batch = await parallel(ready.map((t) => () => {
+        const ptier = taskModel(t)
+        return agent(implementerPrompt(t, '<your isolated worktree — you are checked out on a private copy>'), {
           label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-          agentType: 'executor', model: taskModel(t), isolation: 'worktree',
-        }).then((r) => ({ t, r }))))
+          agentType: ptier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: ptier, isolation: 'worktree',
+        }).then((r) => ({ t, r }))
+      }))
       for (const b of batch.filter(Boolean).sort((x, y) => x.t.n - y.t.n)) {
-        if (!b.r || b.r.status !== 'done') return { aborted: `task ${b.t.n}`, results, blocked: b.r ?? null }
+        if (!b.r || b.r.status !== 'done') {
+          // Asymmetry: a blocked HAIKU parallel task falls through to a sequential
+          // sonnet-escalation retry in the primary worktree (idle at merge time) — same
+          // ladder as the sequential path. A blocked/failed SONNET result, or an infra-dead
+          // (null) result at any tier, aborts as before: retrying a sonnet blocked-verdict
+          // papers over a brief failure rather than fixing it.
+          if (taskModel(b.t) === 'haiku' && b.r && b.r.status === 'blocked') {
+            log(`task ${b.t.n}: haiku parallel implementer blocked — falling through to sequential escalation`)
+            const out = await runSequential(b.t)
+            if (out.blocked !== undefined) return { aborted: `task ${b.t.n}`, results, blocked: out.blocked }
+            if (out.failedReview) return { aborted: `task ${b.t.n} failed re-review`, results, review: out.failedReview }
+            continue
+          }
+          return { aborted: `task ${b.t.n}`, results, blocked: b.r ?? null }
+        }
         const merged = await agent(
           `In ${A.worktree}: git cherry-pick ${b.r.commit} (the commit exists in a sibling worktree sharing this repo's object store). Resolve NOTHING silently — if the pick conflicts, git cherry-pick --abort and return status blocked with the conflict summary. Then run "${A.gate}" and verify exit 0. Return task=${b.t.n}, status, the NEW commit hash on this branch, gateSummary, notes.`,
           { label: `merge-task-${b.t.n}`, phase: 'Implement', schema: TASK_RESULT, agentType: 'executor-fast', model: 'haiku' },
@@ -342,6 +388,7 @@ Verdict approved or needs-fixes; findings bucketed critical/important/minor with
     { label: 'whole-plan-review', phase: 'End review', model: 'opus', effort: 'high', schema: REVIEW },
   )
 }
+if (!review) return { aborted: 'review-null', results }
 
 phase('Fix wave')
 let fixWave = null
@@ -349,13 +396,15 @@ let reReview = null
 const actionable = review.findings.filter((f) => f.severity !== 'minor')
 if (review.verdict !== 'approved' || actionable.length > 0) {
   fixWave = await agent(fixPrompt({ n: 'wave' }, { findings: actionable }, 'whole-plan fix wave'), {
-    label: 'fix-wave', schema: TASK_RESULT, agentType: 'executor', model: 'sonnet',
+    label: 'fix-wave', schema: TASK_RESULT, agentType: IMPL_AGENT, model: 'sonnet',
   })
   reReview = await agent(
     `Scoped re-review: verify ONLY that these findings are correctly fixed in ${fixWave?.commit} (worktree ${A.worktree}), no new defects:
 ${actionable.map((f) => `- ${f.summary}`).join('\n')}`,
-    { label: 'scoped-rereview', model: 'opus', schema: REVIEW },
+    // A critical finding warrants top-intelligence verification; important/minor-only fixes don't.
+    { label: 'scoped-rereview', model: actionable.some((f) => f.severity === 'critical') ? 'opus' : 'sonnet', schema: REVIEW },
   )
+  if (!reReview) return { aborted: 'rereview-null', results, fixWave }
 }
 
 // ---------------------------------------------------------------------------
