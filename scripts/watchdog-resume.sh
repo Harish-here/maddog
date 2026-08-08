@@ -5,6 +5,8 @@
 # risky gates; Telegram pages you), everything else proceeds unattended, and you
 # attach later with:  tmux attach -t jobbunny-resume   (from Ghostty, SSH, phone).
 # State is written by the agent at pause time; deleted by it on in-session resume.
+# Runs as a LaunchAgent (NOT cron): launchd gui/ sessions reach the keychain, cron cannot
+# (live-tested 2026-08-08: cron -> Not logged in; LaunchAgent -> Claude Max, prompt answered).
 # Guard rails: single-shot per state file, no-launch if the tmux session already
 # exists, lock against concurrent cron fires, logged, ping on every action.
 NOTIFY="$HOME/.claude/channels/telegram/notify.sh"
