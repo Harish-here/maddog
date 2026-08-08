@@ -26,7 +26,11 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 // args: {
 //   worktree:  absolute repo path (branch already checked out)
 //   briefsDir: absolute path containing task-<n>-brief.md files + progress.md
-//   tasks:     [{ n: 1, flagged: false, deps: [] }, ...]
+//   tasks:     [{ n: 1, flagged: false, deps: [], model: 'haiku'|'sonnet' (optional) }, ...]
+//              model = implementer tier for THIS task, decided by the plan/lead at
+//              brief-authoring time. Default sonnet. Allowed set is closed (never
+//              inherited); haiku is for briefs with ZERO deviation surface — fully
+//              embedded source, no interface judgment. Flagged tasks refuse haiku.
 //              deps = task numbers that must be DONE first. Omitted deps = depends on
 //              every earlier task (the v1 sequential behavior, always safe).
 //   gate:      shell command that must exit 0 after every task (e.g. 'bash -c "npm run check"')
@@ -52,6 +56,7 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 // MODEL BUDGET (pinned here, never inherited — the 2026-08-05 session burned ~538k
 // top-tier tokens because unpinned agents inherited the session model):
 //   haiku  — brief lint, dossier, ship mechanics
+//            + implementers explicitly pinned per task via tasks[].model (see above)
 //   sonnet — implementers, fix rounds, task reviews, dimension reviews
 //   opus   — adversarial synthesis, whole-plan review, scoped re-reviews (the only
 //            places top intelligence is spent inside the loop)
@@ -103,6 +108,17 @@ TDD per the brief's steps. Commit per the brief's message — NO co-author/attri
 Append your ledger line to ${A.briefsDir}/progress.md and write ${A.briefsDir}/task-<n>-report.md yourself (no separate bookkeeping).
 If reality contradicts the brief (wrong line numbers are fine to resolve; contract/security/user-data mismatches are not), STOP and return status blocked with what you found.
 NEVER edit these paths — if a finding or brief demands it, leave them untouched and put the proposed text in your report/notes instead: ${(A.protectedPaths ?? ['CLAUDE.md', '.claude/**', '**/AGENTS.md']).join(', ')}.`
+
+// Per-task implementer tier: explicit, bounded, never inherited. Flagged
+// (pipeline/security) tasks always get sonnet — the STOP-on-contradiction
+// judgment is the whole point of the tier.
+const TASK_MODELS = new Set(['haiku', 'sonnet'])
+function taskModel(t) {
+  if (t.model === undefined) return 'sonnet'
+  if (!TASK_MODELS.has(t.model)) throw new Error(`task ${t.n}: model '${t.model}' not in [haiku, sonnet]`)
+  if (t.flagged && t.model === 'haiku') throw new Error(`task ${t.n}: flagged tasks cannot run on haiku`)
+  return t.model
+}
 
 // ---------------------------------------------------------------------------
 // Phase 0 — brief lint. The loop's entry contract is FROZEN BRIEFS; this is the
@@ -197,7 +213,7 @@ const spentAtStart = budget.spent()
 async function runSequential(t) {
   const r = await agent(implementerPrompt(t, A.worktree), {
     label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-    agentType: 'executor', model: 'sonnet',
+    agentType: 'executor', model: taskModel(t),
   })
   if (!r || r.status !== 'done') return { blocked: r ?? null }
   results.push(r)
@@ -230,7 +246,7 @@ if (!A.parallelize) {
       const batch = await parallel(ready.map((t) => () =>
         agent(implementerPrompt(t, '<your isolated worktree — you are checked out on a private copy>'), {
           label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-          agentType: 'executor', model: 'sonnet', isolation: 'worktree',
+          agentType: 'executor', model: taskModel(t), isolation: 'worktree',
         }).then((r) => ({ t, r }))))
       for (const b of batch.filter(Boolean).sort((x, y) => x.t.n - y.t.n)) {
         if (!b.r || b.r.status !== 'done') return { aborted: `task ${b.t.n}`, results, blocked: b.r ?? null }
