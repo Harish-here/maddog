@@ -220,10 +220,22 @@ const done = new Set()
 const spentAtStart = budget.spent()
 
 async function runSequential(t) {
-  const r = await agent(implementerPrompt(t, A.worktree), {
+  const tier = taskModel(t)
+  let r = await agent(implementerPrompt(t, A.worktree), {
     label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-    agentType: 'executor', model: taskModel(t),
+    agentType: 'executor', model: tier,
   })
+  if ((!r || r.status !== 'done') && tier === 'haiku') {
+    // Escalation-on-red: one shot, haiku -> sonnet, same brief verbatim. Sequential path
+    // only (the parallel branch keeps static tiers). A sonnet failure aborts as before.
+    log(`task ${t.n}: haiku implementer blocked — escalating to sonnet`)
+    const reason = (r && r.notes ? String(r.notes) : 'no result').slice(0, 200)
+    r = await agent(
+      `${implementerPrompt(t, A.worktree)}
+ESCALATION CONTEXT: a cheaper prior attempt at this exact brief returned blocked/failed (reason, possibly truncated: ${reason}). Before Step 1: run git status in the worktree; if it is dirty with that attempt's uncommitted partials, reset to the last commit (git reset --hard + a git clean -fd scoped to the brief's own paths) and start from the last good commit. Include the word ESCALATED in your checkpoint ping.`,
+      { label: `task-${t.n}-escalated`, phase: 'Implement', schema: TASK_RESULT, agentType: 'executor', model: 'sonnet' },
+    )
+  }
   if (!r || r.status !== 'done') return { blocked: r ?? null }
   results.push(r)
   done.add(t.n)
