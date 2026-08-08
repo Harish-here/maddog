@@ -39,7 +39,7 @@ fi
 
 mv "$STATE" "$STATE.launched"                               # single-shot: never double-launch
 echo "=== $(date) launching tmux session: $prompt" >> "$LOG"
-tmux new-session -d -s "$TMUX_SESSION" -c "$cwd" "claude"
+tmux new-session -d -s "$TMUX_SESSION" -c "$cwd" "/bin/zsh -lic claude"   # interactive login shell: full user env (auth) regardless of cron's stripped env
 sleep 5                                                     # let the REPL come up
 tmux send-keys -t "$TMUX_SESSION" -l "$prompt"
 tmux send-keys -t "$TMUX_SESSION" Enter
