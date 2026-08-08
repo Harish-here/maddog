@@ -12,7 +12,10 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
   2. Persist scriptPath + runId the moment the launch returns; on harness error or restart,
      try ONE resumeFromRunId (cached replay is free) before paging the human.
   3. Doc-sync stays advisor-supervised dispatch (it touches .claude/**, protected here).
-  4. CI watch is a cron; merge is a separate deliberate invocation. Never bundle them.`,
+  4. CI watch is a cron; merge is a separate deliberate invocation. Never bundle them.
+  5. On a session-limit pause: besides the in-session wake cron, write ~/.claude/watchdogs/resume.state
+     (resume_at/cwd/prompt) and delete it on in-session resume — the OS watchdog-resume cron launches a
+     detached-tmux interactive session (tmux attach -t jobbunny-resume) as the sleeping-user fallback.`,
   phases: [
     { title: 'Brief lint', detail: 'cheap preflight: reject unfrozen briefs before any work', model: 'haiku' },
     { title: 'Implement', detail: 'one fresh implementer per brief; parallel where deps allow' },
