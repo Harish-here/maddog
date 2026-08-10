@@ -5,7 +5,9 @@ description: >
   Runs delegated tasks needing SOME local judgment but not full Advisor reasoning,
   on a mid-tier model: refactors that must match existing patterns, tricky or
   context-dependent edits, small design choices inside a fixed boundary, or work
-  where a cheap model would likely produce plausible-but-wrong output. Use when
+  where a cheap model would likely produce plausible-but-wrong output, or
+  live/stateful choreography with contingent branches — background-process
+  babysitting, cleanup that must run even on failure. Use when
   correctness matters more than cost, or after executor-fast returns blocked. If
   the project defines its OWN executor agent (repo rules baked in), prefer it
   over this one at the same tier. Do

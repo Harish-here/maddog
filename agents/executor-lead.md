@@ -10,7 +10,9 @@ description: >
   between steps. Do NOT use for a single task (route it to executor-fast or
   executor-smart directly) or for a flat parallel fan-out of independent
   mechanical tasks (the Advisor dispatches fast-tier directly — no middle
-  manager needed). It never edits files itself and never decides beyond the
+  manager needed), or for a fully-specified frozen plan with no open decisions
+  — however big; that is direct dispatch, not a package needing a lead. It
+  never edits files itself and never decides beyond the
   package boundary — scope, architecture, and cross-package tradeoffs stay
   with the Advisor.
 tools: Agent, Read, Grep, Glob, Bash
