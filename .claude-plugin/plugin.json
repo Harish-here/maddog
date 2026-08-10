@@ -1,10 +1,10 @@
 {
   "name": "maddog-skills",
-  "version": "1.2.0",
-  "description": "Four-tier advisor-executor hierarchy for Claude Code: Advisor (executive) -> executor-lead (Opus package lead) -> executor-smart (Sonnet) -> executor-fast (Haiku). Route on task shape, spend max intelligence only where it's irreplaceable.",
+  "version": "1.3.0",
+  "description": "Four-tier advisor-executor hierarchy for Claude Code: Advisor (executive) -> executor-lead (Opus package lead) -> executor-smart (Sonnet) -> executor-fast (Haiku). Route on task shape, spend max intelligence only where it's irreplaceable. Plus a product-team planning pipeline: PM -> UX -> UI, from feature ask to implementation blueprint.",
   "author": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
   "homepage": "https://github.com/Harish-here/maddog-skills",
   "repository": "https://github.com/Harish-here/maddog-skills",
   "license": "MIT",
-  "keywords": ["agents", "subagents", "delegation", "multi-agent", "advisor", "executor", "workflow"]
+  "keywords": ["agents", "subagents", "delegation", "multi-agent", "advisor", "executor", "workflow", "product-team", "planning"]
 }
