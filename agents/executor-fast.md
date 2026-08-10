@@ -7,7 +7,9 @@ description: >
   search, extracting or reformatting data, scaffolding boilerplate. Use when the
   task has objective acceptance criteria and needs zero judgment. Do NOT use for
   ambiguous refactors, design choices, or any task where a plausible-but-wrong
-  output is likely — those go to executor-smart. Do NOT plan or make architectural
+  output is likely — those go to executor-smart. If
+  the project defines its OWN executor agent, prefer it over this one at the
+  same tier. Do NOT plan or make architectural
   calls — those stay with the Advisor.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---

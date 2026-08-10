@@ -6,7 +6,9 @@ description: >
   on a mid-tier model: refactors that must match existing patterns, tricky or
   context-dependent edits, small design choices inside a fixed boundary, or work
   where a cheap model would likely produce plausible-but-wrong output. Use when
-  correctness matters more than cost, or after executor-fast returns blocked. Do
+  correctness matters more than cost, or after executor-fast returns blocked. If
+  the project defines its OWN executor agent (repo rules baked in), prefer it
+  over this one at the same tier. Do
   NOT use for purely mechanical, objectively-specified work (bulk edits, test runs,
   search, extraction) — that goes to executor-fast, which is cheaper. Do NOT make
   cross-task or architectural decisions — those stay with the Advisor.
