@@ -6,7 +6,7 @@
     {
       "name": "maddog-skills",
       "source": "./",
-      "description": "Advisor-executor hierarchy: 4 tiered agents (executor-fast/smart/lead + researcher), a 3-agent product planning team (product-pm/ux/ui), plus advisor-mode, grind, grind-pro, and product-team skills."
+      "description": "Advisor-executor hierarchy: 4 tiered agents (executor-fast/smart/lead + researcher), a 3-agent product planning team (product-pm/ux/ui), plus advisor-mode, grind, grind-pro, and product-engineering skills."
     }
   ]
 }

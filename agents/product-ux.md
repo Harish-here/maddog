@@ -6,7 +6,7 @@ description: >
   maps the persona's journey, designs every screen and state, applies a
   baked-in UX charter, authors a compact design dossier, and has the HTML
   mockup RENDERED at a cheaper tier from it. Second stage of the
-  product-team pipeline — requires spec.md. Do NOT use for
+  product-engineering pipeline — requires spec.md. Do NOT use for
   requirements/scoping (product-pm) or implementation planning (product-ui);
   it produces ux-notes.md + mockup.html and nothing else.
 tools: Agent, Read, Write, Edit

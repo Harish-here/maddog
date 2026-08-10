@@ -1,5 +1,5 @@
 ---
-name: product-team
+name: product-engineering
 description: Run the PM → UX → UI planning pipeline for one feature — from ask to implementation blueprint; coding happens downstream via executors / sdd-task-loop. Not for small tweaks, bug fixes, or single-component changes — dispatch an executor directly for those.
 disable-model-invocation: true
 argument-hint: [feature ask, or "resume <slug> from pm|ux|ui"] [target-repo-path]

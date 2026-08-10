@@ -6,7 +6,7 @@ description: >
   grounds it in industry research, the app's user persona, and delegated
   recon of the current app; interviews the user (via the orchestrator relay);
   then authors docs/product/<slug>/spec.md with a derived
-  build/reshape/not-needed verdict. First stage of the product-team pipeline.
+  build/reshape/not-needed verdict. First stage of the product-engineering pipeline.
   Do NOT use for UX design (product-ux), implementation planning
   (product-ui), small tweaks or bug fixes, or writing code — it authors one
   spec and nothing else.

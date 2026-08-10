@@ -6,7 +6,7 @@ description: >
   recons the target repo's actual UI stack hands-on, maps every mockup
   element to real components, and authors docs/product/<slug>/blueprint.md
   precise enough that a downstream coding agent implements with zero
-  judgment. Final stage of the product-team pipeline — requires spec.md and
+  judgment. Final stage of the product-engineering pipeline — requires spec.md and
   mockup.html. Do NOT use for requirements (product-pm), UX design
   (product-ux), or writing application code — it plans; executors build.
 tools: Read, Write, Edit, Bash, Glob, Grep

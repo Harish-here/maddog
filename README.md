@@ -32,14 +32,14 @@ agents/
   executor-smart.md   # Sonnet — local-judgment executor
   executor-lead.md    # Opus — package lead (delegate-only: no Write/Edit)
   researcher.md       # Haiku — mechanical web research (capped, cited, no synthesis)
-  product-pm.md       # Opus — feature ask → grounded product spec (product-team stage 1)
+  product-pm.md       # Opus — feature ask → grounded product spec (product-engineering stage 1)
   product-ux.md       # Opus — spec → UX dossier + rendered HTML mockup (stage 2)
   product-ui.md       # Sonnet — mockup → zero-drift implementation blueprint (stage 3)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
-  product-team/       # /product-team <feature> — PM → UX → UI planning pipeline
+  product-engineering/       # /product-engineering <feature> — PM → UX → UI planning pipeline
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
 scripts/
@@ -48,7 +48,7 @@ scripts/
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
 ```
 
-Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-team` references `product-pm`/`product-ux`/`product-ui`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
+Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-ui`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
 
 ## Install
 
@@ -82,9 +82,9 @@ Pick one mode, not both — installing both ways gives you duplicate agents. Res
 
 Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*.
 
-## The product team
+## The product engineering team
 
-A second axis on the org: discipline agents, not judgment tiers. `/product-team <feature>` runs a sequential planning pipeline — `product-pm` (Opus) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (Opus) designs the journey against a baked-in UX charter and has the mockup rendered at Sonnet prices; `product-ui` (Sonnet) maps the mockup to the repo's real components in a blueprint a coding agent can implement with zero judgment. Artifacts land in the target repo under `docs/product/<slug>/`; the blueprint is the frozen input for `sdd-task-loop` or direct executor dispatch. Opus tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (Haiku), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
+A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs a sequential planning pipeline — `product-pm` (Opus) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (Opus) designs the journey against a baked-in UX charter and has the mockup rendered at Sonnet prices; `product-ui` (Sonnet) maps the mockup to the repo's real components in a blueprint a coding agent can implement with zero judgment. Artifacts land in the target repo under `docs/product/<slug>/`; the blueprint is the frozen input for `sdd-task-loop` or direct executor dispatch. Opus tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (Haiku), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
 
 ## The sdd-task-loop workflow
 
