@@ -34,12 +34,14 @@ agents/
   researcher.md       # Haiku — mechanical web research (capped, cited, no synthesis)
   product-pm.md       # Opus — feature ask → grounded product spec (product-engineering stage 1)
   product-ux.md       # Opus — spec → UX dossier + rendered HTML mockup (stage 2)
-  product-ui.md       # Sonnet — mockup → zero-drift implementation blueprint (stage 3)
+  product-be.md       # Sonnet — UX data needs → server contracts + backend blueprint (stage 3)
+  product-ui.md       # Sonnet — mockup + BE contracts → zero-drift implementation blueprint (stage 4)
+  product-qa.md       # Opus — implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
-  product-engineering/       # /product-engineering <feature> — PM → UX → UI planning pipeline
+  product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
 scripts/
@@ -48,7 +50,7 @@ scripts/
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
 ```
 
-Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-ui`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
+Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
 
 ## Install
 
@@ -84,7 +86,7 @@ Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*
 
 ## The product engineering team
 
-A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs a sequential planning pipeline — `product-pm` (Opus) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (Opus) designs the journey against a baked-in UX charter and has the mockup rendered at Sonnet prices; `product-ui` (Sonnet) maps the mockup to the repo's real components in a blueprint a coding agent can implement with zero judgment. Artifacts land in the target repo under `docs/product/<slug>/`; the blueprint is the frozen input for `sdd-task-loop` or direct executor dispatch. Opus tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (Haiku), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
+A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs the full pipeline — `product-pm` (Opus) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (Opus) designs the journey against a baked-in UX charter and has the mockup rendered at Sonnet prices; `product-be` (Sonnet) turns every UX data need into a named server contract (read-path completeness, mandatory migration rehearsal) in `blueprint-be.md`; `product-ui` (Sonnet) maps the mockup to the repo's real components against those contracts, with every screen/state step carrying its pinning e2e in-task. The orchestrator then briefs both blueprints into `sdd-task-loop` for execution, and `product-qa` (Opus) closes: verifies the branch against the artifacts (gates, e2e coverage audit, live drive, exploratory pass, full traceability matrix), routes typed bugs back to the responsible stage, and opens the PR only at zero open bugs — deferral is the user's call, merge is never the pipeline's. Artifacts land in the target repo under `docs/product/<slug>/`. Opus tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (Haiku), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
 
 ## The sdd-task-loop workflow
 
