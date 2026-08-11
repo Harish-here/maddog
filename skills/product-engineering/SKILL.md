@@ -130,7 +130,12 @@ sdd-task-loop's own resume path before QA ever starts.
 
 STAGE QA: dispatch product-qa in the FOREGROUND with every artifact path,
 the repo + branch + expected HEAD, the gate commands, and the return
-contract. QA is read-only on code and its bar is zero open bugs.
+contract. QA is read-only on code and its bar is zero open bugs. In
+UNATTENDED mode the launch contract's watchdog spans EXECUTE and QA as
+one run — QA's live drive and fix rounds can run long, and a session
+death there must page rather than stay silent until morning; tear the
+watchdog down (and verify it gone) only at CLOSE, after the PR-or-red
+outcome.
 
 On VERDICT: red — route each bug by its route-to field: executor bugs
 become targeted fix dispatches to the implementer tier (or a scoped
