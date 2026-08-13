@@ -8,7 +8,7 @@ A four-tier advisor–executor hierarchy for [Claude Code](https://claude.com/cl
 |---|---|---|
 | **Advisor** | your session model (skill: `advisor-mode`) | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work. |
 | **executor-lead** | Opus | Package lead. Takes ONE complex work package (goal + boundary + DONE-WHEN), makes the within-package design calls, and dispatches executors for every edit and every recon step. Never touches a file itself. |
-| **executor-smart** | Sonnet | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |
+| **executor-smart** | Sonnet | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. Dispatches `executor-fast` for the mechanical sub-steps of its own task — hands, never minds. |
 | **executor-fast** | Haiku | The default. Everything mechanical with objective acceptance criteria: bulk edits, test/lint runs, search, extraction, boilerplate. |
 
 **The routing rule:** route on the *task's shape*, never the *subject's sophistication*. A deep architecture question answered by "quote the code with file:line" is still extraction — and extraction is fast-tier work.
@@ -20,6 +20,29 @@ A four-tier advisor–executor hierarchy for [Claude Code](https://claude.com/cl
 - A flat parallel fan-out of independent mechanical tasks needs no middle manager — the Advisor dispatches fast-tier directly.
 - WHETHER/WHAT to build stays with the Advisor; HOW to build it can go to the lead.
 
+## Modes and laws
+
+Each executor classifies every task it receives into one of its own **modes**, and each
+mode carries one named **law** with a worked example. `executor-fast` has ten: RECON,
+EXTRACT, VERIFY, EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT.
+`executor-smart` has eight: BUILD, PORT, AUTHOR, DECOMPOSE, FIX, REVIEW, DIAGNOSE,
+CHOREOGRAPH.
+
+The laws are established principles rather than invented jargon — Goodhart's Law for a
+gate you must not tune to make green, Chesterton's Fence for an edit whose anchor has
+moved, Order of Volatility (RFC 3227) for a cleanup that would destroy the evidence of
+what broke, Parnas's information hiding for choosing where to split a file. A model has
+real priors on those and none at all on a coined phrase.
+
+**Classification belongs to the agent, not the caller.** A dispatching agent sees only
+the frontmatter `description`, never the mode list — so a mode named in a prompt is a
+hint from someone who probably has not read the file, and the agent is told to classify
+on the task and flag the mismatch. Call sites stay decoupled from each agent's internal
+taxonomy.
+
+The modes were derived from 774 real dispatches in local session history, then extended
+with four synthesised forward.
+
 ## Why not just "use the best model for everything"?
 
 The hierarchy isn't built on models — it's built on the **distillation of intelligence**. The tiers are levels of judgment: who decides what to build, who decides how, who handles ambiguity, who executes what's fully specified. Models just fill the roles; decommission one and you re-hire the role, you don't redesign the org. Spend maximum intelligence only where it's irreplaceable — everything else flows downhill, fully specified, to whoever's cheapest and fastest.
@@ -28,8 +51,8 @@ The hierarchy isn't built on models — it's built on the **distillation of inte
 
 ```
 agents/
-  executor-fast.md    # Haiku — mechanical executor
-  executor-smart.md   # Sonnet — local-judgment executor
+  executor-fast.md    # Haiku — mechanical executor, ten modes
+  executor-smart.md   # Sonnet — local-judgment executor, eight modes, delegates to fast
   executor-lead.md    # Opus — package lead (delegate-only: no Write/Edit)
   researcher.md       # Haiku — mechanical web research (capped, cited, no synthesis)
   product-pm.md       # Opus — feature ask → grounded product spec (product-engineering stage 1)
@@ -44,6 +67,11 @@ skills/
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
+  agent-evals.js      # runs evals/ fixtures against the real agents and grades them
+evals/
+  executor-fast.json  # behavioural fixtures — happy + trap per mode and standing law
+  executor-smart.json
+  README.md           # fixture schema, and why the traps are the point
 scripts/
   tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
   watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
@@ -97,6 +125,26 @@ Intelligence is budgeted, never inherited: every `agent()` call pins its model �
 `tg-notify.sh` reads `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` from `~/.claude/channels/telegram/.env` (never versioned) and always exits 0 — a dead network can't fail a run.
 
 **Note:** workflows install in **symlink mode only** — the plugin/marketplace mechanism doesn't ship `workflows/`.
+
+## Evals
+
+`evals/` holds behavioural fixtures — one JSON file per executor plus a schema README.
+Every mode and standing law carries at least one happy fixture and one **trap**, where
+the wrong answer is cheap, plausible and immediately available. A fixture that only asks
+an agent to do the obvious right thing proves nothing, because the wrong answer was never
+attractive.
+
+`workflows/agent-evals.js` runs them: it materialises each fixture's files into a fresh
+temp directory, dispatches the prompt to the real agent, and grades the return against
+the fixture's expectations with a judge. Model and reasoning effort are pinned per
+fixture — an eval of a Haiku agent that runs on Opus measures nothing — and the harness
+stages deliberately avoid the agents under test, so a broken executor cannot masquerade
+as fixture failures. Fixtures carry a `core` flag and the runner defaults to the
+discriminating subset; `args.all` runs everything.
+
+They found real defects. At low effort `executor-fast` deleted a directory holding
+uncommitted work and reported done; at medium `executor-smart` verified a review finding
+was refuted and then applied it anyway. Both agents pin `effort: high` because of that.
 
 ## Unattended runs
 
