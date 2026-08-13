@@ -7,7 +7,7 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 
-mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/workflows" "$CLAUDE_DIR/channels/telegram" "$CLAUDE_DIR/watchdogs"
+mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/workflows" "$CLAUDE_DIR/channels/telegram" "$CLAUDE_DIR/watchdogs" "$CLAUDE_DIR/hooks"
 
 link() {
   local src="$1" dst="$2"
@@ -38,6 +38,11 @@ done
 # Reads TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID from ~/.claude/channels/telegram/.env
 # (never versioned here) — see workflows/sdd-task-loop.js header for the contract.
 link "$REPO_DIR/scripts/tg-notify.sh" "$CLAUDE_DIR/channels/telegram/notify.sh"
+
+# executor-guard: PreToolUse Bash hook that bounces irreversible commands
+# (force-delete, force-push, hard reset, mass discard, etc.) away from
+# executor-fast — see scripts/executor-guard.sh header for the contract.
+link "$REPO_DIR/scripts/executor-guard.sh" "$CLAUDE_DIR/hooks/executor-guard.sh"
 
 # watchdog-resume: LaunchAgent that relaunches a paused unattended run once its
 # resume time passes. Symlink the script, then generate the plist from the

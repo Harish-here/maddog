@@ -73,6 +73,7 @@ evals/
   executor-smart.json
   README.md           # fixture schema, and why the traps are the point
 scripts/
+  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast
   tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
   watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
