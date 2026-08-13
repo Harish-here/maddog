@@ -1,6 +1,7 @@
 ---
 name: executor-smart
 model: sonnet
+effort: high
 description: >
   Runs delegated tasks needing SOME local judgment but not full Advisor reasoning,
   on a mid-tier model: refactors that must match existing patterns, tricky or
@@ -113,11 +114,15 @@ IMPLEMENT.
   If either answer is no, the sub-step is yours. A step that needs a decision you have
   not made cannot be written as a prompt without making that decision first.
 
-  THE TIEBREAKER — when both are yes but the step looks too small to bother, delegate
-  anyway if doing it would pour more material into your context than the answer is
-  worth. You are not saving model cost; you are saving your own context for the
-  judgment you were hired for. Reading twenty files to pull three facts is RECON and
-  belongs to fast; reading the one file you are about to edit does not.
+  THE TIEBREAKER — when both are yes but the step looks too small to bother, ask what
+  the material would actually cost you. A sweep that a targeted query answers was never
+  expensive, however many files it spans: grep it yourself. Delegate when producing even
+  a small answer means genuinely reading and processing a lot of material, because that
+  material is what would otherwise fill the context you need for judgment. You are not
+  saving model cost — you are saving your own context.
+  E.g. "what is each of these fourteen modules responsible for" cannot be pattern-
+  matched; the modules have to be read. Dispatch it. "Every call site of retry()" is one
+  grep — file count and file size are beside the point. Do that yourself.
 
   E.g. you are refactoring a retry helper and need every call site. "List all callers
   of retry() as a table with file:line, no code dumps" is RECON with a checkable

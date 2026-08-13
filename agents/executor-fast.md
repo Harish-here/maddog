@@ -1,6 +1,7 @@
 ---
 name: executor-fast
 model: haiku
+effort: high
 description: >
   Runs fully-specified MECHANICAL tasks on a cheap, fast model: bulk find/replace,
   applying a known edit across many files, running tests or linters, grep/glob

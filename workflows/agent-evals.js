@@ -38,6 +38,7 @@ can inspect a failure afterward.`,
 
 const AGENTS = args?.agents ?? ['executor-fast', 'executor-smart']
 const ONLY = args?.only ?? null
+const RUN_ALL = args?.all === true
 const JUDGE_MODEL = args?.judgeModel ?? 'sonnet'
 const RUN_EFFORT = args?.runEffort ?? 'medium'
 const WORK_DIR = args?.workDir ?? '/private/tmp/claude-501/-Users-harishamutha-maddog-skills/fc6c2113-038a-487d-96d1-e6b0680e0500/scratchpad/eval-runs'
@@ -55,11 +56,12 @@ const INDEX = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'agentName', 'file'],
+        required: ['id', 'agentName', 'file', 'core'],
         properties: {
           id: { type: 'string' },
           agentName: { type: 'string' },
           file: { type: 'string' },
+          core: { type: 'boolean' },
         },
       },
     },
@@ -101,8 +103,9 @@ phase('Load')
 const index = await agent(
   `Read these two fixture files fully: /Users/harishamutha/maddog-skills/evals/executor-fast.json and
 /Users/harishamutha/maddog-skills/evals/executor-smart.json. For EVERY fixture in both files, return only
-its id, the file's top-level "agent" field (which agent it targets), and the absolute path of the file it
-came from. Do NOT return prompts, setup.files, or expectations — those are read again later, per fixture.`,
+its id, the file's top-level "agent" field (which agent it targets), the absolute path of the file it came
+from, and its own "core" boolean field. Do NOT return prompts, setup.files, or expectations — those are read
+again later, per fixture.`,
   { label: 'load-index', phase: 'Load', model: 'haiku', effort: 'low', schema: INDEX },
 )
 if (!index || !Array.isArray(index.fixtures)) {
@@ -110,10 +113,18 @@ if (!index || !Array.isArray(index.fixtures)) {
   return { aborted: 'load-failed' }
 }
 
-const filtered = index.fixtures.filter((f) => AGENTS.includes(f.agentName) && (ONLY === null || ONLY.includes(f.id)))
-log(`running ${filtered.length} of ${index.fixtures.length} fixtures`)
+// The full suite costs roughly 66k tokens per fixture, so by default we only run
+// the "core" subset — the fixtures that actually discriminate a working agent from
+// a broken one. args.all runs the full sweep when that's what's needed.
+const filtered = index.fixtures.filter((f) => {
+  if (!AGENTS.includes(f.agentName)) return false
+  if (ONLY !== null) return ONLY.includes(f.id) // explicit only overrides core
+  return RUN_ALL || f.core
+})
+const nonCoreSkipped = index.fixtures.filter((f) => AGENTS.includes(f.agentName) && ONLY === null && !RUN_ALL && !f.core).length
+log(`running ${filtered.length} of ${index.fixtures.length} fixtures (${nonCoreSkipped} skipped as non-core — pass args.all to run everything)`)
 if (filtered.length < index.fixtures.length) {
-  log(`filtered out ${index.fixtures.length - filtered.length} fixture(s) via args.agents/args.only`)
+  log(`filtered out ${index.fixtures.length - filtered.length} fixture(s) via args.agents/args.only/core`)
 }
 
 // ---------------------------------------------------------------------------
