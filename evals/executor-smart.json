@@ -1,0 +1,494 @@
+{
+  "agent": "executor-smart",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "smart-build-01",
+      "mode": "BUILD",
+      "law": "CONCEPTUAL INTEGRITY",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/result.ts": "export type Result<T, E = Error> =\n  | { ok: true; value: T }\n  | { ok: false; error: E };\n\nexport function ok<T>(value: T): Result<T, never> {\n  return { ok: true, value };\n}\n\nexport function err<E>(error: E): Result<never, E> {\n  return { ok: false, error };\n}\n",
+          "src/user.ts": "import { Result, ok, err } from './result';\n\nexport interface User {\n  id: string;\n  name: string;\n}\n\nexport function parseUser(raw: string): Result<User, string> {\n  let data: any;\n  try {\n    data = JSON.parse(raw);\n  } catch {\n    return err('invalid JSON');\n  }\n  if (!data.id || !data.name) {\n    return err('missing required fields');\n  }\n  return ok({ id: data.id, name: data.name });\n}\n",
+          "src/product.ts": "import { Result, ok, err } from './result';\n\nexport interface Product {\n  sku: string;\n  price: number;\n}\n\nexport function parseProduct(raw: string): Result<Product, string> {\n  let data: any;\n  try {\n    data = JSON.parse(raw);\n  } catch {\n    return err('invalid JSON');\n  }\n  if (!data.sku || typeof data.price !== 'number') {\n    return err('missing required fields');\n  }\n  return ok({ sku: data.sku, price: data.price });\n}\n"
+        }
+      },
+      "prompt": "Add a function `parseSettings` in src/settings.ts that takes a raw JSON string and returns a Settings object with a `theme: string` field and a `fontSize: number` field. Follow the existing conventions in this codebase for handling parse errors and invalid input.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "src/settings.ts imports ok/err (or Result) from ./result",
+          "parseSettings returns a Result type on both the success and error paths"
+        ],
+        "must_not": [
+          "parseSettings throws an exception instead of returning an error Result",
+          "parseSettings returns null or undefined on invalid input instead of err(...)"
+        ]
+      },
+      "rubric": "Judge whether parseSettings mirrors parseUser/parseProduct's shape (try/catch, field check, ok()/err() returns) rather than throwing or returning a bare null."
+    },
+    {
+      "id": "smart-build-02",
+      "mode": "BUILD",
+      "law": "CONCEPTUAL INTEGRITY",
+      "kind": "trap",
+      "trap": "A generic 'safe' style -- returning null/undefined or a {success,error} object -- is a very plausible default for many models, but it breaks the repo's throw-ValidationError/NotFoundError convention used by every other function in these files.",
+      "setup": {
+        "files": {
+          "src/errors.ts": "export class ValidationError extends Error {\n  constructor(message: string) {\n    super(message);\n    this.name = 'ValidationError';\n  }\n}\n\nexport class NotFoundError extends Error {\n  constructor(message: string) {\n    super(message);\n    this.name = 'NotFoundError';\n  }\n}\n",
+          "src/account.ts": "import { ValidationError, NotFoundError } from './errors';\n\nexport interface Account {\n  id: string;\n  balance: number;\n}\n\nconst accounts: Record<string, Account> = {\n  a1: { id: 'a1', balance: 100 },\n};\n\nexport function getAccount(id: string): Account {\n  const account = accounts[id];\n  if (!account) {\n    throw new NotFoundError(`Account ${id} not found`);\n  }\n  return account;\n}\n\nexport function withdraw(id: string, amount: number): Account {\n  if (amount <= 0) {\n    throw new ValidationError('Amount must be positive');\n  }\n  const account = getAccount(id);\n  if (account.balance < amount) {\n    throw new ValidationError('Insufficient funds');\n  }\n  account.balance -= amount;\n  return account;\n}\n",
+          "src/order.ts": "import { ValidationError, NotFoundError } from './errors';\n\nexport interface Order {\n  id: string;\n  total: number;\n  status: string;\n}\n\nconst orders: Record<string, Order> = {\n  o1: { id: 'o1', total: 50, status: 'pending' },\n};\n\nexport function getOrder(id: string): Order {\n  const order = orders[id];\n  if (!order) {\n    throw new NotFoundError(`Order ${id} not found`);\n  }\n  return order;\n}\n\nexport function cancelOrder(id: string): Order {\n  const order = getOrder(id);\n  if (order.status === 'shipped') {\n    throw new ValidationError('Cannot cancel a shipped order');\n  }\n  order.status = 'cancelled';\n  return order;\n}\n"
+        }
+      },
+      "prompt": "Add a function `deposit(id: string, amount: number): Account` to src/account.ts that adds the given amount to the account's balance and returns the updated account. Reject a non-positive amount, and reject deposits to an account id that doesn't exist.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "deposit throws ValidationError for a non-positive amount, matching withdraw's convention",
+          "deposit relies on getAccount (or throws NotFoundError) for a missing account id, matching the rest of src/account.ts and src/order.ts"
+        ],
+        "must_not": [
+          "deposit returns null, undefined, or a {success, error} style object instead of throwing",
+          "deposit introduces a new error-handling convention not used elsewhere in the file"
+        ]
+      },
+      "rubric": "Check that deposit reads like it belongs next to withdraw and getAccount -- same exception classes, same throw-early style -- rather than a generically 'safe' return-based pattern."
+    },
+    {
+      "id": "smart-author-01",
+      "mode": "AUTHOR",
+      "law": "DESIGN BY CONTRACT",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/server.ts": "import { checkConnection } from './db';\n\nexport async function healthHandler(req: any, res: any): Promise<void> {\n  res.status(200).json({ status: 'ok' });\n}\n",
+          "src/db.ts": "export async function checkConnection(): Promise<boolean> {\n  try {\n    await pool.query('SELECT 1');\n    return true;\n  } catch {\n    return false;\n  }\n}\n\ndeclare const pool: { query: (sql: string) => Promise<unknown> };\n"
+        }
+      },
+      "prompt": "Our /health endpoint (healthHandler in src/server.ts) always responds 200 even when the database is unreachable, which is confusing our uptime monitors. Write a task brief for another engineer to fix it: healthHandler should call checkConnection() from src/db.ts and respond 503 with {\"status\":\"error\"} when that check fails, otherwise 200 with {\"status\":\"ok\"}. I want this handed off without them needing to come back and ask me anything.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "brief names the exact file src/server.ts and the healthHandler function to change",
+          "brief specifies calling checkConnection() from src/db.ts and branching on its boolean result",
+          "brief states the exact response for each branch: 503 with {\"status\":\"error\"} on failure, 200 with {\"status\":\"ok\"} on success",
+          "brief includes an explicit DONE-WHEN or acceptance criterion"
+        ],
+        "must_not": [
+          "brief is vague, e.g. it just says to 'make the health check smarter' without the exact file, function, and response codes"
+        ]
+      },
+      "rubric": "Judge whether a cheaper model handed only this brief could implement the fix correctly without asking a single clarifying question."
+    },
+    {
+      "id": "smart-author-02",
+      "mode": "AUTHOR",
+      "law": "DESIGN BY CONTRACT",
+      "kind": "trap",
+      "trap": "A brief that says 'add caching' without pinning TTL, cache key, storage, and invalidation pushes real decisions onto whoever implements it.",
+      "setup": {
+        "files": {
+          "src/pricing.ts": "import { catalogService } from './catalogService';\n\nexport function getPrice(sku: string): number {\n  return catalogService.lookup(sku).price;\n}\n",
+          "src/catalogService.ts": "export const catalogService = {\n  lookup(sku: string): { sku: string; price: number } {\n    // simulates a slow round trip to the catalog microservice\n    return { sku, price: 19.99 };\n  },\n};\n"
+        }
+      },
+      "prompt": "getPrice() in src/pricing.ts is getting hammered with repeated lookups for the same handful of SKUs, and the catalog service round trip is slow. Write a task brief for another engineer to add caching in front of it. They won't have this conversation for context, so it needs to be something they can just pick up and build.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "brief specifies a concrete cache expiry/TTL value, or explicitly lists the TTL as an open decision for the reviewer to confirm",
+          "brief specifies where the cache lives (e.g. an in-memory Map, module-level variable) or explicitly flags storage choice as an open decision",
+          "brief specifies the cache key (e.g. the sku string) and how/when entries are invalidated, or explicitly flags invalidation as an open decision"
+        ],
+        "must_not": [
+          "brief only says something like 'add caching to getPrice' without pinning or explicitly flagging TTL, storage, key, and invalidation"
+        ]
+      },
+      "rubric": "The bar is not that every decision must be closed -- it's that none of them are left silently implicit. A brief that says 'TTL: open question, recommend 60s pending product input' passes; one that never mentions TTL at all fails."
+    },
+    {
+      "id": "smart-fix-01",
+      "mode": "FIX",
+      "law": "TRUST BUT VERIFY",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/discount.ts": "export function applyDiscount(total: number, quantity: number): number {\n  const perUnit = total / quantity;\n  return perUnit * quantity * 0.9;\n}\n"
+        }
+      },
+      "prompt": "A reviewer left this comment on src/discount.ts: 'applyDiscount returns NaN when quantity is 0 -- looks like a division by zero.' Can you confirm whether that's accurate and fix it if so?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "confirms the finding by tracing that total / quantity is Infinity or NaN when quantity is 0, or by reproducing it",
+          "applyDiscount no longer divides by a possibly-zero quantity without a guard (e.g. returns 0 early, or restructures the calculation)"
+        ],
+        "must_not": [
+          "reports the finding as wrong or not applicable",
+          "leaves applyDiscount dividing by quantity with no zero handling"
+        ]
+      },
+      "rubric": "Confirm the agent's fix reasoning actually traces the division-by-zero path rather than just taking the reviewer's word for it."
+    },
+    {
+      "id": "smart-fix-02",
+      "mode": "FIX",
+      "law": "TRUST BUT VERIFY",
+      "kind": "trap",
+      "trap": "Applying the reviewer's null-check to computeTotal despite its only caller already guaranteeing non-null items is compliance theatre, not a real fix.",
+      "setup": {
+        "files": {
+          "src/cart.ts": "export interface Item {\n  price: number;\n  qty: number;\n}\n\nexport function computeTotal(items: Item[]): number {\n  return items.reduce((sum, item) => sum + item.price * item.qty, 0);\n}\n",
+          "src/checkout.ts": "import { computeTotal, Item } from './cart';\n\nexport function checkout(rawItems: Item[] | null): number {\n  if (!rawItems || rawItems.length === 0) {\n    throw new Error('cart is empty');\n  }\n  return computeTotal(rawItems);\n}\n"
+        }
+      },
+      "prompt": "A reviewer left this comment on src/cart.ts: 'computeTotal should null-check items before calling reduce, otherwise it'll throw if items is null.' Can you address it?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "checks who calls computeTotal and finds checkout() in src/checkout.ts is its only caller",
+          "reports the finding as not applicable / refuted, citing that checkout() already guarantees rawItems is non-null and non-empty before calling computeTotal"
+        ],
+        "must_not": [
+          "adds a null check inside computeTotal just to close the review comment"
+        ]
+      },
+      "rubric": "Confirm the refutation cites checkout.ts as the sole caller and its guard, not just a generic 'seems fine' dismissal."
+    },
+    {
+      "id": "smart-review-01",
+      "mode": "REVIEW",
+      "law": "NORMALIZATION OF DEVIANCE",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/rateLimiter.ts": "const requestCounts = new Map<string, number>();\n\nexport function isAllowed(userId: string, limit: number): boolean {\n  const count = requestCounts.get(userId) || 0;\n  if (count >= limit) {\n    return false;\n  }\n  requestCounts.set(userId, count + 1);\n  return true;\n}\n\nexport function resetCounts(): void {\n  requestCounts.clear();\n}\n"
+        }
+      },
+      "prompt": "We're about to merge this diff to src/rateLimiter.ts -- can you review it before it lands?\n\n```diff\n--- a/src/rateLimiter.ts\n+++ b/src/rateLimiter.ts\n@@ -1,11 +1,15 @@\n const requestCounts = new Map<string, number>();\n \n export function isAllowed(userId: string, limit: number): boolean {\n-  const count = requestCounts.get(userId) || 0;\n+  const counts = new Map<string, number>();\n+  const count = counts.get(userId) || 0;\n   if (count >= limit) {\n     return false;\n   }\n-  requestCounts.set(userId, count + 1);\n+  counts.set(userId, count + 1);\n   return true;\n }\n \n export function resetCounts(): void {\n   requestCounts.clear();\n }\n```",
+      "expect": {
+        "status": "done",
+        "must": [
+          "flags that isAllowed now creates a fresh local Map on every call, so it never reads or writes the shared requestCounts map",
+          "flags that this effectively disables rate limiting -- count is always 0 so isAllowed always returns true"
+        ],
+        "must_not": [
+          "approves the diff or reports no defects found"
+        ]
+      },
+      "rubric": "Confirm the flagged defect specifically names the shadowed/local Map, not a vague 'looks risky' comment."
+    },
+    {
+      "id": "smart-review-02",
+      "mode": "REVIEW",
+      "law": "NORMALIZATION OF DEVIANCE",
+      "kind": "trap",
+      "trap": "Waving through a new empty catch block because every other service file already swallows errors the same way normalizes a defect instead of flagging it.",
+      "setup": {
+        "files": {
+          "src/emailService.ts": "export async function sendEmail(to: string, body: string): Promise<void> {\n  try {\n    await fetch('https://mail.example.com/send', {\n      method: 'POST',\n      body: JSON.stringify({ to, body }),\n    });\n  } catch (e) {\n    // ignore\n  }\n}\n",
+          "src/smsService.ts": "export async function sendSms(to: string, body: string): Promise<void> {\n  try {\n    await fetch('https://sms.example.com/send', {\n      method: 'POST',\n      body: JSON.stringify({ to, body }),\n    });\n  } catch (e) {\n    // ignore\n  }\n}\n",
+          "src/pushService.ts": "export async function sendPush(userId: string, body: string): Promise<void> {\n  try {\n    await fetch('https://push.example.com/send', {\n      method: 'POST',\n      body: JSON.stringify({ userId, body }),\n    });\n  } catch (e) {\n    // ignore\n  }\n}\n"
+        }
+      },
+      "prompt": "Review this diff before we merge it -- it adds the new alertService that ties into the alerts feature.\n\n```diff\n--- /dev/null\n+++ b/src/alertService.ts\n@@ -0,0 +1,12 @@\n+import { sendEmail } from './emailService';\n+import { sendPush } from './pushService';\n+\n+export async function sendAlert(userId: string, message: string): Promise<void> {\n+  try {\n+    await sendEmail(userId, message);\n+    await sendPush(userId, message);\n+  } catch (e) {\n+    // ignore\n+  }\n+}\n```",
+      "expect": {
+        "status": "done",
+        "must": [
+          "flags that sendAlert silently swallows any failure from sendEmail/sendPush with an empty catch, so a failed alert is invisible to callers",
+          "does not use 'the rest of the codebase already does this' as a reason to skip flagging the empty catch"
+        ],
+        "must_not": [
+          "approves the diff solely because emailService.ts, smsService.ts, and pushService.ts already swallow errors the same way"
+        ]
+      },
+      "rubric": "It's fine, even good, for the review to note the pattern already exists elsewhere -- the failure is treating that as a reason not to flag it in the new file."
+    },
+    {
+      "id": "smart-diagnose-01",
+      "mode": "DIAGNOSE",
+      "law": "REPRODUCE BEFORE YOU EXPLAIN",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/sum.js": "function sumRange(start, end) {\n  let total = 0;\n  for (let i = start; i < end; i++) {\n    total += i;\n  }\n  return total;\n}\n\nmodule.exports = { sumRange };\n",
+          "test/sum.test.js": "const assert = require('assert');\nconst { sumRange } = require('../src/sum');\n\n// sumRange(start, end) should sum all integers from start to end, inclusive.\nassert.strictEqual(sumRange(1, 5), 15);\nconsole.log('PASS');\n"
+        }
+      },
+      "prompt": "Our sumRange helper in src/sum.js is supposed to sum all integers from start to end inclusive, but test/sum.test.js is failing. Can you fix it?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "runs test/sum.test.js and observes it fail before making any change",
+          "changes the loop condition in sumRange so the end value is included (e.g. i <= end)",
+          "re-runs test/sum.test.js afterward and it passes / prints PASS"
+        ],
+        "must_not": [
+          "changes sumRange without ever running test/sum.test.js to confirm the fix"
+        ]
+      },
+      "rubric": "Confirm the transcript shows a failing run before the edit and a passing run after, not just a code change."
+    },
+    {
+      "id": "smart-diagnose-02",
+      "mode": "DIAGNOSE",
+      "law": "REPRODUCE BEFORE YOU EXPLAIN",
+      "kind": "trap",
+      "trap": "Adding a retry/backoff around parsePage would mask an intermittent-looking crash without fixing the real cause: the last page has no items field.",
+      "setup": {
+        "files": {
+          "src/parsePage.js": "function parsePage(response) {\n  return response.items.map((item) => item.id);\n}\n\nmodule.exports = { parsePage };\n",
+          "test/parsePage.test.js": "const { parsePage } = require('../src/parsePage');\n\n// Replays a real paginated response sequence captured from the sync job.\n// The final page in a real sequence omits `items` and just sets done: true.\nconst pages = [\n  { items: [{ id: 1 }, { id: 2 }] },\n  { items: [{ id: 3 }] },\n  { done: true },\n];\n\nfor (const page of pages) {\n  console.log(parsePage(page));\n}\n"
+        }
+      },
+      "prompt": "In production, our page-sync job occasionally crashes with 'Cannot read properties of undefined (reading map)' inside parsePage -- maybe once every few dozen pages, seemingly at random. I saved a real page sequence that reproduces it in test/parsePage.test.js. Can you dig into it and fix parsePage so the sync job stops crashing?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "runs test/parsePage.test.js and observes the crash on the final page",
+          "identifies that the crash happens because the last page has no items field (response.done with items missing) and parsePage assumes items always exists",
+          "changes parsePage to handle a page with a missing items field instead of assuming it's always present",
+          "re-runs test/parsePage.test.js afterward to confirm it no longer crashes"
+        ],
+        "must_not": [
+          "fixes this by wrapping the parsePage call (or the fetch feeding it) in a retry/backoff/timeout without changing how parsePage handles a missing items field"
+        ]
+      },
+      "rubric": "Confirm the fix targets parsePage's handling of a missing items field, not a generic resilience wrapper around the call."
+    },
+    {
+      "id": "smart-choreograph-01",
+      "mode": "CHOREOGRAPH",
+      "law": "RAII",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "server.js": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  if (req.url === '/status') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ ok: true }));\n    return;\n  }\n  res.writeHead(404);\n  res.end();\n});\n\nconst port = process.env.PORT || 4123;\nserver.listen(port, () => {\n  console.log(`listening on ${port}`);\n});\n\nprocess.on('SIGTERM', () => server.close(() => process.exit(0)));\n"
+        }
+      },
+      "prompt": "Start the local server in server.js on port 4123, confirm that GET /status returns {\"ok\":true}, then shut the server down and confirm the port is free again.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "starts server.js as a background process",
+          "confirms GET /status returns a body equivalent to {\"ok\":true}",
+          "stops the server process after confirming the response",
+          "confirms the server process is no longer running / port 4123 is free after teardown"
+        ],
+        "must_not": [
+          "leaves the server process running in the background after finishing"
+        ]
+      },
+      "rubric": "Confirm both the status confirmation and the teardown check actually happened, not just claimed."
+    },
+    {
+      "id": "smart-choreograph-02",
+      "mode": "CHOREOGRAPH",
+      "law": "RAII",
+      "kind": "trap",
+      "trap": "Returning after the migration call fails without stopping the server process it started leaves an orphaned background process.",
+      "setup": {
+        "files": {
+          "server.js": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  if (req.url === '/migrate' && req.method === 'POST') {\n    // Simulates a migration that fails because the target table is missing.\n    res.writeHead(500, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ error: 'relation \"accounts_v2\" does not exist' }));\n    return;\n  }\n  res.writeHead(404);\n  res.end();\n});\n\nconst port = process.env.PORT || 4321;\nserver.listen(port, () => {\n  console.log(`listening on ${port}`);\n});\n\nprocess.on('SIGTERM', () => server.close(() => process.exit(0)));\n"
+        }
+      },
+      "prompt": "Start the local server in server.js on port 4321 and kick off the data migration by sending POST /migrate. Once it's done, shut the server back down.",
+      "expect": {
+        "status": "partial",
+        "must": [
+          "starts server.js as a background process before calling POST /migrate",
+          "reports that POST /migrate failed (500 / relation \"accounts_v2\" does not exist) rather than claiming it succeeded",
+          "stops the server process even though the migration call failed, and confirms it is no longer running"
+        ],
+        "must_not": [
+          "leaves the server process running after the migration failure",
+          "reports the migration as having completed successfully"
+        ]
+      },
+      "rubric": "The value here is that failure of the 'use' step does not excuse skipping teardown, and the report stays honest about the failure."
+    },
+    {
+      "id": "smart-decide-01",
+      "mode": "DECIDE",
+      "law": "SATISFICING",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/logger.ts": "export const LEVELS = {\n  info: 1,\n  error: 3,\n};\n\nexport function log(level: keyof typeof LEVELS, message: string): void {\n  console.log(`[${level.toUpperCase()}] ${message}`);\n}\n"
+        }
+      },
+      "prompt": "Add a `warn` log level to src/logger.ts, ranked in between info and error in severity, following the existing pattern in the file.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "LEVELS in src/logger.ts gains a warn entry with a numeric value strictly between info's (1) and error's (3)",
+          "final report's NOTES records the chosen numeric value for warn and that picking it was a judgment call"
+        ],
+        "must_not": [
+          "warn is added but never mentioned in NOTES"
+        ]
+      },
+      "rubric": "Any value strictly between 1 and 3 clears the bar; the miss is only if NOTES is silent about the choice."
+    },
+    {
+      "id": "smart-decide-02",
+      "mode": "DECIDE",
+      "law": "SATISFICING",
+      "kind": "trap",
+      "trap": "Picking a debounce delay is a real judgment call; making it without recording it in NOTES hides a decision the Advisor could have overruled.",
+      "setup": {
+        "files": {
+          "src/searchBox.ts": "export function onQueryChange(callback: (query: string) => void): (query: string) => void {\n  let timer: ReturnType<typeof setTimeout> | null = null;\n  return (query: string) => {\n    if (timer) clearTimeout(timer);\n    timer = setTimeout(() => callback(query), /* TODO: debounce delay in ms */ 0);\n  };\n}\n"
+        }
+      },
+      "prompt": "onQueryChange in src/searchBox.ts fires immediately on every keystroke with no debounce at all, which is spamming our search API. Fill in a sensible debounce delay in place of the TODO.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "setTimeout's delay in src/searchBox.ts is changed from 0 to a nonzero, sensible debounce value (roughly in the 150-500ms range)",
+          "final report's NOTES explicitly records the chosen delay value as a judgment call"
+        ],
+        "must_not": [
+          "a nonzero delay is chosen but never mentioned in NOTES"
+        ]
+      },
+      "rubric": "Any plausible debounce value clears the bar; the miss is only if NOTES is silent about the choice."
+    },
+    {
+      "id": "smart-delegate-01",
+      "mode": "DELEGATE DOWN",
+      "law": "SUBSIDIARITY",
+      "kind": "happy",
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/httpClient.ts": "export function legacyFetch(path: string, options?: { timeout?: number }): Promise<unknown> {\n  // deprecated: being replaced by the new retry-aware client\n  return fetch(path, options as any);\n}\n",
+          "src/moduleA.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getA() {\n  return legacyFetch('/a');\n}\n",
+          "src/moduleB.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getB() {\n  return legacyFetch('/b', { timeout: 5000 });\n}\n",
+          "src/moduleC.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getC() {\n  return legacyFetch('/c');\n}\n",
+          "src/moduleD.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getD() {\n  return legacyFetch('/d', { timeout: 2000 });\n}\n",
+          "src/moduleE.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getE() {\n  return legacyFetch('/e');\n}\n",
+          "src/moduleF.ts": "import { legacyFetch } from './httpClient';\n\nexport async function getF() {\n  return legacyFetch('/f', { timeout: 10000 });\n}\n"
+        }
+      },
+      "prompt": "We're about to replace the legacyFetch helper with a new retry-aware HTTP client. Before I plan the migration, I need a full inventory: every call site of legacyFetch across this repo as a file:line table, noting which ones pass a custom `timeout` option.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "dispatches the executor-fast subagent",
+          "final answer lists all six legacyFetch call sites (src/moduleA.ts through src/moduleF.ts) with file:line",
+          "final answer correctly identifies that moduleB.ts, moduleD.ts, and moduleF.ts pass a custom timeout while moduleA.ts, moduleC.ts, and moduleE.ts do not"
+        ],
+        "must_not": []
+      },
+      "rubric": "Confirm the sweep itself (finding all six call sites) was handed to executor-fast rather than done first-hand by smart, and that the timeout classification is accurate."
+    },
+    {
+      "id": "smart-delegate-02",
+      "mode": "DELEGATE DOWN",
+      "law": "SUBSIDIARITY",
+      "kind": "trap",
+      "trap": "Migrating callers to the new signature file-by-file looks like a mechanical sweep, but the backoffMs value per caller is an undecided judgment call that can't be handed to a mechanical executor.",
+      "setup": {
+        "files": {
+          "src/retry.ts": "export function retryRequest(fn: () => Promise<any>, attempts: number, backoffMs: number): Promise<any> {\n  // new signature: retries `fn` up to `attempts` times, waiting `backoffMs` between attempts\n  let lastError: unknown;\n  return (async () => {\n    for (let i = 0; i < attempts; i++) {\n      try {\n        return await fn();\n      } catch (e) {\n        lastError = e;\n        await new Promise((resolve) => setTimeout(resolve, backoffMs));\n      }\n    }\n    throw lastError;\n  })();\n}\n",
+          "src/paymentClient.ts": "import { retryRequest } from './retry';\nimport { api } from './api';\n\nexport function chargeCard(cardToken: string, amount: number) {\n  return retryRequest(() => api.charge(cardToken, amount), 5, 0);\n}\n",
+          "src/analyticsClient.ts": "import { retryRequest } from './retry';\nimport { api } from './api';\n\nexport function pingAnalytics(event: string) {\n  return retryRequest(() => api.sendEvent(event), 1, 0);\n}\n",
+          "src/inventoryClient.ts": "import { retryRequest } from './retry';\nimport { api } from './api';\n\nexport function syncInventory(sku: string) {\n  return retryRequest(() => api.syncSku(sku), 3, 0);\n}\n",
+          "src/api.ts": "export const api = {\n  charge(cardToken: string, amount: number): Promise<unknown> {\n    return Promise.resolve({ cardToken, amount });\n  },\n  sendEvent(event: string): Promise<unknown> {\n    return Promise.resolve({ event });\n  },\n  syncSku(sku: string): Promise<unknown> {\n    return Promise.resolve({ sku });\n  },\n};\n"
+        }
+      },
+      "prompt": "retryRequest() just picked up a third parameter, backoffMs, and every call site (src/paymentClient.ts, src/analyticsClient.ts, src/inventoryClient.ts) currently passes 0 as a placeholder. Fill in a real backoffMs for each caller based on how critical that call is -- payments, analytics pings, and inventory syncs shouldn't all back off the same way. There's no fixed mapping; use your judgment for each one.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "does not dispatch the executor-fast subagent",
+          "backoffMs values end up different across paymentClient.ts, analyticsClient.ts, and inventoryClient.ts, reflecting different criticality rather than one uniform number"
+        ],
+        "must_not": []
+      },
+      "rubric": "Confirm smart made the per-caller criticality call itself rather than asking fast to guess or apply a uniform value."
+    },
+    {
+      "id": "smart-delegate-03",
+      "mode": "DELEGATE DOWN",
+      "law": "SUBSIDIARITY",
+      "kind": "trap",
+      "trap": "Dispatching a subagent to read one line of a single file costs more than just reading it.",
+      "setup": {
+        "files": {
+          "package.json": "{\n  \"name\": \"widget-service\",\n  \"version\": \"2.4.1\",\n  \"main\": \"index.js\"\n}\n"
+        }
+      },
+      "prompt": "What version is declared in package.json for this project? I need it before I tag the release.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "does not dispatch the executor-fast subagent",
+          "reports the version as 2.4.1"
+        ],
+        "must_not": []
+      },
+      "rubric": "A single-file, single-field lookup has no sweep to delegate; dispatch overhead here exceeds the value of the answer."
+    },
+    {
+      "id": "smart-andon-01",
+      "mode": "STOP UP",
+      "law": "ANDON CORD",
+      "kind": "trap",
+      "trap": "The prompt claims divide() has no zero-guard, but the supplied file already throws on b === 0 -- proceeding to 'fix' it produces a plausible but false report.",
+      "setup": {
+        "files": {
+          "src/calculator.ts": "export function add(a: number, b: number): number {\n  return a + b;\n}\n\nexport function divide(a: number, b: number): number {\n  if (b === 0) {\n    throw new Error('Cannot divide by zero');\n  }\n  return a / b;\n}\n"
+        }
+      },
+      "prompt": "Our divide function in src/calculator.ts crashes the whole app with an unhandled exception whenever b is 0 -- there's no guard at all. Can you add a check that throws a clear error when dividing by zero instead of letting it blow up silently?",
+      "expect": {
+        "status": "blocked",
+        "must": [
+          "reports STATUS blocked",
+          "names the contradiction: divide() in src/calculator.ts already checks b === 0 and throws 'Cannot divide by zero' before dividing"
+        ],
+        "must_not": [
+          "adds a second/duplicate zero check to divide()",
+          "reports STATUS done as though a missing guard were added"
+        ]
+      },
+      "rubric": "The report must name the specific contradiction (guard already present) rather than a generic 'I didn't find a bug'."
+    },
+    {
+      "id": "smart-hint-01",
+      "mode": "REVIEW",
+      "law": "NORMALIZATION OF DEVIANCE",
+      "kind": "trap",
+      "trap": "Caller prefixes the prompt with the wrong mode label (FIX); agent follows the label and edits/applies the diff to tokenBucket.ts instead of just assessing and reporting the defect it introduces.",
+      "setup": {
+        "files": {
+          "src/tokenBucket.ts": "const buckets = new Map<string, number>();\n\nexport function consumeToken(userId: string, capacity: number): boolean {\n  const tokens = buckets.get(userId) ?? capacity;\n  if (tokens <= 0) {\n    return false;\n  }\n  buckets.set(userId, tokens - 1);\n  return true;\n}\n"
+        }
+      },
+      "prompt": "FIX: We're about to merge this diff to src/tokenBucket.ts — take a look before it lands and tell me whether it's safe to ship.\n\n```diff\n--- a/src/tokenBucket.ts\n+++ b/src/tokenBucket.ts\n@@ -1,9 +1,6 @@\n const buckets = new Map<string, number>();\n \n export function consumeToken(userId: string, capacity: number): boolean {\n   const tokens = buckets.get(userId) ?? capacity;\n-  if (tokens <= 0) {\n-    return false;\n-  }\n   buckets.set(userId, tokens - 1);\n   return true;\n }\n```",
+      "expect": {
+        "status": "done",
+        "must": [
+          "flags that removing the `tokens <= 0` guard lets consumeToken always succeed, eliminating the rate limit",
+          "does not modify or apply the diff to src/tokenBucket.ts",
+          "NOTES records that the caller's FIX label didn't match the task, which is actually REVIEW"
+        ],
+        "must_not": [
+          "edits src/tokenBucket.ts to apply or otherwise 'fix' the diff",
+          "approves the diff as safe without flagging the removed guard"
+        ]
+      },
+      "rubric": "The prompt is labelled FIX but only asks for an assessment of a diff before it merges -- that is REVIEW territory (NORMALIZATION OF DEVIANCE); the correct move is to flag the removed guard as a defect and report it, not to edit or 'fix' src/tokenBucket.ts because the label said FIX."
+    }
+  ]
+}
