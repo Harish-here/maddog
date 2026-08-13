@@ -27,7 +27,12 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
      source, the brief author saves that source as real files under <briefsDir>/task-N-files/<repo-relative-path>
      and the brief's steps say copy-then-verify (TDD/gate/deviation steps unchanged). Modification
      edits keep fenced-block style (drift tolerance). Copy-then-verify briefs are prime haiku
-     candidates via tasks[].model.`,
+     candidates via tasks[].model.
+
+PER-TASK EFFORT: tasks[].effort mirrors tasks[].model — pinned per task, never inherited,
+defaulting to 'high' (or the run's defaultEffort). An omitted effort silently inherits the
+launching session's, so the same plan run from a low-effort session executes its
+implementers degraded with nothing in the run recording it.`,
   phases: [
     { title: 'Brief lint', detail: 'cheap preflight: reject unfrozen briefs before any work', model: 'haiku' },
     { title: 'Implement', detail: 'one fresh implementer per brief; parallel where deps allow' },
@@ -41,11 +46,16 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 // args: {
 //   worktree:  absolute repo path (branch already checked out)
 //   briefsDir: absolute path containing task-<n>-brief.md files + progress.md
-//   tasks:     [{ n: 1, flagged: false, deps: [], model: 'haiku'|'sonnet' (optional) }, ...]
+//   tasks:     [{ n: 1, flagged: false, deps: [], model: 'haiku'|'sonnet' (optional),
+//                effort: 'low'|'medium'|'high'|'xhigh'|'max' (optional) }, ...]
 //              model = implementer tier for THIS task, decided by the plan/lead at
 //              brief-authoring time. Default sonnet. Allowed set is closed (never
 //              inherited); haiku is for briefs with ZERO deviation surface — fully
 //              embedded source, no interface judgment. Flagged tasks refuse haiku.
+//              effort = reasoning effort for THIS task's implementer, decided by the
+//              plan/lead at brief-authoring time. Default defaultEffort (below), itself
+//              defaulting to 'high'. Pinned per task for the same reason model is: an
+//              omitted effort silently inherits the launching session's, not the brief's.
 //              deps = task numbers that must be DONE first. Omitted deps = depends on
 //              every earlier task (the v1 sequential behavior, always safe).
 //              Note this inverts advisor-mode's fast-tier default: a loop implementer
@@ -60,6 +70,8 @@ LAUNCH CONTRACT (advisor duties the script cannot do itself):
 //              Merge is NEVER part of this workflow.
 //   implementerAgent: optional agentType for implementers/fix agents (default 'executor-smart').
 //              Set to your repo's OWN executor agent if it defines one (it self-enforces repo rules).
+//   defaultEffort: optional 'low'|'medium'|'high'|'xhigh'|'max' — fallback reasoning effort
+//              for tasks that omit tasks[].effort (default 'high').
 //   protectedPaths: optional string[] — paths agents must never edit (default: CLAUDE.md + .claude**)
 //   runName:   optional short label for checkpoint pings (default 'sdd-loop'), e.g. 'phase4'
 //   notifyCmd: optional shell command for checkpoint pings (default:
@@ -99,7 +111,20 @@ if (!A || !Array.isArray(A.tasks)) throw new Error('bad args: tasks missing afte
 for (const key of ['worktree', 'briefsDir', 'gate', 'baseRef']) {
   if (typeof A[key] !== 'string' || A[key].length === 0) throw new Error(`bad args: ${key} missing or not a non-empty string`)
 }
-for (const t of A.tasks) taskModel(t)
+
+// Per-task reasoning effort: explicit, bounded, never inherited — mirrors taskModel
+// above. An omitted effort falls back to defaultEffort (run-level), not the launching
+// session's, so a plan run from a low-effort session doesn't silently execute its
+// implementers degraded.
+const DEFAULT_EFFORT = A.defaultEffort ?? 'high'
+const TASK_EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max'])
+function taskEffort(t) {
+  if (t.effort === undefined) return DEFAULT_EFFORT
+  if (!TASK_EFFORTS.has(t.effort)) throw new Error(`task ${t.n}: effort '${t.effort}' not in [low, medium, high, xhigh, max]`)
+  return t.effort
+}
+
+for (const t of A.tasks) { taskModel(t); taskEffort(t) }
 if (A.parallelize && A.briefsDir.startsWith(A.worktree)) {
   throw new Error('briefsDir must not live inside worktree when parallelize is true (path substitution + artifact reads would break in isolated worktrees)')
 }
@@ -249,10 +274,11 @@ const spentAtStart = budget.spent()
 
 async function runSequential(t) {
   const tier = taskModel(t)
+  const effort = taskEffort(t)
   let r = await agent(implementerPrompt(t, A.worktree), {
     label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
     // haiku implementers get executor-fast's stop-don't-guess persona.
-    agentType: tier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: tier,
+    agentType: tier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: tier, effort,
   })
   // Escalation trigger: only a genuine 'blocked' verdict escalates. Infrastructure
   // death (null result — crash, timeout, harness failure) skips escalation; abort→resume
@@ -267,7 +293,7 @@ async function runSequential(t) {
     r = await agent(
       `${implementerPrompt(t, A.worktree, 'ESCALATED ')}
 ESCALATION CONTEXT: a cheaper prior attempt at this exact brief returned blocked/failed (reason, possibly truncated: ${reason}). Before Step 1: run git status in the worktree; if it is dirty with that attempt's uncommitted partials, reset to the last commit (git reset --hard + a git clean -fd scoped to the brief's own paths) and start from the last good commit.`,
-      { label: `task-${t.n}-escalated`, phase: 'Implement', schema: TASK_RESULT, agentType: IMPL_AGENT, model: 'sonnet' },
+      { label: `task-${t.n}-escalated`, phase: 'Implement', schema: TASK_RESULT, agentType: IMPL_AGENT, model: 'sonnet', effort },
     )
     if (r) r = { ...r, notes: 'ESCALATED haiku→sonnet. ' + r.notes }
   }
@@ -301,9 +327,10 @@ if (!A.parallelize) {
       log(`running tasks ${ready.map((t) => t.n).join(', ')} in parallel (isolated worktrees)`)
       const batch = await parallel(ready.map((t) => () => {
         const ptier = taskModel(t)
+        const peffort = taskEffort(t)
         return agent(implementerPrompt(t, '<your isolated worktree — you are checked out on a private copy>'), {
           label: `task-${t.n}`, phase: 'Implement', schema: TASK_RESULT,
-          agentType: ptier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: ptier, isolation: 'worktree',
+          agentType: ptier === 'haiku' ? 'executor-fast' : IMPL_AGENT, model: ptier, effort: peffort, isolation: 'worktree',
         }).then((r) => ({ t, r }))
       }))
       for (const b of batch.filter(Boolean).sort((x, y) => x.t.n - y.t.n)) {

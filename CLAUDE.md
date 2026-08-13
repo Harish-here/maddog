@@ -71,8 +71,9 @@ extraction, and extraction is fast-tier.
 | `executor-smart` | sonnet | one task carrying local judgment inside a fixed boundary |
 | `executor-lead` | opus | a package needing multiple tasks AND mid-flight judgment |
 
-`executor-fast` classifies every task into one of eight modes — RECON, EXTRACT,
-VERIFY, EDIT, GATE, OPERATE, DIAGNOSE, IMPLEMENT — each carrying one named law.
+`executor-fast` classifies every task into one of ten modes — RECON, EXTRACT, VERIFY,
+EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT — each carrying one named
+law.
 The mode set was derived from real dispatch history; add a mode only when a genuine
 usage cluster demands it, not to cover a hypothetical.
 
