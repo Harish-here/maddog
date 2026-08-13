@@ -8,7 +8,7 @@ A four-tier advisor–executor hierarchy for [Claude Code](https://claude.com/cl
 |---|---|---|
 | **Advisor** | your session model (skill: `advisor-mode`) | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work. |
 | **executor-lead** | Opus | Package lead. Takes ONE complex work package (goal + boundary + DONE-WHEN), makes the within-package design calls, and dispatches executors for every edit and every recon step. Never touches a file itself. |
-| **executor-smart** | Sonnet | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. Dispatches `executor-fast` for the mechanical sub-steps of its own task — hands, never minds. |
+| **executor-smart** | Sonnet | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |
 | **executor-fast** | Haiku | The default. Everything mechanical with objective acceptance criteria: bulk edits, test/lint runs, search, extraction, boilerplate. |
 
 **The routing rule:** route on the *task's shape*, never the *subject's sophistication*. A deep architecture question answered by "quote the code with file:line" is still extraction — and extraction is fast-tier work.
@@ -52,7 +52,7 @@ The hierarchy isn't built on models — it's built on the **distillation of inte
 ```
 agents/
   executor-fast.md    # Haiku — mechanical executor, ten modes
-  executor-smart.md   # Sonnet — local-judgment executor, eight modes, delegates to fast
+  executor-smart.md   # Sonnet — local-judgment executor, eight modes
   executor-lead.md    # Opus — package lead (delegate-only: no Write/Edit)
   researcher.md       # Haiku — mechanical web research (capped, cited, no synthesis)
   product-pm.md       # Opus — feature ask → grounded product spec (product-engineering stage 1)
