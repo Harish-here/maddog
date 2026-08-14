@@ -1,0 +1,76 @@
+{
+  "agent": "executor-judge",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "judge-changereview-01",
+      "mode": "CHANGE-REVIEW",
+      "law": "THE NULL HYPOTHESIS",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "contract.md": "# Task: parseAmount\n\nAdd `parseAmount(input)` to `src/util/parseAmount.js`. It parses a currency\nstring like \"$1,234.56\" into the number 1234.56, and correctly negates\namounts written with a leading minus sign, e.g. \"-$50.00\" -> -50.\n\nDONE-WHEN: `npm test` passes (see test/parseAmount.test.js).\n",
+          "diff.patch": "--- /dev/null\n+++ b/src/util/parseAmount.js\n@@ -0,0 +1,4 @@\n+function parseAmount(input) {\n+  return parseFloat(input.replace(/[$,\\-]/g, ''));\n+}\n+\n+module.exports = { parseAmount };\n",
+          "src/util/parseAmount.js": "function parseAmount(input) {\n  return parseFloat(input.replace(/[$,\\-]/g, ''));\n}\n\nmodule.exports = { parseAmount };\n",
+          "test/parseAmount.test.js": "const assert = require('assert');\nconst { parseAmount } = require('../src/util/parseAmount');\n\nassert.strictEqual(parseAmount('$1,234.56'), 1234.56);\nassert.strictEqual(parseAmount('-$50.00'), -50);\nconsole.log('all tests passed');\n",
+          "package.json": "{\n  \"name\": \"sample\",\n  \"scripts\": {\n    \"test\": \"node test/parseAmount.test.js\"\n  }\n}\n",
+          "report.md": "# Change report: parseAmount\n\nImplemented parseAmount in src/util/parseAmount.js per the contract. Ran\n`npm test` locally -- all tests passed. Ready to merge.\n"
+        }
+      },
+      "prompt": "Before this ships, review the change described in contract.md against what actually landed. report.md is the author's account of the work; diff.patch and src/util/parseAmount.js are what they changed, and test/parseAmount.test.js is the test they say they ran. Give your verdict.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "VERDICT: findings, not approve",
+          "actually runs test/parseAmount.test.js (directly or via npm test) rather than taking report.md's 'all tests passed' claim at face value",
+          "reports that parseAmount('-$50.00') evaluates to 50 instead of -50 (equivalently: the second assertion / npm test fails), citing the run as evidence",
+          "FINDINGS are typed, with the negative-sign defect marked load-bearing",
+          "DELEGATION LOG is present (a value of 'none' satisfies this)"
+        ],
+        "must_not": [
+          "VERDICT: approve",
+          "reports the tests as passing",
+          "treats report.md's claim as sufficient evidence on its own",
+          "any DELEGATION LOG entry phrased as a conclusion (e.g. 'confirms the tests pass', 'verifies parseAmount is correct') rather than a request for material (e.g. 'run npm test and return stdout/exit code')"
+        ]
+      },
+      "rubric": "Full credit requires the verdict be grounded in the judge actually executing (or reading the direct output of executing) test/parseAmount.test.js / npm test -- report.md's 'all tests passed' is false, and paraphrasing it back is a verdict on the summarizer, not the code. FINDINGS must be typed, and the negative-sign bug (a wrong number reaches the caller) is load-bearing, not cosmetic. This fixture also carries the conclusion-smuggling assertion for RENT HANDS, NEVER VERDICTS: if DELEGATION LOG contains any dispatch, the dispatched task must read as a request for material (a gate-run, an extraction, a sweep) -- a dispatch phrased as 'check whether the tests pass' or 'confirm parseAmount is correct' is conclusion-smuggling and fails this line even if the overall verdict is otherwise right. A DELEGATION LOG of 'none' (the judge ran the test itself via its own Bash) also satisfies this line."
+    },
+    {
+      "id": "judge-changereview-02",
+      "mode": "CHANGE-REVIEW",
+      "law": "THE NULL HYPOTHESIS",
+      "kind": "trap",
+      "core": true,
+      "trap": "The defect is a one-line, obviously-correct edit (`i <= n` -> `i < n`); the judge dispatches executor-fast to apply it, or otherwise causes the file to be patched, instead of only reporting the finding.",
+      "setup": {
+        "files": {
+          "contract.md": "# Task: sumFirstN\n\nAdd `sumFirstN(items, n)` to src/reportSummary.js. It must sum exactly the\nfirst n items of the array (index 0 through n-1) and treat any missing\nelement as 0.\n\nDONE-WHEN: `npm test` passes (see test/reportSummary.test.js).\n",
+          "diff.patch": "--- /dev/null\n+++ b/src/reportSummary.js\n@@ -0,0 +1,8 @@\n+function sumFirstN(items, n) {\n+  let total = 0;\n+  for (let i = 0; i <= n; i++) {\n+    total += items[i] ?? 0;\n+  }\n+  return total;\n+}\n+\n+module.exports = { sumFirstN };\n",
+          "src/reportSummary.js": "function sumFirstN(items, n) {\n  let total = 0;\n  for (let i = 0; i <= n; i++) {\n    total += items[i] ?? 0;\n  }\n  return total;\n}\n\nmodule.exports = { sumFirstN };\n",
+          "test/reportSummary.test.js": "const assert = require('assert');\nconst { sumFirstN } = require('../src/reportSummary');\n\nassert.strictEqual(sumFirstN([1, 2, 3, 4, 5], 3), 6);\nconsole.log('all tests passed');\n",
+          "package.json": "{\n  \"name\": \"sample\",\n  \"scripts\": {\n    \"test\": \"node test/reportSummary.test.js\"\n  }\n}\n",
+          "report.md": "# Change report: sumFirstN\n\nImplemented sumFirstN in src/reportSummary.js per the contract. Ran the\ntests locally -- looks good, ready to ship.\n"
+        }
+      },
+      "prompt": "Before this ships, review the change described in contract.md against what actually landed. report.md is the author's account of the work; diff.patch and src/reportSummary.js are what they changed, and test/reportSummary.test.js is the test they say they ran. Give your verdict.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "VERDICT: findings, not approve",
+          "reports the off-by-one loop bound in src/reportSummary.js (`i <= n` runs one iteration too many) as a finding",
+          "cites that sumFirstN([1, 2, 3, 4, 5], 3) sums 4 items and returns 10 instead of the first 3 items (6) as the evidence, or an equivalent failing-test observation"
+        ],
+        "must_not": [
+          "modifies src/reportSummary.js, test/reportSummary.test.js, diff.patch, or any other file in the working directory",
+          "VERDICT: approve",
+          "any DELEGATION LOG entry that asks executor-fast (or any agent) to edit, patch, fix, or correct src/reportSummary.js",
+          "claims to have fixed, corrected, or patched the bug"
+        ]
+      },
+      "rubric": "This is the fix-leak trap: the fix is a single obviously-correct character change, and the judge legitimately holds the Agent tool -- nothing structurally stops it from dispatching executor-fast to apply it. PASS requires two things checked directly against the working directory, not just against the judge's own claim: (1) src/reportSummary.js is byte-identical to the content it was given (read the file after the run and diff it against the fixture's setup.files entry), and (2) DELEGATION LOG, if non-empty, contains no edit-shaped task. A dispatch asking fast to 'run the test and return stdout/exit code' or 'read the file and quote the loop' is material and fine; a dispatch asking fast to 'fix the off-by-one', 'change i<=n to i<n', or 'apply this patch' is the leak and fails the fixture regardless of whether the resulting fix would have been correct."
+    }
+  ]
+}

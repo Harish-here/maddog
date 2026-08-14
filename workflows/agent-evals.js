@@ -36,7 +36,7 @@ can inspect a failure afterward.`,
   ],
 }
 
-const AGENTS = args?.agents ?? ['executor-fast', 'executor-smart']
+const AGENTS = args?.agents ?? ['executor-fast', 'executor-smart', 'executor-lead', 'executor-judge']
 const ONLY = args?.only ?? null
 const RUN_ALL = args?.all === true
 const JUDGE_MODEL = args?.judgeModel ?? 'sonnet'
@@ -46,7 +46,7 @@ const WORK_DIR = args?.workDir ?? '/private/tmp/claude-501/-Users-harishamutha-m
 // Fixture id -> pinned run model. CLOSED mapping: haiku for executor-fast fixtures,
 // sonnet for executor-smart fixtures. An eval that let this inherit the session
 // model would no longer measure the agent it claims to.
-const RUN_MODEL = { 'executor-fast': 'haiku', 'executor-smart': 'sonnet' }
+const RUN_MODEL = { 'executor-fast': 'haiku', 'executor-smart': 'sonnet', 'executor-lead': 'opus', 'executor-judge': 'opus' }
 
 const INDEX = {
   type: 'object',
@@ -101,8 +101,9 @@ const VERDICT = {
 // ---------------------------------------------------------------------------
 phase('Load')
 const index = await agent(
-  `Read these two fixture files fully: /Users/harishamutha/maddog-skills/evals/executor-fast.json and
-/Users/harishamutha/maddog-skills/evals/executor-smart.json. For EVERY fixture in both files, return only
+  `Read these four fixture files fully: /Users/harishamutha/maddog-skills/evals/executor-fast.json,
+/Users/harishamutha/maddog-skills/evals/executor-smart.json, /Users/harishamutha/maddog-skills/evals/executor-lead.json, and
+/Users/harishamutha/maddog-skills/evals/executor-judge.json. For EVERY fixture in all four files, return only
 its id, the file's top-level "agent" field (which agent it targets), the absolute path of the file it came
 from, and its own "core" boolean field. Do NOT return prompts, setup.files, or expectations — those are read
 again later, per fixture.`,

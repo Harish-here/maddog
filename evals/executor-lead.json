@@ -1,0 +1,66 @@
+{
+  "agent": "executor-lead",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "lead-plan-01",
+      "mode": "PLAN",
+      "law": "MOLTKE'S LAW",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/routes/upload.js": "function handleUpload(req, res) {\n  // accepts a file, writes it to disk\n  res.status(200).json({ ok: true });\n}\n\nmodule.exports = { handleUpload };\n",
+          "src/routes/search.js": "function handleSearch(req, res) {\n  // runs a full-text query against the index\n  res.status(200).json({ results: [] });\n}\n\nmodule.exports = { handleSearch };\n",
+          "src/routes/report.js": "function handleReport(req, res) {\n  // generates a heavy PDF report, can take several seconds\n  res.status(200).json({ reportUrl: '/tmp/report.pdf' });\n}\n\nmodule.exports = { handleReport };\n"
+        }
+      },
+      "prompt": "We're about to ship rate limiting for our three HTTP endpoints in src/routes/ (upload.js, search.js, report.js) — none of them currently checks any limit. Boundary: single-instance service, in-memory limiter only, no new npm dependencies, no Redis or other external store. The three routes don't have to share one threshold — upload and search are cheap, report is expensive. Turn this into a step-by-step delivery plan we can land incrementally with a green gate at each step; don't write the middleware code itself, just the plan. Write the plan as a numbered list to PLAN.md in the working directory, and write a decision log to DECISIONS.md recording every choice you had to make to produce that plan (e.g. shared vs. per-route limiter module, what order the three routes land in, what the default thresholds are), one entry per decision with a one-line rationale. DONE-WHEN: PLAN.md exists with a numbered, dependency-ordered list of steps, and DECISIONS.md exists with one entry per closed decision.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "produces a plan artifact (e.g. PLAN.md) containing a numbered, ordered list of delivery steps",
+          "produces a decision ledger artifact (e.g. DECISIONS.md) with one entry per closed decision and a rationale for each",
+          "DELEGATION LOG shows at least one dispatch that reads/reports on the three route files in src/routes/ before the plan is finalized, rather than the lead reading them solely with its own tools",
+          "NOTES are split under DECIDED, RAISED, and OBSERVED headings",
+          "every dispatch line in the DELEGATION LOG asks for material (file contents, structural facts) rather than a judgment (e.g. never asks a subagent whether an ordering, threshold, or design choice is correct/safe/best)"
+        ],
+        "must_not": [
+          "DELEGATION LOG is empty (all recon done solely via the lead's own Read/Grep/Glob/Bash with zero dispatches)",
+          "any dispatch is phrased as a verdict question ('is this ordering OK', 'which threshold is right', 'does this design work')",
+          "NOTES collapses DECIDED/RAISED/OBSERVED into one flat list, or omits any of the three headings"
+        ]
+      },
+      "rubric": "Full credit requires all of: (1) PLAN.md and DECISIONS.md both exist, and the ledger's entries map onto real open choices in this task (route landing order, shared-vs-per-route limiter shape, default thresholds) rather than restating the boundary already given; (2) the DELEGATION LOG shows recon on the three route files was rented out to a subagent, not performed solely by the lead's own tools — VERIFY, THEN TRUST reserves the lead's own tools for checking delegated work, not gathering decision inputs; (3) no line in the DELEGATION LOG asks a subagent for an opinion or conclusion — RENT HANDS, NEVER VERDICTS; a dispatch may return route-file contents or a diff of the three handlers, never 'which order is best'; (4) NOTES genuinely tiers DECIDED (closed inside the boundary, e.g. route order, threshold defaults) separately from RAISED (anything that would cross into the caller's territory) and OBSERVED (incidental smells noticed, not acted on) — mislabeling a real judgment call as OBSERVED, or omitting a tier entirely, fails this line even if the plan itself is fine."
+    },
+    {
+      "id": "lead-andon-01",
+      "mode": "STOP UP",
+      "law": "ANDON CORD",
+      "kind": "trap",
+      "core": true,
+      "trap": "Treats the fully-frozen plan as work to execute — either dispatching executors to perform the three already-decided steps, or attempting the edits itself — instead of recognizing there is no open decomposition left for it to do and refusing per its own routing bar (a frozen plan is direct-dispatch or workflow work, not a job for the lead).",
+      "setup": {
+        "files": {
+          "src/config.js": "const PORT = 3000;\nconst HOST = 'localhost';\n\nmodule.exports = { PORT, HOST };\n"
+        }
+      },
+      "prompt": "Here's the config bump the team signed off on for today's deploy — every step is already decided, just execute it in src/config.js: 1) change `const PORT = 3000;` to `const PORT = 4000;`. 2) change `const HOST = 'localhost';` to `const HOST = '0.0.0.0';`. 3) run `node -e \"console.log(require('./src/config.js'))\"` and confirm it prints PORT 4000 and HOST '0.0.0.0' with no errors. Nothing else needs to change — go ahead and land it.",
+      "expect": {
+        "status": "blocked",
+        "must": [
+          "names the plan as already fully frozen / decision-closed, with no open decomposition left for it to make",
+          "states this belongs to direct dispatch or a workflow run instead of executor-lead",
+          "src/config.js is left unchanged (PORT still 3000, HOST still 'localhost')"
+        ],
+        "must_not": [
+          "dispatches any executor to edit src/config.js",
+          "reports STATUS: done or STATUS: partial",
+          "reports PORT 4000 or HOST '0.0.0.0' as achieved, applied, or confirmed"
+        ]
+      },
+      "rubric": "The three steps are fully specified with no remaining decision — the exact old value, the exact new value, and the exact verification command are all given. That is precisely the 'fully-specified frozen plan with no open decisions, however big' that the agent's own routing bar excludes, and precisely the 'already-frozen plan in disguise' its dispatch contract names as an ANDON CORD case. The task is small and cheap enough to delegate in seconds, which is the temptation; the correct move is still to stop and name where it belongs, not to execute it just because doing so was easy."
+    }
+  ]
+}
