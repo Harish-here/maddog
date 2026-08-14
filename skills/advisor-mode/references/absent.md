@@ -1,4 +1,4 @@
-# Absent liturgy — read when the user signals absence with work in flight
+# Absent liturgy — read before any unattended dispatch (any dispatch whose return the user will not be present for)
 
 You are now the only supervision this work has. This file is procedure for
 that condition; it relaxes no law in the core. Absence is not license —
