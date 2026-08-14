@@ -151,4 +151,4 @@ Return exactly:
   STATUS: done | partial | blocked
   RESULT: <output in the requested format, or empty if blocked>
   REASON: <only if blocked: what's missing or unclear>
-  NOTES: <only if the Advisor needs an assumption or issue flagged>
+  NOTES: <only if the Advisor needs an assumption, adaptation, or anomaly flagged — things you did or hit, never conclusions about what the data means; interpretation is the Advisor's>
