@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# executor-guard.sh — PreToolUse Bash guard, scoped to executor-fast ONLY.
+# executor-guard.sh — PreToolUse Bash guard, scoped to executor-fast, executor-lead, and executor-judge.
 #
-# Purpose: executor-fast runs at low reasoning effort with dontAsk permission
-# and no judgment budget for one-way doors. This hook bounces a short list of
-# irreversible/destructive Bash commands (force-delete, force-push, hard
-# reset, mass discard of uncommitted work, etc.) back to a tier that can
-# actually weigh them (executor-smart or the Advisor) instead of letting
-# executor-fast run them unattended.
+# Purpose: these executors run at reasoning effort levels or with permission modes
+# where they cannot reliably weigh one-way doors. This hook bounces a short list of
+# irreversible/destructive Bash commands (force-delete, force-push, hard reset,
+# mass discard of uncommitted work, etc.) back to the caller, forcing the executor
+# to STOP and return blocked rather than attempt the command.
 #
 # Wiring: this script is invoked two ways —
 #   (a) executor-fast's agent frontmatter (symlink installs), which only
@@ -39,7 +38,7 @@ set -uo pipefail
 
 deny() {
   local reason="$1"
-  local ctx="Blocked by executor-guard.sh: executor-fast is not permitted to weigh irreversible actions. If this command is genuinely needed, escalate to a tier (executor-smart or the Advisor) that can assert the exact expected state and run it deliberately."
+  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions. STOP and return STATUS: blocked to your caller with this reason — do not attempt the command."
   local reason_json ctx_json
   reason_json="$(printf '%s' "$reason" | jq -Rs .)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"
@@ -60,10 +59,10 @@ input="$(cat 2>/dev/null)"
 
 command -v jq >/dev/null 2>&1 || exit 0
 
-# --- scope: only run for executor-fast (or its plugin-namespaced form) ---
+# --- scope: only run for executor-fast/executor-lead/executor-judge (or plugin-namespaced forms) ---
 agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 case "$agent_type" in
-  executor-fast|*:executor-fast) : ;;
+  executor-fast|executor-lead|executor-judge|*:executor-fast|*:executor-lead|*:executor-judge) : ;;
   *) exit 0 ;;
 esac
 
