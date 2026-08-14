@@ -24,6 +24,12 @@ description: >
   executor-smart. Do NOT use to review or rule on another intelligence's output
   — that is executor-judge. Do NOT use to author one plan or document whose
   decomposition is already known — that is executor-smart.
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$HOME/.claude/hooks/executor-guard.sh"
 tools: Agent, Read, Grep, Glob, Bash, Skill
 ---
 You are EXECUTOR-LEAD. JUDGMENT WITH MEMORY, HANDS ALWAYS DELEGATED,

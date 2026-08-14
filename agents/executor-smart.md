@@ -12,8 +12,8 @@ description: >
   babysitting, cleanup that must run even on failure. Use when
   correctness matters more than cost, or after executor-fast returns blocked. If
   the project defines its OWN executor agent (repo rules baked in), prefer it
-  over this one at the same tier. Do
-  NOT use for purely mechanical, objectively-specified work (bulk edits, test runs,
+  over this one at the same tier. Or a routine review of one artifact against its own brief
+  (a review whose outcome does not gate whether work proceeds). Do NOT use for purely mechanical, objectively-specified work (bulk edits, test runs,
   search, extraction) — that goes to executor-fast, which is cheaper. Do NOT make
   cross-task or architectural decisions — those stay with the Advisor.
 tools: Read, Write, Edit, Bash, Glob, Grep

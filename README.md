@@ -131,7 +131,7 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 - Skills arrive namespaced (`/maddog-skills:grind`).
 - Does NOT ship `workflows/` (`sdd-task-loop`, `agent-evals`) — the plugin format has no workflow component yet; the day it does, we ship them.
 - Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
-  - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast via the payload's `agent_type`), and
+  - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
   - `permissionMode: dontAsk` does not apply — executors may surface permission prompts; add allowlist entries for the commands you delegate.
 - Update later with `/plugin marketplace update maddog`.
 
@@ -142,7 +142,7 @@ cd maddog-skills && ./install.sh
 ```
 - Skills un-namespaced (`/grind`); the clone stays the single source of truth — edits land in every new session.
 - Ships everything the plugin can't: `workflows/`, the watchdog LaunchAgent, the Telegram notify script.
-- `permissionMode: dontAsk` is active; the guard is wired via executor-fast's frontmatter to `$HOME/.claude/hooks/executor-guard.sh` (linked by `install.sh`).
+- `permissionMode: dontAsk` is active; the guard is wired via the frontmatter of executor-fast, executor-lead, and executor-judge to `$HOME/.claude/hooks/executor-guard.sh` (linked by `install.sh`).
 - Existing real files at the target are backed up to `<name>.bak`, never deleted.
 
 Restart Claude Code sessions after installing (the agent registry snapshots at session start).
