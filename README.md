@@ -1,24 +1,57 @@
 # maddog-skills
 
-A four-tier advisor–executor hierarchy for [Claude Code](https://claude.com/claude-code): global agents and skills that run your coding agent as an **organisation**, not an assistant.
+A five-role advisor–executor hierarchy for [Claude Code](https://claude.com/claude-code): global agents and skills that run your coding agent as an **organisation**, not an assistant.
 
 ## The hierarchy
 
-| Tier | Model | Role |
+| Tier | Judgment class | Role |
 |---|---|---|
-| **Advisor** | your session model (skill: `advisor-mode`) | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work. |
-| **executor-lead** | Opus | Package lead. Takes ONE complex work package (goal + boundary + DONE-WHEN), makes the within-package design calls, and dispatches executors for every edit and every recon step. Never touches a file itself. |
-| **executor-smart** | Sonnet | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |
-| **executor-fast** | Haiku | The default. Everything mechanical with objective acceptance criteria: bulk edits, test/lint runs, search, extraction, boilerplate. |
+| **Advisor** | architectural / cross-package | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work. |
+| **executor-lead** | iterated (judgment with memory) | Judgment with memory, hands always delegated. Dispatched per judgment burst for an open decomposition (PLAN), an unfreezable evidence-driven campaign (CAMPAIGN), or decided-scope delivery entangled with a live/hazardous environment (DELIVER). Continuity lives in artifacts — a plan, a decision ledger — never in a live context. Not an orchestrator: babysitting execution is a workflow script's job. Never touches a file itself. |
+| **executor-judge** | adversarial verdict | Adversarial verdicts on another intelligence's output: plan/design review before execution (DESIGN-REVIEW), executed-change review after (CHANGE-REVIEW), or adjudicating a dispute that gates progression (ADJUDICATE). Rules only on primary evidence it reads itself. Cannot fix by construction — no Write/Edit. |
+| **executor-smart** | local | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |
+| **executor-fast** | none (mechanical) | The default. Everything mechanical with objective acceptance criteria: bulk edits, test/lint runs, search, extraction, boilerplate. |
 
 **The routing rule:** route on the *task's shape*, never the *subject's sophistication*. A deep architecture question answered by "quote the code with file:line" is still extraction — and extraction is fast-tier work.
 
 **Escalation is earned, not assumed:**
 
 - Open decisions confined to one task → `executor-smart`.
-- Multiple tasks AND mid-flight judgment (step N's result shapes step N+1) → `executor-lead`.
+- An open decomposition to freeze into a plan, an unfreezable evidence-driven campaign, or decided-scope delivery entangled with a live/hazardous environment → `executor-lead`.
+- A verdict on another intelligence's output — before execution, after it, or adjudicating a dispute that gates progression → `executor-judge`.
 - A flat parallel fan-out of independent mechanical tasks needs no middle manager — the Advisor dispatches fast-tier directly.
-- WHETHER/WHAT to build stays with the Advisor; HOW to build it can go to the lead.
+- WHETHER/WHAT to build stays with the Advisor; HOW to build it can go to the lead; whether it PASSED goes to the judge, never to whoever built it.
+
+## Doctrine: intelligence is the budget
+
+Intelligence is the budget, and it has two axes: **tier** (quality of judgment) and
+**context** (attention).
+
+- Closed decisions cost zero intelligence — they go to scripts/workflows, or to the
+  cheapest tier when a model is needed only for perception.
+- Open decisions go to the cheapest tier whose judgment class covers them.
+- Judgment that accumulates working state gets a disposable container (a dispatched
+  agent), never the caller's context.
+- Orchestration/choreography is never an intelligence spend: when decisions are
+  closed, a script out-manages any model, for free, deterministically.
+- Top-tier intelligence concentrates at exactly three kinds of work: open
+  decomposition (including its small, live-entangled form), unfreezable
+  evidence-driven campaigns, and adversarial gate verdicts on another
+  intelligence's output.
+
+Judgment classes are decoupled from models. The table below is an
+**exchange-rate table** — today's cheapest model clearing each class — not the
+definition of the role: agent files are defined by judgment class, and re-pinning
+a model to a class never touches the role it fills.
+
+| Judgment class | Agent | Today's pin |
+|---|---|---|
+| none (mechanical, decisions closed) | `executor-fast` | haiku |
+| local (one task, fixed boundary) | `executor-smart` | sonnet |
+| iterated (judgment with memory, one package) | `executor-lead` | opus |
+| adversarial verdict (gates) | `executor-judge` | opus |
+| architectural / cross-package | Advisor (session model) | — |
+| zero (choreography) | workflow scripts | none |
 
 ## Modes and laws
 
@@ -26,7 +59,8 @@ Each executor classifies every task it receives into one of its own **modes**, a
 mode carries one named **law** with a worked example. `executor-fast` has ten: RECON,
 EXTRACT, VERIFY, EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT.
 `executor-smart` has eight: BUILD, PORT, AUTHOR, DECOMPOSE, FIX, REVIEW, DIAGNOSE,
-CHOREOGRAPH.
+CHOREOGRAPH. `executor-lead` has three: PLAN, CAMPAIGN, DELIVER. `executor-judge` has
+three: DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE.
 
 The laws are established principles rather than invented jargon — Goodhart's Law for a
 gate you must not tune to make green, Chesterton's Fence for an edit whose anchor has
@@ -40,8 +74,9 @@ hint from someone who probably has not read the file, and the agent is told to c
 on the task and flag the mismatch. Call sites stay decoupled from each agent's internal
 taxonomy.
 
-The modes were derived from 774 real dispatches in local session history, then extended
-with four synthesised forward.
+The fast/smart modes were derived from 774 real dispatches in local session history,
+then extended with four synthesised forward. Lead's and judge's modes are new, designed
+directly against the doctrine's judgment classes rather than mined from history.
 
 ## Why not just "use the best model for everything"?
 
@@ -51,15 +86,16 @@ The hierarchy isn't built on models — it's built on the **distillation of inte
 
 ```
 agents/
-  executor-fast.md    # Haiku — mechanical executor, ten modes
-  executor-smart.md   # Sonnet — local-judgment executor, eight modes
-  executor-lead.md    # Opus — package lead (delegate-only: no Write/Edit)
-  researcher.md       # Haiku — mechanical web research (capped, cited, no synthesis)
-  product-pm.md       # Opus — feature ask → grounded product spec (product-engineering stage 1)
-  product-ux.md       # Opus — spec → UX dossier + rendered HTML mockup (stage 2)
-  product-be.md       # Sonnet — UX data needs → server contracts + backend blueprint (stage 3)
-  product-ui.md       # Sonnet — mockup + BE contracts → zero-drift implementation blueprint (stage 4)
-  product-qa.md       # Opus — implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
+  executor-fast.md    # Mechanical executor, ten modes
+  executor-smart.md   # Local-judgment executor, eight modes
+  executor-lead.md    # Judgment with memory: PLAN / CAMPAIGN / DELIVER (delegate-only: no Write/Edit)
+  executor-judge.md   # Adversarial gate verdicts: DESIGN-REVIEW / CHANGE-REVIEW / ADJUDICATE (cannot fix by construction: no Write/Edit)
+  researcher.md       # Mechanical web research (capped, cited, no synthesis)
+  product-pm.md       # Feature ask → grounded product spec (product-engineering stage 1)
+  product-ux.md       # Spec → UX dossier + rendered HTML mockup (stage 2)
+  product-be.md       # UX data needs → server contracts + backend blueprint (stage 3)
+  product-ui.md       # Mockup + BE contracts → zero-drift implementation blueprint (stage 4)
+  product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   grind/              # /grind <task> — one mechanical task, isolated context
@@ -71,6 +107,8 @@ workflows/
 evals/
   executor-fast.json  # behavioural fixtures — happy + trap per mode and standing law
   executor-smart.json
+  executor-lead.json  # lean set: happy PLAN + trap frozen-plan (RENT HANDS asserted inline)
+  executor-judge.json # lean set: happy CHANGE-REVIEW + trap fix-leak
   README.md           # fixture schema, and why the traps are the point
 scripts/
   executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast
@@ -79,7 +117,7 @@ scripts/
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
 ```
 
-Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
+Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
 
 ## Install modes
 
@@ -136,8 +174,10 @@ Intelligence is budgeted, never inherited: every `agent()` call pins its model �
 ## Evals
 
 `evals/` holds behavioural fixtures — one JSON file per executor plus a schema README.
-Every mode and standing law carries at least one happy fixture and one **trap**, where
-the wrong answer is cheap, plausible and immediately available. A fixture that only asks
+Every fast/smart mode and standing law carries at least one happy fixture and one **trap**, where
+the wrong answer is cheap, plausible and immediately available. Lead and judge carry a deliberately
+lean set — opus runs are expensive, so only the main happy path and the instruction-only prohibitions
+get fixtures, with secondary assertions folded into the happy rubrics. A fixture that only asks
 an agent to do the obvious right thing proves nothing, because the wrong answer was never
 attractive.
 
@@ -155,7 +195,7 @@ was refuted and then applied it anyway. Both agents pin `effort: high` because o
 
 ## Model pinning
 
-Currently the agents and workflows are model-pinned to the Claude ecosystem (`haiku` / `sonnet` / `opus` by name) — every dispatch names its tier explicitly. Once the hierarchy matures we will abstract this out to generic capability tiers (fast / smart / lead) so that any model can be pinned to a tier.
+Currently the agents and workflows are model-pinned to the Claude ecosystem (`haiku` / `sonnet` / `opus` by name) — every dispatch names its tier explicitly. Once the hierarchy matures we will abstract this out to generic capability tiers (fast / smart / lead / judge) so that any model can be pinned to a tier.
 
 ## Unattended runs
 

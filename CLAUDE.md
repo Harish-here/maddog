@@ -48,13 +48,17 @@ load-bearing dispatch logic, not documentation — it gets tuned against evals (
 commits `1eca87e`, `7d30742`). Change behavior in the body; change routing in the
 description. Do not casually reword a description while editing the body.
 
-**`executor-lead` has no `Write`/`Edit` in its `tools:` list.** Delegate-only is
-enforced by tool restriction, not by instruction. Granting it those tools would
-silently dissolve the hierarchy's central invariant.
+**`executor-lead` and `executor-judge` have no `Write`/`Edit` in their `tools:` lists.**
+The lead is delegate-only (every file change flows through an executor it spawns); the
+judge is fix-less (it rules, it never repairs — findings route back to the caller).
+Both invariants are enforced by tool restriction, not instruction. Granting either
+agent those tools silently dissolves the family's central invariants. The shared
+RENT HANDS, NEVER VERDICTS law is verbatim-identical in both files — edit it in both
+or neither. `scripts/executor-guard.sh` covers fast, lead, and judge (not smart).
 
 **Agents and skills ship as a unit.** `grind`/`grind-pro` name
 `executor-fast`/`executor-smart`; `product-engineering` names all five `product-*`
-agents plus `researcher`; `advisor-mode` orchestrates all of them. Renaming an agent
+agents plus `researcher`; `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed. Renaming an agent
 means updating every by-name reference across `skills/` and `workflows/`.
 
 ## Architecture
@@ -69,7 +73,8 @@ extraction, and extraction is fast-tier.
 |---|---|---|
 | `executor-fast` | haiku | mechanical work with objective acceptance criteria |
 | `executor-smart` | sonnet | one task carrying local judgment inside a fixed boundary |
-| `executor-lead` | opus | a package needing multiple tasks AND mid-flight judgment |
+| `executor-lead` | opus | judgment with memory for ONE package: PLAN (open decomposition → frozen plan), CAMPAIGN (unfreezable, evidence-driven probes), DELIVER (decided scope entangled with live reality). Burst-dispatched; never orchestrates — execution belongs to workflow scripts |
+| `executor-judge` | opus | adversarial gate verdicts on another intelligence's output: DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE. Cannot fix by construction |
 
 `executor-fast` classifies every task into one of ten modes — RECON, EXTRACT, VERIFY,
 EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT — each carrying one named
@@ -91,7 +96,9 @@ one. The per-stage gates live in `skills/product-engineering/SKILL.md`.
 explicitly — in `workflows/sdd-task-loop.js`, haiku for lint/dossier/ship mechanics,
 sonnet for implementation and dimension reviews, opus only for adversarial synthesis.
 When adding a dispatch, pin the tier deliberately; silently inheriting the caller's
-model is a bug, not a default.
+model is a bug, not a default. The full doctrine — judgment classes as identity, model pins as an exchange-rate
+table stated once — lives in the README; agent files are defined by judgment class
+and must never treat a model name as identity.
 
 ## sdd-task-loop
 
