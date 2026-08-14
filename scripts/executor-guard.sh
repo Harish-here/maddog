@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# executor-guard.sh — PreToolUse Bash guard, wired to executor-fast ONLY.
+# executor-guard.sh — PreToolUse Bash guard, scoped to executor-fast ONLY.
 #
 # Purpose: executor-fast runs at low reasoning effort with dontAsk permission
 # and no judgment budget for one-way doors. This hook bounces a short list of
@@ -7,6 +7,19 @@
 # reset, mass discard of uncommitted work, etc.) back to a tier that can
 # actually weigh them (executor-smart or the Advisor) instead of letting
 # executor-fast run them unattended.
+#
+# Wiring: this script is invoked two ways —
+#   (a) executor-fast's agent frontmatter (symlink installs), which only
+#       ever calls it for executor-fast, and
+#   (b) plugin-level hooks/hooks.json (session-wide, matcher "Bash") in
+#       plugin installs, which fires for every agent and the main
+#       conversation.
+# Because (b) is not agent-scoped, the executor-fast-only restriction is
+# enforced IN-SCRIPT via the payload's .agent_type field: the guard's checks
+# run only when agent_type is "executor-fast" or ends in ":executor-fast"
+# (plugin-namespaced form). Every other case — a different agent_type, or
+# agent_type absent (e.g. the main conversation) — ALLOWS (fail-open)
+# immediately with no output.
 #
 # IMPORTANT: Claude Code hooks FAIL OPEN. If this file is missing, not
 # executable, times out, or emits malformed JSON, the tool call proceeds as
@@ -46,6 +59,13 @@ input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
 
 command -v jq >/dev/null 2>&1 || exit 0
+
+# --- scope: only run for executor-fast (or its plugin-namespaced form) ---
+agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
+case "$agent_type" in
+  executor-fast|*:executor-fast) : ;;
+  *) exit 0 ;;
+esac
 
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -z "$cmd" ] && exit 0

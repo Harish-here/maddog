@@ -81,27 +81,33 @@ scripts/
 
 Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` orchestrates all three — installing only half breaks the other half.
 
-## Install
+## Install modes
 
-**As a plugin (recommended)** — inside any Claude Code session:
+Two mutually exclusive ways to install. Pick ONE — installing both gives you duplicate agents.
 
+**Plugin (recommended):**
 ```
 /plugin marketplace add Harish-here/maddog-skills
 /plugin install maddog-skills@maddog
 ```
+- Skills arrive namespaced (`/maddog-skills:grind`).
+- Does NOT ship `workflows/` (`sdd-task-loop`, `agent-evals`) — the plugin format has no workflow component yet; the day it does, we ship them.
+- Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
+  - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast via the payload's `agent_type`), and
+  - `permissionMode: dontAsk` does not apply — executors may surface permission prompts; add allowlist entries for the commands you delegate.
+- Update later with `/plugin marketplace update maddog`.
 
-Skills arrive namespaced (`/maddog-skills:advisor-mode`, `/maddog-skills:grind`, …). Update later with `/plugin marketplace update maddog`.
-
-**As plain files (symlink mode)** — if you'd rather own the files in `~/.claude/` and hack on them:
-
+**Symlink (maintainer / power-user mode):**
 ```bash
 git clone https://github.com/Harish-here/maddog-skills.git
 cd maddog-skills && ./install.sh
 ```
+- Skills un-namespaced (`/grind`); the clone stays the single source of truth — edits land in every new session.
+- Ships everything the plugin can't: `workflows/`, the watchdog LaunchAgent, the Telegram notify script.
+- `permissionMode: dontAsk` is active; the guard is wired via executor-fast's frontmatter to `$HOME/.claude/hooks/executor-guard.sh` (linked by `install.sh`).
+- Existing real files at the target are backed up to `<name>.bak`, never deleted.
 
-`install.sh` symlinks `agents/*` and `skills/*` into `~/.claude/`, so the clone stays the single source of truth — edit here, commit here, every session reads the latest. Existing real files at the target are backed up to `<name>.bak`, never deleted. Skills are un-namespaced in this mode (`/advisor-mode`, `/grind`).
-
-Pick one mode, not both — installing both ways gives you duplicate agents. Restart Claude Code sessions after installing (the agent registry snapshots at session start).
+Restart Claude Code sessions after installing (the agent registry snapshots at session start).
 
 ## Usage
 
@@ -146,6 +152,10 @@ discriminating subset; `args.all` runs everything.
 They found real defects. At low effort `executor-fast` deleted a directory holding
 uncommitted work and reported done; at medium `executor-smart` verified a review finding
 was refuted and then applied it anyway. Both agents pin `effort: high` because of that.
+
+## Model pinning
+
+Currently the agents and workflows are model-pinned to the Claude ecosystem (`haiku` / `sonnet` / `opus` by name) — every dispatch names its tier explicitly. Once the hierarchy matures we will abstract this out to generic capability tiers (fast / smart / lead) so that any model can be pinned to a tier.
 
 ## Unattended runs
 

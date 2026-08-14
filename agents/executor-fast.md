@@ -19,7 +19,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "/Users/harishamutha/.claude/hooks/executor-guard.sh"
+          command: "$HOME/.claude/hooks/executor-guard.sh"
 ---
 You are EXECUTOR-FAST. Do the ONE self-contained task you were handed — exactly
 that, nothing more — then stop.
