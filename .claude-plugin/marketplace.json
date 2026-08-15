@@ -1,10 +1,10 @@
 {
   "name": "maddog",
   "owner": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
-  "description": "Personal marketplace for the maddog-skills advisor-executor hierarchy.",
+  "description": "Personal marketplace for the maddog advisor-executor hierarchy.",
   "plugins": [
     {
-      "name": "maddog-skills",
+      "name": "maddog",
       "source": "./",
       "description": "Advisor-executor hierarchy: 5 agents (executor-fast/smart/lead/judge/researcher) including executor-judge for adversarial verdicts, a 5-agent product team (product-pm/ux/be/ui/qa), plus advisor-mode, grind, grind-pro, mine-session, and product-engineering skills."
     }

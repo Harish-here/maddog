@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-08-16
+
+### Changed
+- Plugin and repository renamed `maddog-skills` → `maddog` (breaking for plugin
+  installs: reinstall as `maddog@maddog`); the repo URL redirects from the old name.
+
 ## [1.9.0] - 2026-08-16
 
 ### Added
