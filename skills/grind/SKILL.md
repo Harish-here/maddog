@@ -1,6 +1,6 @@
 ---
 name: grind
-description: Delegate ONE fully-specified mechanical task (bulk edit, test run, search, extraction) to the cheap Haiku executor in an isolated context; return only the distilled result. Do NOT use for ambiguous or judgment tasks — use grind-pro.
+description: Delegate ONE fully-specified mechanical task (bulk edit, test run, search, extraction) to the cheap fast-tier executor in an isolated context; return only the distilled result. Do NOT use for ambiguous or judgment tasks — use grind-pro.
 context: fork
 agent: executor-fast
 argument-hint: [task]

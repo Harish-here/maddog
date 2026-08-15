@@ -23,7 +23,7 @@ the laws are decorative.
 
 ## Schema
 
-One JSON file per agent: `executor-fast.json`, `executor-smart.json`.
+One JSON file per agent: `executor-fast.json`, `executor-smart.json`, `executor-lead.json`, `executor-judge.json`.
 
 ```json
 {
@@ -85,3 +85,15 @@ against `expect`.
 Every mode and every standing law in both agent files carries at least one `happy`
 and one `trap` fixture. Adding a law to an agent means adding its pair here; a law
 with no trap fixture is untested no matter how many happy fixtures it has.
+
+## Skill routing fixtures (evals/<skill>.json + run-skill-routing.sh)
+
+Skill fixtures probe description ROUTING, not agent behavior. kind is
+happy | negative | boundary | open — "open" fixtures carry "expect": null,
+are report-only (their sampled answers inform a decision instead of gating),
+and are always core: false. core: true fixtures gate the runner's exit code.
+Probes are stochastic: the runner samples each graded fixture (default 5,
+pass at >=4; SAMPLES/PASS_AT env overrides). Candidate descriptions are
+extracted from each SKILL.md at run time, so a reworded description is
+re-tested automatically — a stable new failure after a description change is
+information about the description, never a fixture to adjust back to green.

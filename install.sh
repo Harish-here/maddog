@@ -49,6 +49,30 @@ link "$REPO_DIR/scripts/executor-guard.sh" "$CLAUDE_DIR/hooks/executor-guard.sh"
 # template (its __HOME__ placeholder is substituted here, not committed).
 link "$REPO_DIR/scripts/watchdog-resume.sh" "$CLAUDE_DIR/watchdogs/watchdog-resume.sh"
 
+# Prune dangling symlinks this script previously created: a source file/dir
+# that moved or was deleted from the repo leaves a dead link behind (e.g. a
+# skill relocated out of skills/). Only touches symlinks pointing into
+# $REPO_DIR that no longer resolve — never regular files/dirs, never links
+# owned by other plugins/tools.
+prune_dead_links() {
+  local dir="$1" link_path target
+  for link_path in "$dir"/*; do
+    [ -L "$link_path" ] || continue
+    target="$(readlink "$link_path")"
+    case "$target" in
+      "$REPO_DIR"/*)
+        [ -e "$link_path" ] && continue
+        rm "$link_path"
+        echo "pruned: $link_path -> $target"
+        ;;
+    esac
+  done
+}
+
+for pdir in "$CLAUDE_DIR/agents" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/workflows" "$CLAUDE_DIR/channels/telegram" "$CLAUDE_DIR/watchdogs" "$CLAUDE_DIR/hooks"; do
+  prune_dead_links "$pdir"
+done
+
 WATCHDOG_PLIST="$HOME/Library/LaunchAgents/com.maddog.watchdog-resume.plist"
 mkdir -p "$HOME/Library/LaunchAgents"
 WATCHDOG_PLIST_NEW="$(sed "s|__HOME__|$HOME|g" "$REPO_DIR/scripts/com.maddog.watchdog-resume.plist")"

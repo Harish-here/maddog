@@ -1,0 +1,39 @@
+{
+  "skill": "author-agent",
+  "version": 1,
+  "candidates": [
+    {"name": "author-agent", "path": ".claude/skills/author-agent/SKILL.md"},
+    {"name": "review-agent", "path": ".claude/skills/review-agent/SKILL.md"}
+  ],
+  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p. NOTE: workflows/agent-evals.js does NOT execute skill fixtures; this file has its own runner. Descriptions are extracted from each candidate's SKILL.md at run time; probes are multi-sampled (see run-skill-routing.sh). author-route-01 demoted to non-gating 2026-08-16: against the real description it measures 3/5 (haiku reads the low-stakes Do-NOT as covering fix-against-findings). Recorded as description debt for author-agent's next overhaul — re-promote to core after the description is reworked; do not bend the fixture.",
+  "fixtures": [
+    {
+      "id": "author-route-01",
+      "kind": "happy",
+      "core": false,
+      "prompt": "Fix executor-lead's body against these eight accepted review findings and apply the changes.",
+      "expect": "author-agent"
+    },
+    {
+      "id": "author-route-02",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "I drafted a new agent file myself; review it before I ship it. I only want the verdict.",
+      "expect": "review-agent"
+    },
+    {
+      "id": "author-route-03",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Change executor-fast's frontmatter description to fix a keyword monopoly, and land the change.",
+      "expect": "author-agent"
+    },
+    {
+      "id": "author-route-04",
+      "kind": "negative",
+      "core": false,
+      "prompt": "Fix a typo in the README.",
+      "expect": "none"
+    }
+  ]
+}

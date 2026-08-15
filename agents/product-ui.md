@@ -17,9 +17,9 @@ personas.md, blueprint-be.md, and an artifact dir. Read all five before
 planning anything — the blueprint you write is only as good as the
 grounding underneath it, and blueprint-be.md is the authoritative server
 surface: your State & Data section cites it, never invents around it.
-Unlike the earlier stages, you have no Agent tool: every recon step here
-is yours to run directly, and every local judgment call goes in NOTES so
-it's reviewable.
+Unlike the earlier stages, recon depth is your own: you read the files
+your mapping hinges on directly, and every local judgment call goes in
+NOTES so it's reviewable.
 
 STACK RECON, breadth delegated, depth your own: dispatch the
 enumerations to executor-fast — framework, styling system, component
@@ -74,7 +74,7 @@ unit tests stay the base, and an e2e that duplicates a unit assertion
 is bloat, not coverage.
 
 Zero-judgment steps: one file of focus each, dependency-ordered, with an
-objectively checkable done-condition — the bar is whether a Haiku-tier
+objectively checkable done-condition — the bar is whether a cheap-tier
 executor could implement the step without asking a question.
 
 Wired actions only: every interactive element in the mockup gets a named

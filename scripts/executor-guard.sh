@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# executor-guard.sh — PreToolUse Bash guard, scoped to executor-fast ONLY.
+# executor-guard.sh — PreToolUse Bash guard, scoped to executor-fast, executor-lead, and executor-judge.
 #
-# Purpose: executor-fast runs at low reasoning effort with dontAsk permission
-# and no judgment budget for one-way doors. This hook bounces a short list of
-# irreversible/destructive Bash commands (force-delete, force-push, hard
-# reset, mass discard of uncommitted work, etc.) back to a tier that can
-# actually weigh them (executor-smart or the Advisor) instead of letting
-# executor-fast run them unattended.
+# Purpose: these executors run at reasoning effort levels or with permission modes
+# where they cannot reliably weigh one-way doors. This hook bounces a short list of
+# irreversible/destructive Bash commands (force-delete, force-push, hard reset,
+# mass discard of uncommitted work, etc.) back to the caller, forcing the executor
+# to STOP and return blocked rather than attempt the command.
 #
 # Wiring: this script is invoked two ways —
-#   (a) executor-fast's agent frontmatter (symlink installs), which only
-#       ever calls it for executor-fast, and
+#   (a) executor-fast/executor-lead/executor-judge agent frontmatter (symlink
+#       installs), which calls it for those three agents, and
 #   (b) plugin-level hooks/hooks.json (session-wide, matcher "Bash") in
 #       plugin installs, which fires for every agent and the main
 #       conversation.
-# Because (b) is not agent-scoped, the executor-fast-only restriction is
-# enforced IN-SCRIPT via the payload's .agent_type field: the guard's checks
-# run only when agent_type is "executor-fast" or ends in ":executor-fast"
-# (plugin-namespaced form). Every other case — a different agent_type, or
-# agent_type absent (e.g. the main conversation) — ALLOWS (fail-open)
-# immediately with no output.
+# Because (b) is not agent-scoped, the three-agent scoping is enforced
+# IN-SCRIPT via the payload's .agent_type field: the guard's checks run only
+# when agent_type is "executor-fast", "executor-lead", "executor-judge", or
+# ends in the plugin-namespaced forms (":executor-fast", ":executor-lead",
+# ":executor-judge"). Every other case — a different agent_type, or agent_type
+# absent (e.g. the main conversation) — ALLOWS (fail-open) immediately with no
+# output.
 #
 # IMPORTANT: Claude Code hooks FAIL OPEN. If this file is missing, not
 # executable, times out, or emits malformed JSON, the tool call proceeds as
@@ -39,7 +39,7 @@ set -uo pipefail
 
 deny() {
   local reason="$1"
-  local ctx="Blocked by executor-guard.sh: executor-fast is not permitted to weigh irreversible actions. If this command is genuinely needed, escalate to a tier (executor-smart or the Advisor) that can assert the exact expected state and run it deliberately."
+  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions. STOP and return STATUS: blocked to your caller with this reason — do not attempt the command."
   local reason_json ctx_json
   reason_json="$(printf '%s' "$reason" | jq -Rs .)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"
@@ -60,10 +60,10 @@ input="$(cat 2>/dev/null)"
 
 command -v jq >/dev/null 2>&1 || exit 0
 
-# --- scope: only run for executor-fast (or its plugin-namespaced form) ---
+# --- scope: only run for executor-fast/executor-lead/executor-judge (or plugin-namespaced forms) ---
 agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 case "$agent_type" in
-  executor-fast|*:executor-fast) : ;;
+  executor-fast|executor-lead|executor-judge|*:executor-fast|*:executor-lead|*:executor-judge) : ;;
   *) exit 0 ;;
 esac
 
