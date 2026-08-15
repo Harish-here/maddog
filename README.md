@@ -153,6 +153,27 @@ cd maddog-skills && ./install.sh
 
 Restart Claude Code sessions after installing (the agent registry snapshots at session start).
 
+### What `install.sh` does to your machine
+
+`install.sh` (symlink mode only) is honest about the surface it touches:
+
+- Symlinks `agents/`, `skills/`, and `workflows/` from this clone into
+  `~/.claude/{agents,skills,workflows}` — nothing is copied, so edits here
+  reach every new session.
+- Writes a LaunchAgent plist for the watchdog to
+  `~/Library/LaunchAgents/com.maddog.watchdog-resume.plist` but does **not**
+  load it — it prints the `launchctl bootstrap` command as a next step
+  instead of running it for you.
+- The optional Telegram notifier (`scripts/tg-notify.sh`, symlinked to
+  `~/.claude/channels/telegram/notify.sh`) only ever reads its bot token and
+  chat ID from `~/.claude/channels/telegram/.env`, which is never versioned
+  in this repo.
+- Prunes only dangling symlinks that point back into this repo (e.g. a skill
+  that moved or was deleted) — it never touches a regular file/dir or a
+  symlink owned by another plugin or tool.
+- The watchdog writes append-only logs to `~/.claude/watchdogs/resume.log`;
+  they're diagnostic only and safe to delete at any time.
+
 ## Usage
 
 ```

@@ -101,9 +101,9 @@ const VERDICT = {
 // ---------------------------------------------------------------------------
 phase('Load')
 const index = await agent(
-  `Read these four fixture files fully: /Users/harishamutha/maddog-skills/evals/executor-fast.json,
-/Users/harishamutha/maddog-skills/evals/executor-smart.json, /Users/harishamutha/maddog-skills/evals/executor-lead.json, and
-/Users/harishamutha/maddog-skills/evals/executor-judge.json. For EVERY fixture in all four files, return only
+  `Read these four fixture files fully: evals/executor-fast.json,
+evals/executor-smart.json, evals/executor-lead.json, and
+evals/executor-judge.json. For EVERY fixture in all four files, return only
 its id, the file's top-level "agent" field (which agent it targets), the absolute path of the file it came
 from, and its own "core" boolean field. Do NOT return prompts, setup.files, or expectations — those are read
 again later, per fixture.`,
@@ -197,7 +197,7 @@ const reportPath = await agent(
   `Here is the full verdict array from an agent-evals run, as JSON: ${JSON.stringify(verdicts)}.
 Here is the id -> agent mapping for every fixture attempted, as JSON: ${JSON.stringify(filtered.map((f) => ({ id: f.id, agentName: f.agentName })))}.
 Dropped (harness-error, not fixture-failure) count: ${dropped}. Total fixtures attempted: ${filtered.length}.
-Write a Markdown report to /Users/harishamutha/maddog-skills/evals/last-run.md containing:
+Write a Markdown report to evals/last-run.md containing:
 1. A summary line: passed/failed/dropped out of total.
 2. A results table with columns id | agent | pass | failed assertion (if any) — join verdicts to agent by id.
 3. A section listing each failure with its full reasoning and its working directory (under ${WORK_DIR}) so a
