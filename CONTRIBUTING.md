@@ -2,7 +2,7 @@
 
 ## Branches and PRs
 
-`main` is protected — changes land by pull request, not by pushing directly.
+`main` is protected: force-pushes and deletions are blocked and changes land by pull request; the sole maintainer can currently bypass review, which tightens to required approvals once a second maintainer exists.
 
 ## Commit style
 
@@ -40,3 +40,7 @@ be silent in production.
 When the shipped set of agents or skills changes (added, renamed, removed),
 bump `version` in `.claude-plugin/plugin.json` and add an entry to
 `CHANGELOG.md`.
+
+## Releases
+
+Before submitting or releasing, run `claude plugin validate .claude-plugin/plugin.json` — invoking the validator at the repo root validates only the marketplace manifest and never exercises the plugin. Known, accepted warning: CLAUDE.md at the plugin root is maintainer context (instructions for developing this repo), not consumer context, so the 'not loaded as project context' warning is expected and --strict is deliberately not this repo's gate. Tag releases as both `v<version>` and `<name>--v<version>` (the plugin CLI's convention), with plugin.json, CHANGELOG, and tags agreeing on the version.

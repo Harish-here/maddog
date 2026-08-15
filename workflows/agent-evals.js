@@ -41,7 +41,7 @@ const ONLY = args?.only ?? null
 const RUN_ALL = args?.all === true
 const JUDGE_MODEL = args?.judgeModel ?? 'sonnet'
 const RUN_EFFORT = args?.runEffort ?? 'medium'
-const WORK_DIR = args?.workDir ?? '/private/tmp/claude-501/-Users-harishamutha-maddog-skills/fc6c2113-038a-487d-96d1-e6b0680e0500/scratchpad/eval-runs'
+const WORK_DIR = args?.workDir ?? '/tmp/maddog-eval-runs'
 
 // Fixture id -> pinned run model. CLOSED mapping: haiku for executor-fast fixtures,
 // sonnet for executor-smart fixtures, opus for executor-lead and executor-judge fixtures.
