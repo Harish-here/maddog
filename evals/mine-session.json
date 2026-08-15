@@ -1,0 +1,53 @@
+{
+  "skill": "mine-session",
+  "version": 1,
+  "harness": "evals/run-skill-routing.sh evals/mine-session.json — fresh-session routing probes; candidate descriptions extracted from SKILL.md at run time; multi-sampled (default 5, pass at 4). mine-arm-01 is report-only (expect null): its answers settle whether the arm trigger fires model-invoked on a natural session opening. Candidates are THIS repo's registry (author-agent is repo-internal): a green run clears routing within this registry, not a foreign install's. mine-institution-01 was re-baselined 2026-08-16: measured routing sends session-lesson asks to mining first (3/5 mine-session, 2/5 none, 0/5 author-agent over 5 samples); institutionalization then flows through the authoring path per both bodies. Bimodal, hence non-gating.",
+  "candidates": [
+    {"name": "mine-session", "path": "skills/mine-session/SKILL.md"},
+    {"name": "author-agent", "path": ".claude/skills/author-agent/SKILL.md"}
+  ],
+  "fixtures": [
+    {
+      "id": "mine-arm-01",
+      "kind": "open",
+      "core": false,
+      "prompt": "We're starting a big refactor of the auth layer and I expect a lot of back-and-forth.",
+      "expect": null
+    },
+    {
+      "id": "mine-bare-01",
+      "kind": "negative",
+      "core": true,
+      "prompt": "Fix the retry backoff in src/http.",
+      "expect": "none"
+    },
+    {
+      "id": "mine-distill-01",
+      "kind": "happy",
+      "core": true,
+      "prompt": "We're wrapping up — distill what we learned about how we worked this session.",
+      "expect": "mine-session"
+    },
+    {
+      "id": "mine-summary-01",
+      "kind": "negative",
+      "core": true,
+      "prompt": "Summarize what we did this session.",
+      "expect": "none"
+    },
+    {
+      "id": "mine-author-01",
+      "kind": "boundary",
+      "core": false,
+      "prompt": "Rewrite executor-fast's description to fix a keyword monopoly and land it.",
+      "expect": "author-agent"
+    },
+    {
+      "id": "mine-institution-01",
+      "kind": "boundary",
+      "core": false,
+      "prompt": "The lesson from this session should become a skill.",
+      "expect": "mine-session"
+    }
+  ]
+}

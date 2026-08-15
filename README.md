@@ -100,6 +100,7 @@ skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
+  mine-session/       # /mine-session — arm capture early, distill at session end; mines surprise, not activity
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
