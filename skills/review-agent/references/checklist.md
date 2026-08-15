@@ -35,11 +35,14 @@ conversation the agent has no path to reach.
 
 ## Ordering & budget
 
-Run dimensions in this order: 2, 3, 4, 5 first, then 0, 1, 6, 7, 8. Cap
-dimension 8 (token-weight) at descriptions and always-resident skill bodies
-— never agent bodies, which are pay-per-dispatch and not a token-weight
-concern. A dimension with no defects is reported "checked-clean: <what was
-read>" — never padded with restated procedure to look thorough.
+Run dimensions in this order: 0 first, then 2, 3, 4, 5, 1, 6, 7, 8. Dimension
+0 is cheap and is the precondition the others assume — reasoning about a
+file's content before confirming it is well-formed risks reasoning about raw
+tool-call residue as if it were intent. Cap dimension 8 (token-weight) at
+descriptions and always-resident skill bodies — never agent bodies, which are
+pay-per-dispatch and not a token-weight concern. A dimension with no defects
+is reported "checked-clean: <what was read>" — never padded with restated
+procedure to look thorough.
 
 ## Output contract
 
@@ -215,7 +218,7 @@ commit entirely. The output contract's type/scenario fields and dimension
 
 ### Provenance
 
-Distilled 2026-08-14 from two opus premortems (executor family revamp: 18
+Distilled 2026-08-14 from three opus premortems (executor family revamp: 18
 findings; advisor-mode revamp: 14 findings; checklist premortem: 19
 findings), PR #2 of maddog-skills.
 

@@ -1,14 +1,14 @@
 export const meta = {
   name: 'agent-evals',
   description: 'Run the behavioural fixtures in evals/ against the real executor agents and grade the results',
-  whenToUse: `Run this to check whether the LAWS in agents/executor-fast.md and agents/executor-smart.md actually
+  whenToUse: `Run this to check whether the LAWS in agents/executor-fast.md, agents/executor-smart.md, agents/executor-lead.md, and agents/executor-judge.md actually
 fire — each fixture in evals/ dispatches a real task to a real agent and a judge grades the return against
 expect.status / expect.must / expect.must_not / rubric.
 
 INTEGRITY RULES (the whole point of the harness — do not "clean up" these away):
   (a) Run models are PINNED per fixture: executor-fast always runs on haiku, executor-smart always runs on
-      sonnet. Never let the Run stage inherit the session model — an eval of a Haiku agent that actually runs
-      on Opus measures nothing.
+      sonnet, executor-lead always runs on opus, executor-judge always runs on opus. Never let the Run stage
+      inherit the session model — an eval of a Haiku agent that actually runs on Opus measures nothing.
   (b) Load, Setup, Judge and Report deliberately OMIT agentType, so they run on the default workflow agent.
       The harness must never depend on the agents under test — if Setup ran as executor-fast and
       executor-fast were broken, the failure would masquerade as fixture failures.
@@ -44,8 +44,8 @@ const RUN_EFFORT = args?.runEffort ?? 'medium'
 const WORK_DIR = args?.workDir ?? '/private/tmp/claude-501/-Users-harishamutha-maddog-skills/fc6c2113-038a-487d-96d1-e6b0680e0500/scratchpad/eval-runs'
 
 // Fixture id -> pinned run model. CLOSED mapping: haiku for executor-fast fixtures,
-// sonnet for executor-smart fixtures. An eval that let this inherit the session
-// model would no longer measure the agent it claims to.
+// sonnet for executor-smart fixtures, opus for executor-lead and executor-judge fixtures.
+// An eval that let this inherit the session model would no longer measure the agent it claims to.
 const RUN_MODEL = { 'executor-fast': 'haiku', 'executor-smart': 'sonnet', 'executor-lead': 'opus', 'executor-judge': 'opus' }
 
 const INDEX = {

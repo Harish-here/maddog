@@ -98,6 +98,7 @@ agents/
   product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
+  review-agent/       # /review-agent — design review of agent definitions and routing descriptions before they ship
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
@@ -111,7 +112,7 @@ evals/
   executor-judge.json # lean set: happy CHANGE-REVIEW + trap fix-leak
   README.md           # fixture schema, and why the traps are the point
 scripts/
-  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast
+  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast, executor-lead, executor-judge
   tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
   watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)

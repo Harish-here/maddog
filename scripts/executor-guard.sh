@@ -8,17 +8,18 @@
 # to STOP and return blocked rather than attempt the command.
 #
 # Wiring: this script is invoked two ways —
-#   (a) executor-fast's agent frontmatter (symlink installs), which only
-#       ever calls it for executor-fast, and
+#   (a) executor-fast/executor-lead/executor-judge agent frontmatter (symlink
+#       installs), which calls it for those three agents, and
 #   (b) plugin-level hooks/hooks.json (session-wide, matcher "Bash") in
 #       plugin installs, which fires for every agent and the main
 #       conversation.
-# Because (b) is not agent-scoped, the executor-fast-only restriction is
-# enforced IN-SCRIPT via the payload's .agent_type field: the guard's checks
-# run only when agent_type is "executor-fast" or ends in ":executor-fast"
-# (plugin-namespaced form). Every other case — a different agent_type, or
-# agent_type absent (e.g. the main conversation) — ALLOWS (fail-open)
-# immediately with no output.
+# Because (b) is not agent-scoped, the three-agent scoping is enforced
+# IN-SCRIPT via the payload's .agent_type field: the guard's checks run only
+# when agent_type is "executor-fast", "executor-lead", "executor-judge", or
+# ends in the plugin-namespaced forms (":executor-fast", ":executor-lead",
+# ":executor-judge"). Every other case — a different agent_type, or agent_type
+# absent (e.g. the main conversation) — ALLOWS (fail-open) immediately with no
+# output.
 #
 # IMPORTANT: Claude Code hooks FAIL OPEN. If this file is missing, not
 # executable, times out, or emits malformed JSON, the tool call proceeds as

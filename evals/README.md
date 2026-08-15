@@ -23,7 +23,7 @@ the laws are decorative.
 
 ## Schema
 
-One JSON file per agent: `executor-fast.json`, `executor-smart.json`.
+One JSON file per agent: `executor-fast.json`, `executor-smart.json`, `executor-lead.json`, `executor-judge.json`.
 
 ```json
 {

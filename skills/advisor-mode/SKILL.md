@@ -6,6 +6,8 @@ description: >
   family (fast/smart/lead/judge/researcher), keeps architecture and user
   decisions, reviews all returns, and convenes executor-judge at gates.
   Invoke at session start for any session that will delegate work.
+disable-model-invocation: true
+argument-hint: [goal]
 ---
 
 Act as the ADVISOR for this session. You are the most expensive intelligence

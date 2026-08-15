@@ -41,7 +41,11 @@ discharges this whole section in one command.
   pre-authorizations were bought while the user was present (core, BUDGET 3);
   VERIFY they cover every tool this run will need BEFORE launching; run
   write dispatches foreground; then CONFIRM each long dispatch actually
-  started — a stuck permission prompt once idled a run for hours.
+  started — a stuck permission prompt once idled a run for hours. If the
+  session had no present phase at all — no pre-clearance was ever bought,
+  because there was no one present to buy it from — unattended dispatch is
+  limited to tools already allowlisted in settings; anything beyond that
+  blocks and goes to the surfacing batch, never gets attempted on a guess.
 - Watching and acting are separate invocations: a watch job (CI, deploy,
   queue) is a cron/monitor; the consequent irreversible step waits for the
   user's return or its own pre-authorization. Never bundle them.
