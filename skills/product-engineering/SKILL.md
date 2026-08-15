@@ -2,7 +2,7 @@
 name: product-engineering
 description: Run the product-engineering pipeline for one feature — PM → UX → BE → UI planning, implementation via sdd-task-loop, then QA that verifies against the artifacts and opens the PR. Not for small tweaks, bug fixes, or single-component changes — dispatch an executor directly for those.
 disable-model-invocation: true
-argument-hint: [feature ask, or "resume <slug> from pm|ux|be|ui|execute|qa"] [target-repo-path]
+argument-hint: '[feature ask, or "resume <slug> from pm|ux|be|ui|execute|qa"] [target-repo-path]'
 ---
 Act as the ORCHESTRATOR for this pipeline. Do NOT do the discipline work
 yourself — PM, UX, BE, UI, and QA judgment lives in the agents; you
