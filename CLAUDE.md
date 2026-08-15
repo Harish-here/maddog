@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-maddog-skills is a Claude Code plugin: agent definitions, skills, and one workflow
+maddog is a Claude Code plugin: agent definitions, skills, and one workflow
 script that install into `~/.claude/`. There is **no application code** — the
 deliverables are Markdown prompts. Nothing here compiles, and nothing runs in CI.
 
@@ -27,9 +27,9 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resu
 
 ## The two install modes are mutually exclusive
 
-- **Plugin:** `/plugin marketplace add Harish-here/maddog-skills` then
-  `/plugin install maddog-skills@maddog`. Skills arrive namespaced
-  (`/maddog-skills:grind`). **Does not ship `workflows/`.**
+- **Plugin:** `/plugin marketplace add Harish-here/maddog` then
+  `/plugin install maddog@maddog`. Skills arrive namespaced
+  (`/maddog:grind`). **Does not ship `workflows/`.**
 - **Symlink:** `./install.sh`. Skills un-namespaced (`/grind`). The clone stays the
   single source of truth — edit here, every session reads the latest.
 
