@@ -98,7 +98,6 @@ agents/
   product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
-  review-agent/       # /review-agent — design review of agent definitions and routing descriptions before they ship
   grind/              # /grind <task> — one mechanical task, isolated context
   grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
@@ -118,11 +117,16 @@ scripts/
   com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
 ```
 
+`review-agent` is repo-internal tooling living in `.claude/skills/review-agent/` —
+auto-discovered when working in this repo, not shipped in the plugin.
+
 Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
 
 ## Install modes
 
 Two mutually exclusive ways to install. Pick ONE — installing both gives you duplicate agents.
+
+**Prerequisite:** `product-qa`'s live-drive verification requires the playwright MCP browser tools. Neither install mode installs it — configure it separately, or `product-qa` returns blocked at its prerequisite check.
 
 **Plugin (recommended):**
 ```
@@ -160,7 +164,7 @@ Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*
 
 ## The product engineering team
 
-A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs the full pipeline — `product-pm` (Opus) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (Opus) designs the journey against a baked-in UX charter and has the mockup rendered at Sonnet prices; `product-be` (Sonnet) turns every UX data need into a named server contract (read-path completeness, mandatory migration rehearsal) in `blueprint-be.md`; `product-ui` (Sonnet) maps the mockup to the repo's real components against those contracts, with every screen/state step carrying its pinning e2e in-task. The orchestrator then briefs both blueprints into `sdd-task-loop` for execution, and `product-qa` (Opus) closes: verifies the branch against the artifacts (gates, e2e coverage audit, live drive, exploratory pass, full traceability matrix), routes typed bugs back to the responsible stage, and opens the PR only at zero open bugs — deferral is the user's call, merge is never the pipeline's. Artifacts land in the target repo under `docs/product/<slug>/`. Opus tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (Haiku), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
+A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs the full pipeline — `product-pm` (top-tier) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (top-tier) designs the journey against a baked-in UX charter and has the mockup rendered at mid-tier prices; `product-be` (mid-tier) turns every UX data need into a named server contract (read-path completeness, mandatory migration rehearsal) in `blueprint-be.md`; `product-ui` (mid-tier) maps the mockup to the repo's real components against those contracts, with every screen/state step carrying its pinning e2e in-task. The orchestrator then briefs both blueprints into `sdd-task-loop` for execution, and `product-qa` (top-tier) closes: verifies the branch against the artifacts (gates, e2e coverage audit, live drive, exploratory pass, full traceability matrix), routes typed bugs back to the responsible stage, and opens the PR only at zero open bugs — deferral is the user's call, merge is never the pipeline's. Artifacts land in the target repo under `docs/product/<slug>/`. Top-tier tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (cheap-tier), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
 
 ## The sdd-task-loop workflow
 

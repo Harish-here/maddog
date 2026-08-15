@@ -49,7 +49,9 @@ procedure to look thorough.
 Each finding: **type** (load-bearing | cosmetic | unverified assumption) +
 **dimension** + **file:line** + a **concrete failure scenario** (what
 happens when this line is followed, not what it "could" mean) + replacement
-text where short. File each defect once, under its primary dimension;
+text where short. Where the correct fix is a deletion, or a caller decision
+between two valid repairs, say so — naming the alternatives without choosing
+is the expected shape. File each defect once, under its primary dimension;
 elsewhere, cross-reference — never restate. The reviewer's own return format
 carries STATUS/VERDICT; this contract governs the findings inside it, not
 the envelope.
@@ -92,6 +94,43 @@ sides, not a negative one on either.
 **Output shape:** one finding per monopoly word, per double-match shape, per
 uncovered shape, per weak-negative tiebreak; quote both competing
 descriptions.
+
+**Description shape (family invariant):** every executor-family description
+follows the same five slots, in the same order; only slot content differs
+per agent. A missing or reordered slot is a finding.
+
+1. Positive claim — task shape + budget tier in one sentence, the shape
+   keyword in CAPS.
+2. Concrete instances — a short list grounding the shape.
+3. Positive trigger — a "Use when…" sentence; this is the positive
+   discriminator the partition test requires.
+4. Boundary redirects — every "Do NOT use for X" names the correct
+   neighbor (tie-breaks such as repo-local-executor preference ride here);
+   a bare prohibition with no destination is a finding.
+5. Structural invariant — optional; include only when it changes what the
+   caller can expect back at dispatch time.
+
+Each boundary is stated ONCE: an inline counter-example inside a shape
+clause that repeats a trailing Do-NOT redirect is duplication — flag it.
+
+Exemplar — executor-fast, slots labelled:
+[1] "Runs fully-specified MECHANICAL tasks on a cheap, fast model:"
+[2] "bulk find/replace, applying a known edit across many files, running
+tests or linters, grep/glob search, extracting or reformatting data,
+scaffolding boilerplate."
+[3] "Use when the task has objective acceptance criteria and needs zero
+judgment."
+[4] "Do NOT use for ambiguous refactors, design choices, or any task where
+a plausible-but-wrong output is likely — those go to executor-smart." (plus
+the repo-local tie-break and the Advisor redirect)
+[5] absent — optional here; executor-judge's "it holds no Write or Edit,
+and a judge that fixes has stopped being a judge" is the canonical instance.
+
+**Body structure:** classify the agent's dimension — EXECUTION or PERSONA —
+from the table in `references/agent-template.md`, then review the body against
+that overlay's element order and rules (law selection, example fidelity,
+artifact contract). A missing or reordered element, or an agent mixing
+dimensions, is a load-bearing finding.
 
 ### 3. NORMATIVE COHERENCE
 **Subject:** the body's normative statements against each other.
