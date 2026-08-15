@@ -1,0 +1,35 @@
+{
+  "skill": "author-agent",
+  "version": 1,
+  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p. NOTE: workflows/agent-evals.js does NOT execute skill fixtures; this file has its own runner. KNOWN LIMIT: the runner's probe prompt hardcodes the two skills' discriminator phrases — if either description is reworded, update the prompt (v2: extract descriptions from the SKILL.md files at runtime).",
+  "fixtures": [
+    {
+      "id": "author-route-01",
+      "kind": "happy",
+      "core": true,
+      "prompt": "Fix executor-lead's body against these eight accepted review findings and apply the changes.",
+      "expect": "author-agent"
+    },
+    {
+      "id": "author-route-02",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "I drafted a new agent file myself; review it before I ship it. I only want the verdict.",
+      "expect": "review-agent"
+    },
+    {
+      "id": "author-route-03",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Change executor-fast's frontmatter description to fix a keyword monopoly, and land the change.",
+      "expect": "author-agent"
+    },
+    {
+      "id": "author-route-04",
+      "kind": "negative",
+      "core": false,
+      "prompt": "Fix a typo in the README.",
+      "expect": "none"
+    }
+  ]
+}

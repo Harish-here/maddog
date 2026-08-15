@@ -1,9 +1,12 @@
 ---
 name: review-agent
 description: >
-  Use when an agent definition, routing description, or always-resident skill
-  text needs a design review before it ships — new agent files, rewrites to
-  an existing agent's body, or any change to a frontmatter description.
+  Use when agent-definition, routing-description, or always-resident skill
+  text needs a design review before it ships and the deliverable is the
+  verdict itself — a draft or a rewrite handed over for judgment, or any
+  change to a frontmatter description. When authoring the fix and applying
+  it are part of the same job, that is author-agent, which calls this
+  review as its gate step.
 ---
 
 1. Assemble the evidence set: the target file(s); every file in `agents/`;
