@@ -69,12 +69,12 @@ Two orthogonal axes.
 A deep architecture question answered by "quote the code with file:line" is still
 extraction, and extraction is fast-tier.
 
-| Agent | Model | Takes |
+| Agent | Tier | Takes |
 |---|---|---|
-| `executor-fast` | haiku | mechanical work with objective acceptance criteria |
-| `executor-smart` | sonnet | one task carrying local judgment inside a fixed boundary |
-| `executor-lead` | opus | judgment with memory for ONE package: PLAN (open decomposition → frozen plan), CAMPAIGN (unfreezable, evidence-driven probes), DELIVER (decided scope entangled with live reality). Burst-dispatched; never orchestrates — execution belongs to workflow scripts |
-| `executor-judge` | opus | adversarial gate verdicts on another intelligence's output: DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE. Cannot fix by construction |
+| `executor-fast` | cheap | mechanical work with objective acceptance criteria |
+| `executor-smart` | mid | one task carrying local judgment inside a fixed boundary |
+| `executor-lead` | top | judgment with memory for ONE package: PLAN (open decomposition → frozen plan), CAMPAIGN (unfreezable, evidence-driven probes), DELIVER (decided scope entangled with live reality). Burst-dispatched; never orchestrates — execution belongs to workflow scripts |
+| `executor-judge` | top | adversarial gate verdicts on another intelligence's output: DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE. Cannot fix by construction |
 
 `executor-fast` classifies every task into one of ten modes — RECON, EXTRACT, VERIFY,
 EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT — each carrying one named
@@ -93,8 +93,8 @@ Artifacts land in the **target** repo under `docs/product/<slug>/`, never in thi
 one. The per-stage gates live in `skills/product-engineering/SKILL.md`.
 
 **Intelligence is budgeted, never inherited.** Every dispatch pins its model
-explicitly — in `workflows/sdd-task-loop.js`, haiku for lint/dossier/ship mechanics,
-sonnet for implementation and dimension reviews, opus only for adversarial synthesis.
+explicitly — in `workflows/sdd-task-loop.js`, cheap-tier for lint/dossier/ship mechanics,
+mid-tier for implementation and dimension reviews, top-tier only for adversarial synthesis.
 When adding a dispatch, pin the tier deliberately; silently inheriting the caller's
 model is a bug, not a default. The full doctrine — judgment classes as identity, model pins as an exchange-rate
 table stated once — lives in the README; agent files are defined by judgment class
