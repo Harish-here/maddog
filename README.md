@@ -1,4 +1,4 @@
-# maddog-skills
+# maddog
 
 A five-role advisor–executor hierarchy for [Claude Code](https://claude.com/claude-code): global agents and skills that run your coding agent as an **organisation**, not an assistant.
 
@@ -131,10 +131,10 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 
 **Plugin (recommended):**
 ```
-/plugin marketplace add Harish-here/maddog-skills
-/plugin install maddog-skills@maddog
+/plugin marketplace add Harish-here/maddog
+/plugin install maddog@maddog
 ```
-- Skills arrive namespaced (`/maddog-skills:grind`).
+- Skills arrive namespaced (`/maddog:grind`).
 - Does NOT ship `workflows/` (`sdd-task-loop`, `agent-evals`) — the plugin format has no workflow component yet; the day it does, we ship them.
 - Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
   - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
@@ -143,8 +143,8 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 
 **Symlink (maintainer / power-user mode):**
 ```bash
-git clone https://github.com/Harish-here/maddog-skills.git
-cd maddog-skills && ./install.sh
+git clone https://github.com/Harish-here/maddog.git
+cd maddog && ./install.sh
 ```
 - Skills un-namespaced (`/grind`); the clone stays the single source of truth — edits land in every new session.
 - Ships everything the plugin can't: `workflows/`, the watchdog LaunchAgent, the Telegram notify script.

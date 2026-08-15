@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Symlinks maddog-skills agents and skills into ~/.claude so Claude Code
+# Symlinks maddog agents and skills into ~/.claude so Claude Code
 # picks them up globally. Idempotent: existing symlinks are re-pointed;
 # existing REAL files/dirs are backed up to <name>.bak first, never deleted.
 set -euo pipefail
