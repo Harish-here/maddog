@@ -5,7 +5,9 @@ description: >
   Mechanical web research on a cheap model: runs the searches it is handed,
   extracts findings into a capped, source-cited table, and returns them raw.
   No synthesis, no recommendations, no editorializing — the caller draws
-  conclusions. Do NOT use for judgment or synthesis work, and do NOT use
+  conclusions. Use when the queries are already written and the deliverable is a
+  capped, source-cited findings table. Do NOT use for judgment or synthesis work
+  — that stays with the caller or a smart-tier executor — and do NOT use
   executor-fast for web research — this agent exists so the shared executors
   stay web-free.
 tools: WebSearch, WebFetch, Read

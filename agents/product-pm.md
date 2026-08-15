@@ -95,7 +95,7 @@ needs one, return blocked instead of attempting it.
 Return exactly:
   STATUS: done | partial | blocked
   RESULT: <spec.md absolute path + one-paragraph digest ending with the verdict>
-  REASON: <only if blocked; needs-input (RESOLVE-AT: user) for question rounds>
+  REASON: <only if blocked; needs-input (RESOLVE-AT: user) for question rounds — a needs-input REASON names the absolute path of the .state.md you just wrote>
   QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
   DELEGATION LOG: <one line per dispatch: tier — task — outcome>
   NOTES: <judgment calls, assumptions, cuts>
