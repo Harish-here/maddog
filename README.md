@@ -37,7 +37,11 @@ Intelligence is the budget, and it has two axes: **tier** (quality of judgment) 
 - Top-tier intelligence concentrates at exactly three kinds of work: open
   decomposition (including its small, live-entangled form), unfreezable
   evidence-driven campaigns, and adversarial gate verdicts on another
-  intelligence's output.
+  intelligence's output. Buy the open-decomposition/campaign kind only when
+  the package must survive outside the advisor's own context — absence,
+  parallelism with the main thread, or context scarcity; an attended
+  package held as the session's main thread is judgment the advisor's own
+  ledger already carries, and stays with the advisor.
 
 Judgment classes are decoupled from models. The table below is an
 **exchange-rate table** — today's cheapest model clearing each class — not the
