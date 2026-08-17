@@ -19,6 +19,22 @@ description: >
    ratchets by decision, never by drift.
 
 1. MODE.
+   SCALED: fire when the work alters the MODEL — a new abstraction, a
+   doctrine change, an invariant crossing files; skip straight to the
+   branches below when the work edits text within the standing model. The
+   model flow ADDS to findings-first, it never replaces it: the incumbent
+   text still gets its sweep, and the packet may drop only indicted
+   lines. The move: build a diagrammed mental-model artifact — derived
+   from evidence and verified canon; usage is evidence of failure modes,
+   never the spec — publish it, discuss the inferences with the user, and
+   lock their decisions on the model. The law: the model is
+   advisor-authored design and is never self-judged — it goes to the
+   judge before any packet is authored against it; the packet is then
+   authored against the locked model. A fired trigger re-opens step 0:
+   the model phase gets its own cost line before the artifact is built —
+   scope ratchets by decision, never by drift. (Two model gates, 35
+   findings total — 26 + 9, one a silent safety defect — all before a
+   line of skill text existed.)
    - CREATE (agent): classify the dimension FIRST from the table in
      `.claude/skills/review-agent/references/agent-template.md` — an agent
      mixing dimensions is stillborn, not fixable later. Author the
@@ -48,9 +64,10 @@ description: >
    (P1..Pn). The packet opens with the step-0 line and the user's green
    light — the gate refuses a headerless packet. Each item names its
    target file and either its anchor plus the replacement text (OVERHAUL)
-   or "new file — full contents follow" (CREATE), plus the finding or
-   template rule it answers. Item headers and markers are packet
-   scaffolding, never file content. The packet is the single authority —
+   or "new file — full contents follow" (CREATE), plus
+   the finding, template rule, or locked-model section it
+   answers. Item headers and markers are packet scaffolding,
+   never file content. The packet is the single authority —
    apply dispatches read it, never chat memory.
 
 3. GATE. Dispatch ONE top-tier judge per the review-agent procedure:
