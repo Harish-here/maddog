@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.3.0] - 2026-08-17
 
 ### Added
-- `release`: internal release-engineering skill (`/release`) encoding the six-phase ritual (DECLARE→SEAL), REMEDY incident lane, and twelve laws; locked design model committed alongside as its reference
+- `release`: internal release-engineering skill (`/release`) encoding the six-phase ritual (DECLARE→SEAL), REMEDY incident lane, and twelve laws; locked design model committed alongside as its reference (`f736c6a`)
 
 ## [2.2.0] - 2026-08-17
 
