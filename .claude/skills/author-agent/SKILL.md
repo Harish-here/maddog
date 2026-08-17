@@ -24,13 +24,16 @@ description: >
    branches below when the work edits text within the standing model. The
    model flow ADDS to findings-first, it never replaces it: the incumbent
    text still gets its sweep, and the packet may drop only indicted
-   lines. The move: build a diagrammed mental-model artifact — derived
-   from evidence and verified canon; usage is evidence of failure modes,
-   never the spec — publish it, discuss the inferences with the user, and
-   lock their decisions on the model. The law: the model is
-   advisor-authored design and is never self-judged — it goes to the
-   judge before any packet is authored against it; the packet is then
-   authored against the locked model. A fired trigger re-opens step 0:
+   lines. The move: author the model as ONE canonical lean markdown file
+   — derived from evidence and verified canon; usage is evidence of
+   failure modes, never the spec. The published rendered artifact (HTML,
+   diagrams) is a VIEW of that file for the user only: render it FROM the
+   .md, never the reverse, and never hand it to a dispatched agent — the
+   judge and every apply hand read the canonical .md, which packets cite.
+   Discuss the inferences with the user and lock their decisions on the
+   model. The law: the model is advisor-authored design and is never
+   self-judged — it goes to the judge before any packet is authored
+   against it; the packet is then authored against the locked model. A fired trigger re-opens step 0:
    the model phase gets its own cost line before the artifact is built —
    scope ratchets by decision, never by drift. (Two model gates, 35
    findings total — 26 + 9, one a silent safety defect — all before a
