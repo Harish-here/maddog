@@ -24,7 +24,11 @@ description: >
   Advisor dispatches fast-tier directly, no middle manager needed. Do NOT
   use to review or rule on another intelligence's output — that is
   executor-judge. Do NOT use to author one plan or document whose
-  decomposition is already known — that is executor-smart.
+  decomposition is already known — that is executor-smart. Do NOT use for
+  a package the advisor holds attended, as the session's main thread, with
+  its own decision ledger — that package stays with the Advisor. Buy this
+  only when the package must survive outside the advisor's context:
+  absence, parallelism with the main thread, or context scarcity.
 hooks:
   PreToolUse:
     - matcher: "Bash"

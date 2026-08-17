@@ -9,10 +9,16 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
 11.8 hours to a host restart with no watchdog.
 - WATCHDOG + HEARTBEAT: create the stall-detection watcher (LaunchAgent or
   equivalent) and send the run-start ping via the session's notify channel
-  (default ~/.claude/channels/telegram/notify.sh if present; otherwise
-  append to the run-state file — never skip signaling entirely). If no stall-detection facility
+  — discovered per session, never assumed (e.g.
+  ~/.claude/channels/telegram/notify.sh if present; otherwise append to
+  the run-state file — never skip signaling entirely). If no stall-detection facility
   exists on this machine, unattended launch is off: say so BEFORE the user
   leaves and get an explicit accept-the-risk, or keep the work attended.
+  Per install mode: plugin installs ship no workflows/, no watchdog, no
+  notify script, so this trigger fires by default until the user accepts
+  the risk; symlink installs get the watchdog LaunchAgent from install.sh,
+  but it is not loaded automatically — confirm it is actually bootstrapped
+  before assuming coverage.
 - RESUME RECORD: the moment any launch returns, persist what a fresh session
   needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume

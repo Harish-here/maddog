@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] - 2026-08-17
+
+### Changed
+- `advisor-mode`: full SKILL.md rewrite — BIND contract-checked class binding with visible degradation, never silent substitution; routing redefined as six classes bonded by judgment (mechanical/local/iterated) or structural property (adversarial/web-perception/kept), each with a tier-matched temptation example; four-category own-hands charter (claim verification, state artifacts, session bootstrap, short synchronous probes); PURPOSE line added to the dispatch contract; proportional acceptance spot-checking; BIND and CLOSE stated as prohibitions, not procedures (`367b92d`)
+- `absent.md`: channel discovery is per-session, never assumed, with a per-install-mode trigger — plugin installs ship no watchdog/notify script by default; symlink installs must confirm the watchdog LaunchAgent is actually bootstrapped, not just written (`367b92d`)
+- `executor-lead`, README: iterated class gains the attended/context qualifier — buy lead only when the package must survive outside the advisor's own context (absence, parallelism with the main thread, context scarcity); an attended package held as the session's main thread stays with the advisor's own ledger (`dde6b4f`)
+
 ## [2.0.0] - 2026-08-16
 
 ### Changed
