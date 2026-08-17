@@ -24,13 +24,16 @@ description: >
    branches below when the work edits text within the standing model. The
    model flow ADDS to findings-first, it never replaces it: the incumbent
    text still gets its sweep, and the packet may drop only indicted
-   lines. The move: build a diagrammed mental-model artifact — derived
-   from evidence and verified canon; usage is evidence of failure modes,
-   never the spec — publish it, discuss the inferences with the user, and
-   lock their decisions on the model. The law: the model is
-   advisor-authored design and is never self-judged — it goes to the
-   judge before any packet is authored against it; the packet is then
-   authored against the locked model. A fired trigger re-opens step 0:
+   lines. The move: author the model as ONE canonical lean markdown file
+   — derived from evidence and verified canon; usage is evidence of
+   failure modes, never the spec. The published rendered artifact (HTML,
+   diagrams) is a VIEW of that file for the user only: render it FROM the
+   .md, never the reverse, and never hand it to a dispatched agent — the
+   judge and every apply hand read the canonical .md, which packets cite.
+   Discuss the inferences with the user and lock their decisions on the
+   model. The law: the model is advisor-authored design and is never
+   self-judged — it goes to the judge before any packet is authored
+   against it; the packet is then authored against the locked model. A fired trigger re-opens step 0:
    the model phase gets its own cost line before the artifact is built —
    scope ratchets by decision, never by drift. (Two model gates, 35
    findings total — 26 + 9, one a silent safety defect — all before a
@@ -79,13 +82,16 @@ description: >
    rules; it never authors replacement text.
 
 4. REWORK LOOP. Fold the named cuts exactly — no more, no less. Rework
-   each REWORK per its finding. Re-gate ONLY the changed items, with the
-   SAME judge instance where it is still reachable — its earlier
-   precedents bind, and it audits the cut-folding. If that instance is
-   gone, dispatch a fresh judge and supply every prior ruling verbatim; a
-   fresh judge with no precedents supplied is not a re-gate. Repeat until
-   every item clears. The author never self-clears an item, whatever the
-   round count.
+   each REWORK per its finding. Re-gate ONLY the changed items. Use the
+   SAME judge instance while it is fresh — back-to-back rounds, transcript
+   still hot; once it has idled past cache life or its transcript has
+   grown heavy, resuming re-pays the whole transcript uncached, and a
+   fresh judge supplied every prior ruling verbatim (the filed rulings
+   are compact) is the cheaper equivalent and counts as the same re-gate.
+   Either way the earlier precedents bind and the judge audits the
+   cut-folding. A fresh judge with no precedents supplied is never a
+   re-gate. Repeat until every item clears. The author never self-clears
+   an item, whatever the round count.
 
 5. USER APPROVAL. Final verbatim texts on screen, referenced by item ID,
    each item citing the gate verdict that cleared it — an item with no
