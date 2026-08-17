@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.2.0] - 2026-08-17
 
 ### Removed
-- `grind`, `grind-pro` skills — `advisor-mode`'s judgment-class routing supersedes the two thin dispatch skills; agents (`executor-fast`, `executor-smart`) unchanged.
+- `grind`, `grind-pro` skills — `advisor-mode`'s judgment-class routing supersedes the two thin dispatch skills; agents (`executor-fast`, `executor-smart`) unchanged (`849edbb`)
 
 ## [2.1.0] - 2026-08-17
 
