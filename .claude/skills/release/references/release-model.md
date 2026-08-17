@@ -55,8 +55,13 @@ check nobody can run under pressure is not a check.
 - E15: local clones drift; decisions or checks on unsynced trees target
   something other than what ships.
 - E16: install.sh is destructive to $CLAUDE_DIR and reads CLAUDE_DIR from
-  the environment; an EMPTY sandbox exercises neither the backup branch nor
-  foreign-link pruning — only a populated fixture does.
+  the environment; its sole deletion path (`rm`) fires only on a DEAD
+  REPO-OWNED link — foreign links always survive (negative control). An
+  EMPTY sandbox exercises neither the backup (`mv`) branch nor the prune
+  branch — only a fixture populated with live repo links, one dead repo
+  link, one foreign link, and one real file at a link target does.
+  (Wording corrected to observed install.sh behavior at the adoption RULE;
+  earlier revisions said "foreign-link pruning", a mislabel.)
 - E17: judge-demonstrated — a pure revert can DELETE validate.yml
   (`git revert -m 1 6dd9d0e`); reverting a merge needs a named `-m` parent.
 - E18: judge-demonstrated — release merges carry their own bump, so a pure

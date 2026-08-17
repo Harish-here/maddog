@@ -91,11 +91,15 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    relevant — currently never run (E9); record UNVERIFIED + named debt E9 until
    it is.
 4. Populated-fixture `install.sh` probe when GATE-INFRA is touched. Build the
-   fixture with all three elements (E16): repo-owned links, ONE foreign
-   symlink (pointing outside the repo), and ONE real file sitting at a link
-   target — so the backup branch (`mv` of the real file) and foreign-link
-   pruning both actually execute. An empty or partial sandbox exercises
-   neither and its PASS counts for nothing.
+   fixture with all four elements (E16, corrected to observed behavior at
+   the adoption RULE): live repo-owned links; ONE DEAD repo-owned link (a
+   target inside the repo that no longer exists) — the only input that
+   reaches install.sh's `rm`, its sole deletion path; ONE foreign symlink
+   (pointing outside the repo) as the NEGATIVE CONTROL, which must SURVIVE
+   untouched; and ONE real file sitting at a link target — the backup
+   branch (`mv`). PASS requires all three outcomes: dead repo-owned link
+   pruned, foreign link intact, real file backed up. An empty or partial
+   sandbox exercises none of this and its PASS counts for nothing.
 5. Anything that cannot run in this environment: record UNVERIFIED with a
    named debt (L1) — never silently skip it.
 
