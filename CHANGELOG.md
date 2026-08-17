@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] - 2026-08-17
+
+### Removed
+- `grind`, `grind-pro` skills — `advisor-mode`'s judgment-class routing supersedes the two thin dispatch skills; agents (`executor-fast`, `executor-smart`) unchanged (`849edbb`)
+
 ## [2.1.0] - 2026-08-17
 
 ### Changed
