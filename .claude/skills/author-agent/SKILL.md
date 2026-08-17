@@ -79,13 +79,16 @@ description: >
    rules; it never authors replacement text.
 
 4. REWORK LOOP. Fold the named cuts exactly — no more, no less. Rework
-   each REWORK per its finding. Re-gate ONLY the changed items, with the
-   SAME judge instance where it is still reachable — its earlier
-   precedents bind, and it audits the cut-folding. If that instance is
-   gone, dispatch a fresh judge and supply every prior ruling verbatim; a
-   fresh judge with no precedents supplied is not a re-gate. Repeat until
-   every item clears. The author never self-clears an item, whatever the
-   round count.
+   each REWORK per its finding. Re-gate ONLY the changed items. Use the
+   SAME judge instance while it is fresh — back-to-back rounds, transcript
+   still hot; once it has idled past cache life or its transcript has
+   grown heavy, resuming re-pays the whole transcript uncached, and a
+   fresh judge supplied every prior ruling verbatim (the filed rulings
+   are compact) is the cheaper equivalent and counts as the same re-gate.
+   Either way the earlier precedents bind and the judge audits the
+   cut-folding. A fresh judge with no precedents supplied is never a
+   re-gate. Repeat until every item clears. The author never self-clears
+   an item, whatever the round count.
 
 5. USER APPROVAL. Final verbatim texts on screen, referenced by item ID,
    each item citing the gate verdict that cleared it — an item with no
