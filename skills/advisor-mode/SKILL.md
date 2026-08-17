@@ -29,9 +29,10 @@ BUDGET 2 — OWN CONTEXT: never ingest raw material when a distilled return
 suffices. Verifying a load-bearing claim is not ingestion: read the cited
 line, or buy a fast VERIFY. A claim cleared by rereading the sentence is not
 cleared. Package-local working state lives in artifacts and disposable
-containers (a lead's context, a ledger file), never in this conversation.
-Externalize decisions to artifacts as made — create the decision record
-before the first dispatch, thereafter only append.
+containers (a lead's context, the package's own working artifacts),
+never in this conversation — and never in the decision ledger, which
+holds decisions alone. Create the decision ledger before the first
+dispatch; write it only per the LEDGER LAW.
 BUDGET 3 — USER ATTENTION, the scarcest resource. A user interrupt freezes
 the world: stop in-flight work, report what ran. Instruction files:
 verbatim proposal first, write only after approval. (Front-loading
@@ -51,7 +52,7 @@ instructions.
 | web-perception | Hand needs web tools; none exists → UNBOUND, and web questions block to the user rather than being answered by guesswork. |
 
 Every binding — hand, satisfied invariants, degradations — is written into
-the binding record (the decision record's first entry) and stated to the
+the binding record (the decision ledger's first entry) and stated to the
 user at session open. No "nearest class up": an unqualified class is
 DEGRADED or UNBOUND, visibly, never silently substituted, never escalated
 into the advisor judging its own work. Where classes share one
@@ -109,7 +110,7 @@ OWN HANDS — four categories, closed list:
 | Category | Rule |
 |---|---|
 | Claim verification | Read the cited line yourself, or buy a fast VERIFY — both stay legal, the choice is cost. A claim cleared by rereading the claimant's sentence is not cleared. |
-| State artifacts | Binding record, decision ledger, memory, handover files — your continuity is your own duty. |
+| State artifacts | The decision ledger (its first entry the binding record), memory, handover files — your continuity is your own duty. |
 | Session bootstrap | The BIND survey: discovering the hands at the one moment no hand is yet bound to do it. |
 | Short synchronous probes | One command or query per probe, no loops, no waits; the third repeat of the same check is watching, and watching is delegated. |
 
@@ -125,6 +126,37 @@ Own hands only where briefing and verifying a blank agent costs more than
 the task itself (Coase) — exception: claim verification is governed by
 independence, not cost; however cheap delegation gets, acceptance stays
 your duty.
+
+THE LEDGER LAW — one decision ledger per session; its first entry is the
+binding record, and every name for it in this skill and its references
+means this one file.
+- WHEN: append only at a decision event — a decision closes (user or
+  in-boundary), an authorization is granted or denied, a binding or
+  degradation is recorded, a deviation is accepted. Decisions closed by
+  one event (one ruling triaged, one user batch, one return accepted)
+  share one entry. A decision that opens gets one line in the ledger's
+  single OPEN section. Dispatch, return, acceptance, verification:
+  process, never entries.
+- WHAT: one entry = one decision event — the closed decision(s), who
+  closed them, a one-line rationale and a one-line what-would-reopen-it
+  each (the decider's basis, never the citation's content restated),
+  citations (file:line, artifact path, ruling ID). The entry alone must
+  let a later session stand by the decision. Per-item dispositions
+  belong in the artifact they rework, each named to the finding it
+  answers — the entry carries that artifact's revision pointer, never
+  the item list. An obligation created by a decision rides in its
+  entry; a free-standing reminder is an OPEN line or it is nothing.
+  Entries are advisor-authored even when a hand applies the write.
+- CLOSING an open item: append its closing entry first, then delete the
+  OPEN line — history lives in entries; OPEN is an index. A discharged
+  reminder just loses its line, no entry. An "empty" ledger at CLOSE
+  means no entries, never a pruned OPEN section.
+- PROHIBITIONS: never rewrite a filed entry — absent.md's durability
+  path rewrite is the sole exception; never restate filed content —
+  rulings, models, transcripts enter as pointers, exactly as ACCEPTANCE
+  files them; never record that a law was followed — CLOSE is
+  discharged by the surfacing batch, never by an entry asserting
+  compliance.
 
 DISPATCH CONTRACT (every delegation): subagents start blank — include
 paths, error text, closed decisions ("do not redesign"), the dispatch's
@@ -159,8 +191,8 @@ STATE — track two bits; they select procedure, never relax law:
 
 | Bit | Rule |
 |---|---|
-| DECISION STATE (per item) | OPEN → dialogue (present) or bounded-judgment (absent); CLOSED → procurement via the class table. OPEN + ABSENT: decide within the boundary, LOG in the ledger, surface as a batch — a boundary-crossing decision blocks instead. |
-| USER PRESENCE | Unattended dispatch is PROHIBITED until references/absent.md (this skill's own directory) has been read this session — "unattended" means any dispatch whose return the user will not be present for, including work authorized on their way out and sessions starting with no user at all. Holds the unattended liturgy (watchdog, heartbeat, resume state, judgment ledger, batched surfacing). |
+| DECISION STATE (per item) | OPEN → dialogue (present) or bounded-judgment (absent); CLOSED → procurement via the class table. OPEN + ABSENT: decide within the boundary, log per the LEDGER LAW, surface as a batch — a boundary-crossing decision blocks instead. |
+| USER PRESENCE | Unattended dispatch is PROHIBITED until references/absent.md (this skill's own directory) has been read this session — "unattended" means any dispatch whose return the user will not be present for, including work authorized on their way out and sessions starting with no user at all. Holds the unattended liturgy (watchdog, heartbeat, resume state, ledger durability, batched surfacing). |
 
 CLOSE — prohibition: neither a package nor the session itself may be
 concluded — no completion claim, no final report — while logged decisions

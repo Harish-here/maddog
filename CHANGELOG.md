@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.0] - 2026-08-17
+
+### Added
+- `advisor-mode`: THE LEDGER LAW — when/what/how-often contract for the session decision ledger: entries only at decision events, aggregated by event; rationale + reopen-condition per decision; citations as pointers, never restated content; prunable OPEN index; filed entries immutable (`8f81d18`)
+
+### Changed
+- `absent.md`: §1 LEDGER FILE → LEDGER DURABILITY — the ledger already exists per the core law; going unattended relocates it plus scratch-cited artifacts to a durable path and re-points citations, the sole sanctioned edit of a filed entry (`8f81d18`)
+
 ## [2.3.0] - 2026-08-17
 
 ### Added
