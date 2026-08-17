@@ -29,8 +29,8 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resu
 
 - **Plugin:** `/plugin marketplace add Harish-here/maddog` then
   `/plugin install maddog@maddog`. Skills arrive namespaced
-  (`/maddog:grind`). **Does not ship `workflows/`.**
-- **Symlink:** `./install.sh`. Skills un-namespaced (`/grind`). The clone stays the
+  (`/maddog:advisor-mode`). **Does not ship `workflows/`.**
+- **Symlink:** `./install.sh`. Skills un-namespaced (`/advisor-mode`). The clone stays the
   single source of truth — edit here, every session reads the latest.
 
 Installing both ways gives you duplicate agents.
@@ -56,10 +56,11 @@ agent those tools silently dissolves the family's central invariants. The shared
 RENT HANDS, NEVER VERDICTS law is verbatim-identical in both files — edit it in both
 or neither. `scripts/executor-guard.sh` covers fast, lead, and judge (not smart).
 
-**Agents and skills ship as a unit.** `grind`/`grind-pro` name
-`executor-fast`/`executor-smart`; `product-engineering` names all five `product-*`
-agents plus `researcher`; `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed. Renaming an agent
-means updating every by-name reference across `skills/` and `workflows/`.
+**Agents and skills ship as a unit.** `product-engineering` names all five
+`product-*` agents plus `researcher`; `advisor-mode` routes the whole executor
+family by judgment class and offers the product pipeline when installed.
+Renaming an agent means updating every by-name reference across `skills/` and
+`workflows/`.
 
 ## Architecture
 

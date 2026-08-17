@@ -1,7 +1,7 @@
 {
   "name": "maddog",
-  "version": "2.1.0",
-  "description": "Advisor-executor hierarchy: executor-fast (mechanical), executor-smart (local judgment), executor-lead (judgment with memory: plan/campaign/deliver), executor-judge (adversarial gate verdicts), plus researcher. Route on task shape, spend max intelligence only where it's irreplaceable. Plus a product-engineering pipeline: PM -> UX -> BE -> UI planning, sdd-task-loop execution, and QA that verifies against the artifacts and opens the PR. Skills: advisor-mode, grind, grind-pro, mine-session, product-engineering.",
+  "version": "2.2.0",
+  "description": "Advisor-executor hierarchy: executor-fast (mechanical), executor-smart (local judgment), executor-lead (judgment with memory: plan/campaign/deliver), executor-judge (adversarial gate verdicts), plus researcher. Route on task shape, spend max intelligence only where it's irreplaceable. Plus a product-engineering pipeline: PM -> UX -> BE -> UI planning, sdd-task-loop execution, and QA that verifies against the artifacts and opens the PR. Skills: advisor-mode, mine-session, product-engineering.",
   "author": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
   "homepage": "https://github.com/Harish-here/maddog",
   "repository": "https://github.com/Harish-here/maddog",

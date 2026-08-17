@@ -102,8 +102,6 @@ agents/
   product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
-  grind/              # /grind <task> — one mechanical task, isolated context
-  grind-pro/          # /grind-pro <task> — one local-judgment task, isolated context
   mine-session/       # /mine-session — arm capture early, distill at session end; mines surprise, not activity
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
@@ -125,7 +123,7 @@ scripts/
 `review-agent` is repo-internal tooling living in `.claude/skills/review-agent/` —
 auto-discovered when working in this repo, not shipped in the plugin.
 
-Agents and skills ship together: `grind`/`grind-pro` reference `executor-fast`/`executor-smart` by name, `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
+Agents and skills ship together: `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
 
 ## Install modes
 
@@ -138,7 +136,7 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 /plugin marketplace add Harish-here/maddog
 /plugin install maddog@maddog
 ```
-- Skills arrive namespaced (`/maddog:grind`).
+- Skills arrive namespaced (`/maddog:advisor-mode`).
 - Does NOT ship `workflows/` (`sdd-task-loop`, `agent-evals`) — the plugin format has no workflow component yet; the day it does, we ship them.
 - Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
   - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
@@ -150,7 +148,7 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 git clone https://github.com/Harish-here/maddog.git
 cd maddog && ./install.sh
 ```
-- Skills un-namespaced (`/grind`); the clone stays the single source of truth — edits land in every new session.
+- Skills un-namespaced (`/advisor-mode`); the clone stays the single source of truth — edits land in every new session.
 - Ships everything the plugin can't: `workflows/`, the watchdog LaunchAgent, the Telegram notify script.
 - `permissionMode: dontAsk` is active; the guard is wired via the frontmatter of executor-fast, executor-lead, and executor-judge to `$HOME/.claude/hooks/executor-guard.sh` (linked by `install.sh`).
 - Existing real files at the target are backed up to `<name>.bak`, never deleted.
@@ -182,8 +180,8 @@ Restart Claude Code sessions after installing (the agent registry snapshots at s
 
 ```
 /advisor-mode migrate the config loader to zod and fix every caller
-/grind run the test suite and summarize failures
-/grind-pro refactor src/http/retry.ts to match the backoff pattern in src/queue/
+/mine-session
+/product-engineering add CSV export to the reports page
 ```
 
 Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*.
