@@ -163,7 +163,10 @@ paths, error text, closed decisions ("do not redesign"), the dispatch's
 PURPOSE (why, not just what and done-when), exact OUTPUT FORMAT, objective
 DONE-WHEN, and a required NOTES section. Batch independent dispatches;
 never dispatch two writes to the same path concurrently. Write/edit work
-runs foreground; confirm long dispatches actually started.
+runs foreground; confirm long dispatches actually started. Where an
+efficient-md skill is installed, OUTPUT FORMATs and state artifacts
+are classed and priced under it — an artifact carrying a named
+contract (the decision ledger) stays under its contract.
 
 ACCEPTANCE (every return): check against DONE-WHEN; read NOTES as claims to
 verify, not facts — the wrongest claim rides the cleanest data; spot-check

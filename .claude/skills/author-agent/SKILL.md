@@ -12,10 +12,14 @@ description: >
 ---
 
 0. COST/VALUE LINE. Before any authoring, one sentence to the user: what
-   this thread will cost (gate rounds × dispatches, roughly) and what it
-   buys — and name the step-8 closing report as the thread's deliverable.
-   Proceed on their green light. A new thread opened mid-loop, or a rework
-   round beyond the count the line quoted, gets its own line — scope
+   this thread will cost — gate rounds × dispatches, roughly, plus an
+   exact count of rework rounds covered (every request for a gate
+   ruling after the first consumes one covered round, whatever comes
+   back — a refusal included) — and what it buys; name the
+   step-8 closing report as the thread's deliverable.
+   Proceed on their green light. A new thread opened mid-loop is
+   prohibited until the user green-lights its own line, and a rework
+   round beyond the covered count is prohibited the same way — scope
    ratchets by decision, never by drift.
 
 1. MODE.
@@ -33,8 +37,9 @@ description: >
    Discuss the inferences with the user and lock their decisions on the
    model. The law: the model is advisor-authored design and is never
    self-judged — it goes to the judge before any packet is authored
-   against it; the packet is then authored against the locked model. A fired trigger re-opens step 0:
-   the model phase gets its own cost line before the artifact is built —
+   against it; the packet is then authored against the locked model.
+   A fired trigger re-opens step 0: building the model artifact is
+   prohibited until the user green-lights the model phase's own cost line —
    scope ratchets by decision, never by drift. (Two model gates, 35
    findings total — 26 + 9, one a silent safety defect — all before a
    line of skill text existed.)
@@ -58,14 +63,19 @@ description: >
      non-agent text, and the checklist's own Scope excludes references
      that are not force-loaded — name in the packet exactly which
      dimensions you authored against and which do not apply, so the gate
-     rules against a stated contract rather than inferring one.
+     rules against a stated contract rather than inferring one. Where
+     the efficient-md skill is installed, its residency classes are the
+     contract for non-agent text — name in the packet the class each
+     item was authored against.
    - OVERHAUL: findings first. Run the review-agent gate (or a scoped
      sweep) on the existing text; author fixes only against accepted
      findings — never freestyle rewrites of text nobody indicted.
 
 2. PACKET. All verbatim texts in one scratchpad file with item IDs
-   (P1..Pn). The packet opens with the step-0 line and the user's green
-   light — the gate refuses a headerless packet. Each item names its
+   (P1..Pn). The packet opens with the step-0 line, the user's green
+   light, and the running rework-round count — the gate refuses a
+   packet missing any of the three or whose step-0 line lacks the
+   exact covered count. Each item names its
    target file and either its anchor plus the replacement text (OVERHAUL)
    or "new file — full contents follow" (CREATE), plus
    the finding, template rule, or locked-model section it

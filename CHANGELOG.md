@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.0] - 2026-08-18
+
+### Added
+- `efficient-md`: new skill — context-residency authoring doctrine (HOT/WARM/COLD/CHANNEL + HUMAN overlay classification, canonical model, per-class exemplar references), shipped initially as `skills/token-residency` (`84350a2`)
+- `advisor-mode`: repo-specific decision-ledger contract split out of the generic doctrine into `skills/advisor-mode/references/contract-decision-ledger.md`, so no reader holds a contract citing law they cannot load (`84350a2`)
+
+### Changed
+- `token-residency` renamed to `efficient-md` (the handle optimizes for the person; the doctrine keeps its Token-Residency name in the references); description rewritten generic — no internal-only skill names in a shipped skill's routing text; inbound pointers added from `advisor-mode`'s DISPATCH CONTRACT and `author-agent`'s CREATE branch (`4a3c32d`)
+- `author-agent`: prohibition-shaped all three rework-budget scope brakes — step 0's cost line must quote an exact count of covered rework rounds before a mid-loop thread or overage round may run; step 1's model-artifact build is prohibited until its own green-lit cost line exists; the covered-round unit is every gate-ruling request after the first, refusals included, closing the apply-with-cuts dodge (`599ae67`, `d72df67`)
+- `efficient-md`: dropped the `references/evidence.md` research-table digest; primary-source pointers now ride each Grounding bullet inline (`f41e1f5`)
+
 ## [2.4.0] - 2026-08-17
 
 ### Added
