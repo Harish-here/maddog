@@ -63,7 +63,10 @@ description: >
      non-agent text, and the checklist's own Scope excludes references
      that are not force-loaded — name in the packet exactly which
      dimensions you authored against and which do not apply, so the gate
-     rules against a stated contract rather than inferring one.
+     rules against a stated contract rather than inferring one. Where
+     the efficient-md skill is installed, its residency classes are the
+     contract for non-agent text — name in the packet the class each
+     item was authored against.
    - OVERHAUL: findings first. Run the review-agent gate (or a scoped
      sweep) on the existing text; author fixes only against accepted
      findings — never freestyle rewrites of text nobody indicted.

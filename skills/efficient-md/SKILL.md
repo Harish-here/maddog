@@ -1,15 +1,15 @@
 ---
-name: token-residency
+name: efficient-md
 description: >
-  Classify any artifact agents will load — skill bodies, briefs,
-  blueprints, memory files, ledgers, dispatch prompts and returns —
-  by CONTEXT RESIDENCY, then author it under that class's template,
-  budget, and laws. Use BEFORE authoring such an artifact or
-  specifying a dispatch's OUTPUT FORMAT. This skill prices and
-  structures; it never gates or reviews. Do NOT use to review or
-  judge existing text — a review whose deliverable is the verdict is
-  review-agent, and gated authoring of load-bearing text is
-  author-agent.
+  Classifies any artifact agents will load by CONTEXT RESIDENCY and
+  authors it under that class's template, budget, and laws. You MUST
+  load this BEFORE writing or restructuring any of: CLAUDE.md, a
+  memory index, a frontmatter description, a SKILL.md body, a brief,
+  spec, or blueprint, a state or handover file, a decision ledger, or
+  a dispatch prompt's OUTPUT FORMAT. This skill prices and
+  structures; it never gates, reviews, or judges — a task whose
+  deliverable is a verdict on existing text belongs to your system's
+  review or authoring gate, not here.
 ---
 
 One axis prices what a multi-agent system authors for a context: how
