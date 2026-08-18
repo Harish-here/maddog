@@ -12,10 +12,12 @@ description: >
 ---
 
 0. COST/VALUE LINE. Before any authoring, one sentence to the user: what
-   this thread will cost (gate rounds × dispatches, roughly) and what it
-   buys — and name the step-8 closing report as the thread's deliverable.
-   Proceed on their green light. A new thread opened mid-loop, or a rework
-   round beyond the count the line quoted, gets its own line — scope
+   this thread will cost — gate rounds × dispatches, roughly, plus an
+   exact count of rework rounds covered — and what it buys; name the
+   step-8 closing report as the thread's deliverable.
+   Proceed on their green light. A new thread opened mid-loop is
+   prohibited until the user green-lights its own line, and a rework
+   round beyond the covered count is prohibited the same way — scope
    ratchets by decision, never by drift.
 
 1. MODE.
@@ -33,8 +35,9 @@ description: >
    Discuss the inferences with the user and lock their decisions on the
    model. The law: the model is advisor-authored design and is never
    self-judged — it goes to the judge before any packet is authored
-   against it; the packet is then authored against the locked model. A fired trigger re-opens step 0:
-   the model phase gets its own cost line before the artifact is built —
+   against it; the packet is then authored against the locked model.
+   A fired trigger re-opens step 0: building the model artifact is
+   prohibited until the model phase has its own green-lit cost line —
    scope ratchets by decision, never by drift. (Two model gates, 35
    findings total — 26 + 9, one a silent safety defect — all before a
    line of skill text existed.)
