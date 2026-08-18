@@ -13,7 +13,9 @@ description: >
 
 0. COST/VALUE LINE. Before any authoring, one sentence to the user: what
    this thread will cost — gate rounds × dispatches, roughly, plus an
-   exact count of rework rounds covered — and what it buys; name the
+   exact count of rework rounds covered (every request for a gate
+   ruling after the first consumes one covered round, whatever comes
+   back — a refusal included) — and what it buys; name the
    step-8 closing report as the thread's deliverable.
    Proceed on their green light. A new thread opened mid-loop is
    prohibited until the user green-lights its own line, and a rework
@@ -37,7 +39,7 @@ description: >
    self-judged — it goes to the judge before any packet is authored
    against it; the packet is then authored against the locked model.
    A fired trigger re-opens step 0: building the model artifact is
-   prohibited until the model phase has its own green-lit cost line —
+   prohibited until the user green-lights the model phase's own cost line —
    scope ratchets by decision, never by drift. (Two model gates, 35
    findings total — 26 + 9, one a silent safety defect — all before a
    line of skill text existed.)
@@ -67,8 +69,10 @@ description: >
      findings — never freestyle rewrites of text nobody indicted.
 
 2. PACKET. All verbatim texts in one scratchpad file with item IDs
-   (P1..Pn). The packet opens with the step-0 line and the user's green
-   light — the gate refuses a headerless packet. Each item names its
+   (P1..Pn). The packet opens with the step-0 line, the user's green
+   light, and the running rework-round count — the gate refuses a
+   packet missing any of the three or whose step-0 line lacks the
+   exact covered count. Each item names its
    target file and either its anchor plus the replacement text (OVERHAUL)
    or "new file — full contents follow" (CREATE), plus
    the finding, template rule, or locked-model section it
