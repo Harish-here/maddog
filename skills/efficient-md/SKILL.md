@@ -1,15 +1,11 @@
 ---
 name: efficient-md
 description: >
-  Classifies any artifact agents will load by CONTEXT RESIDENCY and
-  authors it under that class's template, budget, and laws. You MUST
-  load this BEFORE writing or restructuring any of: CLAUDE.md, a
-  memory index, a frontmatter description, a SKILL.md body, a brief,
-  spec, or blueprint, a state or handover file, a decision ledger, or
-  a dispatch prompt's OUTPUT FORMAT. This skill prices and
-  structures; it never gates, reviews, or judges — a task whose
-  deliverable is a verdict on existing text belongs to your system's
-  review or authoring gate, not here.
+  Use when writing or restructuring any of: CLAUDE.md, a memory
+  index, a frontmatter description, a SKILL.md body, a brief, spec,
+  or blueprint, a state or handover file, a decision ledger, or a
+  dispatch prompt's OUTPUT FORMAT. Not for reviewing or rendering a
+  verdict on text that already exists.
 ---
 
 One axis prices what a multi-agent system authors for a context: how
@@ -24,7 +20,9 @@ evidence: references/model.md.
 | COLD | write-once, verbatim, never rewritten (filed rulings, post-mortems, transcripts) | references/cold.md |
 | CHANNEL | resident in the orchestrator all session (dispatch prompts, returns, the session ledger) | references/channel.md |
 
-HUMAN is an AUDIENCE OVERLAY, not a class: where a person is the
+## Human Audience Overlay
+
+Not a class: where a person is the
 primary audience, readability governs form; the class still prices
 substance — file the bulk, present the digest. A surface whose
 purpose is agent loading never takes the overlay; a dual-read
@@ -33,13 +31,16 @@ precedence (2). Where the overlay applies, agent-reader laws — no
 narrative history, IDs over prose — are SUSPENDED, not merely
 softened: a human doc's narrative can be its load-bearing substance.
 
-PRECEDENCE: (1) shipped law and documented invariants beat class
+## Precedence
+
+(1) shipped law and documented invariants beat class
 laws; (2) dual-audience artifacts split surfaces before blending
 laws — never cut a human doc to a WARM ceiling; (3) an artifact may
 carry a NAMED CONTRACT that replaces class-generic law — a contract
 lives beside the law it extends and ships only where that law ships.
 
-PROCEDURE:
+## Procedure
+
 1. In scope? The unit must enter a context — class attaches to the
    unit, never the whole file.
 2. Name the class by who loads it, how often, for how long; overlay
