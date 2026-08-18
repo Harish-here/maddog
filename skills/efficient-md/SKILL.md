@@ -15,7 +15,7 @@ description: >
 One axis prices what a multi-agent system authors for a context: how
 long the tokens stay resident, and in whose context. Name the class
 first; template, budget, and prohibitions follow. Full doctrine and
-evidence: references/model.md, references/evidence.md.
+evidence: references/model.md.
 
 | Class | Residency | Author with |
 |---|---|---|
