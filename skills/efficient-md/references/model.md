@@ -120,25 +120,30 @@ contract, which lives in advisor-mode's references/ in this repo.
 
 ## Grounding (provenance-tagged)
 
-Evidence filed beside this file: evidence.md (38 source-cited rows).
+Primary sources inline per bullet — audit the source, not a digest.
 - vendor-canonical: progressive disclosure — skill metadata preloads,
   bodies load on relevance, references one level deep, under ~500
-  lines (Anthropic skills guidance).
+  lines (Anthropic skills guidance,
+  docs.claude.com agent-skills best practices).
 - paper: mid-context content suffers 30%+ accuracy loss — a floor,
-  not an estimate ("Lost in the Middle", 2023).
-- benchmark: all 18 tested frontier models degrade as input grows
-  (Chroma context rot) — minimalism is an accuracy measure, not just
-  a cost measure.
+  not an estimate ("Lost in the Middle",
+  arxiv.org/abs/2307.03172).
+- benchmark: all 18 tested frontier models degrade as input grows —
+  minimalism is an accuracy measure, not just a cost measure
+  (trychroma.com/research/context-rot).
 - directional, low-authority sources: markdown ~34-38% cheaper than
   JSON on structured data and ~40-60% on document content — two
-  measurement bases, not one range; XML worse.
-- convention, no empirical metrics (per the filed NOTES): GitHub's
-  AGENTS.md guidance from 2,500+ repositories — one real snippet
-  beats paragraphs of description.
+  measurement bases, not one range; XML worse
+  (jsonkit.in json-vs-markdown-llm-prompts).
+- convention, no empirical metrics in the source: GitHub's AGENTS.md
+  guidance from 2,500+ repositories — one real snippet beats
+  paragraphs of description (github.blog
+  how-to-write-a-great-agents-md).
 - convention: skip markers borrowed from the llms.txt "Optional"
-  section.
+  section (llmstxt.org).
 - vendor guidance: filesystem artifacts between agents avoid the
-  game of telephone (Anthropic harness design).
+  game of telephone (anthropic.com/engineering, harness design and
+  effective-context-engineering-for-ai-agents).
 
 ## Decision procedure
 
