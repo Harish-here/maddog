@@ -96,8 +96,10 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    target inside the repo that no longer exists) — the only input that
    reaches install.sh's `rm`, its sole deletion path; ONE foreign symlink
    (pointing outside the repo) as the NEGATIVE CONTROL, which must SURVIVE
-   untouched; and ONE real file sitting at a link target — the backup
-   branch (`mv`). PASS requires all three outcomes: dead repo-owned link
+   untouched; and ONE real file at a path install.sh will actually link —
+   e.g. `agents/<name>.md` for a `<name>.md` that exists in the repo — so
+   the backup branch (`mv`) is exercised; a real file at an unlinked path
+   proves nothing. PASS requires all three outcomes: dead repo-owned link
    pruned, foreign link intact, real file backed up. An empty or partial
    sandbox exercises none of this and its PASS counts for nothing.
 5. Anything that cannot run in this environment: record UNVERIFIED with a
@@ -134,7 +136,14 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    that same commit, run `claude plugin tag --push` from the repo root,
    producing `maddog--vX.Y.Z` — a dependency-resolution tag that lets OTHER
    plugins declare semver constraints on this one (plugin-dependencies.md);
-   never before merge either. Record the CLI's output line.
+   never before merge either. Dispositions on the command's own refusals:
+   tag already exists on this commit → the required end-state already
+   holds — record and continue, NOT a failure; dirty tree under the plugin
+   directory → clean it and re-run; `plugin.json`/marketplace version
+   disagreement, or any other validation failure → affirmative SEAL
+   failure; tag created but the push failed → run the printed `git push`
+   yourself — a local-only tag is not a pass. Record BOTH CLI lines:
+   `Created tag maddog--vX.Y.Z` and `Pushed to origin`.
 2. Confirm CI is green on main for the merge commit.
 3. Run a fresh plugin-install probe, or record UNVERIFIED + debt.
 4. Run a live `install.sh` probe against a populated target ONLY if BEHAVIOR's
@@ -161,11 +170,10 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    bump on the highest version ever shipped, read from `origin/main`'s
    `plugin.json` `version` (M58) — never from tags (tags can be backfilled or
    moved; `plugin.json` on main cannot silently lie about what shipped), never
-   from the candidate tree (the reverts under review rewrite it). The
-   CHANGELOG entry names the restoration; the bad tag and
-   heading stay as history; versions are monotonic, always. On this lane the
-   forward rule IS the standing D5 ruling — no human ruling blocks
-   mid-incident.
+   from the candidate tree (the reverts under review rewrite it). The CHANGELOG
+   entry names the restoration; the bad tag and heading stay as history;
+   versions are monotonic, always. On this lane the forward rule IS the
+   standing D5 ruling — no human ruling blocks mid-incident.
 4. **Path:** every phase EXCEPT BEHAVIOR, in order — DECLARE (forward bump +
    uniqueness) → READY → EXPEDITED JUDGE verdict at RULE → SHIP → SEAL, all in
    their normal form; SHIP's merge-side prohibition (M52) binds here too

@@ -5,16 +5,17 @@ this file for the user; this file is the authority packets cite.
 Rev 10 corrects E3 on doc-verified evidence (E21): the community directory
 was never tag-pinned, it follows pushes via its own CI re-pin, so SEAL's
 second-channel check is removed and replaced with `claude plugin tag --push`
-producing the `maddog--vX.Y.Z` dependency-resolution tag (plugin-dependencies.md)
-— L12: +1 mechanism, −1 mechanism, net zero growth. Rev 9 names the forward version rule's input source and restores the
-uniqueness check's origin/main anchor (M58 — the last live descendant of
-rev 7's compression), completes REMEDY's phase path (M59), scopes L12's
-unit of account (M60), restores SEAL's recency qualifier (M61), and folds
-the D3 addendum into D3 (M62). Rev 8 restored two prohibitions lost in
-rev 7's compression and pinned the merge method (M51–M57; rulings filed
-in session task record a76d847). Rev 7 was the SIMPLIFICATION (user-ruled, D11): mechanisms
-removed with reversal evidence recorded; expedited judge replaces waiver
-machinery; release record specified.
+producing the `maddog--vX.Y.Z` dependency-resolution tag
+(plugin-dependencies.md) — L12: +1 mechanism, −1 mechanism, net zero growth.
+Rev 9 names the forward version rule's input source and restores the
+uniqueness check's origin/main anchor (M58 — the last live descendant of rev
+7's compression), completes REMEDY's phase path (M59), scopes L12's unit of
+account (M60), restores SEAL's recency qualifier (M61), and folds the D3
+addendum into D3 (M62). Rev 8 restored two prohibitions lost in rev 7's
+compression and pinned the merge method (M51–M57; rulings filed in session
+task record a76d847). Rev 7 was the SIMPLIFICATION (user-ruled, D11):
+mechanisms removed with reversal evidence recorded; expedited judge replaces
+waiver machinery; release record specified.
 
 THESIS: the plugin marketplace installs from main HEAD (`source: "./"`), so
 every merge to main IS a release. The ritual gates BEFORE merge; a seal runs
@@ -29,16 +30,21 @@ check nobody can run under pressure is not a check.
 - E2: 14 CHANGELOG releases in 17 days (1.0.0→2.2.0); merge cadence can be
   ~1/hour (PRs #8/#9/#10 on 2026-08-17).
 - E3: only 2.0.0 was tagged at adoption (v2.0.0 + maddog--v2.0.0, same
-  release); backfilled 2026-08-24 for 1.0.0–2.2.0, except 1.7.0/1.8.0 which
-  were never current on main. Doc-verified 2026-08-24 (Anthropic docs
+  release); on 2026-08-24 both series were backfilled — `v*` for
+  1.0.0–2.2.0 (except 1.7.0/1.8.0, never current on main) and `maddog--v*`
+  mirrors for every existing `v*` tag (16 `maddog--v*` tags on origin,
+  verified) — no tag gap remains. Doc-verified 2026-08-24 (Anthropic docs
   plugins.md, plugin-dependencies.md): the community directory
-  (`anthropics/claude-plugins-community`) pins each plugin to a commit SHA
-  that its own CI bumps automatically on every push, syncing nightly — no
-  version tag involved; `claude-plugins-official` is curated by Anthropic at
-  its own discretion, no author-side procedure. `maddog--vX.Y.Z` tags exist
-  so OTHER plugins can declare semver constraints on this one — Claude Code
-  lists `<name>--v*` tags to resolve them; a missing tag yields
-  `no-matching-tag` only for constrained dependents, never for any directory.
+  (`anthropics/claude-plugins-community`) pins each APPROVED, LISTED plugin
+  to a commit SHA that its own CI bumps automatically on every push,
+  syncing nightly — no version tag involved; `claude-plugins-official` is
+  curated by Anthropic at its own discretion, no author-side procedure.
+  Precondition: maddog is an approved, listed plugin (user attestation
+  2026-08-24) — the CI re-pin applies to approved plugins only.
+  `maddog--vX.Y.Z` tags exist so OTHER plugins can declare semver
+  constraints on this one — Claude Code lists `<name>--v*` tags to resolve
+  them; a missing tag yields `no-matching-tag` only for constrained
+  dependents, never for any directory.
 - E4: CI validate.yml checks exactly three things: frontmatter YAML parses,
   JSON parses (.claude-plugin/*.json, evals/*.json — NOT hooks/hooks.json),
   plugin.json version == CHANGELOG top entry (first-match regex — internal
@@ -91,14 +97,10 @@ check nobody can run under pressure is not a check.
   SEAL comments are author-editable — edit history is retained and is the
   recourse if a record is disputed (M54).
 - E21: doc-verified 2026-08-24 (Anthropic docs plugins.md,
-  plugin-dependencies.md) — E3's prior "directory pin" model was wrong:
-  the community directory follows pushes via its own CI re-pin and never
-  reads `maddog--vX.Y.Z`; that tag exists solely to resolve OTHER plugins'
-  semver constraints on this one. Overturns E3 as previously written.
-  SEAL's second-channel check (directory pin repair) is removed and
-  replaced with `claude plugin tag --push` at SEAL step 1. L12 accounting:
-  +1 mechanism (`claude plugin tag --push` at SEAL) − 1 mechanism
-  (second-channel check, deleted) = net zero growth.
+  plugin-dependencies.md) — overturns E3's prior "directory pin" model as
+  previously written (mechanism detail: E3; SEAL mechanics: §6). L12
+  accounting: +1 mechanism (`claude plugin tag --push` at SEAL) − 1
+  mechanism (second-channel check, deleted) = net zero growth.
 
 ## Failure modes → catching phase
 
@@ -116,7 +118,7 @@ check nobody can run under pressure is not a check.
 | Bad release published | E1 | REMEDY (expedited judge) |
 | Bad remedy | judge demo | L11: escalate, never revert a remedy |
 | Revert rolls version backward / orphans tag | E18 | forward version rule |
-| Directory serves stale content after a bad release | E3 | Directory follows pushes (community CI re-pin) — a REMEDY reaches it on merge; no pin step |
+| Directory serves stale content after a bad release (approved, listed plugins only — E3) | E3 | Directory follows pushes (community CI re-pin) — a REMEDY reaches it on merge; no pin step |
 | Symlink-mode regression damages live ~/.claude | E16 | BEHAVIOR populated-fixture probe, pre-merge |
 | Checks stale vs CI / unsynced trees | E15 | L6 |
 | Intermediate HEAD published mid-multi-PR work | E1 | L9 |
@@ -200,8 +202,10 @@ GitHub-native; no push-to-main needed. THE RELEASE PR IS THE RECORD:
 6. SEAL — post-merge: tag the merge commit `vX.Y.Z` per D2 (L3), then run
    `claude plugin tag --push` on that same commit producing
    `maddog--vX.Y.Z` — a dependency-resolution tag other plugins' semver
-   constraints resolve against (plugin-dependencies.md), the CLI's output
-   line recorded; CI green on main; fresh plugin-install probe or
+   constraints resolve against (plugin-dependencies.md); dispositions on
+   the command's own refusals (already-exists, dirty tree, version
+   disagreement, push failure) at SKILL.md §6.1, both CLI lines recorded;
+   CI green on main; fresh plugin-install probe or
    UNVERIFIED record; live install.sh run licensed ONLY by BEHAVIOR's
    populated-fixture pass THIS RELEASE (M61 restores rev 6's recency
    qualifier — a prior release's pass licenses nothing against
@@ -233,19 +237,18 @@ REMEDY — the incident lane for a bad release already on main:
 - Unit of work (D7): the chain of pure reverts restoring the LAST
   FULLY-GATED STATE (as computed from the release record) — never a
   partial revert that strands a dependent, never a revert-plus-fix.
-- FORWARD VERSION RULE (E18): a remedy is a new FORWARD release — patch
-  bump on the highest version ever shipped, READ FROM origin/main's
-  plugin.json `version` (M58): merge = publish, so main's manifest IS the
-  highest shipped, and CI's parity check pins the CHANGELOG top heading to
-  it. Tags are NEVER the source — tags can be backfilled or moved;
-  plugin.json on main cannot silently lie about what shipped, so a
-  tag-sourced bump risks a remedy numbered below what users hold (M32's
-  failure via unnamed input). The candidate tree is never the
-  source either — the reverts under review rewrite it. Whether or not the
-  offending merge bumped, the CHANGELOG entry names the restoration; the
-  bad tag and heading stay as history; versions are monotonic, always. On this lane
-  the forward rule IS the standing user ruling under D5 — no human ruling
-  blocks mid-incident.
+- FORWARD VERSION RULE (E18): a remedy is a new FORWARD release — patch bump
+  on the highest version ever shipped, READ FROM origin/main's plugin.json
+  `version` (M58): merge = publish, so main's manifest IS the highest
+  shipped, and CI's parity check pins the CHANGELOG top heading to it. Tags
+  are NEVER the source — tags can be backfilled or moved; plugin.json on
+  main cannot silently lie about what shipped, so a tag-sourced bump risks a
+  remedy numbered below what users hold (M32's failure via unnamed input).
+  The candidate tree is never the source either — the reverts under review
+  rewrite it. Whether or not the offending merge bumped, the CHANGELOG entry
+  names the restoration; the bad tag and heading stay as history; versions
+  are monotonic, always. On this lane the forward rule IS the standing user
+  ruling under D5 — no human ruling blocks mid-incident.
 - Path: every phase in order EXCEPT BEHAVIOR — DECLARE (forward bump +
   uniqueness) + READY + an EXPEDITED JUDGE verdict at RULE + SHIP + SEAL
   in their normal form; SHIP's merge-side prohibition binds here as
