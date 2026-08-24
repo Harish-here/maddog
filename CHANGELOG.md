@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.1] - 2026-08-24
+
+### Fixed
+- `.claude-plugin`: `plugin.json` and `marketplace.json` descriptions now list the `efficient-md` skill, shipped since 2.5.0 but absent from both manifest texts
+
 ## [2.5.0] - 2026-08-18
 
 ### Added
