@@ -59,8 +59,9 @@ description: >
      bump when the shipped set changes) ride in the packet as their own
      items, ordered so a forwarding reference lands only after the file it
      names exists.
-   - CREATE (skill or reference): no template contract exists for
-     non-agent text, and the checklist's own Scope excludes references
+   - CREATE (skill or reference): `review-agent/references/description-standard.md`
+     governs any frontmatter description; no template contract exists for
+     other non-agent text, and the checklist's own Scope excludes references
      that are not force-loaded — name in the packet exactly which
      dimensions you authored against and which do not apply, so the gate
      rules against a stated contract rather than inferring one. Where
