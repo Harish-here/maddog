@@ -102,6 +102,7 @@ agents/
   product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
 skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
+  efficient-md/       # authoring doctrine — context-residency classes (HOT/WARM/COLD/CHANNEL); model-invoked, no slash command
   mine-session/       # /mine-session — arm capture early, distill at session end; mines surprise, not activity
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
