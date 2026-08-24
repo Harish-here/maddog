@@ -20,8 +20,10 @@ description: >
 2. Dispatch ONE top-tier reviewer at a design gate — prefer this plugin's own
    gate-verdict agent if the family is installed, otherwise any top-tier
    general reviewer — with a premortem stance, the evidence list, and
-   `references/checklist.md` as the review contract and `references/agent-template.md`
-   as its structural reference. Do not name any agent's internal mode taxonomy
+   `references/checklist.md` as the review contract, `references/agent-template.md`
+   as its structural reference, and, when any target is a `SKILL.md` frontmatter
+   description, `references/description-standard.md` as the binding contract for
+   that dimension. Do not name any agent's internal mode taxonomy
    in the dispatch.
 3. Triage findings yourself. Fold accepted fixes via a dispatched executor.
    Convert any finding worth keeping permanently into an eval fixture
