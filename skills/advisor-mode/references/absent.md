@@ -23,14 +23,13 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
   needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume
   prompt; for anything else, the command that restarts it.
-- LEDGER DURABILITY: the session's decision ledger already exists (core
-  LEDGER LAW — one file; create no second one here). Move it, plus a
-  copy of every scratch-resident artifact its entries cite, to a
-  durable path outside session scratch (e.g. ~/.claude/ledgers/<slug>/),
-  then rewrite those scratch citations to the durable copies — the path
-  rewrite is the one sanctioned edit of a filed entry; repo and durable
-  citations stay put. A citation the returning user or a fresh session
-  cannot open is not a citation.
+- LEDGER: the decision ledger does not exist yet — it opens now, at the
+  flip, as one file on a durable path outside session scratch (e.g.
+  ~/.claude/ledgers/<slug>/), with the binding record from session open
+  as its first entry; create no second one. Two files leave with you:
+  the handover file says what the user must do; the ledger says what
+  was decided. A citation the returning user or a fresh session cannot
+  open is not a citation.
 If the work is a workflow that carries its own LAUNCH CONTRACT in its
 whenToUse header, execute that contract too — it encodes post-mortems the
 generic stack does not.
@@ -39,7 +38,7 @@ If scripts/unattended-start.sh exists in the family repo, run it — it
 discharges this whole section in one command.
 
 ## 2. DECISIONS WHILE ABSENT (the OPEN + ABSENT cell)
-- Within the boundary: decide, append the entry per the core LEDGER LAW,
+- Within the boundary: decide, append the entry per ledger.md,
   continue. No stalls for callable judgment.
 - Surface the ledger as ONE batch at closure or on the user's return —
   never as a drip, never silently absorbed.

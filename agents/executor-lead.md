@@ -25,8 +25,9 @@ description: >
   use to review or rule on another intelligence's output — that is
   executor-judge. Do NOT use to author one plan or document whose
   decomposition is already known — that is executor-smart. Do NOT use for
-  a package the advisor holds attended, as the session's main thread, with
-  its own decision ledger — that package stays with the Advisor. Buy this
+  a package the advisor holds attended, as the session's main thread,
+  while the advisor's own context suffices — that package stays with the
+  Advisor. Buy this
   only when the package must survive outside the advisor's context:
   absence, parallelism with the main thread, or context scarcity.
 hooks:

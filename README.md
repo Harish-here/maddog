@@ -40,8 +40,8 @@ Intelligence is the budget, and it has two axes: **tier** (quality of judgment) 
   intelligence's output. Buy the open-decomposition/campaign kind only when
   the package must survive outside the advisor's own context — absence,
   parallelism with the main thread, or context scarcity; an attended
-  package held as the session's main thread is judgment the advisor's own
-  ledger already carries, and stays with the advisor.
+  package held as the session's main thread, while the advisor's own
+  context suffices, stays with the advisor.
 
 Judgment classes are decoupled from models. The table below is an
 **exchange-rate table** — today's cheapest model clearing each class — not the
