@@ -52,7 +52,7 @@ mechanical hand to run it — it discharges this whole section in one command.
 - Nothing downstream can surface a permission prompt. The pre-clearance and
   pre-authorizations were bought while the user was present (core, BUDGET 3);
   VERIFY they cover every tool this run will need BEFORE launching; run
-  write dispatches foreground; then CONFIRM each long dispatch actually
+  write dispatches foreground; then a mechanical VERIFY confirms each long dispatch actually
   started — a stuck permission prompt once idled a run for hours. If the
   session had no present phase at all — no pre-clearance was ever bought,
   because there was no one present to buy it from — unattended dispatch is
@@ -63,9 +63,10 @@ mechanical hand to run it — it discharges this whole section in one command.
   user's return or its own pre-authorization. Never bundle them.
 
 ## 4. FAILURE AND RECOVERY
-- Harness error or restart: attempt ONE cheap resume (cached replay /
-  resumeFromRunId) before paging the human.
-- When paging: write current state to the resume record FIRST, then ping —
+- Harness error or restart: a mechanical hand attempts ONE cheap resume
+  (cached replay / resumeFromRunId) before paging the human.
+- When paging: a mechanical hand writes current state to the resume record
+  FIRST, then pings —
   a page that dies with the session helps nobody.
 - Two failures on the same recovery path: stop the run cleanly, record
   state, page, wait.
