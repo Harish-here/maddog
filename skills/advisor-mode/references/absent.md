@@ -7,8 +7,9 @@ budgets and prohibitions bind exactly as before.
 ## 1. FIRST ARTIFACT — the supervision stack (before your next dispatch)
 No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
 11.8 hours to a host restart with no watchdog.
-- WATCHDOG + HEARTBEAT: create the stall-detection watcher (LaunchAgent or
-  equivalent) and send the run-start ping via the session's notify channel
+- WATCHDOG + HEARTBEAT: a mechanical hand creates the stall-detection
+  watcher (LaunchAgent or equivalent) and sends the run-start ping via the
+  session's notify channel
   — discovered per session, never assumed (e.g.
   ~/.claude/channels/telegram/notify.sh if present; otherwise append to
   the run-state file — never skip signaling entirely). If no stall-detection facility
@@ -19,8 +20,8 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
   the risk; symlink installs get the watchdog LaunchAgent from install.sh,
   but it is not loaded automatically — confirm it is actually bootstrapped
   before assuming coverage.
-- RESUME RECORD: the moment any launch returns, persist what a fresh session
-  needs to relaunch this exact work — for a workflow harness, its script
+- RESUME RECORD: the moment any launch returns, a mechanical hand persists
+  what a fresh session needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume
   prompt; for anything else, the command that restarts it.
 - LEDGER: the decision ledger does not exist yet — it opens now, at the
@@ -34,8 +35,8 @@ If the work is a workflow that carries its own LAUNCH CONTRACT in its
 whenToUse header, execute that contract too — it encodes post-mortems the
 generic stack does not.
 
-If scripts/unattended-start.sh exists in the family repo, run it — it
-discharges this whole section in one command.
+If scripts/unattended-start.sh exists in the family repo, dispatch a
+mechanical hand to run it — it discharges this whole section in one command.
 
 ## 2. DECISIONS WHILE ABSENT (the OPEN + ABSENT cell)
 - Within the boundary: decide, append the entry per ledger.md,
@@ -70,8 +71,8 @@ discharges this whole section in one command.
   state, page, wait.
 
 ## 5. CLOSURE
-- Send the run-complete (or aborted) ping through the same channel that
-  got the run-start.
+- A mechanical hand sends the run-complete (or aborted) ping through the
+  same channel that got the run-start.
 - The closure report is the batch: ledger decisions, deviations, blocked
   items, and the verification artifacts that prove DONE-WHEN — claims
   cited to artifacts, per the core's acceptance law.
