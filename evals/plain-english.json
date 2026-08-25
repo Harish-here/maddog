@@ -1,0 +1,91 @@
+{
+  "skill": "plain-english",
+  "version": 1,
+  "candidates": [
+    {"name": "plain-english", "path": "skills/plain-english/SKILL.md"},
+    {"name": "efficient-md", "path": "skills/efficient-md/SKILL.md"},
+    {"name": "mine-session", "path": "skills/mine-session/SKILL.md"}
+  ],
+  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p, multi-sampled. Routing fixtures are runnable today. The `behaviour` fixtures have NO runner (run-skill-routing.sh measures routing only): run them by hand with `claude -p` after invoking the skill and grade by must/must_not. Runner debt recorded 2026-08-25. plain-route-05 and plain-route-06 are core:false pending a measured baseline: efficient-md's description does not claim README, so a README prompt has no shipped owner (description debt for efficient-md, recorded 2026-08-25; re-promote after that description is reworked, do not bend the fixtures). NOT MEASURED BY ANY FIXTURE HERE: persistence of the register past turn 1 (decay is the failure mode the evidence file predicts), and the session-start invocation, which lives in the user's CLAUDE.md and cannot be exercised by a stateless one-shot probe.",
+  "fixtures": [
+    {
+      "id": "plain-route-01",
+      "kind": "happy",
+      "core": true,
+      "prompt": "I read that twice and still don't know what you're asking me to decide. Put it the way you'd tell a colleague at their desk.",
+      "expect": "plain-english"
+    },
+    {
+      "id": "plain-route-02",
+      "kind": "happy",
+      "core": true,
+      "prompt": "Too much packed into too few words. Unpack your last message so I can follow it without the history.",
+      "expect": "plain-english"
+    },
+    {
+      "id": "plain-route-03",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Rewrite this SKILL.md body so it loads cheaper every session.",
+      "expect": "efficient-md"
+    },
+    {
+      "id": "plain-route-04",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Session's over; distill what we learned about how we worked together today.",
+      "expect": "mine-session"
+    },
+    {
+      "id": "plain-route-05",
+      "kind": "negative",
+      "core": false,
+      "prompt": "Fix the typo in the README heading.",
+      "expect": "none"
+    },
+    {
+      "id": "plain-route-06",
+      "kind": "boundary",
+      "core": false,
+      "prompt": "Make this repo's README readable for a non-engineer who will clone it and follow the setup steps.",
+      "expect": "efficient-md"
+    }
+  ],
+  "behaviour": [
+    {
+      "id": "plain-behave-01",
+      "core": true,
+      "setup": "Invoke the skill, then ask: 'We have two options for the retry policy in services/auth: exponential backoff with jitter, or a fixed 3-attempt loop. Ask me which to pick using AskUserQuestion.'",
+      "must": [
+        "at least two full sentences of explanation appear before the AskUserQuestion call",
+        "each option description is a complete sentence stating what changes in practice",
+        "the question text is a single sentence"
+      ],
+      "must_not": [
+        "any identifier coined in the reply (e.g. 'Option A', 'the jitter path') appears in the question without being spelled out earlier in the same message"
+      ]
+    },
+    {
+      "id": "plain-behave-02",
+      "core": true,
+      "setup": "Invoke the skill, then ask: 'Explain in one message why the build failed: the CI log says `error TS2345 at src/api/client.ts:88` and the last commit changed the return type of fetchUser.'",
+      "must": [
+        "the first line states the cause",
+        "every sentence is a full sentence of fewer than 25 words",
+        "no sentence contains more than one em-dash"
+      ],
+      "must_not": [
+        "the pattern 'not X, but Y' / 'isn't about X, it's Y'",
+        "a closing summary that restates the cause",
+        "a figure of speech that a literal phrase could replace (e.g. 'load-bearing', 'seam', 'spine', 'blast radius'); ordinary idiom with no literal substitute does not count"
+      ]
+    },
+    {
+      "id": "plain-behave-03",
+      "core": false,
+      "setup": "Invoke the skill, then ask a yes/no question: 'Is the watchdog plist present at ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist?' (environment: it is present).",
+      "must": ["the first line is yes or no with the path"],
+      "must_not": ["more than one caveat", "any caveat that does not change what the reader should do"]
+    }
+  ]
+}
