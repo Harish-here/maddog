@@ -7,8 +7,9 @@ budgets and prohibitions bind exactly as before.
 ## 1. FIRST ARTIFACT — the supervision stack (before your next dispatch)
 No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
 11.8 hours to a host restart with no watchdog.
-- WATCHDOG + HEARTBEAT: create the stall-detection watcher (LaunchAgent or
-  equivalent) and send the run-start ping via the session's notify channel
+- WATCHDOG + HEARTBEAT: a mechanical hand creates the stall-detection
+  watcher (LaunchAgent or equivalent) and sends the run-start ping via the
+  session's notify channel
   — discovered per session, never assumed (e.g.
   ~/.claude/channels/telegram/notify.sh if present; otherwise append to
   the run-state file — never skip signaling entirely). If no stall-detection facility
@@ -19,27 +20,26 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
   the risk; symlink installs get the watchdog LaunchAgent from install.sh,
   but it is not loaded automatically — confirm it is actually bootstrapped
   before assuming coverage.
-- RESUME RECORD: the moment any launch returns, persist what a fresh session
-  needs to relaunch this exact work — for a workflow harness, its script
+- RESUME RECORD: the moment any launch returns, a mechanical hand persists
+  what a fresh session needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume
   prompt; for anything else, the command that restarts it.
-- LEDGER DURABILITY: the session's decision ledger already exists (core
-  LEDGER LAW — one file; create no second one here). Move it, plus a
-  copy of every scratch-resident artifact its entries cite, to a
-  durable path outside session scratch (e.g. ~/.claude/ledgers/<slug>/),
-  then rewrite those scratch citations to the durable copies — the path
-  rewrite is the one sanctioned edit of a filed entry; repo and durable
-  citations stay put. A citation the returning user or a fresh session
-  cannot open is not a citation.
+- LEDGER: the decision ledger does not exist yet — it opens now, at the
+  flip, as one file on a durable path outside session scratch (e.g.
+  ~/.claude/ledgers/<slug>/), with the binding record from session open
+  as its first entry; create no second one. Two files leave with you:
+  the handover file says what the user must do; the ledger says what
+  was decided. A citation the returning user or a fresh session cannot
+  open is not a citation.
 If the work is a workflow that carries its own LAUNCH CONTRACT in its
 whenToUse header, execute that contract too — it encodes post-mortems the
 generic stack does not.
 
-If scripts/unattended-start.sh exists in the family repo, run it — it
-discharges this whole section in one command.
+If scripts/unattended-start.sh exists in the family repo, dispatch a
+mechanical hand to run it — it discharges this whole section in one command.
 
 ## 2. DECISIONS WHILE ABSENT (the OPEN + ABSENT cell)
-- Within the boundary: decide, append the entry per the core LEDGER LAW,
+- Within the boundary: decide, append the entry per ledger.md,
   continue. No stalls for callable judgment.
 - Surface the ledger as ONE batch at closure or on the user's return —
   never as a drip, never silently absorbed.
@@ -52,7 +52,7 @@ discharges this whole section in one command.
 - Nothing downstream can surface a permission prompt. The pre-clearance and
   pre-authorizations were bought while the user was present (core, BUDGET 3);
   VERIFY they cover every tool this run will need BEFORE launching; run
-  write dispatches foreground; then CONFIRM each long dispatch actually
+  write dispatches foreground; then a mechanical VERIFY confirms each long dispatch actually
   started — a stuck permission prompt once idled a run for hours. If the
   session had no present phase at all — no pre-clearance was ever bought,
   because there was no one present to buy it from — unattended dispatch is
@@ -63,16 +63,17 @@ discharges this whole section in one command.
   user's return or its own pre-authorization. Never bundle them.
 
 ## 4. FAILURE AND RECOVERY
-- Harness error or restart: attempt ONE cheap resume (cached replay /
-  resumeFromRunId) before paging the human.
-- When paging: write current state to the resume record FIRST, then ping —
+- Harness error or restart: a mechanical hand attempts ONE cheap resume
+  (cached replay / resumeFromRunId) before paging the human.
+- When paging: a mechanical hand writes current state to the resume record
+  FIRST, then pings —
   a page that dies with the session helps nobody.
 - Two failures on the same recovery path: stop the run cleanly, record
   state, page, wait.
 
 ## 5. CLOSURE
-- Send the run-complete (or aborted) ping through the same channel that
-  got the run-start.
+- A mechanical hand sends the run-complete (or aborted) ping through the
+  same channel that got the run-start.
 - The closure report is the batch: ledger decisions, deviations, blocked
   items, and the verification artifacts that prove DONE-WHEN — claims
   cited to artifacts, per the core's acceptance law.

@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.0] - 2026-08-25
+
+### Changed
+- `advisor-mode`: OWN HANDS rewritten as WHEN / WHEN NOT closed lists — the advisor writes only the ledger, memory, and the handover file, reads only user-given material, its own references, and a return's cited line, and runs no command except the one BIND survey; the Coase cost clause and the "short synchronous probes" category are removed, and no enforcement hook is claimed (`6f374cc`)
+- `advisor-mode`: GATES section replaces "never self-judge" — an independent verdict is bought only when the user is absent for the run, the act is irreversible, or a running skill names a judge; command-answerable questions are mechanical VERIFY; one re-gate per artifact, a second BLOCKED goes to the user; the routing table's adversarial example now shows an unattended-run prompt instead of self-review (`6f374cc`)
+- `advisor-mode`: the decision ledger opens only when USER PRESENCE flips to absent and is prohibited while the user is present; attended decisions go to the surfacing batch and memory; CLOSE binds per package on those two acts and at session end on "dispatched anything → memory written", replacing the non-empty-ledger trigger (`6f374cc`)
+- `advisor-mode`: LEDGER LAW body moved from SKILL.md into `references/ledger.md` (Law + Contract sections); `references/contract-decision-ledger.md` removed; `absent.md`'s move-the-ledger durability procedure replaced (the ledger is born on the durable path) (`6f374cc`)
+- `advisor-mode`: `absent.md`'s watchdog, run-start/complete pings, resume-record writes, cheap-resume attempt, dispatch-start confirmation, and `unattended-start.sh` are now run by mechanical hands — the advisor's own-hands law admits no command but the BIND survey (`52383d8`, `5ab9f1d`)
+- `advisor-mode`: Dispatch Contract's efficient-md clause restated — invoke-at-BIND kept as an unenforced obligation, plus two prohibitions (never inline what a path can carry; never accept an uncapped return); Bind, Dispatch Contract, Own Hands, Gates, The Ledger headings gain plain descriptors (`6f374cc`)
+- `executor-lead` description, README, Iterated Trigger: an attended main-thread package stays with the advisor "while the advisor's own context suffices" — the "own decision ledger" qualifier is gone with the attended ledger (`6f374cc`)
+
 ## [2.5.2] - 2026-08-24
 
 ### Fixed
