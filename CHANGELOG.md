@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.7.0] - 2026-08-25
 
 ### Added
-- `plain-english`: session-resident skill governing the wording of replies and questions to the user — answer first, explain every term the reader may not know, spell out session-coined labels at first use in each message, no coined terms or metaphors, full short active sentences, no "not X, but Y", say it once, one em-dash per sentence, caveats only when they change the decision, and a 2–5 sentence preamble before every question to the user.
+- `plain-english`: skill governing the wording of replies and questions to the user — answer first, explain every term the reader may not know, spell out session-coined labels at first use in each message, no coined terms or metaphors, full short active sentences, no "not X, but Y", say it once, one em-dash per sentence, caveats only when they change the decision, and a 2–5 sentence preamble before every question to the user. Session-wide use needs an invoke-first line in the user's CLAUDE.md; nothing shipped invokes it automatically.
 - `evals/plain-english.json`: routing fixtures against efficient-md and mine-session for `evals/run-skill-routing.sh`, plus behaviour fixtures recorded as runner debt
 
 ## [2.6.0] - 2026-08-25

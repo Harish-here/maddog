@@ -104,7 +104,7 @@ skills/
   advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
   efficient-md/       # authoring doctrine — context-residency classes (HOT/WARM/COLD/CHANNEL); model-invoked, no slash command
   mine-session/       # /mine-session — arm capture early, distill at session end; mines surprise, not activity
-  plain-english/      # /plain-english — register for replies and questions to the user; invoked first, every session
+  plain-english/      # /plain-english — register for replies and questions to the user; add "invoke plain-english first" to your CLAUDE.md to make it session-wide
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
