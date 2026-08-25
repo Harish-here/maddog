@@ -39,8 +39,11 @@ check nobody can run under pressure is not a check.
   to a commit SHA that its own CI bumps automatically on every push,
   syncing nightly — no version tag involved; `claude-plugins-official` is
   curated by Anthropic at its own discretion, no author-side procedure.
-  Precondition: maddog is an approved, listed plugin (user attestation
-  2026-08-24) — the CI re-pin applies to approved plugins only.
+  The CI re-pin applies to approved, listed plugins only — and maddog is
+  NOT listed in either directory (judge sweep 2026-08-25: 0 of 2282
+  community entries, 0 of 289 official); it installs from its own
+  marketplace (`Harish-here/maddog`), so directory staleness does not
+  currently apply to it.
   `maddog--vX.Y.Z` tags exist so OTHER plugins can declare semver
   constraints on this one — Claude Code lists `<name>--v*` tags to resolve
   them; a missing tag yields `no-matching-tag` only for constrained
@@ -118,7 +121,7 @@ check nobody can run under pressure is not a check.
 | Bad release published | E1 | REMEDY (expedited judge) |
 | Bad remedy | judge demo | L11: escalate, never revert a remedy |
 | Revert rolls version backward / orphans tag | E18 | forward version rule |
-| Directory serves stale content after a bad release (approved, listed plugins only — E3) | E3 | Directory follows pushes (community CI re-pin) — a REMEDY reaches it on merge; no pin step |
+| Directory serves stale content after a bad release (approved, listed plugins only; maddog is not listed — E3) | E3 | Directory follows pushes (community CI re-pin) — a REMEDY reaches it on merge; no pin step |
 | Symlink-mode regression damages live ~/.claude | E16 | BEHAVIOR populated-fixture probe, pre-merge |
 | Checks stale vs CI / unsynced trees | E15 | L6 |
 | Intermediate HEAD published mid-multi-PR work | E1 | L9 |

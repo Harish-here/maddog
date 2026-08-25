@@ -139,7 +139,8 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    never before merge either. Dispositions on the command's own refusals:
    tag already exists on this commit → the required end-state already
    holds — record and continue, NOT a failure; dirty tree under the plugin
-   directory → clean it and re-run; `plugin.json`/marketplace version
+   directory (the repo root) → stash or commit, never discard; if the dirt
+   is not yours, hand back to the user; `plugin.json`/marketplace version
    disagreement, or any other validation failure → affirmative SEAL
    failure; tag created but the push failed → run the printed `git push`
    yourself — a local-only tag is not a pass. Record BOTH CLI lines:
@@ -150,8 +151,8 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    populated-fixture probe passed on THIS release (M61) — a prior release's
    pass licenses nothing against a live `~/.claude` (E16 fence). Otherwise
    record UNVERIFIED.
-5. Post a SEAL comment on the merged PR: tag, `maddog--vX.Y.Z` tag (with the
-   CLI's output line), CI-on-main status, install probe results.
+5. Post a SEAL comment on the merged PR: tag, `maddog--vX.Y.Z` tag (with
+   both CLI output lines), CI-on-main status, install probe results.
 6. SEAL PASSES when every probe succeeded or is recorded UNVERIFIED with a
    named debt; it FAILS only on an affirmative failure. "Fully-gated" means
    gated per the ritual with debts named — the record says which.
