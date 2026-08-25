@@ -96,8 +96,10 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    target inside the repo that no longer exists) — the only input that
    reaches install.sh's `rm`, its sole deletion path; ONE foreign symlink
    (pointing outside the repo) as the NEGATIVE CONTROL, which must SURVIVE
-   untouched; and ONE real file sitting at a link target — the backup
-   branch (`mv`). PASS requires all three outcomes: dead repo-owned link
+   untouched; and ONE real file at a path install.sh will actually link —
+   e.g. `agents/<name>.md` for a `<name>.md` that exists in the repo — so
+   the backup branch (`mv`) is exercised; a real file at an unlinked path
+   proves nothing. PASS requires all three outcomes: dead repo-owned link
    pruned, foreign link intact, real file backed up. An empty or partial
    sandbox exercises none of this and its PASS counts for nothing.
 5. Anything that cannot run in this environment: record UNVERIFIED with a
@@ -130,26 +132,31 @@ branch until whole (L9). SHIP pushes it and opens the PR.
 
 ## 6. SEAL — fast-tier executor, post-merge
 
-1. Tag the merge commit `vX.Y.Z` (D2) — never before merge (L3);
-   `maddog--vX.Y.Z` is reserved for directory submissions, not this tag.
+1. Tag the merge commit `vX.Y.Z` (D2) — never before merge (L3); then, on
+   that same commit, run `claude plugin tag --push` from the repo root,
+   producing `maddog--vX.Y.Z` — a dependency-resolution tag that lets OTHER
+   plugins declare semver constraints on this one (plugin-dependencies.md);
+   never before merge either. Dispositions on the command's own refusals:
+   tag already exists on this commit → the required end-state already
+   holds — record and continue, NOT a failure; dirty tree under the plugin
+   directory (the repo root) → stash or commit, never discard; if the dirt
+   is not yours, hand back to the user; `plugin.json`/marketplace version
+   disagreement, or any other validation failure → affirmative SEAL
+   failure; tag created but the push failed → run the printed `git push`
+   yourself — a local-only tag is not a pass. Record BOTH CLI lines:
+   `Created tag maddog--vX.Y.Z` and `Pushed to origin`.
 2. Confirm CI is green on main for the merge commit.
 3. Run a fresh plugin-install probe, or record UNVERIFIED + debt.
 4. Run a live `install.sh` probe against a populated target ONLY if BEHAVIOR's
    populated-fixture probe passed on THIS release (M61) — a prior release's
    pass licenses nothing against a live `~/.claude` (E16 fence). Otherwise
    record UNVERIFIED.
-5. Second-channel check: the directory pin (`maddog--vX.Y.Z`) is tag-pinned
-   (E3) and unaffected by a normal release — record "pin unaffected" and
-   move on. Only when the pin sits on content this release reverted (a
-   REMEDY repairing a bad release at or after the pinned version) must the
-   pin be updated/resubmitted, or a named debt recorded (M69: a debt on
-   every release is noise, and noise unnames debts).
-6. Post a SEAL comment on the merged PR: tag, CI-on-main status, install probe
-   results, second-channel state.
-7. SEAL PASSES when every probe succeeded or is recorded UNVERIFIED with a
+5. Post a SEAL comment on the merged PR: tag, `maddog--vX.Y.Z` tag (with
+   both CLI output lines), CI-on-main status, install probe results.
+6. SEAL PASSES when every probe succeeded or is recorded UNVERIFIED with a
    named debt; it FAILS only on an affirmative failure. "Fully-gated" means
    gated per the ritual with debts named — the record says which.
-8. On an affirmative SEAL failure: enter REMEDY — unless the failed release
+7. On an affirmative SEAL failure: enter REMEDY — unless the failed release
    was itself a REMEDY, in which case run the full ritual with the judge
    present (L11).
 
@@ -162,12 +169,12 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    partial revert that strands a dependent, never a revert-plus-fix.
 3. **Forward version rule (E18):** a remedy is a new FORWARD release — patch
    bump on the highest version ever shipped, read from `origin/main`'s
-   `plugin.json` `version` (M58) — never from tags (E3: most shipped versions
-   were never tagged), never from the candidate tree (the reverts under review
-   rewrite it). The CHANGELOG entry names the restoration; the bad tag and
-   heading stay as history; versions are monotonic, always. On this lane the
-   forward rule IS the standing D5 ruling — no human ruling blocks
-   mid-incident.
+   `plugin.json` `version` (M58) — never from tags (tags can be backfilled or
+   moved; `plugin.json` on main cannot silently lie about what shipped), never
+   from the candidate tree (the reverts under review rewrite it). The CHANGELOG
+   entry names the restoration; the bad tag and heading stay as history;
+   versions are monotonic, always. On this lane the forward rule IS the
+   standing D5 ruling — no human ruling blocks mid-incident.
 4. **Path:** every phase EXCEPT BEHAVIOR, in order — DECLARE (forward bump +
    uniqueness) → READY → EXPEDITED JUDGE verdict at RULE → SHIP → SEAL, all in
    their normal form; SHIP's merge-side prohibition (M52) binds here too
@@ -224,8 +231,8 @@ GitHub-native; no push-to-main needed to record anything.
 - THE RELEASE PR IS THE RECORD: SHIP's PR body cites the RULE verdict naming
   the head commit, every probe run, and every UNVERIFIED item with its named
   debt.
-- SEAL posts its results (tag, CI-on-main, install probes, second-channel
-  state) as a comment on the merged PR.
+- SEAL posts its results (tag, `maddog--vX.Y.Z` tag output, CI-on-main,
+  install probes) as a comment on the merged PR.
 - SEAL passes when every probe succeeded or is recorded UNVERIFIED with a
   named debt; it FAILS only on an affirmative failure.
 - LAST FULLY-GATED STATE := the most recent merge commit on main whose PR

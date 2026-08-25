@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.2] - 2026-08-24
+
+### Fixed
+- `release`: the `maddog--vX.Y.Z` tag was modelled as a "directory submission pin" — Anthropic's docs say the directory CI re-pins on every push and that tag serves dependents' semver constraints (`plugin-dependencies.md`); E3/D2 corrected, new evidence E21
+- `release`: SEAL now runs `claude plugin tag --push` beside the `vX.Y.Z` tag; the second-channel check is retired (L12: one mechanism in, one out)
+
 ## [2.5.1] - 2026-08-24
 
 ### Fixed
