@@ -18,7 +18,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `README.md`: Advisor row notes the one-time Survey as its sole exception to "never does mechanical work" (F13)
 
 ### Added
-- `evals/advisor-mode.json`: behaviour fixtures pinning F1/F6, F3, and F7 against regression, run by hand per the file's own harness note (the skill disables model invocation, so no routing block applies)
+- `evals/advisor-mode.json`: behaviour fixtures pinning F1/F6, F3, and F7 against regression, no runner exists for behaviour fixtures (debt E24); hand-executed status is recorded in the release PR
 
 ## [2.7.0] - 2026-08-25
 
