@@ -1,7 +1,20 @@
 # The Ledger — law and contract
 
-Read with absent.md when the user leaves. SKILL.md holds when the
-ledger opens; this file holds how it is written and closed.
+Read with absent.md when the user leaves. This file holds when the
+ledger opens, and how it is written and closed.
+
+## Opening
+
+The ledger opens at the launch decision for a dispatch whose return
+the user will not be present for, before that dispatch, on the durable
+path.
+
+Opening it does not flip USER PRESENCE by itself. USER PRESENCE flips
+to absent only when the user actually leaves.
+
+Launching the dispatch can be that departure. Or the user can say
+mid-flight, while a dispatch runs, that they are leaving. Either way,
+the ledger opens then too if it has not already opened.
 
 ## Law
 
@@ -30,8 +43,10 @@ ledger opens; this file holds how it is written and closed.
   content — rulings, models, transcripts enter as pointers, exactly as
   ACCEPTANCE files them; never cite a path the returning user or a
   fresh session cannot open; never record that a law was followed —
-  CLOSE is discharged by the surfacing batch and the memory write,
-  never by an entry asserting compliance.
+  CLOSE is discharged, while the user is present, by the surfacing
+  batch and any memory candidate the user approved; while the user is
+  away, by the surfacing batch alone. Never by an entry asserting
+  compliance.
 
 ## Contract (repo companion to the Token-Residency Model, rev 4)
 
@@ -63,19 +78,23 @@ adversarial design review of a withdrawn ledger redesign.
     session scratchpad. A line admitted for R3 may cite only paths R3
     can open — a citation the reader cannot open is not a citation
     (absent.md's law, imported as this contract's constraint).
-- BINDING RECORD: the statement made to the user at session open
-  always NAMES each routed class's hand. Kept is exempt. Hands are
-  never derivable, the skill deliberately names none. An undegraded bind fits ONE line
-  carrying all pairs, each gate-critical invariant as verified (the
-  adversarial hand's absence of Write/Edit), and the reopen condition;
-  DEGRADED, UNBOUND, and shared-hand tier-collapse each take their own
-  line naming the consequence. This format SUPPLEMENTS the shipped
-  element list (hand, satisfied invariants, degradations); no element
-  of that list may be dropped. When a ledger opens, the statement is
-  copied in unchanged as its first entry.
-- ROUTING PRECONDITION: the routing gate keys on the statement NAMING
-  every routed class's hand (kept is exempt, see SKILL.md Bind), not
-  on its mere existence — a prohibition at the consumer, never an
+- BINDING RECORD: the advisor writes it to the binding record file in the session scratchpad at
+  session open, naming each routed class's hand. Kept is exempt. Hands
+  are never derivable, the skill deliberately names none. An
+  undegraded bind fits ONE line carrying all pairs, each gate-critical
+  invariant as verified (the adversarial hand's absence of Write/Edit),
+  and the reopen condition; DEGRADED, UNBOUND, and shared-hand
+  tier-collapse each take their own line naming the consequence. This
+  format SUPPLEMENTS the shipped element list (hand, satisfied
+  invariants, degradations); no element of that list may be dropped.
+  The advisor states the record when the user asks, and states a
+  degraded or unbound class unprompted, per SKILL.md Session Open.
+  When a ledger opens, the binding record file's content is copied in
+  unchanged as its first entry.
+- ROUTING PRECONDITION: the routing gate keys on the binding record
+  EXISTING — the binding record file written at session open, or the
+  ledger's first entry once a ledger has opened — never on its being
+  spoken to the user. A prohibition at the consumer, never an
   obligation on the author.
 - EXCHANGE TEST: every line added to instruction text that agents
   load is tested at its class's load frequency — a frontmatter

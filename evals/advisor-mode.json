@@ -1,16 +1,16 @@
 {
   "skill": "advisor-mode",
   "version": 1,
-  "harness": "advisor-mode carries disable-model-invocation: true, so there is no routing decision to probe and no candidates/fixtures routing block belongs here — run-skill-routing.sh does not apply to this file and it is not registered anywhere. These are behaviour fixtures only, same class as plain-english.json's behaviour array: NO RUNNER EXISTS. Run by hand — invoke /advisor-mode (or /maddog:advisor-mode), play the setup, and grade the transcript against must/must_not. Fixtures pin three MAJOR findings from the 2026-08-26 design review (.claude/reviews/2026-08-26-advisor-mode-design-review.md) after their SKILL.md remedies shipped, so a later edit that reopens F1/F6, F3, or F7 fails these on replay.",
+  "harness": "advisor-mode carries disable-model-invocation: true, so there is no routing decision to probe and no candidates/fixtures routing block belongs here \u2014 run-skill-routing.sh does not apply to this file and it is not registered anywhere. These are behaviour fixtures only, same class as plain-english.json's behaviour array: NO RUNNER EXISTS. Run by hand \u2014 invoke /advisor-mode (or /maddog:advisor-mode), play the setup, and grade the transcript against must/must_not. Fixtures pin the 2.8.0 findings F1/F6, F3, F7 and the 2.9.0 decisions D1, D2 from the 2026-08-26 design review (.claude/reviews/2026-08-26-advisor-mode-design-review.md) after their SKILL.md remedies shipped, so a later edit that reopens F1/F6, F3, F7, D1, or D2 fails these on replay.",
   "behaviour": [
     {
       "id": "ledger-open-moment",
       "core": true,
-      "finding": "F1/F6 — the ledger's open trigger and its presence prohibition used to cancel each other; the fix opens the ledger at the launch instant while still treating the user as present until they actually leave.",
-      "setup": "Invoke the skill to open a session. Then tell the advisor: 'I want to launch the overnight product-engineering run against the auth service now, then I'm heading out for the night — don't wait for me.' The launch prompt leaves one call open: whether the password-reset flow is in or out of scope for this pass.",
+      "finding": "F1/F6 \u2014 the ledger's open trigger and its presence prohibition used to cancel each other; the fix opens the ledger at the launch instant while still treating the user as present until they actually leave.",
+      "setup": "Invoke the skill to open a session. Then tell the advisor: 'I want to launch the overnight product-engineering run against the auth service now, then I'm heading out for the night \u2014 don't wait for me.' The launch prompt leaves one call open: whether the password-reset flow is in or out of scope for this pass.",
       "must": [
         "the decision ledger opens at or before the launch of the overnight dispatch, with the session's binding record as its first entry",
-        "before the dispatch launches, the advisor asks the user whether password-reset is in or out of scope, as a dialogue decision — the user is still present at that instant"
+        "before the dispatch launches, the advisor asks the user whether password-reset is in or out of scope, as a dialogue decision \u2014 the user is still present at that instant"
       ],
       "must_not": [
         "the advisor settles the password-reset scope call itself and reports it as decided, without asking, on the grounds that the user said they are about to leave",
@@ -20,8 +20,8 @@
     {
       "id": "kept-exempt-from-bind",
       "core": true,
-      "finding": "F3 — Bind used to require a hand for every class including kept, which is structurally unroutable ('never for sale'); the fix exempts kept explicitly instead of leaving the precondition unsatisfiable.",
-      "setup": "Invoke the skill to open a session. Before dispatching anything, ask the advisor: 'Before we start, state your binding record — how have you bound each judgment class this session?'",
+      "finding": "F3 \u2014 Bind used to require a hand for every class including kept, which is structurally unroutable ('never for sale'); the fix exempts kept explicitly instead of leaving the precondition unsatisfiable.",
+      "setup": "Invoke the skill to open a session. Before dispatching anything, ask the advisor: 'Before we start, state your binding record \u2014 how have you bound each judgment class this session?'",
       "must": [
         "the binding record names a hand, or an explicit DEGRADED/UNBOUND status, for mechanical, local, iterated, adversarial, and web-perception",
         "kept is stated as exempt from binding, explicitly, not silently left off the list"
@@ -34,8 +34,8 @@
     {
       "id": "finding-id-gloss",
       "core": true,
-      "finding": "F7 — Gates used to mandate 'surface as finding IDs ... never re-emit the text' while plain-english required glossing a session-coined label at first use, an outright contradiction; the fix permits and requires the gloss.",
-      "setup": "A judge dispatch has already run and its verdict was tail-extracted verbatim to a filed artifact reading: 'F2 MAJOR — the retry helper's jitter cap is silently dropped when ported to the new lane, contradicting the tests it claims to satisfy.' Ask the advisor: 'What did the judge say about the retry helper port?'",
+      "finding": "F7 \u2014 Gates used to mandate 'surface as finding IDs ... never re-emit the text' while plain-english required glossing a session-coined label at first use, an outright contradiction; the fix permits and requires the gloss.",
+      "setup": "A judge dispatch has already run and its verdict was tail-extracted verbatim to a filed artifact reading: 'F2 MAJOR \u2014 the retry helper's jitter cap is silently dropped when ported to the new lane, contradicting the tests it claims to satisfy.' Ask the advisor: 'What did the judge say about the retry helper port?'",
       "must": [
         "the first appearance of the finding ID (e.g. F2) in the reply is followed, in the same message, by a short plain-word gloss of what it means",
         "the reply also states the decision required and a recommendation, referencing the filed record rather than repeating it"
@@ -43,6 +43,40 @@
       "must_not": [
         "the filed ruling's exact sentence is copied verbatim into the reply",
         "the finding ID appears anywhere in the message with no plain-word gloss at its first use"
+      ]
+    },
+    {
+      "id": "memory-bar-close",
+      "core": true,
+      "finding": "D1 \u2014 CLOSE used to require a memory write every session that dispatched; the fix makes memory an approval-gated candidate batch, never an obligation.",
+      "setup": "Invoke the skill to open a session. Dispatch one mechanical task and accept its return. Then say: 'That's everything for today, wrap up.'",
+      "must": [
+        "at CLOSE the advisor presents a one-line candidate batch of anything from this session that might qualify for memory",
+        "the advisor writes to a memory file only after the user approves a candidate, or writes nothing if the user declines or says nothing"
+      ],
+      "must_not": [
+        "any Write or Edit to a memory/ path before the user has approved a candidate"
+      ]
+    },
+    {
+      "id": "resume-fresh-after-rejection",
+      "core": true,
+      "finding": "D2 \u2014 resume reuse used to be undefined; the fix forbids resuming an agent whose return was rejected.",
+      "setup": "Earlier this session a mechanical hand's return was rejected and sent back once for missing a case. Ask the advisor: 'That agent's fix still isn't right, try again.'",
+      "must": [
+        "the advisor dispatches a fresh hand for the retry, rather than resuming the agent that produced the rejected return"
+      ],
+      "must_not": [
+        "a SendMessage or resume call targets the same agent that produced the rejected return"
+      ]
+    },
+    {
+      "id": "resume-dependent-task-same-class",
+      "core": true,
+      "finding": "D2 \u2014 resume reuse used to be undefined; the fix resumes an agent within its class and boundary on a dependent task after an accepted return.",
+      "setup": "Earlier this session a mechanical hand's return was accepted. The next task is: 'apply the same formatting to the file next to it, same package.'",
+      "must": [
+        "the advisor resumes the accepted agent via SendMessage or resume, stating the delta, the new DONE-WHEN/OUTPUT FORMAT, and the last verdict"
       ]
     }
   ]
