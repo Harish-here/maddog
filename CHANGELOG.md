@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.8.0] - 2026-08-26
+
+### Changed
+- `advisor-mode`: description rewritten to the description-standard contract — "Use when …" triggers replace imperative second person and the restated body norms, and the family names it dropped so it stops contradicting "this table names no agents" (F8, F9)
+- `advisor-mode`: the ledger now opens at the launch decision for a dispatch the user will not be present for, not after they have already left; USER PRESENCE flips only on the actual departure, so a scope call raised at launch still reaches the user attended (F1, F6)
+- `absent.md` gains §6 MID-FLIGHT DEPARTURE — a user leaving mid-dispatch now opens the ledger and starts the watchdog/resume record without killing the running dispatch
+- `advisor-mode`: Bind's `kept` class is stated Exempt rather than left unroutable — `kept` is never for sale and could never satisfy "name a hand for every class" (F3)
+- `advisor-mode`: Survey now names reading agents' frontmatter `tools:` line alongside descriptions, matching what Bind's verification actually demands; Own Hands' Read allowance closes the same way Survey's does (F2, F5)
+- `advisor-mode`: efficient-md's BIND invocation now cites the installed-skill list already in session context as its discovery evidence (F4)
+- `advisor-mode`: Gates permits and requires glossing a finding ID in one plain-word line at first use per message, resolving the contradiction with plain-english's session-coined-label rule (F7)
+- `advisor-mode`: the iterated buy-in test and the same-file dispatch rule each collapse to one statement, cutting their near-duplicate copies (F10, F11)
+- `README.md`: Advisor row notes the one-time Survey as its sole exception to "never does mechanical work" (F13)
+
+### Added
+- `evals/advisor-mode.json`: behaviour fixtures pinning F1/F6, F3, and F7 against regression, no runner exists for behaviour fixtures (debt E24); hand-executed status is recorded in the release PR
+
 ## [2.7.0] - 2026-08-25
 
 ### Added
