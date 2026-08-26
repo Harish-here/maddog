@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.8.0] - 2026-08-26
 
 ### Changed
-- `advisor-mode`: description rewritten to the description-standard contract — "Use when …" triggers replace imperative second person and the restated body norms, and the family names it dropped so it stops contradicting "this table names no agents" (F8, F9, F13)
+- `advisor-mode`: description rewritten to the description-standard contract — "Use when …" triggers replace imperative second person and the restated body norms, and the family names it dropped so it stops contradicting "this table names no agents" (F8, F9)
 - `advisor-mode`: the ledger now opens at the launch decision for a dispatch the user will not be present for, not after they have already left; USER PRESENCE flips only on the actual departure, so a scope call raised at launch still reaches the user attended (F1, F6)
 - `absent.md` gains §6 MID-FLIGHT DEPARTURE — a user leaving mid-dispatch now opens the ledger and starts the watchdog/resume record without killing the running dispatch
 - `advisor-mode`: Bind's `kept` class is stated Exempt rather than left unroutable — `kept` is never for sale and could never satisfy "name a hand for every class" (F3)
