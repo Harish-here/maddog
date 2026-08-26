@@ -6,7 +6,7 @@ A five-role advisor–executor hierarchy for [Claude Code](https://claude.com/cl
 
 | Tier | Judgment class | Role |
 |---|---|---|
-| **Advisor** | architectural / cross-package | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work. |
+| **Advisor** | architectural / cross-package | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work, aside from the one-time Survey at session open. |
 | **executor-lead** | iterated (judgment with memory) | Judgment with memory, hands always delegated. Dispatched per judgment burst for an open decomposition (PLAN), an unfreezable evidence-driven campaign (CAMPAIGN), or decided-scope delivery entangled with a live/hazardous environment (DELIVER). Continuity lives in artifacts — a plan, a decision ledger — never in a live context. Not an orchestrator: babysitting execution is a workflow script's job. Never touches a file itself. |
 | **executor-judge** | adversarial verdict | Adversarial verdicts on another intelligence's output: plan/design review before execution (DESIGN-REVIEW), executed-change review after (CHANGE-REVIEW), or adjudicating a dispute that gates progression (ADJUDICATE). Rules only on primary evidence it reads itself. Cannot fix by construction — no Write/Edit. |
 | **executor-smart** | local | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |

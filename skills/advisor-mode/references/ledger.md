@@ -64,8 +64,8 @@ adversarial design review of a withdrawn ledger redesign.
     can open — a citation the reader cannot open is not a citation
     (absent.md's law, imported as this contract's constraint).
 - BINDING RECORD: the statement made to the user at session open
-  always NAMES each class's hand — hands are never derivable, the
-  skill deliberately names none. An undegraded bind fits ONE line
+  always NAMES each routed class's hand. Kept is exempt. Hands are
+  never derivable, the skill deliberately names none. An undegraded bind fits ONE line
   carrying all pairs, each gate-critical invariant as verified (the
   adversarial hand's absence of Write/Edit), and the reopen condition;
   DEGRADED, UNBOUND, and shared-hand tier-collapse each take their own
@@ -74,8 +74,9 @@ adversarial design review of a withdrawn ledger redesign.
   of that list may be dropped. When a ledger opens, the statement is
   copied in unchanged as its first entry.
 - ROUTING PRECONDITION: the routing gate keys on the statement NAMING
-  every class's hand, not on its mere existence — a prohibition at
-  the consumer, never an obligation on the author.
+  every routed class's hand (kept is exempt, see SKILL.md Bind), not
+  on its mere existence — a prohibition at the consumer, never an
+  obligation on the author.
 - EXCHANGE TEST: every line added to instruction text that agents
   load is tested at its class's load frequency — a frontmatter
   description pays every session, a skill body every invocation, a

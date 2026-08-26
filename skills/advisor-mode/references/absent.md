@@ -24,13 +24,14 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
   what a fresh session needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume
   prompt; for anything else, the command that restarts it.
-- LEDGER: the decision ledger does not exist yet — it opens now, at the
-  flip, as one file on a durable path outside session scratch (e.g.
-  ~/.claude/ledgers/<slug>/), with the binding record from session open
-  as its first entry; create no second one. Two files leave with you:
-  the handover file says what the user must do; the ledger says what
-  was decided. A citation the returning user or a fresh session cannot
-  open is not a citation.
+- LEDGER: the ledger opened already, at the launch decision for this
+  dispatch. If this launch is the departure and it has not opened yet,
+  it opens now — as one file on a durable path outside session scratch
+  (e.g. ~/.claude/ledgers/<slug>/), with the binding record from
+  session open as its first entry; create no second one. Two files
+  leave with you: the handover file says what the user must do; the
+  ledger says what was decided. A citation the returning user or a
+  fresh session cannot open is not a citation.
 If the work is a workflow that carries its own LAUNCH CONTRACT in its
 whenToUse header, execute that contract too — it encodes post-mortems the
 generic stack does not.
@@ -79,3 +80,12 @@ mechanical hand to run it — it discharges this whole section in one command.
   cited to artifacts, per the core's acceptance law.
 - On the user's return mid-run: interrupt rule from the core applies —
   freeze, then surface this batch immediately.
+
+## 6. MID-FLIGHT DEPARTURE — the user leaves while a dispatch already runs
+On the user's word:
+- Read this file, if it has not been read this session.
+- Open the ledger, if it is not already open.
+- A mechanical hand writes the resume record and starts the watchdog
+  for the dispatch already in flight. It also sends the run-start
+  ping via the session's notify channel.
+- Continue — the running dispatch is not killed.
