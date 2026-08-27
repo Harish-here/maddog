@@ -71,23 +71,40 @@ is_temp_path() {
   esac
 }
 
-# --- quote-aware segment splitter -----------------------------------------
-# Splits a command string into pipeline/chain segments on unquoted &&, ||,
-# ;, and | — characters inside single or double quotes are never treated as
-# shell metacharacters, so e.g. `grep -E "a|rm -rf|b"` stays ONE segment
-# instead of re-parsing as a pipeline containing a bogus `rm -rf` stage.
+# --- quote-aware walk -------------------------------------------------
+# One shared character-by-character quote-tracking walk (mode-selected),
+# reused everywhere in this file that needs to know whether a character
+# sits inside single/double quotes — a single implementation, not one per
+# call site that can drift out of sync.
+#   mode="chain": splits a full command into pipeline/chain segments on
+#     unquoted &&, ||, ;, and | — e.g. `grep -E "a|rm -rf|b"` stays ONE
+#     segment instead of re-parsing as a pipeline containing a bogus
+#     `rm -rf` stage. Prints one segment (literal) per line.
+#   mode="word": splits one segment into whitespace-separated argument
+#     tokens, respecting quotes so a quoted argument containing spaces
+#     (e.g. an awk/jq program) stays ONE token. In the same pass it builds
+#     a MASKED companion for each token: every character consumed while
+#     inside a quote (including the quote marks themselves) is replaced
+#     with 'Q'. Redirect-style checks test the masked copy so a '>' that
+#     exists only inside quotes (`grep '>' f`, `awk '$1 > 5'`) is never
+#     mistaken for a real shell metacharacter; checks that need the real
+#     text (rm/git/sed flag matching, path checks) keep using the literal
+#     copy. Prints "literal<US>masked" per token, US = \x1f (0x1f, unlikely
+#     to appear in a shell command), one per line.
 # Best-effort: does not handle backslash-escaped metacharacters outside
 # quotes, or backslash-escaped quotes inside double quotes, beyond a simple
 # lookback — adequate for a guard, not a shell parser.
-split_command() {
-  local cmd="$1"
-  local -a segs=()
-  local buf="" c prev="" in_single=0 in_double=0
+quote_walk() {
+  local mode="$1" cmd="$2"
+  local -a out=()
+  local buf="" mbuf="" c prev="" in_single=0 in_double=0
   local i=0 len=${#cmd}
+  local US=$'\x1f'
   while [ "$i" -lt "$len" ]; do
     c="${cmd:i:1}"
     if [ "$in_single" -eq 1 ]; then
       buf+="$c"
+      mbuf+="Q"
       [ "$c" = "'" ] && in_single=0
       prev="$c"
       i=$((i + 1))
@@ -95,6 +112,7 @@ split_command() {
     fi
     if [ "$in_double" -eq 1 ]; then
       buf+="$c"
+      mbuf+="Q"
       if [ "$c" = '"' ] && [ "$prev" != "\\" ]; then
         in_double=0
       fi
@@ -102,55 +120,87 @@ split_command() {
       i=$((i + 1))
       continue
     fi
+    if [ "$mode" = "word" ]; then
+      case "$c" in
+        ' '|$'\t')
+          [ -n "$buf" ] && out+=("${buf}${US}${mbuf}")
+          buf=""
+          mbuf=""
+          prev="$c"
+          i=$((i + 1))
+          continue
+          ;;
+      esac
+    fi
     case "$c" in
       "'")
         in_single=1
         buf+="$c"
+        mbuf+="Q"
         ;;
       '"')
         in_double=1
         buf+="$c"
+        mbuf+="Q"
         ;;
       '&')
-        if [ "${cmd:i:2}" = "&&" ]; then
-          segs+=("$buf")
+        if [ "$mode" = "chain" ] && [ "${cmd:i:2}" = "&&" ]; then
+          out+=("$buf")
           buf=""
           i=$((i + 2))
           prev="$c"
           continue
         fi
         buf+="$c"
+        mbuf+="$c"
         ;;
       '|')
-        if [ "${cmd:i:2}" = "||" ]; then
-          segs+=("$buf")
+        if [ "$mode" = "chain" ]; then
+          if [ "${cmd:i:2}" = "||" ]; then
+            out+=("$buf")
+            buf=""
+            i=$((i + 2))
+            prev="$c"
+            continue
+          fi
+          out+=("$buf")
           buf=""
-          i=$((i + 2))
+          i=$((i + 1))
           prev="$c"
           continue
         fi
-        segs+=("$buf")
-        buf=""
-        i=$((i + 1))
-        prev="$c"
-        continue
+        buf+="$c"
+        mbuf+="$c"
         ;;
       ';')
-        segs+=("$buf")
-        buf=""
-        i=$((i + 1))
-        prev="$c"
-        continue
+        if [ "$mode" = "chain" ]; then
+          out+=("$buf")
+          buf=""
+          i=$((i + 1))
+          prev="$c"
+          continue
+        fi
+        buf+="$c"
+        mbuf+="$c"
         ;;
       *)
         buf+="$c"
+        mbuf+="$c"
         ;;
     esac
     prev="$c"
     i=$((i + 1))
   done
-  segs+=("$buf")
-  printf '%s\n' "${segs[@]}"
+  if [ "$mode" = "chain" ]; then
+    out+=("$buf")
+  else
+    [ -n "$buf" ] && out+=("${buf}${US}${mbuf}")
+  fi
+  printf '%s\n' "${out[@]}"
+}
+
+split_command() {
+  quote_walk chain "$1"
 }
 
 # --- read stdin once, tolerate absent/malformed input by allowing ---
@@ -184,9 +234,17 @@ while IFS= read -r segment; do
   segment="${segment%"${segment##*[![:space:]]}"}"
   [ -z "$segment" ] && continue
 
-  # tokenize on whitespace (best-effort; no complex quote handling needed
-  # for the flag/path shapes this guard looks for)
-  read -ra tokens <<< "$segment"
+  # tokenize on whitespace, quote-aware (quote_walk word mode) — a quoted
+  # argument containing spaces (an awk/jq program, a grep pattern) stays ONE
+  # token instead of splitting apart and exposing a bare '>' that was never
+  # a real shell metacharacter. tokens_masked is the parallel masked form
+  # used by redirect-style checks (see quote_walk above).
+  tokens=()
+  tokens_masked=()
+  while IFS=$'\x1f' read -r tok_lit tok_masked; do
+    tokens+=("$tok_lit")
+    tokens_masked+=("$tok_masked")
+  done < <(quote_walk word "$segment")
   [ "${#tokens[@]}" -eq 0 ] && continue
 
   cmd0="${tokens[0]##*/}"
@@ -369,9 +427,9 @@ while IFS= read -r segment; do
         done
         ;;
       awk)
-        for tok in "${tokens[@]:1}"; do
-          if [[ "$tok" == *'>'* ]]; then
-            case "$tok" in
+        for mtok in "${tokens_masked[@]:1}"; do
+          if [[ "$mtok" == *'>'* ]]; then
+            case "$mtok" in
               *'>='*) : ;; # best-effort: skip likely numeric-comparison operator
               *) deny "awk with an embedded '>' likely redirects output to a file — this executor may not write files via Bash." ;;
             esac
@@ -400,12 +458,17 @@ while IFS= read -r segment; do
     fi
 
     # bare/glued output redirection: >, >>, N>, N>>, &>, &>> — matched
-    # anywhere in the token (not just at its start), so a redirect glued
-    # straight onto the preceding argument (e.g. `pwned>out.txt`, no space)
-    # is caught the same as a standalone `>out.txt` token.
+    # anywhere in the (masked) token, not just at its start, so a redirect
+    # glued straight onto the preceding argument (e.g. `pwned>out.txt`, no
+    # space) is caught the same as a standalone `>out.txt` token. Tested
+    # against tokens_masked, not tokens: a '>' that only exists inside
+    # quotes (`grep '>' f`, `awk '$1 > 5'`, `git log --grep='fix > bug'`)
+    # is masked to 'Q' and can never trip this check — only a '>' the shell
+    # itself would treat as a redirect operator survives into the masked
+    # form.
     # (fd duplication/close forms like 2>&1, &>&2, 2>&- are not file writes)
-    for tok in "${tokens[@]}"; do
-      if [[ "$tok" =~ [0-9]*(\>\>?|\&\>\>?)([^[:space:]]*)$ ]]; then
+    for mtok in "${tokens_masked[@]}"; do
+      if [[ "$mtok" =~ [0-9]*(\>\>?|\&\>\>?)([^[:space:]]*)$ ]]; then
         rest="${BASH_REMATCH[2]}"
         if [[ "$rest" =~ ^\&[0-9]+$ ]] || [ "$rest" = "&-" ]; then
           : # fd duplication/close — not a file write
