@@ -188,7 +188,8 @@ conditions are required. First, B's brief must point to material A
 already read or produced: the same files, the same error text, or A's
 own findings. Second, B must stay inside A's judgment class and
 boundary: the same package and the same tier. A class change always
-starts a fresh dispatch.
+starts a fresh dispatch. Never open a fresh dispatch for work that
+passes the dependency test while that hand may still be resumed.
 
 A resume message carries four things.
 1. The delta since the last return, with paths named.
@@ -205,18 +206,19 @@ Prohibitions apply on any harness.
 - Never change class or boundary by resume.
 - Never ask an agent to judge its own prior work.
 
-Ceilings apply per class, never per hand: mechanical 2 resumes, local
-4, iterated 2, web-perception 2, and adversarial 3 rounds per
-artifact. Where the harness reports spend in tokens, spend replaces
-the count: mechanical 100k, local 200k, iterated 200k, web-perception
-100k. The skill names the signal, never a harness
-property.
+Ceilings apply per class, never per hand, and count per task chain,
+never per session: mechanical 2 resumes, local 4, iterated 2,
+web-perception 2, and adversarial 3 rounds per artifact. Stop earlier
+when the hand's context is half full. After a long idle, dispatch
+fresh and supply the prior return's findings verbatim. The count does
+not reset.
 
 The judge gets three rounds per artifact: the gate plus two re-gates.
 The advisor resumes the same judge with the prior ruling and the fix
 delta. One judge may serve several artifacts of a package, under the
-adversarial ceiling. Past 200k tokens of judge spend, or after a long idle, dispatch a fresh judge with every prior ruling supplied verbatim. That fresh judge counts as the same re-gate, and the round count does not reset. A round three that ends BLOCKED
-goes to the user.
+adversarial ceiling. A fresh judge dispatched under the ceilings above
+counts as the same re-gate. A round three that ends BLOCKED goes to
+the user.
 
 ## Dispatch Contract
 
