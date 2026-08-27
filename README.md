@@ -111,11 +111,12 @@ workflows/
 evals/
   executor-fast.json  # behavioural fixtures — happy + trap per mode and standing law
   executor-smart.json
-  executor-lead.json  # lean set: happy PLAN + trap frozen-plan (RENT HANDS asserted inline)
-  executor-judge.json # lean set: happy CHANGE-REVIEW + trap fix-leak
+  executor-lead.json  # six fixtures: PLAN, two CAMPAIGN, two DELIVER, plus a standing-law (STOP UP) trap
+  executor-judge.json # six fixtures: two per mode (DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE)
   README.md           # fixture schema, and why the traps are the point
 scripts/
-  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast, executor-lead, executor-judge
+  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on all four executors, plus a write-layer denial on executor-lead/executor-judge alone
+  judge-dispatch-guard.sh            # PreToolUse hook on the Agent tool: denies executor-judge dispatching anything but executor-fast/researcher (including a dispatch naming no subagent)
   setup-watchdog.sh                  # optional: wires the watchdog LaunchAgent + Telegram notify script
   tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
   watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
@@ -201,11 +202,12 @@ Intelligence is budgeted, never inherited: every `agent()` call pins its model �
 
 `evals/` holds behavioural fixtures — one JSON file per executor plus a schema README.
 Every fast/smart mode and standing law carries at least one happy fixture and one **trap**, where
-the wrong answer is cheap, plausible and immediately available. Lead and judge carry a deliberately
-lean set — opus runs are expensive, so only the main happy path and the instruction-only prohibitions
-get fixtures, with secondary assertions folded into the happy rubrics. A fixture that only asks
-an agent to do the obvious right thing proves nothing, because the wrong answer was never
-attractive.
+the wrong answer is cheap, plausible and immediately available. Lead and judge carry six fixtures
+each, despite opus runs being expensive, because the same wrong-answer risk applies across all
+three modes, not just the main one: judge pairs a happy case and a trap for each of DESIGN-REVIEW,
+CHANGE-REVIEW, and ADJUDICATE; lead pairs happy/trap CAMPAIGN and DELIVER fixtures with one happy
+PLAN fixture and one standing-law (STOP UP) trap. A fixture that only asks an agent to do the
+obvious right thing proves nothing, because the wrong answer was never attractive.
 
 `.claude/workflows/agent-evals.js` runs them: it materialises each fixture's files into a fresh
 temp directory, dispatches the prompt to the real agent, and grades the return against

@@ -52,10 +52,19 @@ description. Do not casually reword a description while editing the body.
 **`executor-lead` and `executor-judge` have no `Write`/`Edit` in their `tools:` lists.**
 The lead is delegate-only (every file change flows through an executor it spawns); the
 judge is fix-less (it rules, it never repairs — findings route back to the caller).
-Both invariants are enforced by tool restriction, not instruction. Granting either
-agent those tools silently dissolves the family's central invariants. The shared
-RENT HANDS, NEVER VERDICTS law is verbatim-identical in both files — edit it in both
-or neither. `scripts/executor-guard.sh` covers fast, lead, and judge (not smart).
+Removing those tools is half the enforcement: both hold `Bash`, so
+`scripts/executor-guard.sh` also denies the common file-writing Bash forms for lead and
+judge — redirection (including the glued `echo x>f`), `tee`, `sed -i`, `rm`, `cp`, `mv`,
+`git add/commit/rm/mv`, and inline interpreters (`python`, `node`, `perl`, `ed`, `xargs`).
+It is a guard, not a proof: a command hidden inside `$(...)` is never classified, and
+hooks fail open on a payload they cannot read. Granting either agent `Write`/`Edit`, or
+weakening that layer, silently dissolves the family's central
+invariants. One route stays open by design: the judge holds `Agent` and may rent
+`executor-fast`, which can write — that containment is instruction, not structure. The
+shared RENT HANDS, NEVER VERDICTS law is verbatim-identical in both files — edit it in
+both or neither. `scripts/executor-guard.sh` covers all four executors: irreversible
+commands (`git merge` and `git worktree remove` included) for every one, plus the
+file-write denial for lead and judge alone.
 
 **Agents and skills ship as a unit.** `product-engineering` names all five
 `product-*` agents plus `researcher`; `advisor-mode` routes the whole executor
