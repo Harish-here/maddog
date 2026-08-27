@@ -59,6 +59,61 @@
       "rubric": "Check that deposit reads like it belongs next to withdraw and getAccount -- same exception classes, same throw-early style -- rather than a generically 'safe' return-based pattern."
     },
     {
+      "id": "smart-port-01",
+      "mode": "PORT",
+      "law": "CHARACTERIZATION TESTS",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/legacy/currency.ts": "export function formatCents(cents: number): string {\n  const sign = cents < 0 ? '-' : '';\n  const abs = Math.abs(cents);\n  const dollars = Math.floor(abs / 100);\n  const remainder = String(abs % 100).padStart(2, '0');\n  return `${sign}$${dollars}.${remainder}`;\n}\n",
+          "src/invoice.ts": "import { formatCents } from './legacy/currency';\n\nexport function renderTotal(cents: number): string {\n  return `Total: ${formatCents(cents)}`;\n}\n"
+        }
+      },
+      "prompt": "We're migrating away from src/legacy/ -- move formatCents from src/legacy/currency.ts into a new file src/money/format.ts, update src/invoice.ts's import to the new location, and remove formatCents from the legacy file. Behavior should stay exactly the same, including how it handles negative amounts.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "src/money/format.ts exports formatCents with the same sign-handling logic (a negative cents value produces a leading '-' before the '$')",
+          "src/invoice.ts's import is repointed to the new src/money/format.ts location",
+          "src/legacy/currency.ts no longer exports formatCents"
+        ],
+        "must_not": [
+          "the ported formatCents drops or changes the negative-number sign/abs handling",
+          "src/invoice.ts is left importing formatCents from src/legacy/currency.ts"
+        ]
+      },
+      "rubric": "Confirm the port preserves the exact negative-sign/padStart behavior and the caller is repointed, not just copied with a plausible-looking simplification that changes edge-case output."
+    },
+    {
+      "id": "smart-port-02",
+      "mode": "PORT",
+      "law": "CHARACTERIZATION TESTS",
+      "kind": "trap",
+      "core": true,
+      "trap": "Reimplementing nextDelay's jitter+backoff cleanly in the new location while quietly dropping the cooldownUntil/consecutive-failure forced cooldown, since it isn't obviously part of 'the delay calculation' on a shallow read.",
+      "setup": {
+        "files": {
+          "src/legacy/pacer.ts": "// Paces retries for the sync worker. After MAX_ATTEMPTS consecutive\n// failures, this forces a 5-minute cooldown before handing out another\n// delay at all, to keep a wedged downstream service from being hammered.\nconst MAX_ATTEMPTS = 5;\nconst COOLDOWN_MS = 5 * 60 * 1000;\n\nlet consecutiveFailures = 0;\nlet cooldownUntil = 0;\n\nexport function nextDelay(attempt: number): number {\n  const now = Date.now();\n  if (now < cooldownUntil) {\n    return cooldownUntil - now;\n  }\n  const base = Math.min(1000 * 2 ** attempt, 30000);\n  const jitter = Math.floor(Math.random() * 250);\n  return base + jitter;\n}\n\nexport function recordFailure(): void {\n  consecutiveFailures++;\n  if (consecutiveFailures >= MAX_ATTEMPTS) {\n    cooldownUntil = Date.now() + COOLDOWN_MS;\n    consecutiveFailures = 0;\n  }\n}\n\nexport function recordSuccess(): void {\n  consecutiveFailures = 0;\n}\n",
+          "src/syncWorker.ts": "import { nextDelay, recordFailure, recordSuccess } from './legacy/pacer';\n\nexport async function runSyncAttempt(attempt: number, doSync: () => Promise<void>): Promise<void> {\n  try {\n    await doSync();\n    recordSuccess();\n  } catch (e) {\n    recordFailure();\n    throw e;\n  }\n}\n"
+        }
+      },
+      "prompt": "We're consolidating retry logic -- port nextDelay, recordFailure, and recordSuccess from src/legacy/pacer.ts into a new file src/sync/pacer.ts, update src/syncWorker.ts's import to the new location, and remove the exports from the old file. Keep the retry pacing behavior the same.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "src/sync/pacer.ts preserves the forced cooldown: after MAX_ATTEMPTS (5) consecutive calls to recordFailure, nextDelay enforces a cooldown period before returning a normal backoff delay again",
+          "src/syncWorker.ts's import is repointed to the new src/sync/pacer.ts location",
+          "src/legacy/pacer.ts no longer exports nextDelay, recordFailure, or recordSuccess"
+        ],
+        "must_not": [
+          "the ported nextDelay/recordFailure only carries the base-plus-jitter exponential backoff and drops the cooldownUntil/consecutive-failure cooldown behavior"
+        ]
+      },
+      "rubric": "The base exponential backoff with jitter is the obvious, visible behavior; the forced cooldown after MAX_ATTEMPTS consecutive failures is easy to miss on a shallow read but is exactly the load-bearing behavior that must survive the move."
+    },
+    {
       "id": "smart-author-01",
       "mode": "AUTHOR",
       "law": "DESIGN BY CONTRACT",
@@ -114,9 +169,60 @@
       "rubric": "The bar is not that every decision must be closed -- it's that none of them are left silently implicit. A brief that says 'TTL: open question, recommend 60s pending product input' passes; one that never mentions TTL at all fails."
     },
     {
+      "id": "smart-decompose-01",
+      "mode": "DECOMPOSE",
+      "law": "INFORMATION HIDING",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/priceScraper.ts": "import fetch from 'node-fetch';\n\n// ---- generic fetch/retry helpers (stable, shared by every future scraper) ----\nexport async function fetchHtml(url: string, retries = 3): Promise<string> {\n  for (let i = 0; i < retries; i++) {\n    try {\n      const res = await fetch(url);\n      return await res.text();\n    } catch (e) {\n      if (i === retries - 1) throw e;\n    }\n  }\n  throw new Error('unreachable');\n}\n\nexport function stripTags(html: string): string {\n  return html.replace(/<[^>]*>/g, '');\n}\n\n// ---- site-specific price selector -- this breaks every time the target site\n// redesigns its markup, which happens often and without notice ----\nexport function extractPrice(html: string): number {\n  const match = html.match(/<span class=\"price-value\">\\$([\\d.]+)<\\/span>/);\n  if (!match) {\n    throw new Error('price selector did not match -- site markup likely changed');\n  }\n  return parseFloat(match[1]);\n}\n\nexport async function getPrice(url: string): Promise<number> {\n  const html = await fetchHtml(url);\n  return extractPrice(html);\n}\n"
+        }
+      },
+      "prompt": "src/priceScraper.ts is getting unwieldy. Split it into two files: keep the generic fetch/retry/parsing helpers in one file and the price-extraction logic in another, with getPrice wiring them together. This scraper's target site changes its markup often, so whichever file holds the price-matching logic is the one that'll need constant edits -- set the split up so that churn stays contained to just that file.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "extractPrice (the site-specific selector/regex logic) ends up isolated in its own file, separate from fetchHtml and stripTags",
+          "fetchHtml and stripTags (the generic, stable helpers) live together in a file separate from extractPrice",
+          "getPrice imports from both files and still works, calling the extraction logic through a function rather than inlining the selector"
+        ],
+        "must_not": [
+          "extractPrice's selector logic is merged into the same file as fetchHtml/stripTags"
+        ]
+      },
+      "rubric": "The cut that pays hides the volatile selector/regex logic (extractPrice) behind its own file, separate from the stable fetch/parse helpers -- confirm the split actually isolates it, not just any two-file split."
+    },
+    {
+      "id": "smart-decompose-02",
+      "mode": "DECOMPOSE",
+      "law": "INFORMATION HIDING",
+      "kind": "trap",
+      "core": true,
+      "trap": "Splitting src/webhooks.ts along a tidy-looking seam (e.g. types/dispatch in one file, remaining functions in another, or grouping by position) that leaves normalizePayload -- the part that changes whenever a provider's webhook schema changes -- bundled in with the stable dispatch/retry machinery instead of isolated behind its own boundary.",
+      "setup": {
+        "files": {
+          "src/webhooks.ts": "export interface WebhookEvent {\n  provider: string;\n  type: string;\n  payload: unknown;\n}\n\n// ---- generic dispatch machinery (stable) ----\nconst handlers = new Map<string, (event: WebhookEvent) => void>();\n\nexport function registerHandler(type: string, fn: (event: WebhookEvent) => void): void {\n  handlers.set(type, fn);\n}\n\nexport function dispatch(event: WebhookEvent): void {\n  const fn = handlers.get(event.type);\n  if (fn) fn(event);\n}\n\n// ---- provider payload mapping -- Stripe and GitHub both restructure their\n// webhook payload shapes multiple times a year without warning; this mapping\n// gets rewritten every time one of them does ----\nexport function normalizePayload(provider: string, raw: any): WebhookEvent {\n  if (provider === 'stripe') {\n    return { provider, type: raw.type, payload: raw.data.object };\n  }\n  if (provider === 'github') {\n    return { provider, type: raw.action, payload: raw };\n  }\n  throw new Error(`unknown provider ${provider}`);\n}\n\n// ---- retry helper (stable) ----\nexport function withRetry<T>(fn: () => T, retries = 3): T {\n  let lastErr: unknown;\n  for (let i = 0; i < retries; i++) {\n    try {\n      return fn();\n    } catch (e) {\n      lastErr = e;\n    }\n  }\n  throw lastErr;\n}\n"
+        }
+      },
+      "prompt": "src/webhooks.ts has grown into one big file -- split it into two files along whatever lines make it read cleanest to you. Update any imports so it still works the same way.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "normalizePayload (the Stripe/GitHub payload-mapping logic) ends up isolated in its own file, separate from dispatch, registerHandler, and withRetry"
+        ],
+        "must_not": [
+          "normalizePayload's Stripe branch and GitHub branch are split apart into different files",
+          "normalizePayload is merged into the same file as dispatch/registerHandler/withRetry"
+        ]
+      },
+      "rubric": "The comment names normalizePayload as the part that gets rewritten whenever a provider changes; the correct cut hides exactly that behind its own boundary. A split that groups it in with dispatch/registerHandler/withRetry because they happen to sit near each other in the file, or because a types-vs-logic split looks tidy, is exactly the wrong-but-plausible cut this fixture exists to catch."
+    },
+    {
       "id": "smart-fix-01",
       "mode": "FIX",
-      "law": "TRUST BUT VERIFY",
+      "law": "THE NULL HYPOTHESIS",
       "kind": "happy",
       "core": false,
       "trap": null,
@@ -142,7 +248,7 @@
     {
       "id": "smart-fix-02",
       "mode": "FIX",
-      "law": "TRUST BUT VERIFY",
+      "law": "THE NULL HYPOTHESIS",
       "kind": "trap",
       "core": true,
       "trap": "Applying the reviewer's null-check to computeTotal despite its only caller already guaranteeing non-null items is compliance theatre, not a real fix.",

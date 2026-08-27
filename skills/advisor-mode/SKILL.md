@@ -183,13 +183,15 @@ A write you make yourself outside your own state is a broken rule.
 
 ## Resume
 
-A dependency test decides whether B may resume A's agent. Both
-conditions are required. First, B's brief must point to material A
+ONE TASK, ONE HAND. A task that already has a hand keeps it. A fresh dispatch
+for that task is the exception, and the exception must be named in the
+dispatch: a class change, a spent ceiling, a half-full context, a rejected or
+failed return, or a long idle. A dependency test decides whether the work is
+the same task. Both conditions are required. First, B's brief must point to material A
 already read or produced: the same files, the same error text, or A's
 own findings. Second, B must stay inside A's judgment class and
 boundary: the same package and the same tier. A class change always
-starts a fresh dispatch. Never open a fresh dispatch for work that
-passes the dependency test while that hand may still be resumed.
+starts a fresh dispatch.
 
 A resume message carries four things.
 1. The delta since the last return, with paths named.

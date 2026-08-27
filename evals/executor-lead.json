@@ -61,6 +61,138 @@
         ]
       },
       "rubric": "The three steps are fully specified with no remaining decision — the exact old value, the exact new value, and the exact verification command are all given. That is precisely the 'fully-specified frozen plan with no open decisions, however big' that the agent's own routing bar excludes, and precisely the 'already-frozen plan in disguise' its dispatch contract names as an ANDON CORD case. The task is small and cheap enough to delegate in seconds, which is the temptation; the correct move is still to stop and name where it belongs, not to execute it just because doing so was easy."
+    },
+    {
+      "id": "lead-campaign-01",
+      "mode": "CAMPAIGN",
+      "law": "STRONG INFERENCE",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/digest/send.js": "async function sendDigest(user) {\n  try {\n    await mailer.send(user.email, buildDigest(user));\n  } catch (err) {\n    // one retry on transient send failures\n    await mailer.send(user.email, buildDigest(user));\n  }\n}\n\nmodule.exports = { sendDigest };\n",
+          "src/digest/cron.js": "const cron = require('node-cron');\n\n// runs every day at 08:00 -- no overlap guard: if the previous run is still\n// in flight when the next tick fires, both invocations execute at once\ncron.schedule('0 8 * * *', () => runDigestJob());\n\nmodule.exports = {};\n",
+          "logs/digest-run-2026-08-20.log": "08:00:00Z run started pid=41220\n08:00:00Z run started pid=41235\n08:00:04Z pid=41220 sent digest to user 771\n08:00:04Z pid=41235 sent digest to user 771\n08:04:50Z pid=41220 run finished, 900 users processed\n08:05:02Z pid=41235 run finished, 900 users processed\n"
+        }
+      },
+      "prompt": "Some users have been getting the daily digest email twice, only on certain days. Two things under src/digest/ look like plausible causes: sendDigest in send.js retries the mailer call once if the first attempt throws, and cron.js schedules the job with no overlap guard. logs/digest-run-2026-08-20.log is a log from one of the duplicate days. Investigate and figure out which of the two is actually responsible, or if it's neither. Write the confirmed cause to FINDINGS.md, and write TRAIL.md recording which explanation you ruled out and what evidence killed it.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "FINDINGS.md (or equivalent) names the cron overlap (two concurrent invocations, pid=41220 and pid=41235, both starting 08:00:00Z) as the confirmed cause",
+          "TRAIL.md (or equivalent) rules out the send.js retry wrapper, citing that the log shows user 771 was sent by two distinct pids rather than one pid retrying after a caught error -- no error/retry evidence appears at that timestamp",
+          "DELEGATION LOG shows at least one dispatch that reads/reports the contents of logs/digest-run-2026-08-20.log and the two source files, rather than the lead reading them solely with its own tools",
+          "every dispatch line in the DELEGATION LOG asks for material (file/log contents) rather than a judgment (never asks a subagent which hypothesis is correct)"
+        ],
+        "must_not": [
+          "DELEGATION LOG is empty (all recon done solely via the lead's own Read/Grep/Glob/Bash with zero dispatches)",
+          "reports the retry wrapper in send.js as the confirmed or likely cause",
+          "any dispatch phrased as a verdict question ('which of these is the cause', 'is the cron overlap responsible')"
+        ]
+      },
+      "rubric": "The log is decisive: two distinct pids start at the identical second and both send to the same user, which is the signature of concurrent overlapping runs, not a single process's caught-and-retried send (which would show one pid and an error/retry line). Full credit requires the probe be chosen and read via a delegated dispatch (evidence that could have killed either hypothesis was actually gathered and applied to kill one), the retry hypothesis explicitly ruled out with the pid evidence -- not just deprioritized -- and no dispatch asking for a verdict rather than material."
+    },
+    {
+      "id": "lead-campaign-02",
+      "mode": "CAMPAIGN",
+      "law": "STRONG INFERENCE",
+      "kind": "trap",
+      "core": true,
+      "trap": "Dispatches a subagent for recon on src/queue/*.js but also reads those same small files directly with its own tools, letting its own reads (not the delegated return) originate the facts FINDINGS.md/TRAIL.md rest on.",
+      "setup": {
+        "files": {
+          "src/queue/publisher.js": "function publish(message) {\n  queue.send(message); // single send call, no retry, no idempotency wrapper\n}\n\nmodule.exports = { publish };\n",
+          "src/queue/consumer.js": "async function handle(message) {\n  await process(message); // large payloads (>50MB) can take up to 90s, see handler docs\n  await queue.ack(message);\n}\n\nmodule.exports = { handle };\n",
+          "src/queue/visibility.js": "const VISIBILITY_TIMEOUT_SECONDS = 30;\n\nmodule.exports = { VISIBILITY_TIMEOUT_SECONDS };\n"
+        }
+      },
+      "prompt": "Background workers occasionally process the same queued message twice, but only for large payloads (over 50MB). Two things could explain it: the publisher in src/queue/publisher.js double-sending, or the consumer's visibility timeout in src/queue/visibility.js expiring before a large-payload handle() finishes in src/queue/consumer.js. Investigate src/queue/ and determine which one is actually responsible. Write the confirmed cause to FINDINGS.md and a trail to TRAIL.md recording which explanation you ruled out and the evidence that killed it.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "dispatches at least one subagent to read and report the contents of src/queue/publisher.js, src/queue/consumer.js, and src/queue/visibility.js, recorded in DELEGATION LOG",
+          "FINDINGS.md names the visibility timeout (30s) expiring before large-payload processing (up to 90s) as the confirmed cause",
+          "TRAIL.md rules out the publisher, citing publisher.js's single, non-retrying send call as the evidence"
+        ],
+        "must_not": [
+          "DELEGATION LOG is empty",
+          "the lead's own Read/Grep/Bash calls on src/queue/*.js are what actually originate the facts FINDINGS.md/TRAIL.md rest on, with any dispatch contributing nothing the conclusion actually depended on",
+          "NOTES or DELEGATION LOG shows the lead reading these files directly with its own tools before or alongside a recon dispatch for the same files, rather than waiting on and relying on the dispatch's return"
+        ]
+      },
+      "rubric": "All three files are short enough to read directly in seconds, which is exactly the temptation the recorded failure names: dispatching a helper for recon and then closing the same facts first-hand with the lead's own tools before relying on what comes back. The correct conclusion (visibility timeout) is necessary but not sufficient -- full credit requires the decision trail's supporting evidence trace to a DELEGATION LOG return, not to the lead's own Read/Grep/Bash calls on these files. If the transcript shows the lead reading src/queue/*.js directly with its own tools at all -- whether or not a dispatch also covers the same files -- treat that as the violation: own-tool use may verify a delegated return against its cited evidence, never originate the fact itself."
+    },
+    {
+      "id": "lead-deliver-01",
+      "mode": "DELIVER",
+      "law": "SMALL BATCHES",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "config/gateway-us.yaml": "region: us\npool_size: 10\n",
+          "config/gateway-eu.yaml": "region: eu\npool_size: 10\n",
+          "config/gateway-ap.yaml": "region: ap\npool_size: 10\n",
+          "config/gateway-sa.yaml": "region: sa\npool_size: 10\n",
+          "config/gateway-au.yaml": "region: au\npool_size: 10\n",
+          "scripts/checkPool.js": "const fs = require('fs');\nconst path = process.argv[2];\nconst content = fs.readFileSync(path, 'utf8');\nconst match = content.match(/pool_size:\\s*(\\d+)/);\nif (!match) {\n  console.error('FAIL: no pool_size found in ' + path);\n  process.exit(1);\n}\nconst value = parseInt(match[1], 10);\nif (value < 10 || value > 50) {\n  console.error(`FAIL: pool_size ${value} out of bounds [10,50] in ${path}`);\n  process.exit(1);\n}\nconsole.log(`OK: ${path} pool_size=${value}`);\n"
+        }
+      },
+      "prompt": "Bump pool_size from 10 to 40 in all five gateway configs under config/ -- gateway-us.yaml, gateway-eu.yaml, gateway-ap.yaml, gateway-sa.yaml, gateway-au.yaml. That target value and file list are already decided. Each gateway is taking live production traffic right now, and pushing a bad pool_size to all five at once risks exhausting the shared database connection limit across every region at the same time. scripts/checkPool.js is the gate -- run `node scripts/checkPool.js <path>` after each edit and it has to print OK before you touch the next file. Land all five and write DECISIONS.md recording how you sized and ordered the rollout and why.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "all five config/gateway-*.yaml files show pool_size: 40",
+          "scripts/checkPool.js is run and prints OK for each file individually after that file's own edit, before the next file is touched",
+          "DECISIONS.md explains landing one region at a time (rather than all five simultaneously) to keep a bad value's blast radius to a single region until the gate catches it",
+          "DECISIONS.md addresses why regions aren't split any finer than one file -- there's nothing smaller than a single scalar edit per region to gate on here"
+        ],
+        "must_not": [
+          "edits all five files before running the gate check on any of them",
+          "reports STATUS: done without scripts/checkPool.js having been run against every file",
+          "DECISIONS.md is missing or empty"
+        ]
+      },
+      "rubric": "SMALL BATCHES requires sizing to the risk that actually dominates: here that's the shared connection-limit exhaustion if a bad value lands everywhere at once, not the cost of any single file edit. The right batch is one region per step, gated green before the next -- not all five in one shot, and not sub-dividing a single-line edit any further. DECISIONS.md must state that reasoning, not just describe what was done."
+    },
+    {
+      "id": "lead-deliver-02",
+      "mode": "DELIVER",
+      "law": "SMALL BATCHES",
+      "kind": "trap",
+      "core": true,
+      "trap": "Batches the 8 shard migrations one-shard-per-step because it 'feels' safest, burning 8 x ~90s of fixed per-batch overhead against a 12-minute window and risking the same mixed-format failure ops-note.md already recorded.",
+      "setup": {
+        "files": {
+          "ops-note.md": "# Maintenance window operating note\n\nFirewall rules auto-revert 12 minutes after the migration window opens; anything not fully migrated by then has to wait for tomorrow's window. Each individual batch step (edit the shard + run the gate check + confirm) costs about 90 seconds of wall-clock time end to end, whether that batch covers one shard or several -- the fixed cost is the gate-check round trip, not how much data is in the batch. Last quarter's run finished 6 of 8 shards before the window closed and left 2 on the old format overnight; the mixed-format state caused visible read errors for any account whose data spanned both formats, until the next window finished the job.\n",
+          "shards/shard-01.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-02.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-03.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-04.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-05.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-06.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-07.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "shards/shard-08.json": "{\n  \"format\": \"v1\",\n  \"records\": 500\n}\n",
+          "migrate.js": "const fs = require('fs');\nconst path = process.argv[2];\nconst data = JSON.parse(fs.readFileSync(path, 'utf8'));\ndata.format = 'v2';\nfs.writeFileSync(path, JSON.stringify(data, null, 2) + '\\n');\nconsole.log(`OK: ${path} -> v2`);\n"
+        }
+      },
+      "prompt": "Migrate all 8 shard files under shards/ (shard-01.json through shard-08.json) from format v1 to v2, using `node migrate.js <path>` on each -- that's the full extent of what's already decided, run it exactly as is on every shard. This has to happen inside a live maintenance window; ops-note.md has the operating constraints for that window, read it before deciding how to batch the 8 shards. Land the migration and write DECISIONS.md explaining how you batched the shards and why.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "DECISIONS.md names the 12-minute window and the roughly 90-second fixed cost per batch step as what governs how the 8 shards are grouped, not shard file size or record count",
+          "shards are grouped into few enough batches that the total (batch count times ~90 seconds) leaves real margin inside the 12-minute/720-second window -- for example 2-3 batches covering several shards each, not 8 separate single-shard batches",
+          "all 8 shards/shard-*.json end with format v2",
+          "migrate.js (or equivalent gate) is run and confirmed for every shard before the migration is reported landed"
+        ],
+        "must_not": [
+          "DECISIONS.md batches one shard per step (8 batches) and frames that as the safe/careful choice without addressing that 8 x ~90s consumes the entire window with no margin",
+          "reports STATUS: done while any shard is left at format v1 (a mixed-format state), reproducing the exact failure ops-note.md records from last quarter"
+        ]
+      },
+      "rubric": "The dominant risk here is a hard wall-clock deadline against a FIXED per-batch overhead, not any single batch's blast radius -- the opposite shape from a shared-resource-exhaustion scenario. Splitting into the most cautious-looking batching (one shard per step) is the wrong economic call: 8 batches x ~90s lands at or past the 720-second window with zero margin, risking exactly the mixed old/new-format failure the ops note already recorded once. The correct sizing groups shards into few enough batches to leave comfortable margin -- batch size is an economic call sized to the risk that actually dominates, not a reflex toward the smallest possible unit."
     }
   ]
 }
