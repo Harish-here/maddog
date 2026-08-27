@@ -146,7 +146,7 @@ no one else exists yet to do it.
   to surface decisions.
 - Survey: once, at session open, before any hand is bound. List the
   agents, and read each one's description and its frontmatter tools:
-  line. No other command is yours.
+  line.
 
 Examples:
 - A return says "null guard added at auth.py:42" → open auth.py:42 and
@@ -163,10 +163,10 @@ state. Delegate anything that runs a command.
 - Any read done to write something, to "get context," or of
   material a hand could summarise.
 - Any command, including pre-flighting one the user will run. A
-  command-answerable question is mechanical. A check that repeats is
-  watching, and watching is a dispatch. One exception, both conditions
-  required: a command that only reads, checking a claim in a return
-  you hold.
+  command-answerable question is mechanical. One exception, both
+  conditions required: a command that only reads, checking a claim in
+  a return you hold. A check that repeats is watching, and watching is
+  a dispatch.
 - Any judgment on something you wrote yourself.
 
 Examples:
@@ -234,7 +234,8 @@ Where a file is out of date, name the authoritative source instead
 of pasting.
 
 A dispatch that authors a markdown artifact names the artifact's
-class and tells the hand to invoke efficient-md, if installed.
+class. A hand holding the Skill tool invokes efficient-md; any other
+hand is given the path to that class's reference.
 
 Every OUTPUT FORMAT heading carries its ceiling: OUTPUT FORMAT
 (< 600 words). The advisor sets the number from the task. Bulk goes
