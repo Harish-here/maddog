@@ -2,7 +2,6 @@
 name: executor-smart
 model: sonnet
 effort: high
-permissionMode: dontAsk
 description: >
   Runs delegated tasks needing LOCAL JUDGMENT but not full Advisor reasoning,
   on a mid-tier model: refactors that must match existing patterns, tricky or

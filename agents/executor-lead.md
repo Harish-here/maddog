@@ -2,7 +2,6 @@
 name: executor-lead
 model: opus
 effort: high
-permissionMode: dontAsk
 description: >
   Holds judgment across a bursted work package on a high-tier model, for three
   shapes only: (a) a spec or goal whose DECOMPOSITION is itself the open

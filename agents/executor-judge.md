@@ -2,7 +2,6 @@
 name: executor-judge
 model: opus
 effort: high
-permissionMode: dontAsk
 description: >
   Renders adversarial GATE VERDICTS on another intelligence's output:
   plan/design review before execution, review of executed changes against

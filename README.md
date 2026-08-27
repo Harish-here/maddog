@@ -151,10 +151,12 @@ only auto-registers `agents/` and `skills/` — nothing wires the watchdog
 LaunchAgent or the Telegram notify script automatically. Run this once per
 machine, from wherever the plugin cached itself
 (`~/.claude/plugins/cache/maddog/maddog/<version>/`), if you want crash/stall
-recovery and Telegram pings for unattended `sdd-task-loop` runs:
+recovery and Telegram pings for unattended `sdd-task-loop` runs. The plugin
+cache retains every past version, so don't glob for it blindly — pick the
+newest:
 
 ```bash
-bash ~/.claude/plugins/cache/maddog/maddog/*/scripts/setup-watchdog.sh
+bash "$(ls -td ~/.claude/plugins/cache/maddog/maddog/*/ | head -1)scripts/setup-watchdog.sh"
 ```
 
 - Symlinks `scripts/tg-notify.sh` → `~/.claude/channels/telegram/notify.sh`
@@ -166,6 +168,12 @@ bash ~/.claude/plugins/cache/maddog/maddog/*/scripts/setup-watchdog.sh
   step.
 - Existing real files at either target are backed up to `<name>.bak`, never
   deleted.
+- The symlinks point at whatever version's cache directory you ran this
+  from — they don't move on `/plugin marketplace update`, and unlike the old
+  `install.sh` there's no dangling-link cleanup. Re-run this script after
+  updating the plugin to keep the watchdog on the latest version; if Claude
+  Code ever prunes an old cache directory out from under a still-linked
+  symlink, the LaunchAgent fails silently every 600s until you do.
 
 ## Usage
 
