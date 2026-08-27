@@ -116,9 +116,10 @@ evals/
   README.md           # fixture schema, and why the traps are the point
 scripts/
   executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on executor-fast, executor-lead, executor-judge
+  setup-watchdog.sh                  # optional: wires the watchdog LaunchAgent + Telegram notify script
   tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
   watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
-  com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — install.sh substitutes it)
+  com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — setup-watchdog.sh substitutes it)
 ```
 
 `review-agent` is repo-internal tooling living in `.claude/skills/review-agent/` —
@@ -126,56 +127,53 @@ auto-discovered when working in this repo, not shipped in the plugin.
 
 Agents and skills ship together: `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
 
-## Install modes
+## Install
 
-Two mutually exclusive ways to install. Pick ONE — installing both gives you duplicate agents.
-
-**Prerequisite:** `product-qa`'s live-drive verification requires the playwright MCP browser tools. Neither install mode installs it — configure it separately, or `product-qa` returns blocked at its prerequisite check.
-
-**Plugin (recommended):**
 ```
 /plugin marketplace add Harish-here/maddog
 /plugin install maddog@maddog
 ```
+
 - Skills arrive namespaced (`/maddog:advisor-mode`).
 - Ships `workflows/sdd-task-loop.js` (general-usage plan execution) but not `agent-evals` — that lives in `.claude/workflows/`, invoked only via `scriptPath` for maintainer use, never auto-registered for installers.
 - Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
   - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
   - `permissionMode: dontAsk` does not apply — executors may surface permission prompts; add allowlist entries for the commands you delegate.
 - Update later with `/plugin marketplace update maddog`.
-
-**Symlink (maintainer / power-user mode):**
-```bash
-git clone https://github.com/Harish-here/maddog.git
-cd maddog && ./install.sh
-```
-- Skills un-namespaced (`/advisor-mode`); the clone stays the single source of truth — edits land in every new session.
-- Ships everything the plugin can't: `workflows/`, the watchdog LaunchAgent, the Telegram notify script.
-- `permissionMode: dontAsk` is active; the guard is wired via the frontmatter of executor-fast, executor-lead, and executor-judge to `$HOME/.claude/hooks/executor-guard.sh` (linked by `install.sh`).
-- Existing real files at the target are backed up to `<name>.bak`, never deleted.
+- **Prerequisite:** `product-qa`'s live-drive verification requires the playwright MCP browser tools — configure it separately, or `product-qa` returns blocked at its prerequisite check.
 
 Restart Claude Code sessions after installing (the agent registry snapshots at session start).
 
-### What `install.sh` does to your machine
+### Setting up the watchdog (optional)
 
-`install.sh` (symlink mode only) is honest about the surface it touches:
+`workflows/` and `scripts/` ship in the plugin tarball, but the plugin loader
+only auto-registers `agents/` and `skills/` — nothing wires the watchdog
+LaunchAgent or the Telegram notify script automatically. Run this once per
+machine, from wherever the plugin cached itself
+(`~/.claude/plugins/cache/maddog/maddog/<version>/`), if you want crash/stall
+recovery and Telegram pings for unattended `sdd-task-loop` runs. The plugin
+cache retains every past version, so don't glob for it blindly — pick the
+newest:
 
-- Symlinks `agents/`, `skills/`, and `workflows/` from this clone into
-  `~/.claude/{agents,skills,workflows}` — nothing is copied, so edits here
-  reach every new session.
-- Writes a LaunchAgent plist for the watchdog to
-  `~/Library/LaunchAgents/com.maddog.watchdog-resume.plist` but does **not**
-  load it — it prints the `launchctl bootstrap` command as a next step
-  instead of running it for you.
-- The optional Telegram notifier (`scripts/tg-notify.sh`, symlinked to
-  `~/.claude/channels/telegram/notify.sh`) only ever reads its bot token and
-  chat ID from `~/.claude/channels/telegram/.env`, which is never versioned
-  in this repo.
-- Prunes only dangling symlinks that point back into this repo (e.g. a skill
-  that moved or was deleted) — it never touches a regular file/dir or a
-  symlink owned by another plugin or tool.
-- The watchdog writes append-only logs to `~/.claude/watchdogs/resume.log`;
-  they're diagnostic only and safe to delete at any time.
+```bash
+bash "$(ls -td ~/.claude/plugins/cache/maddog/maddog/*/ | head -1)scripts/setup-watchdog.sh"
+```
+
+- Symlinks `scripts/tg-notify.sh` → `~/.claude/channels/telegram/notify.sh`
+  (reads its bot token/chat ID from `~/.claude/channels/telegram/.env`, never
+  versioned in this repo) and `scripts/watchdog-resume.sh` →
+  `~/.claude/watchdogs/watchdog-resume.sh`.
+- Writes `~/Library/LaunchAgents/com.maddog.watchdog-resume.plist` but does
+  **not** load it — it prints the `launchctl bootstrap` command as a next
+  step.
+- Existing real files at either target are backed up to `<name>.bak`, never
+  deleted.
+- The symlinks point at whatever version's cache directory you ran this
+  from — they don't move on `/plugin marketplace update`, and unlike the old
+  `install.sh` there's no dangling-link cleanup. Re-run this script after
+  updating the plugin to keep the watchdog on the latest version; if Claude
+  Code ever prunes an old cache directory out from under a still-linked
+  symlink, the LaunchAgent fails silently every 600s until you do.
 
 ## Usage
 
@@ -198,8 +196,6 @@ A second axis on the org: discipline agents, not judgment tiers. `/product-engin
 Intelligence is budgeted, never inherited: every `agent()` call pins its model — Haiku for lint/dossier/ship mechanics, Sonnet for implementation and dimension reviews, Opus only for adversarial synthesis and re-reviews. Checkpoints ping Telegram through `scripts/tg-notify.sh` (template `🔁 <run> · ✅ 7/11 task-7 done (sha) · gate ✓`), riding on agents already running — zero extra agents. The launcher's duties (writing `resume.state` for `watchdog-resume.sh`'s LaunchAgent before launch, run-start/complete pings, one auto-`resumeFromRunId` on harness death) are spelled out in the script's `whenToUse` header.
 
 `tg-notify.sh` reads `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` from `~/.claude/channels/telegram/.env` (never versioned) and always exits 0 — a dead network can't fail a run.
-
-**Note:** workflows install in **symlink mode only** — the plugin/marketplace mechanism doesn't ship `workflows/`.
 
 ## Evals
 
@@ -235,7 +231,7 @@ time passes — inside detached tmux, so permission prompts still wait for a hum
 
 It runs as a **LaunchAgent, not cron**: launchd `gui/` sessions reach the login
 keychain, cron does not (live-tested 2026-08-08: cron → `Not logged in`; LaunchAgent
-→ authenticated, prompt answered). `install.sh` symlinks the script into
+→ authenticated, prompt answered). `scripts/setup-watchdog.sh` symlinks the script into
 `~/.claude/watchdogs/` and generates the LaunchAgent plist from
 `scripts/com.maddog.watchdog-resume.plist` (its `__HOME__` placeholder gets
 substituted with your `$HOME`); it prints the `launchctl bootstrap` command as a

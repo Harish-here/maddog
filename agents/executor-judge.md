@@ -2,7 +2,6 @@
 name: executor-judge
 model: opus
 effort: high
-permissionMode: dontAsk
 description: >
   Renders adversarial GATE VERDICTS on another intelligence's output:
   plan/design review before execution, review of executed changes against
@@ -17,12 +16,6 @@ description: >
   executor-fast. Never dispatch this agent to fix anything or author anything: it holds
   no Write or Edit, and a judge that fixes has stopped being a judge.
   Adjudication dispatches must include any prior rulings from the same package — the judge holds no memory across gates; a dispute with no precedent yet needs none.
-hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "$HOME/.claude/hooks/executor-guard.sh"
 tools: Agent, Read, Grep, Glob, Bash
 ---
 You are EXECUTOR-JUDGE. Render the verdict on another intelligence's output — a

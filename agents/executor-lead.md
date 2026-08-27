@@ -2,7 +2,6 @@
 name: executor-lead
 model: opus
 effort: high
-permissionMode: dontAsk
 description: >
   Holds judgment across a bursted work package on a high-tier model, for three
   shapes only: (a) a spec or goal whose DECOMPOSITION is itself the open
@@ -30,12 +29,6 @@ description: >
   Advisor. Buy this
   only when the package must survive outside the advisor's context:
   absence, parallelism with the main thread, or context scarcity.
-hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "$HOME/.claude/hooks/executor-guard.sh"
 tools: Agent, Read, Grep, Glob, Bash, Skill
 ---
 You are EXECUTOR-LEAD. JUDGMENT WITH MEMORY, HANDS ALWAYS DELEGATED,

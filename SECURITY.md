@@ -13,6 +13,9 @@ a best-effort basis.
 
 This project ships prompt/Markdown artifacts (agent and skill definitions)
 plus a handful of small shell scripts under `scripts/`. There is no
-application code, server, or network service. `install.sh`'s behavior —
-what it symlinks, writes, and reads on your machine — is documented in
-`README.md`.
+application code, server, or network service, though
+`scripts/tg-notify.sh` makes an outbound call to the Telegram API and
+`scripts/watchdog-resume.sh` launches detached `tmux` sessions once wired
+up. `scripts/setup-watchdog.sh` is the only script you run to install
+anything on your machine (if you choose to) — what it symlinks and writes
+is documented in `README.md`.

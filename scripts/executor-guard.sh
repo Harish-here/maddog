@@ -7,13 +7,9 @@
 # mass discard of uncommitted work, etc.) back to the caller, forcing the executor
 # to STOP and return blocked rather than attempt the command.
 #
-# Wiring: this script is invoked two ways —
-#   (a) executor-fast/executor-lead/executor-judge agent frontmatter (symlink
-#       installs), which calls it for those three agents, and
-#   (b) plugin-level hooks/hooks.json (session-wide, matcher "Bash") in
-#       plugin installs, which fires for every agent and the main
-#       conversation.
-# Because (b) is not agent-scoped, the three-agent scoping is enforced
+# Wiring: plugin-level hooks/hooks.json (session-wide, matcher "Bash") fires
+# this script for every agent and the main conversation. Because that wiring
+# is not agent-scoped, the three-agent scoping is enforced
 # IN-SCRIPT via the payload's .agent_type field: the guard's checks run only
 # when agent_type is "executor-fast", "executor-lead", "executor-judge", or
 # ends in the plugin-namespaced forms (":executor-fast", ":executor-lead",

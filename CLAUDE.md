@@ -5,35 +5,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 maddog is a Claude Code plugin: agent definitions, skills, and one workflow
-script that install into `~/.claude/`. There is **no application code** — the
-deliverables are Markdown prompts. Nothing here compiles, and nothing runs in CI.
+script that install into `~/.claude/` via `/plugin install`. There is **no
+application code** — the deliverables are Markdown prompts. Nothing here
+compiles, and nothing runs in CI.
+
+## Install
+
+```
+/plugin marketplace add Harish-here/maddog
+/plugin install maddog@maddog
+```
+
+Skills arrive namespaced (`/maddog:advisor-mode`). Ships
+`workflows/sdd-task-loop.js` (general-usage plan execution) but not
+`agent-evals` — that lives in `.claude/workflows/`, invoked only via
+`scriptPath` for maintainer use, never auto-registered for installers.
 
 ## Commands
 
-```bash
-./install.sh    # symlink agents/, skills/, workflows/ into ~/.claude (idempotent)
-```
+There is no package.json, test suite, linter, or CI — do not go looking for
+one, and do not invent a build or test command. Changes are verified by
+exercising them (see Validation).
 
-That is the only command. There is no package.json, test suite, linter, or CI —
-do not go looking for one, and do not invent a build or test command. Changes are
-verified by exercising them (see Validation).
-
-`install.sh` writes the watchdog LaunchAgent plist but deliberately does not load
-it; it prints the next step:
+`scripts/setup-watchdog.sh` is the one script a user runs by hand — it wires
+the watchdog LaunchAgent and Telegram notify script for unattended
+`sdd-task-loop` runs. It writes the plist but deliberately does not load it;
+it prints the next step:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist
 ```
-
-## The two install modes are mutually exclusive
-
-- **Plugin:** `/plugin marketplace add Harish-here/maddog` then
-  `/plugin install maddog@maddog`. Skills arrive namespaced
-  (`/maddog:advisor-mode`). **Ships `workflows/sdd-task-loop.js` (general-usage plan execution) but not `agent-evals` — that lives in `.claude/workflows/`, invoked only via `scriptPath` for maintainer use, never auto-registered for installers.**
-- **Symlink:** `./install.sh`. Skills un-namespaced (`/advisor-mode`). The clone stays the
-  single source of truth — edit here, every session reads the latest.
-
-Installing both ways gives you duplicate agents.
 
 ## Things that are easy to get wrong
 

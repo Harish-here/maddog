@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.11.0] - 2026-08-27
+
+### Fixed
+- `README.md`: the documented watchdog-setup command no longer globs blindly across every cached plugin version — it now picks the newest cache directory, avoiding a silent wrong-version pick once a second release ships (RULE finding)
+- `SECURITY.md`: corrected the claim that `setup-watchdog.sh` is the only script touching the machine outside the repo — `tg-notify.sh` and `watchdog-resume.sh` also do, once wired up (RULE finding)
+- `scripts/executor-guard.sh`: header comment no longer describes the deleted symlink-mode wiring path (RULE finding)
+- `permissionMode: dontAsk` removed from `executor-fast`, `executor-smart`, `executor-lead`, `executor-judge` frontmatter — it only ever took effect under symlink installs, which no longer exist (RULE finding)
+
+### Removed
+- `install.sh` and the symlink install mode — plugin-only distribution now; the two-install-modes framing is gone from `README.md` and `CLAUDE.md` (`0fe22f2`)
+- dead `hooks:` frontmatter blocks in `agents/executor-fast.md`, `agents/executor-lead.md`, `agents/executor-judge.md` — ignored under plugin installs already, and now unused since symlink mode is gone (`0fe22f2`)
+
+### Added
+- `scripts/setup-watchdog.sh` — optional, maintainer-run script that wires the watchdog LaunchAgent and Telegram notify script, since a plugin install can't do this automatically; extracted from `install.sh`'s watchdog/notify logic only (`0fe22f2`)
+
+### Changed
+- `README.md`, `SECURITY.md`, `skills/advisor-mode/references/absent.md`: symlink-mode references replaced with the opt-in watchdog-setup story (`0fe22f2`)
+
 ## [2.10.0] - 2026-08-27
 
 ### Changed
