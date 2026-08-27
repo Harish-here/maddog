@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.9.0] - 2026-08-26
+
+### Changed
+- `advisor-mode`: memory write is no longer a CLOSE obligation — a one-line candidate batch is presented at CLOSE and written only with the user's approval; a zero-memory session is steady state, not a failure (D1)
+- `advisor-mode`: resume extended to every hand — a dependency test decides reuse, ceilings set per class (mechanical 2, local 4, iterated 2, web-perception 2 resumes, adversarial 3 rounds per artifact, with a token-spend override), and the judge gets three rounds per artifact with a tighter running-skill bound always winning (D2)
+- `advisor-mode`: context overhead ruled tolerable at current levels — the existing laws (return cap, give-the-path, filed rulings, artifacts not conversation) stay as-is; the resume rule is the new saving lever (D3)
+- `advisor-mode`: implementation detail removed from the body — the "nothing enforces this" disclaimer, the gate-filing mechanism's literal wording, the State section's unattended-procedure contents list, and the "guarantees live in tool restrictions" line; DELEGATION LOG stays named as a guaranteed family return slot, and the one-sentence definition of "unattended" stays resident in State (D4)
+- `advisor-mode`: body cut from 2,621 words to 2,495 words. The cut removed justification and implementation detail. Every example and edge case survived. New Resume and Session Open sections were added (D5)
+- `advisor-mode`: body restructured — the Budgets frame is dropped (Own Context and User Attention are top-level), Iterated Trigger folds into Routing, a new Session Open section covers efficient-md/survey/bind, and a new Resume section covers D2; the binding record is now written silently to the advisor's own scratchpad file at session open and stated only on request or when degraded/unbound (R-F15), and the Ledger section's opening narrative moves to `references/ledger.md` (D6)
+- `advisor-mode`: body rewritten to a plain declarative standard — one rule per sentence, active voice, the doer named, no nested clauses, no parentheticals, at most one em-dash per sentence; every example and "the thought that means you are about to break this rule" line survives (D7)
+- `references/ledger.md`: CLOSE's discharge condition now matches D1 — the surfacing batch plus any user-approved memory candidate while the user is present, the surfacing batch alone while absent
+- `references/ledger.md`: the routing gate now keys on the binding record existing (the session-open scratchpad file, or the ledger's first entry), never on the record being spoken to the user; gains an Opening section carrying the ledger's open-trigger and departure-shape narrative moved from `SKILL.md`
+
+### Added
+- `evals/advisor-mode.json`: three behaviour fixtures pinning D1 and D2 — `memory-bar-close` (no memory write before approval), `resume-fresh-after-rejection`, and `resume-dependent-task-same-class`
+
+
 ## [2.8.0] - 2026-08-26
 
 ### Changed

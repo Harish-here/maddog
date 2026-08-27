@@ -51,7 +51,7 @@ mechanical hand to run it — it discharges this whole section in one command.
 
 ## 3. DISPATCH WHILE ABSENT
 - Nothing downstream can surface a permission prompt. The pre-clearance and
-  pre-authorizations were bought while the user was present (core, BUDGET 3);
+  pre-authorizations were bought while the user was present (core, User Attention);
   VERIFY they cover every tool this run will need BEFORE launching; run
   write dispatches foreground; then a mechanical VERIFY confirms each long dispatch actually
   started — a stuck permission prompt once idled a run for hours. If the
