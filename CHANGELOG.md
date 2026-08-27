@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.11.0] - 2026-08-27
+
+### Removed
+- `install.sh` and the symlink install mode — plugin-only distribution now; the two-install-modes framing is gone from `README.md` and `CLAUDE.md` (`0fe22f2`)
+- dead `hooks:` frontmatter blocks in `agents/executor-fast.md`, `agents/executor-lead.md`, `agents/executor-judge.md` — ignored under plugin installs already, and now unused since symlink mode is gone (`0fe22f2`)
+
+### Added
+- `scripts/setup-watchdog.sh` — optional, maintainer-run script that wires the watchdog LaunchAgent and Telegram notify script, since a plugin install can't do this automatically; extracted from `install.sh`'s watchdog/notify logic only (`0fe22f2`)
+
+### Changed
+- `README.md`, `SECURITY.md`, `skills/advisor-mode/references/absent.md`: symlink-mode references replaced with the opt-in watchdog-setup story (`0fe22f2`)
+
 ## [2.10.0] - 2026-08-27
 
 ### Changed
