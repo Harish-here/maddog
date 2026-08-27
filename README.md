@@ -108,7 +108,6 @@ skills/
   product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
 workflows/
   sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
-  agent-evals.js      # runs evals/ fixtures against the real agents and grades them
 evals/
   executor-fast.json  # behavioural fixtures — happy + trap per mode and standing law
   executor-smart.json
@@ -139,7 +138,7 @@ Two mutually exclusive ways to install. Pick ONE — installing both gives you d
 /plugin install maddog@maddog
 ```
 - Skills arrive namespaced (`/maddog:advisor-mode`).
-- Does NOT ship `workflows/` (`sdd-task-loop`, `agent-evals`) — the plugin format has no workflow component yet; the day it does, we ship them.
+- Ships `workflows/sdd-task-loop.js` (general-usage plan execution) but not `agent-evals` — that lives in `.claude/workflows/`, invoked only via `scriptPath` for maintainer use, never auto-registered for installers.
 - Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
   - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
   - `permissionMode: dontAsk` does not apply — executors may surface permission prompts; add allowlist entries for the commands you delegate.
@@ -212,13 +211,13 @@ get fixtures, with secondary assertions folded into the happy rubrics. A fixture
 an agent to do the obvious right thing proves nothing, because the wrong answer was never
 attractive.
 
-`workflows/agent-evals.js` runs them: it materialises each fixture's files into a fresh
+`.claude/workflows/agent-evals.js` runs them: it materialises each fixture's files into a fresh
 temp directory, dispatches the prompt to the real agent, and grades the return against
 the fixture's expectations with a judge. Model and reasoning effort are pinned per
 fixture — an eval of a Haiku agent that runs on Opus measures nothing — and the harness
 stages deliberately avoid the agents under test, so a broken executor cannot masquerade
 as fixture failures. Fixtures carry a `core` flag and the runner defaults to the
-discriminating subset; `args.all` runs everything.
+discriminating subset; `args.all` runs everything. Invoke it via `Workflow({scriptPath: '.claude/workflows/agent-evals.js', ...})`.
 
 They found real defects. At low effort `executor-fast` deleted a directory holding
 uncommitted work and reported done; at medium `executor-smart` verified a review finding
