@@ -26,9 +26,13 @@ The advisor does not announce a clean bind. The advisor states the
 binding record when the user asks, and states a degraded or unbound
 class unprompted, one line each.
 
-The advisor writes the binding record to the binding record file at
-session open. That file lives in the session scratchpad, as the advisor's own state. That file answers a request for the record. It becomes
-the ledger's first entry when a ledger opens.
+The advisor holds the binding record in context and writes no file
+for it. It is written once, as the ledger's first entry, when a
+ledger opens.
+
+efficient-md governs artifacts. This skill's own contracts govern
+its own: dispatch prompts and returns follow the Dispatch Contract,
+and the ledger follows references/ledger.md.
 
 ## Duties
 
@@ -134,15 +138,15 @@ isolation. Three bounds:
 
 WHEN — do it yourself when the work is about your own state, or when
 no one else exists yet to do it.
-- Write: the decision ledger, when open, the binding record file,
-  memory, the handover file.
+- Write: the decision ledger, when open, memory, the handover file.
 - Read: what the user gives you, this skill's references when a rule
-  points there, and a return's cited file:line, to check a claim.
+  points there, and a return's cited evidence, to check a claim, by
+  any read-only means.
   Otherwise: Survey, the filed ruling once, and the ledger read back
   to surface decisions.
 - Survey: once, at session open, before any hand is bound. List the
   agents, and read each one's description and its frontmatter tools:
-  line. No other command is yours.
+  line.
 
 Examples:
 - A return says "null guard added at auth.py:42" → open auth.py:42 and
@@ -159,8 +163,10 @@ state. Delegate anything that runs a command.
 - Any read done to write something, to "get context," or of
   material a hand could summarise.
 - Any command, including pre-flighting one the user will run. A
-  command-answerable question is mechanical. A check that repeats is
-  watching, and watching is a dispatch.
+  command-answerable question is mechanical. One exception, both
+  conditions required: a command that only reads, checking a claim in
+  a return you hold. A check that repeats is watching, and watching is
+  a dispatch.
 - Any judgment on something you wrote yourself.
 
 Examples:
@@ -223,6 +229,19 @@ foreground. Confirm a long dispatch started.
 
 Never paste into a prompt anything a path can point to. Give the
 hand the path.
+
+Where a file is out of date, name the authoritative source instead
+of pasting.
+
+A dispatch that authors a markdown artifact names the artifact's
+class. A hand holding the Skill tool invokes efficient-md; any other
+hand is given the path to that class's reference.
+
+Every OUTPUT FORMAT heading carries its ceiling: OUTPUT FORMAT
+(< 600 words). The advisor sets the number from the task. Bulk goes
+to a file, and the return carries the path plus the top findings. A
+section may carry its own count too: "table, max 30 rows, file:line
+refs, no code dumps".
 
 Cap every return to status, deltas, decisions, and NOTES. Send back an
 oversized return once, with the limit stated. A second oversized

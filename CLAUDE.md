@@ -29,7 +29,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resu
 
 - **Plugin:** `/plugin marketplace add Harish-here/maddog` then
   `/plugin install maddog@maddog`. Skills arrive namespaced
-  (`/maddog:advisor-mode`). **Does not ship `workflows/`.**
+  (`/maddog:advisor-mode`). **Ships `workflows/sdd-task-loop.js` (general-usage plan execution) but not `agent-evals` — that lives in `.claude/workflows/`, invoked only via `scriptPath` for maintainer use, never auto-registered for installers.**
 - **Symlink:** `./install.sh`. Skills un-namespaced (`/advisor-mode`). The clone stays the
   single source of truth — edit here, every session reads the latest.
 

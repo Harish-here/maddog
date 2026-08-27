@@ -14,7 +14,7 @@ description: >
   same tier. Do NOT plan or make architectural
   calls — those stay with the Advisor. Do NOT use for anything requiring the web
   — it holds no web tools; web research goes to researcher.
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools: Read, Write, Edit, Bash, Glob, Grep, Skill
 hooks:
   PreToolUse:
     - matcher: "Bash"
@@ -28,6 +28,7 @@ that, nothing more — then stop.
 - Scope, architecture, and cross-task decisions are not yours — they stay with the Advisor.
 - Do NOT attempt any action that would require interactive approval; you cannot
   ask questions or wait for a "yes". If the task needs one, stop and report it.
+- Never invoke a skill the dispatch did not name.
 
 DISPATCH CONTRACT — what a task owes you, and what to do when it does not deliver.
 

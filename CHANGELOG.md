@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.10.0] - 2026-08-27
+
+### Changed
+- `advisor-mode`: the binding record is no longer written to a file at session open — the advisor binds at session open and holds the record in context, writing it once as the ledger's first entry when a ledger opens; Own Hands' Write allowance no longer names a binding record file
+- `advisor-mode`: Session Open gains a scope line — efficient-md governs artifacts, this skill's own contracts govern its own: dispatch prompts and returns follow the Dispatch Contract, the ledger follows `references/ledger.md`
+- `advisor-mode`: Own Hands now permits the advisor to run a read-only command itself, both conditions required — it only reads, and it checks a claim in a return the advisor holds; previously reading a cited file:line was allowed but every command was forbidden, leaving command-only verification unsettled; the Survey bullet's blanket "No other command is yours" is removed, since it contradicted this exception
+- `advisor-mode`: the Dispatch Contract gains three rules — name the authoritative source instead of pasting when a file is out of date, a dispatch authoring a markdown artifact names the artifact's class so a hand holding the Skill tool invokes efficient-md and any other hand is given the path to that class's reference, and every OUTPUT FORMAT heading carries its own ceiling (`OUTPUT FORMAT (< 600 words)`, the number set per task)
+- `references/ledger.md`: BINDING RECORD and ROUTING PRECONDITION rewritten to match the binding-record change — bound at session open and held in context, written as the ledger's first entry once a ledger opens
+- `executor-fast`, `executor-smart`: `Skill` added to `tools:`, with the law "Never invoke a skill the dispatch did not name" — the grant lets them invoke efficient-md when a dispatch names it, the prohibition stops a cheap hand pulling in skills nobody asked for
+- `agent-evals`: the workflow moves from `workflows/` to `.claude/workflows/` — it is maintainer-only, invoked via `scriptPath`, and no longer part of the shipped set; `.gitignore`, `README`, `CLAUDE.md`, and `evals/author-agent.json` updated to match (`edb58cf`, `2e725dc`)
+
 ## [2.9.0] - 2026-08-26
 
 ### Changed
