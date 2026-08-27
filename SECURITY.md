@@ -13,6 +13,6 @@ a best-effort basis.
 
 This project ships prompt/Markdown artifacts (agent and skill definitions)
 plus a handful of small shell scripts under `scripts/`. There is no
-application code, server, or network service. `install.sh`'s behavior —
-what it symlinks, writes, and reads on your machine — is documented in
-`README.md`.
+application code, server, or network service. `scripts/setup-watchdog.sh` is
+the only one that touches your machine outside this repo (if you choose to
+run it) — what it symlinks, writes, and reads is documented in `README.md`.

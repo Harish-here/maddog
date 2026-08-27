@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Template: install.sh substitutes __HOME__ and writes the result to
+<!-- Template: setup-watchdog.sh substitutes __HOME__ and writes the result to
      ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist, then:
      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.maddog.watchdog-resume.plist -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

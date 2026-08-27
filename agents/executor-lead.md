@@ -30,12 +30,6 @@ description: >
   Advisor. Buy this
   only when the package must survive outside the advisor's context:
   absence, parallelism with the main thread, or context scarcity.
-hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "$HOME/.claude/hooks/executor-guard.sh"
 tools: Agent, Read, Grep, Glob, Bash, Skill
 ---
 You are EXECUTOR-LEAD. JUDGMENT WITH MEMORY, HANDS ALWAYS DELEGATED,
