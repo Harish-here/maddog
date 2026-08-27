@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.11.1] - 2026-08-27
+
+### Fixed
+- `advisor-mode`: the general resume rule was stated as a permission ("a dependency test decides whether B MAY resume A's agent"), so it never fired reliably — only the judge's resume (stated as an instruction) did; in one session, 19 dispatches produced exactly 1 resume, though 4 more passed the dependency test and were spawned fresh anyway. The Resume section's first paragraph now ends with an explicit prohibition: "Never open a fresh dispatch for work that passes the dependency test while that hand may still be resumed." (`f067e54`)
+- `advisor-mode`: the ceilings paragraph never stated what its counts are measured against — "per class, never per session" read as either per-task or per-session; now explicit: "count per task chain, never per session." Replaced the token-budget numbers (which had silently replaced the hard counts on harnesses reporting spend in tokens, and which were meaningless without a context-window size the advisor never receives) with a softer, harness-agnostic brake: stop when the hand's context is half full, dispatch fresh after a long idle with prior findings supplied verbatim (`f067e54`)
+- `advisor-mode`: the judge paragraph's long-idle rule is now stated once, in the general ceilings paragraph, instead of being duplicated with a judge-specific token number (`f067e54`)
+
 ## [2.11.0] - 2026-08-27
 
 ### Fixed
