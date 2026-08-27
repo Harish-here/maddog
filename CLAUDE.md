@@ -56,14 +56,17 @@ Removing those tools is half the enforcement: both hold `Bash`, so
 `scripts/executor-guard.sh` also denies the common file-writing Bash forms for lead and
 judge — redirection (including the glued `echo x>f`), `tee`, `sed -i`, `rm`, `cp`, `mv`,
 `git add/commit/rm/mv`, and inline interpreters (`python`, `node`, `perl`, `ed`, `xargs`).
-It is a guard, not a proof: a command hidden inside `$(...)` is never classified, and
-hooks fail open on a payload they cannot read. Granting either agent `Write`/`Edit`, or
-weakening that layer, silently dissolves the family's central
-invariants. One route stays open by design: the judge holds `Agent` and may rent
-`executor-fast`, which can write — that containment is instruction, not structure. The
-shared RENT HANDS, NEVER VERDICTS law is verbatim-identical in both files — edit it in
-both or neither. `scripts/executor-guard.sh` covers all four executors: irreversible
-commands (`git merge` and `git worktree remove` included) for every one, plus the
+It is a guard, not a proof: only the first token of each command segment is
+classified, so anything that shifts the dangerous verb off that position —
+command substitution, `bash -c`, a `git -C` global option, a `sudo`/`env`/`time`
+prefix, shell grouping — passes unexamined, and hooks fail open on a payload
+they cannot read. Granting either agent `Write`/`Edit`, or weakening that layer,
+silently dissolves the family's central invariants. One route stays open by
+design: the judge holds `Agent` and may rent `executor-fast`, which can write —
+that containment is instruction, not structure. The shared RENT HANDS, NEVER
+VERDICTS law is verbatim-identical in both files — edit it in both or neither.
+`scripts/executor-guard.sh` covers all four executors: irreversible commands
+(`git merge` and `git worktree remove` included) for every one, plus the
 file-write denial for lead and judge alone.
 
 **Agents and skills ship as a unit.** `product-engineering` names all five
