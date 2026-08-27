@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.12.0] - 2026-08-27
+
+### Added
+- `scripts/judge-dispatch-guard.sh` — a PreToolUse hook on the `Agent` tool denying `executor-judge` any dispatch target but `executor-fast` or `researcher`, including a dispatch naming no target at all (which runs the default general-purpose agent, holding every tool); payload field names confirmed against captured live payloads
+- `evals/`: 16 behavioural fixtures covering the eight mode laws that had none — fast TRANSFORM/RECOVER, smart PORT/DECOMPOSE, lead CAMPAIGN/DELIVER, judge DESIGN-REVIEW/ADJUDICATE — one happy case and one trap each, all core
+- `advisor-mode`: gains the named rule ONE TASK, ONE HAND — a task that already has a hand keeps it; a fresh dispatch is now the exception and must name its reason (class change, spent ceiling, half-full context, a rejected or failed return, or a long idle). Note: 2.11.1's prohibition on opening a fresh dispatch for resumable work did not bind in practice — this rule inverts the default instead of restating the prohibition
+
+### Changed
+- `agents/executor-fast.md`, `executor-smart.md`, `executor-lead.md`, `executor-judge.md`: all four descriptions rewritten against the description standard and the checklist's five-slot shape — family resident cost fell from 4,567 to about 3,380 characters while gaining positive claimants for debugging, git/operations work, migrations, splitting and authoring, which no description previously claimed; `executor-lead` fell from 1,786 to 861 characters, and all four are now under the 1,024-character cap
+
+### Fixed
+- `scripts/executor-guard.sh`: now denies the common file-writing Bash forms for lead and judge (glued redirects, inline interpreters, `git rm`/`git mv`), extends irreversible-command coverage to `executor-smart`, denies `git merge` and `git worktree remove`/`prune` for all four, catches the `+ref` force-push form and `find -delete` and `git branch --delete --force`, and matches the temp carve-out on a path component rather than a substring; a quote-handling bug in its command splitter that blocked legitimate searches containing a pipe is fixed
+- `agents/executor-lead.md`: regains the precedence clause its satisficing law had lost
+- `CLAUDE.md`, `README.md`: no longer claim enforcement the guards did not deliver
+
 ## [2.11.1] - 2026-08-27
 
 ### Fixed
