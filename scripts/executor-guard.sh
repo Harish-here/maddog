@@ -97,26 +97,37 @@ is_temp_path() {
 quote_walk() {
   local mode="$1" cmd="$2"
   local -a out=()
-  local buf="" mbuf="" c prev="" in_single=0 in_double=0
+  local buf="" mbuf="" c in_single=0 in_double=0
+  local esc=0 esc_next=0
   local i=0 len=${#cmd}
   local US=$'\x1f'
   while [ "$i" -lt "$len" ]; do
     c="${cmd:i:1}"
+    # esc = is THIS character escaped by an odd run of preceding, themselves-
+    # unescaped, backslashes? Parity-tracked (not a 1-char lookback), so a
+    # doubled backslash (`\\` = one literal backslash) correctly leaves the
+    # character after it unescaped — e.g. `"a\\" > f` closes the quote at
+    # the real closing `"` instead of treating it as escaped.
+    if [ "$c" = "\\" ] && [ "$esc_next" -eq 0 ]; then
+      esc=0
+      esc_next=1
+    else
+      esc="$esc_next"
+      esc_next=0
+    fi
     if [ "$in_single" -eq 1 ]; then
       buf+="$c"
       mbuf+="Q"
       [ "$c" = "'" ] && in_single=0
-      prev="$c"
       i=$((i + 1))
       continue
     fi
     if [ "$in_double" -eq 1 ]; then
       buf+="$c"
       mbuf+="Q"
-      if [ "$c" = '"' ] && [ "$prev" != "\\" ]; then
+      if [ "$c" = '"' ] && [ "$esc" -eq 0 ]; then
         in_double=0
       fi
-      prev="$c"
       i=$((i + 1))
       continue
     fi
@@ -126,7 +137,6 @@ quote_walk() {
           [ -n "$buf" ] && out+=("${buf}${US}${mbuf}")
           buf=""
           mbuf=""
-          prev="$c"
           i=$((i + 1))
           continue
           ;;
@@ -134,21 +144,30 @@ quote_walk() {
     fi
     case "$c" in
       "'")
-        in_single=1
-        buf+="$c"
-        mbuf+="Q"
+        if [ "$esc" -eq 0 ]; then
+          in_single=1
+          buf+="$c"
+          mbuf+="Q"
+        else
+          buf+="$c"
+          mbuf+="$c"
+        fi
         ;;
       '"')
-        in_double=1
-        buf+="$c"
-        mbuf+="Q"
+        if [ "$esc" -eq 0 ]; then
+          in_double=1
+          buf+="$c"
+          mbuf+="Q"
+        else
+          buf+="$c"
+          mbuf+="$c"
+        fi
         ;;
       '&')
         if [ "$mode" = "chain" ] && [ "${cmd:i:2}" = "&&" ]; then
           out+=("$buf")
           buf=""
           i=$((i + 2))
-          prev="$c"
           continue
         fi
         buf+="$c"
@@ -160,13 +179,11 @@ quote_walk() {
             out+=("$buf")
             buf=""
             i=$((i + 2))
-            prev="$c"
             continue
           fi
           out+=("$buf")
           buf=""
           i=$((i + 1))
-          prev="$c"
           continue
         fi
         buf+="$c"
@@ -177,7 +194,6 @@ quote_walk() {
           out+=("$buf")
           buf=""
           i=$((i + 1))
-          prev="$c"
           continue
         fi
         buf+="$c"
@@ -188,7 +204,6 @@ quote_walk() {
         mbuf+="$c"
         ;;
     esac
-    prev="$c"
     i=$((i + 1))
   done
   if [ "$mode" = "chain" ]; then
