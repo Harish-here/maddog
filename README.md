@@ -69,8 +69,9 @@ session: agents load at session start, skills reload live.
 npx skills add Harish-here/maddog
 ```
 
-This installs maddog's skills into other agent runtimes; the plugin install
-above stays the primary route for Claude.
+This installs the maddog skills into other agent runtimes. The executor and
+product agents that `advisor-mode` and `product-engineering` dispatch come
+only with the plugin install above.
 
 ## What ships
 
