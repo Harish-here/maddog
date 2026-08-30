@@ -25,8 +25,9 @@ through `.claude/skills/author-agent`, which gates via `review-agent`.
 
 ## Distribution mechanics
 
-Only `agents/` and `skills/` auto-register on install; `workflows/` and
-`scripts/` ship in the tarball but need manual wiring. Agent frontmatter
-`hooks:` and `permissionMode:` are inert — guard hooks arrive via
-`hooks/hooks.json`. A session snapshots agents, skills, and workflows at
-start; restart it before an edit to any of them takes effect.
+A plugin install auto-registers `agents/`, `skills/`, `commands/`, `hooks/`,
+and `.mcp.json`; `workflows/` and `scripts/` ship in the tarball but are not
+auto-wired (undocumented). Agent frontmatter `hooks:` and `permissionMode:`
+are ignored in plugin agents — guard hooks arrive via `hooks/hooks.json`.
+Skill edits take effect immediately; agent edits need `/reload-plugins` or a
+restart; workflow reload is undocumented, so restart to be sure.
