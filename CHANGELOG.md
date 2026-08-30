@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.13.0] - 2026-08-30
+
+### Added
+- `DESIGN.md` 1.0.0 — the visual identity (black-and-white with amber and ink-blue accents; typography, text contrast, wording rules, versioning), linked from README and CLAUDE.md (`bcf0692`, `9296c04`, `cf1f229`)
+- `assets/wordmark.txt` (figlet ansi_shadow MADDOG with a double-rule "Skills & Agents" band, 53×10) and `assets/wordmark-ascii.txt` (figlet slant fallback, 43×10); README masthead now carries the wordmark block with `# maddog` beneath (`cf1f229`)
+
+### Changed
+- release taxonomy classifies `DESIGN.md` and `assets/` as DOCS (`306efbe`); adversarial judge review of DESIGN.md and the lockup, two rounds, all findings applied before `cf1f229`
+
 ## [2.12.1] - 2026-08-30
 
 ### Added
