@@ -1,6 +1,6 @@
 # maddog Design System
 
-Version: 1.0.0
+Version: 1.0.1
 
 ## 1. Purpose and scope
 
@@ -35,9 +35,10 @@ fallback: `assets/wordmark-ascii.txt` (figlet `slant`, art 43
 columns, `=` rules), 43×10 — used when Unicode is unsupported or
 width is 43–52 columns.
 
-It ships as a fenced code block in README and as plain text in any
-terminal splash. It is never re-typeset in another font, and never
-rendered as an image where text can go.
+It ships as preformatted text: a centred `<pre>` block in README, a
+fenced block elsewhere, plain text in any terminal splash. It is
+never re-typeset in another font, and never rendered as an image
+where text can go.
 
 **Colour.** `--md-ink` on `--md-paper`, or `--md-text-primary` on
 `--md-paper-dark`. No colour inside the art. The ampersand in the
