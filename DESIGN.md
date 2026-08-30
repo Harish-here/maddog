@@ -1,13 +1,13 @@
 # maddog Design System
 
-Version: 0.2.0
+Version: 1.0.0
 
 ## 1. Purpose and scope
 
-This document governs maddog's visual identity: logo, colour,
-typography, text colour, and the words on user-facing surfaces —
-README, CHANGELOG, any prose a person reads rather than an agent
-loads. Out of scope: code architecture, agent routing, and
+This document governs maddog's visual identity: wordmark, colour,
+typography, text colour, and the words on user-facing surfaces. That
+covers README, CHANGELOG, and any prose a person reads rather than
+an agent loads. Out of scope: code architecture, agent routing, and
 conversational sentence rules — see `PHILOSOPHY.md` and the
 `plain-english` skill.
 
@@ -18,55 +18,64 @@ conversational sentence rules — see `PHILOSOPHY.md` and the
 | 1 | Black and white is the constant | Harness-neutral core — renders the same everywhere |
 | 2 | Colour and shape are named, never memorised | Tokens are the new currency — every value is a token |
 | 3 | Colour is the exception | Spend your attention on what matters — a colourful page is a wrong page |
-| 4 | The rule outranks the drawing | Architect the integrity — valid because it followed section 8, not because it looks right |
-| 5 | Cheapest mark that reads | Intelligence is a budget — a 32×32 grid reads at icon size, no per-resolution tuning |
+| 4 | The rule outranks the drawing | Architect the integrity. Don't just instruct the agent. |
+| 5 | Cheapest mark that reads | Intelligence is a budget — the mark is text; it ships wherever text ships |
 
 **Tone standard.** Every visual surface reads in one line as: neat,
 minimal, strong, detail-oriented.
 
-## 3. Logo
+## 3. Wordmark
 
-**Construction.** 32×32 pixel grid, one `<rect>` per pixel,
-`shape-rendering="crispEdges"`. Cartoon dog head, curious look, tongue
-out: `--md-ink` outline, `--md-paper` body, `--md-grey` shade,
-`--md-tongue` tongue, one `--md-amber` spark. Fixed: tilted head, one
-ear up one down, big eyes with a 1px catch-light, raised brow — pixel
-placement is `assets/logo/maddog-head.svg`, once locked.
+The mark is MADDOG set in the figlet font `ansi_shadow`, above a
+subtitle band. The band opens with a full-width double rule
+(`═`, U+2550, 53 columns). It centres "SKILLS & AGENTS" in
+letterspaced capitals on the art width, then closes with a second
+rule. The subtitle's written form is "Skills & Agents"; the capitals are display-only. Lockup: 53×10. Canonical file: `assets/wordmark.txt`. ASCII
+fallback: `assets/wordmark-ascii.txt` (figlet `slant`, art 43
+columns, `=` rules), 43×10 — used when Unicode is unsupported or
+width is 43–52 columns.
 
-**Dark ground.** No inversion: outline stays `--md-ink`, body
-`--md-paper`, tongue becomes `--md-tongue-dark`. The dark icon tile
-carries `--md-paper-dark`; the mark does not.
+It ships as a fenced code block in README and as plain text in any
+terminal splash. It is never re-typeset in another font, and never
+rendered as an image where text can go.
 
-**Sizing.** Clear space: one grid cell per side (4px at 128px render).
-16px floor; below it, a two-tone ink-on-paper silhouette. Lockup
-(icon + wordmark) floor: 120px; below that, icon alone.
+**Colour.** `--md-ink` on `--md-paper`, or `--md-text-primary` on
+`--md-paper-dark`. No colour inside the art. The ampersand in the
+subtitle may take `--md-amber-ink` on light or `--md-amber` on dark —
+the only accent.
 
-**Do:** named tokens only; one spark; tongue always on; dark tile for
-icon-only contexts on dark ground.
+**Sizing.** The art is fixed-size text, so "minimum size" is replaced
+by a width rule: never wrap. Below 43 columns, use the subtitle line
+alone in plain text — "maddog — Skills & Agents". Clear space: one
+blank line above and below.
 
-**Don't:** rotate, skew, mirror, recolour the outline, add a shadow or
-gradient, or invert on dark ground.
+**Do:** ship the canonical file byte-for-byte; use the ASCII fallback
+when Unicode is unsupported or width is 43–52 columns, subtitle alone
+below 43.
+
+**Don't:** re-typeset in another font; render as an image; add colour
+inside the glyphs.
 
 ## 4. Colour
 
 | Token | Value | Role |
 |---|---|---|
-| `--md-ink` | `#1A1A18` | outline; text (light) |
-| `--md-paper` | `#FFFFFF` | logo body; light ground |
+| `--md-ink` | `#1A1A18` | text (light) |
+| `--md-paper` | `#FFFFFF` | light ground |
 | `--md-paper-dark` | `#16171A` | dark ground |
 | `--md-grey` | `#D9D8D2` | shade; rules/borders (light) |
 | `--md-grey-dark` | `#3A3B3F` | rules/borders (dark) |
-| `--md-amber` | `#F2B441` | attention: spark, warnings — not light-text |
+| `--md-amber` | `#F2B441` | attention: warnings — not light-text |
 | `--md-amber-ink` | `#8A5E12` | amber, text-safe (light) |
 | `--md-blue` | `#1F4B99` | links, active states (light) |
 | `--md-blue-light` | `#7FB0F2` | links (dark) |
-| `--md-tongue` | `#F28BA8` | tongue (light) |
-| `--md-tongue-dark` | `#C9607F` | tongue (dark) |
+
+Text-on-ground tokens (`--md-text-*`) are defined in section 6.
 
 **Rule.** Amber and blue together cover no more than a small fraction
 of any surface; a colourful page is wrong. No token may approximate a
 sibling or vendor hue: Claude orange `#D97757`, Copilot purple
-`#6E40C9`, OpenAI green `#10A37F`, Jobbunny purple `#7B5EA7`.
+`#6E40C9`, OpenAI green `#10A37F`.
 
 ## 5. Typography
 
@@ -87,27 +96,28 @@ Both SIL Open Font License, on Google Fonts — one licence, one system.
 | 4 | Heading | 28 | 1.75rem | h2 |
 | 5 | Display | 40 | 2.5rem | h1, hero |
 
-**Pixel wordmark.** Only in the logo lockup, a README masthead, or a
-splash/hero graphic — never in running text, headings, table headers,
-error text, or below its 16px floor (section 3).
+**Wordmark.** Only in the wordmark lockup, a README masthead, or a
+splash/hero graphic. Never in running text, headings, table headers,
+error text, or below 43 columns (section 3).
 
 ## 6. Text colour and contrast
 
-`--md-ground` pairs the page background per theme: `--md-paper` on
-light, `--md-paper-dark` on dark.
+`--md-ground` is the page-ground pair: `--md-paper` on light,
+`--md-paper-dark` on dark. Each row below names the text token used
+against it.
 
 | Token | Ground | Value | Ratio |
 |---|---|---|---|
-| primary | light | `#1A1A18` | 17.43:1 |
-| secondary | light | `#4A4A46` | 8.90:1 |
-| muted | light | `#6E6E68` | 5.13:1 |
-| link (`--md-blue`) | light | `#1F4B99` | 8.32:1 |
-| amber-ink | light | `#8A5E12` | 5.69:1 |
-| primary | dark | `#F2F1EC` | 15.85:1 |
-| secondary | dark | `#C8C6BE` | 10.48:1 |
-| muted | dark | `#9C9A92` | 6.36:1 |
-| link (`--md-blue-light`) | dark | `#7FB0F2` | 8.02:1 |
-| amber | dark | `#F2B441` | 9.71:1 |
+| `--md-text-primary` | light | `#1A1A18` | 17.43:1 |
+| `--md-text-secondary` | light | `#4A4A46` | 8.90:1 |
+| `--md-text-muted` | light | `#6E6E68` | 5.13:1 |
+| `--md-text-link` | light | `#1F4B99` | 8.32:1 |
+| `--md-text-accent-on-ground` | light | `#8A5E12` | 5.69:1 |
+| `--md-text-primary` | dark | `#F2F1EC` | 15.85:1 |
+| `--md-text-secondary` | dark | `#C8C6BE` | 10.48:1 |
+| `--md-text-muted` | dark | `#9C9A92` | 6.36:1 |
+| `--md-text-link` | dark | `#7FB0F2` | 8.02:1 |
+| `--md-text-accent-on-ground` | dark | `#F2B441` | 9.71:1 |
 
 All ten rows pass AA (≥4.5:1). Raw `--md-amber` on `--md-paper`
 measures 1.85:1 and fails — hence `--md-amber-ink`.
@@ -115,7 +125,8 @@ measures 1.85:1 and fails — hence `--md-amber-ink`.
 ## 7. Words
 
 - **Product name.** "maddog" always lowercase, sentence start too —
-  except the pixel wordmark ("MADDOG").
+  except the ansi_shadow wordmark ("MADDOG"); the ASCII fallback
+  stays lowercase.
 - **Agent names.** Verbatim as `agents/*.md` — lowercase, hyphenated,
   code-styled (`executor-smart`), never title-cased.
 - **Skill names.** Namespaced (`/maddog:plain-english`) to invoke;
@@ -127,34 +138,29 @@ measures 1.85:1 and fails — hence `--md-amber-ink`.
 
 ## 8. Family illustrations
 
-32×32 grid. Fixed: silhouette, `--md-ink` outline, `--md-paper` body,
-`--md-grey` shade, `--md-tongue` — every member keeps the tongue.
-Varies, exactly one: a prop, `--md-ink` outline, filled with either
-`--md-amber` or `--md-blue`, inside a fixed prop zone. Nothing else
-moves.
+Family illustrations are deferred. When they return, they are a
+separate asset class from the wordmark, and get their own rule under
+a minor version.
 
 ## 9. File layout
 
-- `assets/logo/maddog-head.svg`, `maddog-icon.svg`,
-  `maddog-wordmark.svg`; `assets/family/<agent-name>.svg`.
-- `viewBox="0 0 32 32"`, one `<rect>` per pixel, `shape-rendering=
-  "crispEdges"`, `role="img"`, plain-sentence `aria-label`, fills as
-  `fill="var(--md-ink)"` — a palette change is a token swap.
-- Two copies: token-based source (inlined) and static-hex for
-  `<img>` embeds.
+- `assets/wordmark.txt`, `assets/wordmark-ascii.txt`.
+- Family assets: reserved.
+- `assets/` holds the wordmark files and nothing else at 1.0.0.
 
 ## 10. Versioning
 
 Own semantic version, independent of the plugin's release (`2.12.x`).
 
-- **Breaking (major):** logo construction change, a token
-  rename/removal, a typeface change.
+- **Breaking (major):** wordmark construction change, a token
+  rename/removal, a typeface change, or a picture mark if one is
+  ever adopted.
 - **Non-breaking (minor):** a new family member, a new text-colour
   token, an extended type scale.
 - **Patch:** wording or contrast-value corrections, no rule change.
 
-The version line bumps with the document. 1.0.0 is cut when
-`assets/logo/maddog-head.svg` is locked.
+The version line bumps with the document. 1.0.0 is cut with the
+wordmark lock.
 
 **Reserved for later** — a future minor or major may add, without
 breaking 1.x:
@@ -162,7 +168,6 @@ breaking 1.x:
 - Motion (hover/loading states for the mark)
 - A data-viz palette
 - A component library (buttons, cards, form controls)
-- Additional family members beyond the current lineups
+- Additional family members
 - Print and social sizing (favicons, OG images, print marks)
-
-Nothing else about these appears elsewhere in this document.
+</content>
