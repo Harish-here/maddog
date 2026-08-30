@@ -12,6 +12,8 @@ description: >
   release candidate. Do NOT use to merge anything: it NEVER merges — the skill and
   every hand it dispatches stop at push + open PR; the user's hand is the only
   merge, and only on a PR whose verdict names its current head commit.
+metadata:
+  internal: true
 ---
 
 ## 0. Surface taxonomy (cite this, never re-enumerate)

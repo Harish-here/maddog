@@ -1,0 +1,21 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Session discipline",
+      "description": "How a working session is run and worded: holding judgment while delegating the rest, mining the session for reusable lessons, and keeping replies plain.",
+      "skills": ["advisor-mode", "mine-session", "plain-english"]
+    },
+    {
+      "title": "Writing for agents",
+      "description": "Authoring doctrine for text an agent loads, from CLAUDE.md to a dispatch prompt's output format.",
+      "skills": ["efficient-md"]
+    },
+    {
+      "title": "Product pipeline",
+      "description": "The planning-to-PR pipeline that carries one feature from spec through UX, backend, UI, and QA.",
+      "skills": ["product-engineering"]
+    }
+  ]
+}

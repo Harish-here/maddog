@@ -7,6 +7,8 @@ description: >
   change to a frontmatter description. When authoring the fix and applying
   it are part of the same job, that is author-agent, which calls this
   review as its gate step.
+metadata:
+  internal: true
 ---
 
 1. Assemble the evidence set: the target file(s); every file in `agents/`;

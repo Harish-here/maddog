@@ -63,6 +63,15 @@ Update later with `/plugin marketplace update maddog`.
 After installing or updating, run `/reload-plugins` or restart the
 session: agents load at session start, skills reload live.
 
+**Also on skills.sh:**
+
+```
+npx skills add Harish-here/maddog
+```
+
+This installs maddog's skills into other agent runtimes; the plugin install
+above stays the primary route for Claude.
+
 ## What ships
 
 ### Agents (`agents/`)
