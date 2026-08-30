@@ -21,6 +21,8 @@ as a plugin for Claude; soon, for every other ecosystem.
 
 See `PHILOSOPHY.md` for the full statement of each point.
 
+See `DESIGN.md` for the visual identity: logo, colour, type, and the wording rules for user-facing text.
+
 ## Install
 
 ```
