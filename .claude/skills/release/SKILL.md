@@ -17,14 +17,13 @@ description: >
 ## 0. Surface taxonomy (cite this, never re-enumerate)
 
 - SHIPPED: agents/, skills/, workflows/, .claude-plugin/ manifests — what users
-  receive (workflows/ reaches symlink installs only; the class governs triggers,
-  not distribution).
-- GATE-INFRA: .github/, hooks/, scripts/, install.sh — what enforces the gate and
+  receive (the class governs triggers, not distribution).
+- GATE-INFRA: .github/, hooks/, scripts/ — what enforces the gate and
   the guard. `.claude/skills/release/` is GATE-INFRA even though it lives under
   `.claude/` (self-application).
 - INTERNAL: `.claude/`, `evals/` (except release/, above).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, LICENSE,
-  .gitignore.
+  .gitignore, PHILOSOPHY.md.
 - DEFAULT: any unclassified path is GATE-INFRA until classified above — fail
   closed.
 - D1 (behavior, restated from the router — M71): full ritual (all six
@@ -64,7 +63,7 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    `agents/*.md`; JSON parses on `.claude-plugin/*.json` and `evals/*.json`;
    `plugin.json`'s `version` equals CHANGELOG.md's first `## [...]` heading.
 2. **Shell gate (E14):** `bash -n` on every GATE-INFRA shell file
-   (`scripts/*.sh`, `install.sh`); JSON-parse `hooks/hooks.json`; every hook
+   (`scripts/*.sh`); JSON-parse `hooks/hooks.json`; every hook
    command path in it resolves to an existing file; run
    `scripts/executor-guard.sh` twice — a benign payload must pass, a
    known-dangerous payload must be REFUSED.
@@ -75,7 +74,7 @@ branch until whole (L9). SHIP pushes it and opens the PR.
 4. **CHANGELOG check:** entry present, styled per the file's existing
    convention, matches what DECLARE ruled.
 
-## 3. BEHAVIOR — pre-merge probes: steps 1, 3, 4 fast-tier; step 2 MID-TIER (M67)
+## 3. BEHAVIOR — pre-merge probes: steps 1, 3 fast-tier; step 2 MID-TIER (M67)
 
 1. `run-skill-routing.sh` where a fixture home exists — derive the list from
    `evals/*.json` on the candidate tree, never from memory (L4's spirit); for
@@ -90,19 +89,7 @@ branch until whole (L9). SHIP pushes it and opens the PR.
 3. Plugin-mode probe (bare-name agent resolution under a plugin install) where
    relevant — currently never run (E9); record UNVERIFIED + named debt E9 until
    it is.
-4. Populated-fixture `install.sh` probe when GATE-INFRA is touched. Build the
-   fixture with all four elements (E16, corrected to observed behavior at
-   the adoption RULE): live repo-owned links; ONE DEAD repo-owned link (a
-   target inside the repo that no longer exists) — the only input that
-   reaches install.sh's `rm`, its sole deletion path; ONE foreign symlink
-   (pointing outside the repo) as the NEGATIVE CONTROL, which must SURVIVE
-   untouched; and ONE real file at a path install.sh will actually link —
-   e.g. `agents/<name>.md` for a `<name>.md` that exists in the repo — so
-   the backup branch (`mv`) is exercised; a real file at an unlinked path
-   proves nothing. PASS requires all three outcomes: dead repo-owned link
-   pruned, foreign link intact, real file backed up. An empty or partial
-   sandbox exercises none of this and its PASS counts for nothing.
-5. Anything that cannot run in this environment: record UNVERIFIED with a
+4. Anything that cannot run in this environment: record UNVERIFIED with a
    named debt (L1) — never silently skip it.
 
 ## 4. RULE — executor-judge (fix-less), the gate
@@ -147,16 +134,12 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    `Created tag maddog--vX.Y.Z` and `Pushed to origin`.
 2. Confirm CI is green on main for the merge commit.
 3. Run a fresh plugin-install probe, or record UNVERIFIED + debt.
-4. Run a live `install.sh` probe against a populated target ONLY if BEHAVIOR's
-   populated-fixture probe passed on THIS release (M61) — a prior release's
-   pass licenses nothing against a live `~/.claude` (E16 fence). Otherwise
-   record UNVERIFIED.
-5. Post a SEAL comment on the merged PR: tag, `maddog--vX.Y.Z` tag (with
+4. Post a SEAL comment on the merged PR: tag, `maddog--vX.Y.Z` tag (with
    both CLI output lines), CI-on-main status, install probe results.
-6. SEAL PASSES when every probe succeeded or is recorded UNVERIFIED with a
+5. SEAL PASSES when every probe succeeded or is recorded UNVERIFIED with a
    named debt; it FAILS only on an affirmative failure. "Fully-gated" means
    gated per the ritual with debts named — the record says which.
-7. On an affirmative SEAL failure: enter REMEDY — unless the failed release
+6. On an affirmative SEAL failure: enter REMEDY — unless the failed release
    was itself a REMEDY, in which case run the full ritual with the judge
    present (L11).
 
