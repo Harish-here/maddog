@@ -21,7 +21,7 @@ through `.claude/skills/author-agent`, which gates via `review-agent`.
   `.claude/`, `.claude-plugin/`. Shipped bodies (`agents/*.md`, `skills/**`)
   name capabilities (write, edit, shell, web), never runtime tool
   identifiers, settings keys, or APIs (`PHILOSOPHY.md` point 5).
-- `.claude/` is repo-internal and never ships.
+- `.claude/` is repo-internal and is never registered as a plugin surface.
 
 ## Distribution mechanics
 

@@ -11,10 +11,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - `README.md` — rewritten with a philosophy section and agents grouped by family (`f4c4d7a`)
-- `CLAUDE.md` — rewritten to 30 lines under the efficient-md HOT law: pointers to PHILOSOPHY.md, README.md, CONTRIBUTING.md; publishing rule; three invariants (lead/judge no-edit, adapter set, .claude/ never ships); distribution mechanics (`f4c4d7a`)
+- `CLAUDE.md` — rewritten under the efficient-md HOT law: pointers to PHILOSOPHY.md, README.md, CONTRIBUTING.md; publishing rule; three invariants (lead/judge no-edit, adapter set, .claude/ not a plugin surface); distribution mechanics verified against the plugin docs (`ecc93d8`, `feed37d`)
 - `CONTRIBUTING.md` — stale pointer retargeted (`f4c4d7a`)
 - `.claude/skills/release/SKILL.md`, `references/release-model.md` — `PHILOSOPHY.md` classed DOCS; `install.sh`, the E16 populated-fixture probe, and the symlink clause removed (gone since 2.11.0); release model revision bumped to 11 (`f4c4d7a`)
-- `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` — descriptions rewritten for adopters: what it does, not a list of component names
+- `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` — descriptions rewritten for adopters: what it does, not a list of component names (`6a95e31`)
 
 ## [2.12.0] - 2026-08-27
 
