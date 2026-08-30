@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.14.0] - 2026-08-30
+
+### Added
+- `skills.sh.json` — three groupings ("Session discipline", "Writing for agents", "Product pipeline") with `notGrouped: "bottom"` for ungrouped skills (`192eaca`)
+- README install line `npx skills add Harish-here/maddog` for skills.sh discovery, alongside the existing plugin install (`192eaca`, `f663600`)
+
+### Changed
+- `release`, `author-agent`, `review-agent` skills marked `metadata.internal: true`, hiding them from skills.sh discovery (`192eaca`)
+- release taxonomy classifies `skills.sh.json` as DOCS (`f49ceec`)
+
 ## [2.13.0] - 2026-08-30
 
 ### Added

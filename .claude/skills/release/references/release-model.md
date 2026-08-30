@@ -1,7 +1,9 @@
-# maddog release doctrine — LOCKED model, rev 12 (2026-08-30)
+# maddog release doctrine — LOCKED model, rev 13 (2026-08-30)
 
 CANONICAL, agent-facing. The published HTML artifact is a rendered view of
 this file for the user; this file is the authority packets cite.
+Rev 13 classes skills.sh.json as DOCS — L12: enumeration content, no
+mechanism, count unchanged.
 Rev 12 classes DESIGN.md and assets/ as DOCS — L12: enumeration content, no
 mechanism added, count unchanged.
 Rev 11 retires E16, its risk row, the populated-fixture probe, and the M61
@@ -137,7 +139,7 @@ check nobody can run under pressure is not a check.
 - INTERNAL: .claude/, evals/ — except .claude/skills/release/, which is
   GATE-INFRA (self-application: a broken gate is a broken factory).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md,
-  LICENSE, .gitignore, PHILOSOPHY.md, DESIGN.md, assets/.
+  LICENSE, .gitignore, PHILOSOPHY.md, DESIGN.md, assets/, skills.sh.json.
 - DEFAULT (fail closed): any unclassified path is GATE-INFRA until
   classified here. Growth is real; the interval defaults strict.
 

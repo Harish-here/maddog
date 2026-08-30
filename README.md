@@ -63,6 +63,16 @@ Update later with `/plugin marketplace update maddog`.
 After installing or updating, run `/reload-plugins` or restart the
 session: agents load at session start, skills reload live.
 
+**Also on skills.sh:**
+
+```
+npx skills add Harish-here/maddog
+```
+
+This installs the maddog skills into other agent runtimes. The executor and
+product agents that `advisor-mode` and `product-engineering` dispatch come
+only with the plugin install above.
+
 ## What ships
 
 ### Agents (`agents/`)
@@ -170,8 +180,8 @@ Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
 SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/`,
 `evals/` — except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
 (this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
-`LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`) take READY
-alone. The release
+`LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`,
+`skills.sh.json`) take READY alone. The release
 skill never merges — it stops at push + open PR; merging is the
 maintainer's own hand, on a PR whose verdict names its current head commit.
 

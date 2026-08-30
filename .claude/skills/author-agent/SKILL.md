@@ -9,6 +9,8 @@ description: >
   and applying. Do NOT use for one-off or low-stakes text — edit that
   directly. Do NOT use when nothing is being authored — reviewing existing
   text alone is review-agent.
+metadata:
+  internal: true
 ---
 
 0. COST/VALUE LINE. Before any authoring, one sentence to the user: what

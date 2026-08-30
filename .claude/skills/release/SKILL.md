@@ -12,6 +12,8 @@ description: >
   release candidate. Do NOT use to merge anything: it NEVER merges — the skill and
   every hand it dispatches stop at push + open PR; the user's hand is the only
   merge, and only on a PR whose verdict names its current head commit.
+metadata:
+  internal: true
 ---
 
 ## 0. Surface taxonomy (cite this, never re-enumerate)
@@ -23,7 +25,7 @@ description: >
   `.claude/` (self-application).
 - INTERNAL: `.claude/`, `evals/` (except release/, above).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, LICENSE,
-  .gitignore, PHILOSOPHY.md, DESIGN.md, assets/.
+  .gitignore, PHILOSOPHY.md, DESIGN.md, assets/, skills.sh.json.
 - DEFAULT: any unclassified path is GATE-INFRA until classified above — fail
   closed.
 - D1 (behavior, restated from the router — M71): full ritual (all six
