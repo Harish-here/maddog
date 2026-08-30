@@ -41,8 +41,8 @@ Update later with `/plugin marketplace update maddog`.
   playwright MCP browser tools — configure it separately, or `product-qa`
   returns blocked at its prerequisite check.
 
-Restart your Claude Code session after installing or updating — the agent
-registry snapshots at session start.
+After installing or updating, run `/reload-plugins` or restart the
+session: agents load at session start, skills reload live.
 
 ## What ships
 
