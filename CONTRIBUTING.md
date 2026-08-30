@@ -24,7 +24,7 @@ or a test runner. A change is validated by exercising it:
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.
 
-See `CLAUDE.md` for the full validation model and repo architecture.
+See `README.md` §Architecture for the repo layout; the validation model is the section above.
 
 ## Authoring agent/skill instruction text
 

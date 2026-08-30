@@ -1,7 +1,12 @@
-# maddog release doctrine — LOCKED model, rev 10 (2026-08-24)
+# maddog release doctrine — LOCKED model, rev 11 (2026-08-30)
 
 CANONICAL, agent-facing. The published HTML artifact is a rendered view of
 this file for the user; this file is the authority packets cite.
+Rev 11 retires E16, its risk row, the populated-fixture probe, and the M61
+SEAL fence because install.sh no longer exists in the tree (removed 2.11.0);
+classes PHILOSOPHY.md as DOCS; drops the "workflows/ reaches symlink
+installs only" clause as false, workflows/ ships in the plugin tarball —
+L12: −1 mechanism, no growth.
 Rev 10 corrects E3 on doc-verified evidence (E21): the community directory
 was never tag-pinned, it follows pushes via its own CI re-pin, so SEAL's
 second-channel check is removed and replaced with `claude plugin tag --push`
@@ -75,14 +80,6 @@ check nobody can run under pressure is not a check.
   its refusal path is live and testable.
 - E15: local clones drift; decisions or checks on unsynced trees target
   something other than what ships.
-- E16: install.sh is destructive to $CLAUDE_DIR and reads CLAUDE_DIR from
-  the environment; its sole deletion path (`rm`) fires only on a DEAD
-  REPO-OWNED link — foreign links always survive (negative control). An
-  EMPTY sandbox exercises neither the backup (`mv`) branch nor the prune
-  branch — only a fixture populated with live repo links, one dead repo
-  link, one foreign link, and one real file at a link target does.
-  (Wording corrected to observed install.sh behavior at the adoption RULE;
-  earlier revisions said "foreign-link pruning", a mislabel.)
 - E17: judge-demonstrated — a pure revert can DELETE validate.yml
   (`git revert -m 1 6dd9d0e`); reverting a merge needs a named `-m` parent.
 - E18: judge-demonstrated — release merges carry their own bump, so a pure
@@ -122,7 +119,6 @@ check nobody can run under pressure is not a check.
 | Bad remedy | judge demo | L11: escalate, never revert a remedy |
 | Revert rolls version backward / orphans tag | E18 | forward version rule |
 | Directory serves stale content after a bad release (approved, listed plugins only; maddog is not listed — E3) | E3 | Directory follows pushes (community CI re-pin) — a REMEDY reaches it on merge; no pin step |
-| Symlink-mode regression damages live ~/.claude | E16 | BEHAVIOR populated-fixture probe, pre-merge |
 | Checks stale vs CI / unsynced trees | E15 | L6 |
 | Intermediate HEAD published mid-multi-PR work | E1 | L9 |
 | Surface lists drift | 3 prior findings | one SURFACE TAXONOMY, cited never re-enumerated |
@@ -133,14 +129,13 @@ check nobody can run under pressure is not a check.
 ## Surface taxonomy (defined ONCE; D1, the shell gate, and judge guidance cite it)
 
 - SHIPPED: agents/, skills/, workflows/, .claude-plugin/ manifests — what
-  users receive (workflows/ reaches symlink installs only; the class
-  governs triggers, not distribution).
-- GATE-INFRA: .github/, hooks/, scripts/, install.sh — what enforces or
+  users receive (the class governs triggers, not distribution).
+- GATE-INFRA: .github/, hooks/, scripts/ — what enforces or
   wires the gate and the guard.
 - INTERNAL: .claude/, evals/ — except .claude/skills/release/, which is
   GATE-INFRA (self-application: a broken gate is a broken factory).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md,
-  LICENSE, .gitignore.
+  LICENSE, .gitignore, PHILOSOPHY.md.
 - DEFAULT (fail closed): any unclassified path is GATE-INFRA until
   classified here. Growth is real; the interval defaults strict.
 
@@ -191,8 +186,7 @@ GitHub-native; no push-to-main needed. THE RELEASE PR IS THE RECORD:
 3. BEHAVIOR — probes, pre-merge: run-skill-routing.sh where a fixture home
    exists (else cite E13); fresh-session claude -p probes per changed
    description (happy path + moved boundaries); plugin-mode probe where
-   relevant (E9); populated-fixture install.sh probe when GATE-INFRA
-   touched (E16). Unrunnable ⇒ UNVERIFIED with named debt (under L1).
+   relevant (E9). Unrunnable ⇒ UNVERIFIED with named debt (under L1).
 4. RULE — the gate: adversarial release-review by a fix-less judge;
    CLEAR/BLOCKED with findings; the verdict names the commit it covers.
    On the REMEDY lane this is the EXPEDITED verdict (see REMEDY) — smaller
@@ -209,10 +203,7 @@ GitHub-native; no push-to-main needed. THE RELEASE PR IS THE RECORD:
    the command's own refusals (already-exists, dirty tree, version
    disagreement, push failure) at SKILL.md §6.1, both CLI lines recorded;
    CI green on main; fresh plugin-install probe or
-   UNVERIFIED record; live install.sh run licensed ONLY by BEHAVIOR's
-   populated-fixture pass THIS RELEASE (M61 restores rev 6's recency
-   qualifier — a prior release's pass licenses nothing against
-   `~/.claude`, the E16 fence); SEAL comment posted on the PR. On an
+   UNVERIFIED record; SEAL comment posted on the PR. On an
    affirmative SEAL failure: REMEDY — unless the failed release was
    itself a REMEDY: then the full ritual, judge present (L11).
 

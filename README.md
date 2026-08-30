@@ -1,132 +1,25 @@
 # maddog
 
-A five-role advisor–executor hierarchy for [Claude Code](https://claude.com/claude-code): global agents and skills that run your coding agent as an **organisation**, not an assistant.
+Maddog is a place for some really good skills and agents, along with some
+no-brainer stuff: four executor tiers, a researcher, and a product pipeline,
+written as plain prose any agent runtime can load. Currently we distribute
+as a plugin for Claude; soon, for every other ecosystem.
 
-## The hierarchy
+## Design philosophy
 
-| Tier | Judgment class | Role |
-|---|---|---|
-| **Advisor** | architectural / cross-package | Executive. Holds the full context, owns architecture, scope, and cross-task tradeoffs. Never does mechanical work, aside from the one-time Survey at session open. |
-| **executor-lead** | iterated (judgment with memory) | Judgment with memory, hands always delegated. Dispatched per judgment burst for an open decomposition (PLAN), an unfreezable evidence-driven campaign (CAMPAIGN), or decided-scope delivery entangled with a live/hazardous environment (DELIVER). Continuity lives in artifacts — a plan, a decision ledger — never in a live context. Not an orchestrator: babysitting execution is a workflow script's job. Never touches a file itself. |
-| **executor-judge** | adversarial verdict | Adversarial verdicts on another intelligence's output: plan/design review before execution (DESIGN-REVIEW), executed-change review after (CHANGE-REVIEW), or adjudicating a dispute that gates progression (ADJUDICATE). Rules only on primary evidence it reads itself. Cannot fix by construction — no Write/Edit. |
-| **executor-smart** | local | Single tasks that still carry local judgment: pattern-matching refactors, context-dependent edits, small design choices inside a fixed boundary. |
-| **executor-fast** | none (mechanical) | The default. Everything mechanical with objective acceptance criteria: bulk edits, test/lint runs, search, extraction, boilerplate. |
+- **Intelligence is a budget.** Every task is routed by its shape to the
+  cheapest hand that covers it.
+- **Tokens are the new currency. Never pay twice.** A token spent on
+  something is never spent again on the same thing.
+- **Architect the integrity. Don't just instruct the agent.** A rule that
+  must hold is built into the structure: the judge holds no edit tools, a
+  hook denies the write, a guard blocks the shell form.
+- **Spend your attention on what matters.** There is enough technology to
+  carry the mechanical work.
+- **Harness-neutral core.** The roles, laws, and contracts are plain prose
+  that any agent runtime could load.
 
-**The routing rule:** route on the *task's shape*, never the *subject's sophistication*. A deep architecture question answered by "quote the code with file:line" is still extraction — and extraction is fast-tier work.
-
-**Escalation is earned, not assumed:**
-
-- Open decisions confined to one task → `executor-smart`.
-- An open decomposition to freeze into a plan, an unfreezable evidence-driven campaign, or decided-scope delivery entangled with a live/hazardous environment → `executor-lead`.
-- A verdict on another intelligence's output — before execution, after it, or adjudicating a dispute that gates progression → `executor-judge`.
-- A flat parallel fan-out of independent mechanical tasks needs no middle manager — the Advisor dispatches fast-tier directly.
-- WHETHER/WHAT to build stays with the Advisor; HOW to build it can go to the lead; whether it PASSED goes to the judge, never to whoever built it.
-
-## Doctrine: intelligence is the budget
-
-Intelligence is the budget, and it has two axes: **tier** (quality of judgment) and
-**context** (attention).
-
-- Closed decisions cost zero intelligence — they go to scripts/workflows, or to the
-  cheapest tier when a model is needed only for perception.
-- Open decisions go to the cheapest tier whose judgment class covers them.
-- Judgment that accumulates working state gets a disposable container (a dispatched
-  agent), never the caller's context.
-- Orchestration/choreography is never an intelligence spend: when decisions are
-  closed, a script out-manages any model, for free, deterministically.
-- Top-tier intelligence concentrates at exactly three kinds of work: open
-  decomposition (including its small, live-entangled form), unfreezable
-  evidence-driven campaigns, and adversarial gate verdicts on another
-  intelligence's output. Buy the open-decomposition/campaign kind only when
-  the package must survive outside the advisor's own context — absence,
-  parallelism with the main thread, or context scarcity; an attended
-  package held as the session's main thread, while the advisor's own
-  context suffices, stays with the advisor.
-
-Judgment classes are decoupled from models. The table below is an
-**exchange-rate table** — today's cheapest model clearing each class — not the
-definition of the role: agent files are defined by judgment class, and re-pinning
-a model to a class never touches the role it fills.
-
-| Judgment class | Agent | Today's pin |
-|---|---|---|
-| none (mechanical, decisions closed) | `executor-fast` | haiku |
-| local (one task, fixed boundary) | `executor-smart` | sonnet |
-| iterated (judgment with memory, one package) | `executor-lead` | opus |
-| adversarial verdict (gates) | `executor-judge` | opus |
-| architectural / cross-package | Advisor (session model) | — |
-| zero (choreography) | workflow scripts | none |
-
-## Modes and laws
-
-Each executor classifies every task it receives into one of its own **modes**, and each
-mode carries one named **law** with a worked example. `executor-fast` has ten: RECON,
-EXTRACT, VERIFY, EDIT, TRANSFORM, GATE, OPERATE, RECOVER, DIAGNOSE, IMPLEMENT.
-`executor-smart` has eight: BUILD, PORT, AUTHOR, DECOMPOSE, FIX, REVIEW, DIAGNOSE,
-CHOREOGRAPH. `executor-lead` has three: PLAN, CAMPAIGN, DELIVER. `executor-judge` has
-three: DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE.
-
-The laws are established principles rather than invented jargon — Goodhart's Law for a
-gate you must not tune to make green, Chesterton's Fence for an edit whose anchor has
-moved, Order of Volatility (RFC 3227) for a cleanup that would destroy the evidence of
-what broke, Parnas's information hiding for choosing where to split a file. A model has
-real priors on those and none at all on a coined phrase.
-
-**Classification belongs to the agent, not the caller.** A dispatching agent sees only
-the frontmatter `description`, never the mode list — so a mode named in a prompt is a
-hint from someone who probably has not read the file, and the agent is told to classify
-on the task and flag the mismatch. Call sites stay decoupled from each agent's internal
-taxonomy.
-
-The fast/smart modes were derived from 774 real dispatches in local session history,
-then extended with four synthesised forward. Lead's and judge's modes are new, designed
-directly against the doctrine's judgment classes rather than mined from history.
-
-## Why not just "use the best model for everything"?
-
-The hierarchy isn't built on models — it's built on the **distillation of intelligence**. The tiers are levels of judgment: who decides what to build, who decides how, who handles ambiguity, who executes what's fully specified. Models just fill the roles; decommission one and you re-hire the role, you don't redesign the org. Spend maximum intelligence only where it's irreplaceable — everything else flows downhill, fully specified, to whoever's cheapest and fastest.
-
-## What's in here
-
-```
-agents/
-  executor-fast.md    # Mechanical executor, ten modes
-  executor-smart.md   # Local-judgment executor, eight modes
-  executor-lead.md    # Judgment with memory: PLAN / CAMPAIGN / DELIVER (delegate-only: no Write/Edit)
-  executor-judge.md   # Adversarial gate verdicts: DESIGN-REVIEW / CHANGE-REVIEW / ADJUDICATE (cannot fix by construction: no Write/Edit)
-  researcher.md       # Mechanical web research (capped, cited, no synthesis)
-  product-pm.md       # Feature ask → grounded product spec (product-engineering stage 1)
-  product-ux.md       # Spec → UX dossier + rendered HTML mockup (stage 2)
-  product-be.md       # UX data needs → server contracts + backend blueprint (stage 3)
-  product-ui.md       # Mockup + BE contracts → zero-drift implementation blueprint (stage 4)
-  product-qa.md       # Implemented branch → traceability matrix, routed bugs, PR at zero open bugs (final stage)
-skills/
-  advisor-mode/       # /advisor-mode <goal> — run a session as the Advisor
-  efficient-md/       # authoring doctrine — context-residency classes (HOT/WARM/COLD/CHANNEL); model-invoked, no slash command
-  mine-session/       # /mine-session — arm capture early, distill at session end; mines surprise, not activity
-  plain-english/      # /plain-english — register for replies and questions to the user; add "invoke plain-english first" to your CLAUDE.md to make it session-wide
-  product-engineering/       # /product-engineering <feature> — PM → UX → BE → UI planning, sdd-task-loop execution, QA → PR
-workflows/
-  sdd-task-loop.js    # frozen-brief execution loop (Workflow tool) — see below
-evals/
-  executor-fast.json  # behavioural fixtures — happy + trap per mode and standing law
-  executor-smart.json
-  executor-lead.json  # six fixtures: PLAN, two CAMPAIGN, two DELIVER, plus a standing-law (STOP UP) trap
-  executor-judge.json # six fixtures: two per mode (DESIGN-REVIEW, CHANGE-REVIEW, ADJUDICATE)
-  README.md           # fixture schema, and why the traps are the point
-scripts/
-  executor-guard.sh                  # PreToolUse hook: denies irreversible Bash commands on all four executors, plus a write-layer denial on executor-lead/executor-judge alone
-  judge-dispatch-guard.sh            # PreToolUse hook on the Agent tool: denies executor-judge dispatching anything but executor-fast/researcher (including a dispatch naming no subagent)
-  setup-watchdog.sh                  # optional: wires the watchdog LaunchAgent + Telegram notify script
-  tg-notify.sh                       # fire-and-forget Telegram checkpoint pings (used by the loop)
-  watchdog-resume.sh                 # LaunchAgent: relaunches a paused unattended run once resume_at passes
-  com.maddog.watchdog-resume.plist   # LaunchAgent template (__HOME__ placeholder — setup-watchdog.sh substitutes it)
-```
-
-`review-agent` is repo-internal tooling living in `.claude/skills/review-agent/` —
-auto-discovered when working in this repo, not shipped in the plugin.
-
-Agents and skills ship together: `product-engineering` references `product-pm`/`product-ux`/`product-be`/`product-ui`/`product-qa`/`researcher` by name, and `advisor-mode` routes the whole executor family by judgment class and offers the product pipeline when installed — installing only half breaks the other half.
+See `PHILOSOPHY.md` for the full statement of each point.
 
 ## Install
 
@@ -135,126 +28,133 @@ Agents and skills ship together: `product-engineering` references `product-pm`/`
 /plugin install maddog@maddog
 ```
 
-- Skills arrive namespaced (`/maddog:advisor-mode`).
-- Ships `workflows/sdd-task-loop.js` (general-usage plan execution) but not `agent-evals` — that lives in `.claude/workflows/`, invoked only via `scriptPath` for maintainer use, never auto-registered for installers.
-- Agent frontmatter `hooks:` / `permissionMode:` are ignored for plugin-shipped agents, so:
-  - the executor guard arrives via the plugin's `hooks/hooks.json` instead (session-wide PreToolUse on Bash; the script scopes itself to executor-fast, executor-lead, and executor-judge via the payload's `agent_type`), and
-  - `permissionMode: dontAsk` does not apply — executors may surface permission prompts; add allowlist entries for the commands you delegate.
-- Update later with `/plugin marketplace update maddog`.
-- **Prerequisite:** `product-qa`'s live-drive verification requires the playwright MCP browser tools — configure it separately, or `product-qa` returns blocked at its prerequisite check.
+The marketplace installs straight from `main` HEAD, so every merge to main
+is effectively a publish. Skills arrive namespaced (`/maddog:advisor-mode`).
+Update later with `/plugin marketplace update maddog`.
 
-Restart Claude Code sessions after installing (the agent registry snapshots at session start).
+- Agent frontmatter `hooks:` / `permissionMode:` are ignored for
+  plugin-shipped agents — the executor guards arrive instead via the
+  plugin's `hooks/hooks.json`, and `permissionMode: dontAsk` does not apply,
+  so executors may surface permission prompts; add allowlist entries for the
+  commands you delegate.
+- **Prerequisite:** `product-qa`'s live-drive verification requires the
+  playwright MCP browser tools — configure it separately, or `product-qa`
+  returns blocked at its prerequisite check.
 
-### Setting up the watchdog (optional)
+Restart your Claude Code session after installing or updating — the agent
+registry snapshots at session start.
 
-`workflows/` and `scripts/` ship in the plugin tarball, but the plugin loader
-only auto-registers `agents/` and `skills/` — nothing wires the watchdog
-LaunchAgent or the Telegram notify script automatically. Run this once per
-machine, from wherever the plugin cached itself
-(`~/.claude/plugins/cache/maddog/maddog/<version>/`), if you want crash/stall
-recovery and Telegram pings for unattended `sdd-task-loop` runs. The plugin
-cache retains every past version, so don't glob for it blindly — pick the
-newest:
+## What ships
 
-```bash
-bash "$(ls -td ~/.claude/plugins/cache/maddog/maddog/*/ | head -1)scripts/setup-watchdog.sh"
-```
+### Agents (`agents/`)
 
-- Symlinks `scripts/tg-notify.sh` → `~/.claude/channels/telegram/notify.sh`
-  (reads its bot token/chat ID from `~/.claude/channels/telegram/.env`, never
-  versioned in this repo) and `scripts/watchdog-resume.sh` →
-  `~/.claude/watchdogs/watchdog-resume.sh`.
-- Writes `~/Library/LaunchAgents/com.maddog.watchdog-resume.plist` but does
-  **not** load it — it prints the `launchctl bootstrap` command as a next
-  step.
-- Existing real files at either target are backed up to `<name>.bak`, never
-  deleted.
-- The symlinks point at whatever version's cache directory you ran this
-  from — they don't move on `/plugin marketplace update`, and unlike the old
-  `install.sh` there's no dangling-link cleanup. Re-run this script after
-  updating the plugin to keep the watchdog on the latest version; if Claude
-  Code ever prunes an old cache directory out from under a still-linked
-  symlink, the LaunchAgent fails silently every 600s until you do.
+**Executor family** (`executor-fast`, `executor-smart`, `executor-lead`,
+`executor-judge`) — one ladder of judgment, bought by task shape. Fast and
+smart do the work; lead holds memory across a package; lead and judge can
+rent fast-tier hands, lead smart-tier too; judge rules on the others'
+output and can never edit. The guard scripts enforce the last part.
 
-## Usage
+- **executor-fast** — runs fully-specified mechanical tasks on a cheap, fast
+  model: bulk edits, test/lint runs, search, extraction, boilerplate,
+  committing, pushing, opening a PR.
+- **executor-smart** — runs one delegated task needing local judgment but not
+  top-tier reasoning: pattern-matching refactors, context-dependent edits,
+  small design choices inside a fixed boundary, debugging, migrations,
+  splitting an oversized file, or live/stateful choreography.
+- **executor-lead** — holds judgment with memory across one bursted work
+  package: freezing an open decomposition into a plan, running an
+  unfreezable evidence-driven campaign, or delivering one decided-scope
+  package entangled with live/hazardous reality.
+- **executor-judge** — renders adversarial gate verdicts on another
+  intelligence's output: design review before execution, change review
+  after, and adjudication of gating disputes. Cannot fix anything it rules
+  on — no Write/Edit.
 
-```
-/advisor-mode migrate the config loader to zod and fix every caller
-/mine-session
-/product-engineering add CSV export to the reports page
-```
+**Researcher** — exists so the executors stay web-free; the only hand with
+web tools, returns capped and cited.
 
-Or name a tier directly in any prompt: *"Use the executor-fast subagent to …"*.
+- **researcher** — mechanical web research on a cheap model: runs the
+  searches it's handed and returns a capped, source-cited findings table,
+  no synthesis.
 
-## The product engineering team
+**Product pipeline** (`product-pm` → `product-ux` → `product-be` →
+`product-ui` → `product-qa`) — five ordered stages, each consuming the
+previous stage's artifact under `docs/product/<slug>/`; qa is read-only on
+code and routes bugs back to the responsible stage.
 
-A second axis on the org: discipline agents, not judgment tiers. `/product-engineering <feature>` runs the full pipeline — `product-pm` (top-tier) grounds the ask in industry research, the app's persona (`docs/product/personas.md`), and delegated recon, then interviews you and writes a spec; `product-ux` (top-tier) designs the journey against a baked-in UX charter and has the mockup rendered at mid-tier prices; `product-be` (mid-tier) turns every UX data need into a named server contract (read-path completeness, mandatory migration rehearsal) in `blueprint-be.md`; `product-ui` (mid-tier) maps the mockup to the repo's real components against those contracts, with every screen/state step carrying its pinning e2e in-task. The orchestrator then briefs both blueprints into `sdd-task-loop` for execution, and `product-qa` (top-tier) closes: verifies the branch against the artifacts (gates, e2e coverage audit, live drive, exploratory pass, full traceability matrix), routes typed bugs back to the responsible stage, and opens the PR only at zero open bugs — deferral is the user's call, merge is never the pipeline's. Artifacts land in the target repo under `docs/product/<slug>/`. Top-tier tokens are spent on judgment only: mechanical recon goes to `executor-fast`, web research to `researcher` (cheap-tier), HTML rendering to `executor-smart`. Not for small tweaks — dispatch an executor directly for those.
+- **product-pm** — turns one feature/epic into a shippable product spec,
+  grounded in research, persona, and app recon. First stage of the
+  product-engineering pipeline.
+- **product-ux** — designs the user experience for one spec'd feature and
+  has the HTML mockup rendered from it. Second stage.
+- **product-be** — plans the server-side work for one designed feature into
+  a precise backend blueprint. Third stage.
+- **product-ui** — plans the implementation of one designed feature,
+  mapping every mockup element to real components. Fourth stage.
+- **product-qa** — verifies one implemented feature against its product
+  artifacts, runs gates and e2e, and opens the PR only at zero open bugs.
+  Final stage.
 
-## The sdd-task-loop workflow
+### Workflows and scripts
 
-`workflows/sdd-task-loop.js` is the Advisor's unattended execution engine (Claude Code `Workflow` tool): once a plan's briefs are **frozen** (all design decisions closed), it runs a brief-lint entry gate, one fresh implementer per task (dependency-aware parallelism opt-in), immediate reviews for flagged tasks, an end-of-plan review wave (dimension readers + adversarial Opus synthesis on big diffs), one fix round with scoped re-review, and an optional ship tail (push + PR — never merge).
+`workflows/sdd-task-loop.js` ships as the general-usage plan-execution
+engine. `workflows/` and `scripts/` (the guard hooks, the watchdog) ship in
+the plugin tarball but, unlike `agents/` and `skills/`, are not
+auto-registered — the watchdog wiring is `scripts/setup-watchdog.sh`; launch
+the workflow via its `scriptPath`.
 
-Intelligence is budgeted, never inherited: every `agent()` call pins its model — Haiku for lint/dossier/ship mechanics, Sonnet for implementation and dimension reviews, Opus only for adversarial synthesis and re-reviews. Checkpoints ping Telegram through `scripts/tg-notify.sh` (template `🔁 <run> · ✅ 7/11 task-7 done (sha) · gate ✓`), riding on agents already running — zero extra agents. The launcher's duties (writing `resume.state` for `watchdog-resume.sh`'s LaunchAgent before launch, run-start/complete pings, one auto-`resumeFromRunId` on harness death) are spelled out in the script's `whenToUse` header.
+### Skills (`skills/`)
 
-`tg-notify.sh` reads `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` from `~/.claude/channels/telegram/.env` (never versioned) and always exits 0 — a dead network can't fail a run.
+- **advisor-mode** — runs a session as the Advisor: holds architecture,
+  routing, and acceptance judgment while delegating everything else.
+- **efficient-md** — authoring doctrine for anything an agent loads
+  (CLAUDE.md, a memory index, a frontmatter description, a SKILL.md body, a
+  brief, a state file, a decision ledger, a dispatch prompt's output
+  format).
+- **mine-session** — extracts reusable collaboration patterns from a working
+  session; arm it at session start, distill at session end.
+- **plain-english** — governs how replies and questions are worded for the
+  user.
+- **product-engineering** — orchestrates the full PM → UX → BE → UI →
+  execution → QA pipeline for one feature; not for small tweaks or single
+  bug fixes.
 
-## Evals
+`author-agent`, `release`, and `review-agent` live under `.claude/skills/`
+and are repo-internal maintainer tooling — they never ship in the plugin.
+`advisor-mode` and `product-engineering` are slash-command only
+(`disable-model-invocation: true`) — invoke them by name, they don't
+auto-trigger on a matching description.
 
-`evals/` holds behavioural fixtures — one JSON file per executor plus a schema README.
-Every fast/smart mode and standing law carries at least one happy fixture and one **trap**, where
-the wrong answer is cheap, plausible and immediately available. Lead and judge carry six fixtures
-each, despite opus runs being expensive, because the same wrong-answer risk applies across all
-three modes, not just the main one: judge pairs a happy case and a trap for each of DESIGN-REVIEW,
-CHANGE-REVIEW, and ADJUDICATE; lead pairs happy/trap CAMPAIGN and DELIVER fixtures with one happy
-PLAN fixture and one standing-law (STOP UP) trap. A fixture that only asks an agent to do the
-obvious right thing proves nothing, because the wrong answer was never attractive.
+## Architecture, in brief
 
-`.claude/workflows/agent-evals.js` runs them: it materialises each fixture's files into a fresh
-temp directory, dispatches the prompt to the real agent, and grades the return against
-the fixture's expectations with a judge. Model and reasoning effort are pinned per
-fixture — an eval of a Haiku agent that runs on Opus measures nothing — and the harness
-stages deliberately avoid the agents under test, so a broken executor cannot masquerade
-as fixture failures. Fixtures carry a `core` flag and the runner defaults to the
-discriminating subset; `args.all` runs everything. Invoke it via `Workflow({scriptPath: '.claude/workflows/agent-evals.js', ...})`.
+Route every task on its *shape*, never the subject's sophistication: a task
+with every decision already closed and objective acceptance goes to
+`executor-fast`; one task carrying local judgment inside a fixed boundary
+goes to `executor-smart`; a package needing judgment with memory across
+several steps goes to `executor-lead`; a verdict on another intelligence's
+output goes to `executor-judge`. `product-engineering` is a second,
+orthogonal axis — a discipline pipeline, not a judgment tier.
 
-They found real defects. At low effort `executor-fast` deleted a directory holding
-uncommitted work and reported done; at medium `executor-smart` verified a review finding
-was refuted and then applied it anyway. Both agents pin `effort: high` because of that.
+## Contributing
 
-## Model pinning
+`main` is protected — changes land by pull request. See `CONTRIBUTING.md`
+for commit style, the no-test-suite validation model, and when to route new
+or overhauled agent/skill text through the `author-agent` gated-authoring
+loop.
 
-Currently the agents and workflows are model-pinned to the Claude ecosystem (`haiku` / `sonnet` / `opus` by name) — every dispatch names its tier explicitly. Once the hierarchy matures we will abstract this out to generic capability tiers (fast / smart / lead / judge) so that any model can be pinned to a tier.
+## Releasing
 
-## Unattended runs
+Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
+`.claude-plugin/`) or a GATE-INFRA surface (`.github/`, `hooks/`,
+`scripts/`) headed for `main` goes through the `release` skill
+(`.claude/skills/release/SKILL.md`) — DECLARE, READY, BEHAVIOR, RULE, and
+SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/`,
+`evals/` — except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
+(this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+`LICENSE`, `.gitignore`, `PHILOSOPHY.md`) take READY alone. The release
+skill never merges — it stops at push + open PR; merging is the
+maintainer's own hand, on a PR whose verdict names its current head commit.
 
-`watchdog-resume.sh` relaunches a paused unattended Claude session once its resume
-time passes — inside detached tmux, so permission prompts still wait for a human
-(Telegram pages you) while everything else proceeds unattended.
+## License
 
-It runs as a **LaunchAgent, not cron**: launchd `gui/` sessions reach the login
-keychain, cron does not (live-tested 2026-08-08: cron → `Not logged in`; LaunchAgent
-→ authenticated, prompt answered). `scripts/setup-watchdog.sh` symlinks the script into
-`~/.claude/watchdogs/` and generates the LaunchAgent plist from
-`scripts/com.maddog.watchdog-resume.plist` (its `__HOME__` placeholder gets
-substituted with your `$HOME`); it prints the `launchctl bootstrap` command as a
-next step rather than running it for you.
-
-**`resume.state` contract** (one `key=value` per line, written by the agent at pause
-time, consumed on a verified relaunch):
-
-- `mode=standing|<anything else>` — `standing` persists across relaunches (e.g. a
-  crash-loop guard, not a one-shot resume); anything else is one-shot.
-- `resume_at=<epoch seconds>` — must be all-digits or the run is treated as malformed.
-- `cwd=<path>` — working directory for the relaunched session.
-- `prompt=<text>` — **must be a single line**; it's sent verbatim via
-  `tmux send-keys -l`, so a newline would submit early.
-- `session=<tmux session name>` — optional, defaults to `claude-resume`.
-
-Attach to a relaunched session with `tmux attach -t <session>` (from Ghostty, SSH,
-or your phone).
-
-**Workflow/launch-contract changes need a session restart.** A running Claude Code
-session snapshots `workflows/sdd-task-loop.js` and its launch contract at session
-start — editing the workflow mid-run doesn't reach the live session. Use the
-workflow's `scriptPath` option to launch same-session edits instead of relying on a
-running session to pick up a rewritten workflow file.
+MIT — see `LICENSE`.
