@@ -150,7 +150,7 @@ a minor version.
 
 ## 10. Versioning
 
-Own semantic version, independent of the plugin's release (`2.12.x`).
+Own semantic version, independent of the plugin's release (`2.x`).
 
 - **Breaking (major):** wordmark construction change, a token
   rename/removal, a typeface change, or a picture mark if one is

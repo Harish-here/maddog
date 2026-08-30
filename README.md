@@ -166,7 +166,8 @@ Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
 SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/`,
 `evals/` — except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
 (this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
-`LICENSE`, `.gitignore`, `PHILOSOPHY.md`) take READY alone. The release
+`LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`) take READY
+alone. The release
 skill never merges — it stops at push + open PR; merging is the
 maintainer's own hand, on a PR whose verdict names its current head commit.
 
