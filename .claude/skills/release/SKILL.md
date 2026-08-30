@@ -25,7 +25,7 @@ metadata:
   `.claude/` (self-application).
 - INTERNAL: `.claude/`, `evals/` (except release/, above).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, LICENSE,
-  .gitignore, PHILOSOPHY.md, DESIGN.md, assets/.
+  .gitignore, PHILOSOPHY.md, DESIGN.md, assets/, skills.sh.json.
 - DEFAULT: any unclassified path is GATE-INFRA until classified above — fail
   closed.
 - D1 (behavior, restated from the router — M71): full ritual (all six
