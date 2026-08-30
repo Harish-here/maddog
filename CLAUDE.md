@@ -1,8 +1,8 @@
 # CLAUDE.md
 
-Beliefs: `PHILOSOPHY.md`. Layout and routing: `README.md`. How a change is
-validated — there is no test suite and nothing compiles: `CONTRIBUTING.md`
-§Validation.
+Beliefs: `PHILOSOPHY.md`. Visual identity and user-facing wording: `DESIGN.md`.
+Layout and routing: `README.md`. How a change is validated — there is no
+test suite and nothing compiles: `CONTRIBUTING.md` §Validation.
 
 ## Publishing
 

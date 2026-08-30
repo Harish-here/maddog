@@ -1,6 +1,19 @@
+```
+███╗   ███╗ █████╗ ██████╗ ██████╗  ██████╗  ██████╗
+████╗ ████║██╔══██╗██╔══██╗██╔══██╗██╔═══██╗██╔════╝
+██╔████╔██║███████║██║  ██║██║  ██║██║   ██║██║  ███╗
+██║╚██╔╝██║██╔══██║██║  ██║██║  ██║██║   ██║██║   ██║
+██║ ╚═╝ ██║██║  ██║██████╔╝██████╔╝╚██████╔╝╚██████╔╝
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝  ╚═════╝  ╚═════╝
+
+═════════════════════════════════════════════════════
+            S K I L L S   &   A G E N T S
+═════════════════════════════════════════════════════
+```
+
 # maddog
 
-Maddog is a place for some really good skills and agents, along with some
+maddog is a place for some really good skills and agents, along with some
 no-brainer stuff: four executor tiers, a researcher, and a product pipeline,
 written as plain prose any agent runtime can load. Currently we distribute
 as a plugin for Claude; soon, for every other ecosystem.
@@ -20,6 +33,8 @@ as a plugin for Claude; soon, for every other ecosystem.
   that any agent runtime could load.
 
 See `PHILOSOPHY.md` for the full statement of each point.
+
+See `DESIGN.md` for the visual identity: wordmark, colour, type, and the wording rules for user-facing text.
 
 ## Install
 
@@ -151,7 +166,8 @@ Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
 SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/`,
 `evals/` — except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
 (this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
-`LICENSE`, `.gitignore`, `PHILOSOPHY.md`) take READY alone. The release
+`LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`) take READY
+alone. The release
 skill never merges — it stops at push + open PR; merging is the
 maintainer's own hand, on a PR whose verdict names its current head commit.
 
