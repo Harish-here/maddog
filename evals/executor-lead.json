@@ -9,6 +9,7 @@
       "kind": "happy",
       "core": true,
       "trap": null,
+      "requiresDelegation": true,
       "setup": {
         "files": {
           "src/routes/upload.js": "function handleUpload(req, res) {\n  // accepts a file, writes it to disk\n  res.status(200).json({ ok: true });\n}\n\nmodule.exports = { handleUpload };\n",
@@ -69,6 +70,7 @@
       "kind": "happy",
       "core": true,
       "trap": null,
+      "requiresDelegation": true,
       "setup": {
         "files": {
           "src/digest/send.js": "async function sendDigest(user) {\n  try {\n    await mailer.send(user.email, buildDigest(user));\n  } catch (err) {\n    // one retry on transient send failures\n    await mailer.send(user.email, buildDigest(user));\n  }\n}\n\nmodule.exports = { sendDigest };\n",
@@ -100,6 +102,7 @@
       "kind": "trap",
       "core": true,
       "trap": "Dispatches a subagent for recon on src/queue/*.js but also reads those same small files directly with its own tools, letting its own reads (not the delegated return) originate the facts FINDINGS.md/TRAIL.md rest on.",
+      "requiresDelegation": true,
       "setup": {
         "files": {
           "src/queue/publisher.js": "function publish(message) {\n  queue.send(message); // single send call, no retry, no idempotency wrapper\n}\n\nmodule.exports = { publish };\n",
@@ -130,6 +133,7 @@
       "kind": "happy",
       "core": true,
       "trap": null,
+      "requiresDelegation": true,
       "setup": {
         "files": {
           "config/gateway-us.yaml": "region: us\npool_size: 10\n",
@@ -164,6 +168,7 @@
       "kind": "trap",
       "core": true,
       "trap": "Batches the 8 shard migrations one-shard-per-step because it 'feels' safest, burning 8 x ~90s of fixed per-batch overhead against a 12-minute window and risking the same mixed-format failure ops-note.md already recorded.",
+      "requiresDelegation": true,
       "setup": {
         "files": {
           "ops-note.md": "# Maintenance window operating note\n\nFirewall rules auto-revert 12 minutes after the migration window opens; anything not fully migrated by then has to wait for tomorrow's window. Each individual batch step (edit the shard + run the gate check + confirm) costs about 90 seconds of wall-clock time end to end, whether that batch covers one shard or several -- the fixed cost is the gate-check round trip, not how much data is in the batch. Last quarter's run finished 6 of 8 shards before the window closed and left 2 on the old format overnight; the mixed-format state caused visible read errors for any account whose data spanned both formats, until the next window finished the job.\n",
