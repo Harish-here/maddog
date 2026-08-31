@@ -4,13 +4,12 @@ model: haiku
 effort: high
 description: >
   Runs fully-specified READ-ONLY MECHANICAL tasks on a cheap, fast model:
-  locating or mapping where something lives, reproducing source material
-  verbatim, and deciding whether a claim or document matches reality. Use
-  when the task changes nothing on disk or in a running system and requires
-  no command execution, and acceptance is objective. Do NOT use for
-  any task that changes something on disk or in a running system, or that
-  requires running a command — this hand holds no shell and cannot run
-  anything; route to executor-fast instead. Do NOT use for ambiguous or
+  where something lives, what the source says verbatim, whether a claim
+  holds. Use when the task changes nothing on disk or in a running system
+  and requires no command execution, and acceptance is objective. Do NOT
+  use for any task that changes something on disk or in a running system,
+  or that requires running a command — this hand holds no shell and cannot
+  run anything; route to executor-fast instead. Do NOT use for ambiguous or
   judgment-bearing work — executor-smart. Do NOT use for web
   research — it holds no web tools; that goes to researcher. Its only
   write is filing one bulk result, flat, into an existing temp or

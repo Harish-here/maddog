@@ -39,10 +39,9 @@ phrasing wherever the content is the same; the two-pronged test is the one
 axis that differs, stated positively on both sides):
 ```
 description: >
-  Runs fully-specified MECHANICAL tasks on a cheap, fast model: bulk
-  find/replace, applying a known edit across many files, running tests or
-  linters, scaffolding boilerplate, committing, pushing, opening a PR,
-  restarting a service, clearing a stale lock, reproducing a reported bug.
+  Runs fully-specified MECHANICAL tasks on a cheap, fast model: a decided
+  edit, one rule across many files, test and build runs, git and service
+  operations, state recovery, bug reproduction, code from a frozen brief.
   Use when the task changes something on disk or in a running system, or
   requires running a command, and every decision is already closed with
   acceptance objective. Do NOT use for read-only work that changes nothing
@@ -81,6 +80,49 @@ Partition check: `executor-fast-read`'s mirrored test is the exact logical
 negation — "changes nothing on disk or in a running system AND requires no
 command execution." A ∨ B here, ¬A ∧ ¬B there: every task shape lands on
 exactly one side, none on both, none on neither.
+
+Also replaces slot 2 (the example list right after "on a cheap, fast
+model:") — owner ruling: one example per mode. The old ten-item list
+("bulk find/replace, applying a known edit across many files, running
+tests or linters, scaffolding boilerplate, committing, pushing, opening a
+PR, restarting a service, clearing a stale lock, reproducing a reported
+bug") named ten things for seven modes, with "bulk find/replace" and
+"applying a known edit across many files" naming the same thing twice, and
+"committing, pushing, opening a PR" naming three names for one activity —
+while RECOVER and IMPLEMENT had no example at all. The new seven-item
+list maps one-to-one onto the seven remaining modes, in CLASSIFY FIRST
+order:
+
+| Mode | Example |
+|---|---|
+| EDIT | a decided edit |
+| TRANSFORM | one rule across many files |
+| GATE | test and build runs |
+| OPERATE | git and service operations |
+| RECOVER | state recovery |
+| DIAGNOSE | bug reproduction |
+| IMPLEMENT | code from a frozen brief |
+
+`executor-fast-read`'s slot 2 gets the same treatment, mapping one-to-one
+onto its three modes:
+
+| Mode | Example |
+|---|---|
+| RECON | where something lives |
+| EXTRACT | what the source says verbatim |
+| VERIFY | whether a claim holds |
+
+**The two lists' grammar differs on purpose — owner-ruled, do not
+harmonize.** `executor-fast`'s list names things done (a decided edit, one
+rule across many files, test and build runs...) because that hand changes
+something. `executor-fast-read`'s list names questions answered (where,
+what, whether...) because that hand changes nothing — it can only ever
+produce an answer, never an effect, so the grammar itself carries the
+read-only axis instead of a phrase having to state it. A later editor
+tidying the read list into parallel gerunds ("locating where something
+lives, extracting what the source says verbatim, verifying whether a
+claim holds") would erase the one deliberate textual signal of the
+read/write axis and must not do so.
 
 ### Edit 2 — CLASSIFY FIRST mode count (T2, decision 4)
 
