@@ -1,5 +1,6 @@
 {
   "agent": "executor-fast-read",
+  "candidates_type": "agents",
   "version": 1,
   "candidates": [
     {"name": "executor-fast", "path": "agents/executor-fast.md"},
