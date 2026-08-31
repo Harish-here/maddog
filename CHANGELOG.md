@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.14.1] - 2026-08-31
+
+### Fixed
+- `scripts/executor-guard.sh`: path-confinement bypass in recursive-delete check — paths reaching a protected location through `..`, through a symlink, through a trailing slash, through brace expansion, or through an unexpanded shell variable were treated as temporary and allowed; path resolution now happens before the check, temporary-location prefixes are anchored rather than matched anywhere in the string, and a path token carrying unexpanded shell syntax is refused
+- `scripts/path-guard-lib.sh`: new shared library for path-confinement logic, enabling a second hook to reuse the validation
+
 ## [2.14.0] - 2026-08-30
 
 ### Added
