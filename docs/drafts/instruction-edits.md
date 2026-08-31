@@ -30,27 +30,40 @@ description: >
   web tools; that goes to researcher.
 ```
 
-AFTER:
+AFTER (gate-03 F1: the write-or-not test alone is not decisive — this file's
+own list includes running tests/linters, which change nothing on disk — so
+the test is now TWO-PRONGED: disk/running-system change, OR requiring a
+command at all. Also rewritten to be slot-for-slot SYMMETRIC with
+`executor-fast-read`'s description — same six slots, same order, same
+phrasing wherever the content is the same; the two-pronged test is the one
+axis that differs, stated positively on both sides):
 ```
 description: >
-  Runs fully-specified MECHANICAL tasks that change something on disk or in
-  a running system, on a cheap, fast model: bulk find/replace, applying a
-  known edit across many files, running tests or linters, scaffolding
-  boilerplate, committing, pushing, opening a PR, restarting a service,
-  clearing a stale lock, reproducing a reported bug. Use when every decision
-  is already closed and acceptance is objective. Do NOT use for read-only
-  work that needs no shell command — that goes to executor-fast-read. Do
-  NOT use for ambiguous refactors, design choices, or any
-  plausible-but-wrong-output task — those go to executor-smart. If the
-  project defines its OWN executor agent, prefer it at the same tier. Do
-  NOT plan or make architectural calls — those stay with your caller. Do
-  NOT use for web research — it holds no web tools; that goes to researcher.
+  Runs fully-specified MECHANICAL tasks on a cheap, fast model: bulk
+  find/replace, applying a known edit across many files, running tests or
+  linters, scaffolding boilerplate, committing, pushing, opening a PR,
+  restarting a service, clearing a stale lock, reproducing a reported bug.
+  Use when the task changes something on disk or in a running system, or
+  requires running a command, and every decision is already closed with
+  acceptance objective. Do NOT use for read-only work that changes nothing
+  and runs no command — that goes to executor-fast-read. Do NOT use for
+  ambiguous refactors, design choices, or any plausible-but-wrong-output
+  task — those go to executor-smart. If the project defines its OWN
+  executor agent, prefer it at the same tier. Do NOT plan or make
+  architectural calls — those stay with your caller. Do NOT use for web
+  research — it holds no web tools; that goes to researcher.
 ```
 
 Drops the RECON/EXTRACT examples ("grep/glob search, extracting/reformatting
-data") since those modes leave this file (decision 4); leads with the
-write-or-not test (decision 11); adds the redirect to `executor-fast-read`
-for read-only, no-shell work (decision 21).
+data") since those modes leave this file (decision 4); the two-pronged test
+replaces the flawed single-prong "changes something on disk" test (decision
+11, revised by gate-03 F1); adds the redirect to `executor-fast-read` for
+read-only, no-command work (decision 21).
+
+Partition check: `executor-fast-read`'s mirrored test is the exact logical
+negation — "changes nothing on disk or in a running system AND requires no
+command execution." A ∨ B here, ¬A ∧ ¬B there: every task shape lands on
+exactly one side, none on both, none on neither.
 
 ### Edit 2 — CLASSIFY FIRST mode count (T2, decision 4)
 
@@ -158,7 +171,7 @@ this block — see after the plain rename):
   dispatch that names none, which would default to a general-purpose agent holding
   every tool. Do not fix anything yourself, and do not dispatch a fix: rent
   `executor-fast-read` only for evidence (a sweep, an extraction), never a repair — run
-  any gate yourself via your own Bash tool, since the rentable hand holds no shell. A
+  any gate yourself via your own shell, since the rentable hand holds no shell. A
   defect you find routes back to the party that owns the fix, as a finding — never as a
   delegated edit.
 ```
@@ -211,7 +224,7 @@ BEFORE:
 AFTER:
 ```
 3. EVIDENCE NEEDS discovered mid-review are normal: rent executor-fast-read for
-   sweeps and extraction; run any gate yourself via your own Bash tool (DIRECT
+   sweeps and extraction; run any gate yourself via your own shell (DIRECT
    VERIFICATION, point 4 below) and report its raw output (the red and its failure
    text, or the passing run's tail) — a PASS/FAIL word alone is a characterisation you
    may not rule on; rent researcher when a claim hinges on external documentation
@@ -223,7 +236,16 @@ AFTER:
 ```
 
 Point 1 ("RENT HANDS, NEVER VERDICTS") and point 4 ("DIRECT VERIFICATION") are
-untouched per T8's explicit instruction. With Edits 2-3 and both findings folded in,
+untouched per T8's explicit instruction.
+
+**Debt, not fixed here (gate-03 F5).** DELEGATION point 4 itself reads "you may run
+gates or greps yourself via Bash to test a..." — a shipped body naming a tool
+identifier (`Bash`), which is the same adapter-set violation `CLAUDE.md` forbids and
+that both edits above just avoided introducing. It predates this plan and T8
+explicitly leaves point 4 untouched, so it is recorded here as pre-existing debt for
+a future pass, not corrected as part of this change.
+
+With Edits 2-3 and both findings folded in,
 DELEGATION shrinks from its 25-line baseline (96-120) — satisfying T8's DONE-WHEN —
 while keeping the section's intent (rent for evidence, judge yourself, never delegate
 a fix) exactly as before.
@@ -250,6 +272,28 @@ runs...") is the named exemption (decision 13) — GATE-shaped, needs a shell, s
 ---
 
 ## README.md (T3 group C)
+
+### Edit 0 — lead/judge rental line (line 81-83, gate-03 F4)
+
+The dispatch retarget (judge's guard now allows only `executor-fast-read` and
+`researcher`, per the `agents/executor-judge.md` edits above) makes the current
+sentence false for the judge: it can no longer rent the full fast-tier hand, only
+the read-only one.
+
+BEFORE (grep-verified one hit as a contiguous span, opening line quoted):
+```
+smart do the work; lead holds memory across a package; lead and judge can
+rent fast-tier hands, lead smart-tier too; judge rules on the others'
+output and can never edit. The guard scripts enforce the last part.
+```
+
+AFTER:
+```
+smart do the work; lead holds memory across a package; lead can rent
+fast-tier hands, smart-tier too; judge can rent only the read-only
+fast-tier hand; judge rules on the others' output and can never edit. The
+guard scripts enforce the last part.
+```
 
 ### Edit 1 — Executor family list (line 80, round 3 F5)
 
@@ -324,15 +368,45 @@ BEFORE (last table row, then the section break):
 ### Tie-breaks
 ```
 
-AFTER:
+AFTER (gate-03 F1: the single-prong test — "changes anything on disk or in a
+running system" — is not decisive on its own; a test/lint run changes nothing on
+disk and still needs the write hand's shell. Two-pronged, matching the
+description-level fix above):
 ```
 | kept | Architectural, user-facing judgment. Never for sale. E.g. whether to build the feature at all: delegating it hands away the duty. |
 
 Within mechanical, split by one test: does the task change anything on disk
-or in a running system? No → the read hand. Yes → the write hand.
+or in a running system, or require running a command? No to both → the
+read hand. Yes to either → the write hand.
 
 ### Tie-breaks
 ```
 
 No agent name appears in the new sentence, preserving the table's stated invariant
 ("This table names no agents, the binding record supplies the hands").
+
+---
+
+## Gate-03 disposition notes (not file edits)
+
+**F6, out of scope for any named task.** `agents/researcher.md:11` reads
+"executor-fast for web research — this agent exists so the shared executors ...
+[hold no web tools]" and names only `executor-fast`; it does not mention
+`executor-fast-read`. No T-task in this plan touches `researcher.md`, so no edit is
+proposed here — flagged for the owner as a stale reference the plan's task list
+missed, to be picked up in a future revision or a dedicated task.
+
+**F7, cosmetic — refused, reason recorded.** The mode blocks in
+`executor-fast-read.body.md` (RECON/EXTRACT/VERIFY) omit the literal
+`NAME — takes: ... Output: ... LAW: NAMED PRINCIPLE (attribution) — statement. E.g.
+...` shape `references/agent-template.md` declares. They were copied verbatim from
+`agents/executor-fast.md`, whose own ten mode blocks use the same shorter shape
+(name — one-line scope, then LAW paragraph, then E.g.) and have never carried
+explicit "takes:"/"Output:" labels. Reshaping only the new file's three blocks
+would make it the one file in the executor family with the template's literal
+labels while every sibling (fast, smart, lead, judge) keeps the older shape —
+trading one cosmetic gap for a family-wide inconsistency, and doing so unilaterally
+in a task scoped to two draft files, not a family-wide format pass. Left as
+inherited, with this note as the record of why; the template-vs-shipped-shape gap
+is family-wide pre-existing debt, not something this task introduced or is
+positioned to fix alone.
