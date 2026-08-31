@@ -24,6 +24,22 @@
 #     what they'd do — neither agent's read-only toolset needs one, so a
 #     denial by binary name costs them nothing real.
 #
+#     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
+#     any path is examined" — the recursive-delete check below (which calls
+#     normalize_path/is_temp_path) runs for all four agents and DOES examine
+#     the path first. lead/judge's file-write denial is unconditional and
+#     simply never depends on that check's outcome: a temp-confined `rm -r`
+#     passes the recursive-delete check, then falls through to this layer's
+#     unconditional "rm deletes a file" denial regardless.
+#
+#     Known limit (chained `cd`, not solved here): the recursive-delete
+#     check resolves a relative path against the PreToolUse payload's .cwd,
+#     which tracks the session's current directory and updates whenever a
+#     standalone `cd` Bash call runs — but NOT a `cd` chained inside the
+#     SAME command as the path (split_command evaluates chained segments
+#     independently, before that `cd` has executed). A `cd` issued as its
+#     own, prior tool call IS reflected correctly.
+#
 # Wiring: plugin-level hooks/hooks.json (session-wide, matcher "Bash") fires
 # this script for every agent and the main conversation. Because that wiring
 # is not agent-scoped, the four-agent scoping is enforced IN-SCRIPT via the
@@ -50,6 +66,20 @@
 
 set -uo pipefail
 
+# path-guard-lib.sh provides normalize_path/is_temp_path, shared with any
+# future caller (e.g. a Write-scoping hook) instead of reimplementing path
+# logic here. Loaded via a path relative to this script's own location so
+# it resolves regardless of the hook's invocation cwd (hooks/hooks.json
+# invokes this script via ${CLAUDE_PLUGIN_ROOT}/scripts/executor-guard.sh;
+# cwd at hook time is the user's project, not this repo). This script sets
+# only `set -uo pipefail` (no -e), so a failed source (file missing,
+# unreadable, or a syntax error) does not itself abort the script — instead
+# normalize_path/is_temp_path are left undefined, and the recursive-delete
+# call site below fails with bash's "command not found" (exit 127, falsy),
+# tripping all_temp=0 and denying the delete: a broken source denies every
+# recursive delete — noisy, never weaker.
+source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
+
 deny() {
   local reason="$1"
   local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions or write files via Bash. STOP and return STATUS: blocked to your caller with this reason — do not attempt the command."
@@ -58,17 +88,6 @@ deny() {
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":%s,"additionalContext":%s}}\n' "$reason_json" "$ctx_json"
   exit 0
-}
-
-is_temp_path() {
-  case "$1" in
-    *"/tmp/"*|*"/private/tmp/"*|*"/var/folders/"*) return 0 ;;
-    # scratchpad matched as a path COMPONENT, not a substring: "/scratchpad",
-    # "/scratchpad/...", a bare "scratchpad", or "scratchpad/..." — never e.g.
-    # "/Users/me/my-scratchpad-notes", which merely contains the substring.
-    *"/scratchpad"|*"/scratchpad/"*|"scratchpad"|"scratchpad/"*) return 0 ;;
-    *) return 1 ;;
-  esac
 }
 
 # --- quote-aware walk -------------------------------------------------
@@ -240,6 +259,10 @@ esac
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -z "$cmd" ] && exit 0
 
+# .cwd resolves a relative path token before the recursive-delete check's
+# normalize_path call, below — see the chained-cd known limit in the header.
+cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+
 # --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
 segments_raw="$(split_command "$cmd")"
 
@@ -288,7 +311,16 @@ while IFS= read -r segment; do
         all_temp=0
       else
         for p in "${paths[@]}"; do
-          is_temp_path "$p" || all_temp=0
+          # Decision 7's fail-closed contract: normalize_path's non-zero
+          # return (metacharacter, nonexistent component, cycle/hop-budget,
+          # readlink failure) is treated as NOT-temporary directly — never
+          # call is_temp_path on a partial or absent result. A broken
+          # `source` above (path-guard-lib.sh missing/unreadable/syntax
+          # error) leaves normalize_path undefined, which fails the same
+          # way here (bash "command not found", exit 127, falsy) — denies
+          # closed, per the header note above.
+          resolved_p="$(normalize_path "$p" "$cwd" parent)" || { all_temp=0; continue; }
+          is_temp_path "$resolved_p" || all_temp=0
         done
       fi
       if [ "$all_temp" -eq 0 ]; then
