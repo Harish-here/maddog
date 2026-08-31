@@ -34,7 +34,7 @@ AFTER (gate-03 F1: the write-or-not test alone is not decisive — this file's
 own list includes running tests/linters, which change nothing on disk — so
 the test is now TWO-PRONGED: disk/running-system change, OR requiring a
 command at all. Also rewritten to be slot-for-slot SYMMETRIC with
-`executor-fast-read`'s description — same six slots, same order, same
+`executor-fast-read`'s description — same five slots, same order, same
 phrasing wherever the content is the same; the two-pronged test is the one
 axis that differs, stated positively on both sides):
 ```
@@ -48,8 +48,7 @@ description: >
   acceptance objective. Do NOT use for read-only work that changes nothing
   and runs no command — that goes to executor-fast-read. Do NOT use for
   ambiguous refactors, design choices, or any plausible-but-wrong-output
-  task — those go to executor-smart. Do NOT plan or make
-  architectural calls — those stay with your caller. Do NOT use for web
+  task — those go to executor-smart. Do NOT use for web
   research — it holds no web tools; that goes to researcher.
 ```
 
@@ -60,10 +59,23 @@ replaces the flawed single-prong "changes something on disk" test (decision
 read-only, no-command work (decision 21); drops "If the project defines its
 OWN executor agent, prefer it at the same tier" — owner ruling: this clause
 is an assumption imported from a different repository that this one does not
-hold, and must not be restored as a helpful-looking hint. Slot 5 (the
-scope-deferral slot, shared with "Do NOT plan or make architectural calls")
-loses this sentence but the slot itself survives, so the six-slot count and
-order are unchanged.
+hold, and must not be restored as a helpful-looking hint.
+
+Also drops "Do NOT plan or make architectural calls — those stay with your
+caller" outright — owner ruling: the slot was doubly redundant, never
+load-bearing for hand selection. The "Use when" slot already requires every
+decision to be closed, and an architectural call is by definition an open
+one; the `executor-smart` redirect already excludes "design choices" and,
+unlike this clause, names where the work goes instead. A clause that repeats
+an exclusion and names no destination earns no place in a description meant
+to be as slim as possible — a clause earns its place only if it changes
+which hand gets picked and says something no other slot already says. This
+is the DESCRIPTION copy only: the equivalent rule in the agent BODY ("Scope,
+architecture, and cross-task decisions are not yours — they stay with your
+caller") stays untouched — the body is read by the agent, the description by
+the caller, and the body's copy repeats nothing else there. Removing this
+clause drops a whole slot rather than shrinking one, so the slot count falls
+from six to five on both sides.
 
 Partition check: `executor-fast-read`'s mirrored test is the exact logical
 negation — "changes nothing on disk or in a running system AND requires no
@@ -410,6 +422,55 @@ second, orthogonal axis — a discipline pipeline, not a judgment tier.
 ---
 
 ## skills/advisor-mode/SKILL.md (T9)
+
+### Edit — define the read/write hands in the Bind structural-contract table
+
+The mechanical-split edit below introduces "the read hand" and "the write
+hand" in Routing, but the skill defines neither term anywhere, and its Bind
+section still assumes one hand per class. Define both terms here, in Bind,
+since Bind's table physically precedes Routing in the file — first use.
+Both are named as roles, never as agent names, preserving the table's own
+stated invariant ("This table names no agents, the binding record supplies
+the hands").
+
+BEFORE (grep-verified one hit):
+```
+| mechanical / local / iterated | Needs the task's tools. Where no guard covers an irreversible step, it stays foreground and advisor-supervised. |
+```
+
+AFTER (splits the one row into two: mechanical now binds two hands, each
+with its own structural contract; local and iterated are unaffected and
+stay bundled with mechanical's write hand, since all three need only "the
+task's tools"):
+```
+| mechanical — read hand | No shell, no edit capability: cannot change anything or run anything. |
+| mechanical — write hand / local / iterated | Needs the task's tools. Where no guard covers an irreversible step, it stays foreground and advisor-supervised. |
+```
+
+### Edit — "the binding record names the hand" accommodates two hands
+
+Mechanical now binds two hands, so the sentence declaring what the binding
+record names, singular, no longer covers every class.
+
+BEFORE (grep-verified one hit as a contiguous span):
+```
+Per class, the binding record names the hand. It also names invariants
+satisfied. It also names any degradation. An unqualified class is DEGRADED or UNBOUND.
+Never substitute a class silently.
+```
+
+AFTER:
+```
+Per class, the binding record names the hand — mechanical names two, one
+per structural contract above. It also names invariants satisfied. It also
+names any degradation. An unqualified class is DEGRADED or UNBOUND. Never
+substitute a class silently.
+```
+
+With both edits above applied, "the read hand" and "the write hand" are
+defined terms (roles, not agent names) by the time Routing's new sentence
+below uses them — the routing split reads coherently to a reader who has
+not seen any of the edits that motivated it.
 
 ### Edit — mechanical class split test
 
