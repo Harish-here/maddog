@@ -1,6 +1,6 @@
 {
   "name": "maddog",
-  "version": "2.14.0",
+  "version": "2.14.1",
   "description": "Agents and skills that route each task to the cheapest capable hand, from mechanical steps up to hard judgment calls, plus a full planning-to-PR pipeline for building features.",
   "author": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
   "homepage": "https://github.com/Harish-here/maddog",
