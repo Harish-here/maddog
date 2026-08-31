@@ -65,7 +65,7 @@
     },
     {
       "id": "lead-campaign-01",
-      "mode": "CAMPAIGN",
+      "mode": "INVESTIGATION",
       "law": "STRONG INFERENCE",
       "kind": "happy",
       "core": true,
@@ -97,7 +97,7 @@
     },
     {
       "id": "lead-campaign-02",
-      "mode": "CAMPAIGN",
+      "mode": "INVESTIGATION",
       "law": "STRONG INFERENCE",
       "kind": "trap",
       "core": true,

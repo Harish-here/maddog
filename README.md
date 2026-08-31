@@ -92,7 +92,7 @@ output and can never edit. The guard scripts enforce the last part.
   splitting an oversized file, or live/stateful choreography.
 - **executor-lead** — holds judgment with memory across one bursted work
   package: freezing an open decomposition into a plan, running an
-  unfreezable evidence-driven campaign, or delivering one decided-scope
+  unfreezable evidence-driven investigation, or delivering one decided-scope
   package entangled with live/hazardous reality.
 - **executor-judge** — renders adversarial gate verdicts on another
   intelligence's output: design review before execution, change review

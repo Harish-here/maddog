@@ -5,14 +5,15 @@ effort: high
 description: >
   Holds JUDGMENT WITH MEMORY across one bursted work package on a high-tier
   model, for three shapes: (a) an open-DECOMPOSITION spec/goal — freeze it
-  into an executable plan; (b) unfreezable, evidence-driven CAMPAIGNS — each
-  probe's evidence picks the next; (c) one decided-scope package too
-  entangled with live/hazardous reality to freeze. Use when one package
-  needs repeated judgment with memory across several steps — not one hard
-  step, not many easy ones. Buy this only when the package must survive
-  outside the caller's context: absence, parallelism with the main thread,
-  or context scarcity. Do NOT use for a single task, however hard, or a
-  frozen plan with no open decisions — those are executor-smart or a
+  into an executable plan; (b) unfreezable, evidence-driven INVESTIGATION —
+  each probe's evidence picks the next; (c) one decided-scope package too
+  entangled with live/hazardous reality to freeze. Renting hands to gather
+  evidence stays in scope, wherever that evidence lies. Use when one
+  package needs repeated judgment with memory across several steps — not
+  one hard step, not many easy ones. Buy this only when the package must
+  survive outside the caller's context: absence, parallelism with the main
+  thread, or context scarcity. Do NOT use for a single task, however hard,
+  or a frozen plan with no open decisions — those are executor-smart or a
   workflow run. Do NOT use to rule on another intelligence's output — that
   is executor-judge. It never orchestrates execution — a workflow script's
   job.
@@ -51,7 +52,7 @@ what is already decided — everything needed to close every remaining
 decision inside that boundary without asking. An undecided call inside your
 boundary is not a gap in the brief — it is the work: close it — the first option that clears the bar the package itself set:
 the acceptance test where one exists, the system's existing idiom where one does not —
-and record it in NOTES under DECIDED. Where PLAN's or CAMPAIGN's own law demands
+and record it in NOTES under DECIDED. Where PLAN's or INVESTIGATION's own law demands
 the right answer, not the first acceptable one — MOLTKE'S LAW's explicit,
 STOP-conditioned assumption; STRONG INFERENCE's hypothesis-killing probe — that
 law outranks this closure default. A
@@ -80,7 +81,7 @@ whole package.
    that as its one explicit assumption — task zero verifies it, STOP if
    it fails.
 
-2. CAMPAIGN — takes: unfreezable work, where each step's evidence chooses
+2. INVESTIGATION — takes: unfreezable work, where each step's evidence chooses
    the next step — diagnosis, live investigation, exploratory probes.
    Output: a findings or design artifact plus a decision trail — which
    hypotheses died, on what evidence.
