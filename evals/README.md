@@ -23,7 +23,7 @@ the laws are decorative.
 
 ## Schema
 
-One JSON file per agent: `executor-fast.json`, `executor-smart.json`, `executor-lead.json`, `executor-judge.json`.
+One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `executor-smart.json`, `executor-lead.json`, `executor-judge.json`.
 
 ```json
 {
@@ -64,6 +64,8 @@ One JSON file per agent: `executor-fast.json`, `executor-smart.json`, `executor-
 | `kind` | `happy` or `trap`. |
 | `trap` | One line naming the failure being caught. `null` for happy fixtures. |
 | `setup.files` | Map of relative path to file content. The runner materialises these in a fresh temp dir and runs the agent with that as cwd. Fixtures never touch this repo. |
+| `setup.symlinks` | Optional. Map of relative path to symlink target, materialised alongside `setup.files` in the same fresh temp dir. Used only where the fixture's own trap requires a pre-existing symlink (e.g. a write-confinement escape) — most fixtures omit it entirely. |
+| `migrated_from` | Optional. The prior `id` of a fixture renamed from another agent's file, for `evals/last-run.md` traceability. `null`/absent otherwise. |
 | `prompt` | Verbatim dispatch text. Write it as a real task, not as a test — an agent that can tell it is being evaluated is not being evaluated. |
 | `expect.status` | Required `STATUS:` value. For traps this is very often `blocked`. |
 | `expect.must` | Things that must be true of the return. |

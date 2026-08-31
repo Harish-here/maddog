@@ -52,7 +52,7 @@ so a human can inspect a failure afterward.`,
   ],
 }
 
-const AGENTS = args?.agents ?? ['executor-fast', 'executor-smart', 'executor-lead', 'executor-judge']
+const AGENTS = args?.agents ?? ['executor-fast', 'executor-fast-read', 'executor-smart', 'executor-lead', 'executor-judge']
 const ONLY = args?.only ?? null
 const RUN_ALL = args?.all === true
 const JUDGE_MODEL = args?.judgeModel ?? 'sonnet'
@@ -62,7 +62,7 @@ const WORK_DIR = args?.workDir ?? '/tmp/maddog-eval-runs'
 // Fixture id -> pinned run model. CLOSED mapping: haiku for executor-fast fixtures,
 // sonnet for executor-smart fixtures, opus for executor-lead and executor-judge fixtures.
 // An eval that let this inherit the session model would no longer measure the agent it claims to.
-const RUN_MODEL = { 'executor-fast': 'haiku', 'executor-smart': 'sonnet', 'executor-lead': 'opus', 'executor-judge': 'opus' }
+const RUN_MODEL = { 'executor-fast': 'haiku', 'executor-fast-read': 'haiku', 'executor-smart': 'sonnet', 'executor-lead': 'opus', 'executor-judge': 'opus' }
 
 // Fixtures and args.agents stay bare ('executor-fast') — that's what a human types and what
 // evals/*.json carry. Plugin-only distribution installs agents namespaced (maddog:executor-fast),
@@ -131,9 +131,9 @@ const VERDICT = {
 // ---------------------------------------------------------------------------
 phase('Load')
 const index = await agent(
-  `Read these four fixture files fully: evals/executor-fast.json,
-evals/executor-smart.json, evals/executor-lead.json, and
-evals/executor-judge.json. For EVERY fixture in all four files, return only
+  `Read these five fixture files fully: evals/executor-fast.json,
+evals/executor-fast-read.json, evals/executor-smart.json, evals/executor-lead.json, and
+evals/executor-judge.json. For EVERY fixture in all five files, return only
 its id, the file's top-level "agent" field (which agent it targets), the absolute path of the file it came
 from, its own "core" boolean field, and its own "requiresDelegation" boolean field if present (default false
 when absent). Do NOT return prompts, setup.files, or expectations — those are read

@@ -577,12 +577,14 @@ while IFS= read -r segment; do
     # is masked to 'Q' and can never trip this check — only a '>' the shell
     # itself would treat as a redirect operator survives into the masked
     # form.
-    # (fd duplication/close forms like 2>&1, &>&2, 2>&- are not file writes)
+    # (fd duplication/close forms like 2>&1, &>&2, 2>&- are not file writes;
+    # a target of /dev/null, decision 22, discards output rather than
+    # persisting it to a file — exempted the same way, alongside them)
     for mtok in "${tokens_masked[@]}"; do
       if [[ "$mtok" =~ [0-9]*(\>\>?|\&\>\>?)([^[:space:]]*)$ ]]; then
         rest="${BASH_REMATCH[2]}"
-        if [[ "$rest" =~ ^\&[0-9]+$ ]] || [ "$rest" = "&-" ]; then
-          : # fd duplication/close — not a file write
+        if [[ "$rest" =~ ^\&[0-9]+$ ]] || [ "$rest" = "&-" ] || [ "$rest" = "/dev/null" ]; then
+          : # fd duplication/close, or /dev/null (decision 22) — not a file write
         else
           deny "output redirection (>, >>, &>) writes to a file — this executor may not write files via Bash."
         fi

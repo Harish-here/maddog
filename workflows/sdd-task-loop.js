@@ -202,7 +202,7 @@ const LINT = {
 const lint = await agent(
   `Lint these task briefs for execution-readiness — read each file fully: ${A.tasks.map((t) => `${A.briefsDir}/task-${t.n}-brief.md`).join(', ')}.
 A brief is frozen ONLY if ALL hold: (1) self-contained — global constraints + the task, no reference to unstated decisions; (2) has an explicit DONE-WHEN; (3) states the gate command; (4) states the commit message; (5) contains NO open questions — flag any "TBD", "decide later", "TODO(decide)", unresolved "?" or "or maybe" phrasing, or placeholder text; (6) if the task renders or changes UI, the brief ships the relevant mockup fragment, its data-qa ids, and the Design Scale values it must match as a real file under ${A.briefsDir}/task-<n>-files/ — a UI task briefed only in prose is NOT frozen. Briefs may ship verbatim source as real files under ${A.briefsDir}/task-<n>-files/ referenced by copy-then-verify steps — verify every referenced artifact file EXISTS (list the directory); a missing referenced artifact file makes the brief NOT frozen. Do NOT judge design quality — only readiness. Return one entry per task.`,
-  { label: 'brief-lint', phase: 'Brief lint', agentType: 'executor-fast', model: 'sonnet', effort: 'low', schema: LINT },
+  { label: 'brief-lint', phase: 'Brief lint', agentType: 'executor-fast-read', model: 'sonnet', effort: 'low', schema: LINT },
 )
 if (!lint || !Array.isArray(lint.briefs) || lint.briefs.length !== A.tasks.length) {
   log('brief lint inconclusive — aborting')
