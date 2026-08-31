@@ -23,6 +23,19 @@ corrects decision 4's `.cwd` semantics and states P16/P17's setup. F5
 adds decision 11 (anchored temp-prefix matching). F6 and F8 correct
 probes P9 and P3. F7 corrects decision 10's static check.
 
+Post-release revision note: commit `186b1ba` (v2.14.1) shipped this plan.
+Its RULE verdict cleared, but flagged a behaviour regression: decision
+7's uniform final-component existence check denies two ordinary temp
+operations that were ALLOWED before — idempotent cleanup of an
+already-deleted path (`rm -rf /tmp/some-already-deleted-dir`) and glob
+cleanup inside a temp directory (`rm -rf /private/tmp/claude-501/*`).
+The owner decided to fix rather than document. This revision amends
+decision 7 (narrow relaxation, stated precisely in decision 7's own
+text below) and adds probes P24-P28; it revises P9's expected column
+(ALLOW, was DENY) as a direct, intended consequence of the same
+amendment — see decision 7 and P9's row for why this is not a
+reopened bypass. No other decision or probe changes.
+
 Round 3 revision note: this revision closes
 `docs/plans/gate-03-executor-guard-normalization.md`'s findings G1-G6 (the
 ruling's own numbering 1-6, prefixed G to fit this plan's per-round
@@ -68,7 +81,7 @@ Three design-review gate rounds are spent: `docs/plans/gate-01-executor-guard-no
 pending this revision). The owner has authorised building from this plan
 once G1-G6 are applied — no further judge round. Acceptance is the
 mechanical check named in PT1/PT2's DONE-WHENs: every row of the probe
-table (P1-P23) run, live where tagged, against the built script, plus
+table (P1-P28, per the post-release revision note above) run, live where tagged, against the built script, plus
 `bash -n` and decision 10's sourceability checks. PT3's release-phase
 RULE verdict (executor-judge, fix-less, per the release skill) is a
 separate, later gate on the release candidate diff — not a fourth design
@@ -224,6 +237,59 @@ round on this plan's content.
    permission failure that defeats detection here also blocks the
    underlying `rm` from ever reaching that path, so under-detection does
    not create an exploitable escape.
+   **Post-release amendment — nonexistent/glob-bearing final component
+   (regression fix, commit `186b1ba`; narrowed on purpose).** A
+   nonexistent or glob-bearing (`*`, `?`, or `[`) FINAL component is
+   acceptable ONLY when ALL of:
+   1. Every intermediate component resolved successfully — structural,
+      not a new check: an intermediate that does not exist, or cannot be
+      resolved, still returns non-zero above before the walk ever reaches
+      the final component.
+   2. The resolved parent prefix — the final component's parent, as
+      already resolved by the walk, joined with a trailing `/` — passes
+      `is_temp_path`'s anchored test.
+   3. The raw input path carries no trailing slash. A trailing slash
+      forces `full` mode (this decision's trailing-slash override,
+      above) — that case keeps the existing strict behavior; a dangling
+      final symlink under a trailing slash still denies.
+   When all three hold, `normalize_path` returns the resolved parent
+   joined with the LITERAL final component — never dereferenced, never
+   glob-expanded — and the caller's own `is_temp_path` call on that
+   string decides, exactly as any other success. When any fails,
+   decision 7's original fail-closed return stands. A glob metacharacter
+   in ANY INTERMEDIATE component still denies outright, independent of
+   whether that literal component happens to exist on disk — an
+   intermediate glob that DID exist as a real directory would otherwise
+   be walked into as ordinary text, and that is exactly the shape (P10)
+   that lets a later `..` climb out once the shell actually expands it;
+   this is checked explicitly, not left to the coincidence of a
+   literally-glob-named path being absent.
+   **Consequence for P9 (not a reopened bypass):** P9's dangling relative
+   symlink resolves, in `parent` mode, to a nonexistent final component
+   (`reltarget` itself — the symlink is never dereferenced at the final
+   position in `parent` mode; `[ -e ]` still fails because it follows the
+   symlink chain to test the TARGET, which is absent) whose resolved
+   parent is confined. All three conditions above hold, so P9 now ALLOWs.
+   This is not an escape: the returned path is the literal, unexpanded
+   `<scratchpad-subpath>/reltarget` — physically inside the scratchpad —
+   and `rm -r` in `parent` mode unlinks the symlink itself rather than
+   following it, so the underlying operation is ordinary temp cleanup,
+   the same class this amendment exists to allow. P9's row below is
+   revised accordingly; no other row's expectation changes.
+   **Pre-existing defect found and fixed while implementing this
+   amendment (not itself a decision, recorded here since it lives beside
+   decision 7's code):** `_path_guard_split`'s prior body used `for part
+   in $s` on an unquoted `$s` — bash performs pathname (glob) expansion
+   on each word of an unquoted list expansion, so a component consisting
+   of a bare `*`/`?`/`[...]` was silently expanded against the CALLER'S
+   CWD instead of preserved literally. This was invisible before this
+   amendment (any resulting path still failed the existence check either
+   way, so the end result was DENY regardless of the corruption), but
+   this amendment's ALLOW path depends on the final component staying
+   byte-for-byte literal, so the defect became load-bearing and was
+   fixed as part of this change (pure parameter-expansion slicing,
+   `scripts/path-guard-lib.sh`'s `_path_guard_split`) rather than left
+   for a later plan.
 8. **OWNER DECISION — unexpanded shell metacharacters deny outright
    (resolves N4; trigger set widened by F2, widened again by G1, never
    weakened).** Before any component walk, `normalize_path` scans the RAW
@@ -343,7 +409,7 @@ gated by review-agent — GATE-INFRA]
   - decision 10's marker-pipe check exits 0 and the static
     top-level-functions / no-bare-`set`-or-`exit` check passes;
   - direct probes against `normalize_path`/`is_temp_path` prove every row
-    of the probe table (below), P1-P23 — all 23 rows carry a "PT1 direct"
+    of the probe table (below), P1-P28 — all 28 rows carry a "PT1 direct"
     verification, including P8 (PT1-only, since no write-path hook exists
     in this plan's scope to re-run it live).
 
@@ -359,7 +425,7 @@ gated by review-agent — GATE-INFRA]
   limit as a header comment. Correct the header rationale per decision 6.
 - DONE-WHEN: every probe table row tagged "PT2 live" runs end-to-end
   against the live script (dispatched with `agent_type: executor-fast`)
-  and returns its expected result — that is P1-P7 and P9-P23 (P8 has no
+  and returns its expected result — that is P1-P7 and P9-P28 (P8 has no
   live write-path call site in this plan's scope, so it stays a PT1-only
   direct-function probe); header states the corrected rationale and the
   chained-cd limit; review-agent verdict CLEAR.
@@ -398,7 +464,7 @@ such build is named as a control, not a discriminator.
 | P6 | lexical `..` collapse crossing a symlink boundary | NF1 | executor-fast | PT1 direct + PT2 live | DENY | wrong build pre-collapses `..` against the raw, unresolved path (decision 1's forbidden reading) and stays inside the apparent temp dir → ALLOWs; correct build resolves the symlink first, then collapses against the resolved prefix, and escapes. |
 | P7 | `rm -r` of a repo symlink pointing at a temp dir, `parent` mode | NF4 | executor-fast | PT1 direct + PT2 live | DENY (symlink itself, not target) | wrong build dereferences the final-component symlink in `parent` mode (violates decision 3) and resolves to the temp target → ALLOWs. |
 | P8 | `full`-mode call of the same symlink, direct against `normalize_path` (no write hook exists in scope) | NF4 | n/a — direct function call | PT1 direct only | resolves to the real temp target | wrong build refuses to dereference the final component even in `full` mode and returns the unresolved repo-symlink path. |
-| P9 | `rm -r /tmp/rel-link`, `/tmp/rel-link` a symlink with a RELATIVE target `../<repo-rel>` | N1 (fail-closed control, F6) | executor-fast | PT1 direct + PT2 live | DENY | none — F6: both a correct build (relative target resolves against the symlink's parent, `/private/tmp`, landing on the nonexistent `/private/Users/...`) and an N1-wrong build (resolves against root) land on a nonexistent path and DENY via decision 7. Kept as a fail-closed sanity check, not attributed to N1. |
+| P9 | `rm -r /tmp/rel-link`, `/tmp/rel-link` a symlink with a RELATIVE target `../<repo-rel>` | N1 (fail-closed control, F6); expected value revised by the post-release amendment | executor-fast | PT1 direct + PT2 live | ALLOW (was DENY pre-amendment) | not a discriminator for N1/F6 (unchanged: a correct build and an N1-wrong build both land on the same nonexistent final component either way). Post-amendment: the resolved parent (the symlink's own directory) is confined and the raw path carries no trailing slash, so decision 7's amendment ALLOWs the literal, undereferenced symlink path — ordinary temp cleanup, not an escape (see decision 7's "Consequence for P9" note). A wrong build that dereferences the final symlink in `parent` mode (violates decision 3, same defect P7 catches) would instead resolve the RELATIVE target and, depending on N1 correctness, land somewhere else entirely. |
 | P10 | `rm -r /tmp/*/../../Users/<user>/maddog-skills` (glob into `/tmp`, then lexical `..` climbs across the `/tmp`→`/private/tmp` symlink boundary) — ruling-named shape | N1 / NF1 | executor-fast | PT1 direct + PT2 live | DENY | denies via decision 7 (nonexistent component — G5): the correct resolution lands on a path that does not exist under `/private`; a wrong build lexically pre-collapses `..` before the shell's glob-expanded segment is resolved through the symlink and ALLOWs instead. |
 | P11 | `rm -r /tmp/link/` (trailing slash), `link` → repo dir — ruling-named shape | N2 | executor-fast | PT1 direct + PT2 live | DENY | wrong build has no trailing-slash override, stays in `parent` mode, leaves the final symlink undereferenced, and ALLOWs (looks temp lexically). |
 | P12 | `rm -r /tmp/cycle-a/x`, `cycle-a` → `cycle-b` → `cycle-a` (cycle at an INTERMEDIATE component — F3: a final-position cycle is never dereferenced under `parent` mode and cannot exercise this) | N3 | executor-fast | PT1 direct + PT2 live | DENY | wrong build with no hop-budget/cycle bound loops indefinitely instead of denying; a build that bounds hops but returns success on a partial prefix under `/private/tmp` wrongly ALLOWs — the exact gap decision 7's sentinel closes. |
@@ -413,9 +479,17 @@ such build is named as a control, not a discriminator.
 | P21 | `rm -r <repo>/tmp/x` (a directory literally named `tmp` inside the repo, CREATED before the live PT2 run so decision 7's existence check cannot confound this row — G5) — F5 | F5 | executor-fast | PT1 direct + PT2 live | DENY | wrong build's `is_temp_path` matches `/tmp/` as an unanchored substring anywhere in the string and ALLOWs; the anchored matcher (decision 11) requires the string to START with a temp prefix (or carry a `scratchpad` component) and denies. |
 | P22 | `rm -r ~` (bare tilde) — G1 | G1 (owner decision) | executor-fast | PT1 direct + PT2 live | DENY | wrong build's decision-8 scan has no leading-`~` trigger; `.cwd` resolution yields `<scratchpad>/~`, which the unchanged, unanchored `scratchpad` component match ALLOWs, while the shell expands `~` to the caller's home directory. |
 | P23 | `rm -r '<a-temp-path>'` (P16's `subdir`, single-quoted; `subdir` CREATED first — same precondition as P16) — G4 | G4 | executor-fast | PT1 direct + PT2 live | ALLOW | wrong build skips decision 12's quote-stripping; the literal token retains its surrounding quote marks, fails decision 11's anchored prefix test (which requires the string to START with a temp prefix), and DENIES a legitimate quoted temp-path delete. |
+| P24 | `rm -rf /tmp/already-gone-<unique>` (directory does not exist; regression repro) | post-release amendment | executor-fast | PT1 direct + PT2 live | ALLOW | wrong build keeps decision 7's pre-amendment uniform existence check and DENIES; correct build's resolved parent (`/tmp`) passes `is_temp_path` and ALLOWs the literal nonexistent path. |
+| P25 | `rm -rf <scratchpad>/globtest/*` (glob as FINAL component; `globtest` contains real files so the glob is not itself a stand-in for "nonexistent") — regression repro | post-release amendment | executor-fast | PT1 direct + PT2 live | ALLOW | wrong build either keeps the pre-amendment strict check (DENY) or, if `_path_guard_split` still glob-expands the final component against its own CWD (the pre-existing defect fixed alongside this amendment), corrupts the walk and does not resolve to the literal `.../globtest/*` string at all — either way it fails to ALLOW on the correct literal path. |
+| P26 | `rm -r <scratchpad>/*/leaf` — a directory LITERALLY named `*` is created under `<scratchpad>` containing `leaf`, so this is the strong form: the intermediate glob component actually exists on disk | post-release amendment | executor-fast | PT1 direct + PT2 live | DENY | wrong build has no explicit intermediate-glob check and relies only on existence; since the literal `*`-named directory and `leaf` both exist, a wrong build walks straight through and ALLOWs — the exact P10-shaped escape (an intermediate glob that expands to something real, then climbs out) this explicit check exists to close. |
+| P27 | `rm -r <scratchpad>/nonexistent-dir-xyz/leaf` (intermediate component does not exist; no glob involved) | post-release amendment (regression-adjacent control) | executor-fast | PT1 direct + PT2 live | DENY | control, no discriminator specific to this amendment — confirms the amendment's relaxation is scoped to the FINAL component only; any build that ALLOWs a nonexistent INTERMEDIATE component has broken decision 7 far more broadly than this amendment intends. |
+| P28 | `rm -r /Users/<user>/does-not-exist-outside-temp-test-xyz` (nonexistent final component, resolved parent is NOT a temp location) | post-release amendment | executor-fast | PT1 direct + PT2 live | DENY | wrong build tests `is_temp_path` on the wrong string (e.g. always true, or omits the parent-confinement check entirely) and ALLOWs a nonexistent path anywhere on the filesystem; correct build's `is_temp_path` on the resolved parent (`/Users/<user>`) fails the anchored test and denies. |
 
-23 rows total (P1-P23); P8 is the only PT1-only row — no write-path hook
-exists in this plan's scope to re-run it live.
+28 rows total (P1-P28); P8 is the only PT1-only row — no write-path hook
+exists in this plan's scope to re-run it live. P9's expected value is
+ALLOW (revised by the post-release amendment; see decision 7 and P9's
+row for why this is not a reopened bypass) — every other row's expected
+value is unchanged from round 3.
 
 ## Release sequence
 
