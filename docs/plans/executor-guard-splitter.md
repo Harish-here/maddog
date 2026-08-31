@@ -511,4 +511,3 @@ other work, not tasked in this plan.
   confirmed; finding 3 (cosmetic, mode gate) via the `mode = "chain"`
   guard added to Decision 1 plus Q18. Probe table is now Q1-Q18 (was
   Q1-Q15).
-</content>
