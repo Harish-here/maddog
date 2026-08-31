@@ -1,0 +1,338 @@
+# Instruction-file edits for docs/plans/executor-fast-read.md
+
+Draft only — nothing here has been applied. Each item names the target file,
+quotes the current text verbatim (grep-verified at exactly one hit — see the
+executor return's SNIPPET AUDIT table), and gives the proposed replacement
+verbatim. Two items go beyond the plan's literal task text; each is marked
+FINDING (self-review, not authorized by a specific plan line) and left for
+the owner's call — everything else is a direct transcription of a CLOSED
+decision.
+
+---
+
+## agents/executor-fast.md
+
+### Edit 1 — frontmatter description (T2)
+
+BEFORE:
+```
+description: >
+  Runs fully-specified MECHANICAL tasks on a cheap, fast model: bulk
+  find/replace, applying a known edit across many files, running tests or
+  linters, grep/glob search, extracting/reformatting data, scaffolding
+  boilerplate, committing, pushing, opening a PR, restarting a service,
+  clearing a stale lock, reproducing a reported bug. Use when every decision
+  is already closed and acceptance is objective. Do NOT use
+  for ambiguous refactors, design choices, or any plausible-but-wrong-output
+  task — those go to executor-smart. If the project defines its OWN executor
+  agent, prefer it at the same tier. Do NOT plan or make architectural calls
+  — those stay with your caller. Do NOT use for web research — it holds no
+  web tools; that goes to researcher.
+```
+
+AFTER:
+```
+description: >
+  Runs fully-specified MECHANICAL tasks that change something on disk or in
+  a running system, on a cheap, fast model: bulk find/replace, applying a
+  known edit across many files, running tests or linters, scaffolding
+  boilerplate, committing, pushing, opening a PR, restarting a service,
+  clearing a stale lock, reproducing a reported bug. Use when every decision
+  is already closed and acceptance is objective. Do NOT use for read-only
+  work that needs no shell command — that goes to executor-fast-read. Do
+  NOT use for ambiguous refactors, design choices, or any
+  plausible-but-wrong-output task — those go to executor-smart. If the
+  project defines its OWN executor agent, prefer it at the same tier. Do
+  NOT plan or make architectural calls — those stay with your caller. Do
+  NOT use for web research — it holds no web tools; that goes to researcher.
+```
+
+Drops the RECON/EXTRACT examples ("grep/glob search, extracting/reformatting
+data") since those modes leave this file (decision 4); leads with the
+write-or-not test (decision 11); adds the redirect to `executor-fast-read`
+for read-only, no-shell work (decision 21).
+
+### Edit 2 — CLASSIFY FIRST mode count (T2, decision 4)
+
+BEFORE (one grep hit): `CLASSIFY FIRST. Every task you are handed is one of the ten MODES below. Name the`
+
+AFTER: `CLASSIFY FIRST. Every task you are handed is one of the seven MODES below. Name the`
+
+### Edit 3 — remove RECON, EXTRACT, VERIFY mode blocks (T2, decision 2/4)
+
+BEFORE (currently between the CLASSIFY FIRST paragraph and the EDIT mode block):
+```
+RECON — locate, map, inventory, or answer "how does X work" from a codebase or corpus.
+  INFORMATION SCENT (Pirolli & Card). Follow the strongest lead until the trail stops
+  producing new facts; the first hit is a waypoint, not the destination.
+  E.g. asked where a retry limit is set, you find the default, then the caller that
+  overrides it, then the env var that overrides that. Reporting only the default is a
+  wrong answer, not a partial one.
+
+EXTRACT — reproduce source material: code, config, prose, output, log lines.
+  DIPLOMATIC TRANSCRIPTION (paleography). Reproduce exactly what is there — spacing,
+  spelling, comments, oddities — and mark any omission rather than smoothing it away.
+  E.g. a config line arrives mis-indented with a stale trailing comment; you quote it
+  mis-indented and with the comment. Tidying it produces a line that does not exist.
+
+VERIFY — decide whether a claim, assumption, or document matches reality.
+  THE NULL HYPOTHESIS (statistics). Every claim starts at NOT ESTABLISHED, and only
+  positive evidence moves it; failing to find a contradiction moves nothing.
+  E.g. asked to verify "the timeout is 30s", the line setting it to 30s confirms it.
+  Grepping and finding nothing that says otherwise is NO EVIDENCE, never CONFIRMED.
+
+EDIT — apply a change whose content is already decided: supplied text, a named fix, a
+```
+
+AFTER (block removed entirely — CLASSIFY FIRST paragraph's blank line runs straight into EDIT):
+```
+EDIT — apply a change whose content is already decided: supplied text, a named fix, a
+```
+
+This whole block (opening `RECON —` line through the blank line before `EDIT —`) is
+grep-verified unique as a contiguous span (it contains `RECON — locate, map, inventory,
+or answer "how does X work"`, confirmed one hit, as its distinguishing first line).
+
+---
+
+## agents/executor-smart.md
+
+### Edit — "Do NOT use" clause (T3 group B, round 2 NF5, round 3 F4)
+
+The plan's T3 instruction is "changes the named hand to executor-fast-read... unless
+the authoring pass finds the surrounding sentence now reads oddly." It does: the
+clause names four example tasks (bulk edits, test runs, search, extraction, a bug
+repro) under ONE redirect to `executor-fast`; only two of those four (search,
+extraction) are RECON/EXTRACT-shaped and belong on `executor-fast-read` — the other
+two (bulk edits, test runs, bug repro) are EDIT/GATE/DIAGNOSE-shaped and stay on
+`executor-fast`. A blind rename would misroute test runs and bug repros to a hand that
+holds no shell. Split instead:
+
+BEFORE (two lines, wrap-anchored per round 3 F4 — each independently one grep hit):
+```
+  objective work (bulk edits, test runs, search, extraction, a reliable bug
+  repro) — executor-fast, cheaper. Do NOT make cross-task or architectural
+```
+
+AFTER:
+```
+  objective work (bulk edits, test runs, a reliable bug repro) —
+  executor-fast, cheaper — or read-only search/extraction —
+  executor-fast-read, cheaper still. Do NOT make cross-task or architectural
+```
+
+---
+
+## agents/executor-judge.md
+
+Round 1 finding 3: exactly five bare `executor-fast` hits, all inside three spots
+(lines 14, 15, 31, 33, 106). T8 renames all five to `executor-fast-read`.
+
+### Edit 1 — frontmatter description (lines 14-15)
+
+BEFORE: `  executor-fast. Never dispatch this agent to fix anything or author`
+
+AFTER: `  executor-fast-read. Never dispatch this agent to fix anything or author`
+
+BEFORE: `  anything: it holds no Write or Edit and can dispatch only executor-fast or`
+
+AFTER: `  anything: it holds no Write or Edit and can dispatch only executor-fast-read or`
+
+### Edit 2 — DISPATCH note (lines 30-35)
+
+BEFORE:
+```
+- You hold no Write or Edit tool, and `scripts/judge-dispatch-guard.sh` blocks you from
+  dispatching any subagent but `executor-fast` or `researcher` — including a dispatch
+  that names none, which would default to a general-purpose agent holding every tool.
+  Do not fix anything yourself, and do not dispatch a fix: rent `executor-fast` only for
+  evidence (a sweep, an extraction, a gate-run), never a repair. A defect you find
+  routes back to the party that owns the fix, as a finding — never as a delegated edit.
+```
+
+AFTER (renames the two bare hits at lines 31 and 33; the FINDING below also touches
+this block — see after the plain rename):
+```
+- You hold no Write or Edit tool, and `scripts/judge-dispatch-guard.sh` blocks you from
+  dispatching any subagent but `executor-fast-read` or `researcher` — including a
+  dispatch that names none, which would default to a general-purpose agent holding
+  every tool. Do not fix anything yourself, and do not dispatch a fix: rent
+  `executor-fast-read` only for evidence (a sweep, an extraction), never a repair — run
+  any gate yourself via your own Bash tool, since the rentable hand holds no shell. A
+  defect you find routes back to the party that owns the fix, as a finding — never as a
+  delegated edit.
+```
+
+**FINDING (self-review, not a T8 line — flagged, not authorized).** The original text
+lists "a gate-run" among the things you may rent `executor-fast` for. After decision 8
+the only rentable hands are `executor-fast-read` (no shell) and `researcher` (web-only,
+no shell either) — neither can run anything. Left as a bare rename, this sentence
+would tell the judge to rent a hand for a job that hand structurally cannot do. The
+AFTER text above drops "a gate-run" from the rentable list and routes it to the
+judge's own Bash tool instead (DELEGATION point 4, DIRECT VERIFICATION, already grants
+this). Flagging because it sits one line outside the five grep-verified hits T8 names,
+so it would not be caught by a literal "rename executor-fast" pass.
+
+### Edit 3 — DELEGATION point 2 (line 106) + shrink (decision 9)
+
+BEFORE:
+```
+2. DISPATCH TARGETS — executor-fast and researcher ONLY. Never executor-smart, never
+   executor-lead. Never dispatch an edit of any kind — a judge that causes a fix has
+   stopped being a judge; report the finding instead.
+```
+
+AFTER (renamed and shrunk — the "never executor-smart/lead" and "never dispatch an
+edit" clauses are now enforced structurally by the guard, per decision 9, so the
+instruction-side statement of them is reduced, not repeated at length):
+```
+2. DISPATCH TARGETS — executor-fast-read and researcher ONLY, structurally enforced
+   by `judge-dispatch-guard.sh`. Report a needed fix as a finding, never dispatch one.
+```
+
+**FINDING (self-review, not a T8 line — flagged, not authorized).** DELEGATION point 3
+has the same "gate-run" defect as Edit 2 above (it does not contain the literal string
+`executor-fast`, so it falls outside T8's five named hits, but it names the same
+now-void rental):
+
+BEFORE:
+```
+3. EVIDENCE NEEDS discovered mid-review are normal: rent fast for sweeps, extraction,
+   and gate-runs — a rented gate-run must return the raw output (the red and its
+   failure text, or the passing run's tail); its PASS/FAIL word alone is a
+   characterisation you may not rule on; rent researcher when a claim hinges on
+   external documentation (its return is doc quotes — material, not a conclusion). Claims genuinely unverifiable
+   (no reachable evidence, not merely inconvenient to check) are ruled "unverified
+   assumption" in FINDINGS — that is itself a verdict, not a blocker. Evidence that
+   should exist but does not (the file a report cites is absent, the test it claims
+   passing does not run) is blocked only when it carries the review's sole load-bearing claim; otherwise record it as an unverified-assumption finding and continue.
+```
+
+AFTER:
+```
+3. EVIDENCE NEEDS discovered mid-review are normal: rent executor-fast-read for
+   sweeps and extraction; run any gate yourself via your own Bash tool (DIRECT
+   VERIFICATION, point 4 below) and report its raw output (the red and its failure
+   text, or the passing run's tail) — a PASS/FAIL word alone is a characterisation you
+   may not rule on; rent researcher when a claim hinges on external documentation
+   (its return is doc quotes — material, not a conclusion). Claims genuinely unverifiable
+   (no reachable evidence, not merely inconvenient to check) are ruled "unverified
+   assumption" in FINDINGS — that is itself a verdict, not a blocker. Evidence that
+   should exist but does not (the file a report cites is absent, the test it claims
+   passing does not run) is blocked only when it carries the review's sole load-bearing claim; otherwise record it as an unverified-assumption finding and continue.
+```
+
+Point 1 ("RENT HANDS, NEVER VERDICTS") and point 4 ("DIRECT VERIFICATION") are
+untouched per T8's explicit instruction. With Edits 2-3 and both findings folded in,
+DELEGATION shrinks from its 25-line baseline (96-120) — satisfying T8's DONE-WHEN —
+while keeping the section's intent (rent for evidence, judge yourself, never delegate
+a fix) exactly as before.
+
+---
+
+## agents/product-pm.md, product-ux.md, product-be.md, product-ui.md (T3 group B)
+
+Each is a single-word rename, no surrounding change — all four are RECON-shaped
+(pure enumeration, no shell needed), so a plain rename is safe here (unlike
+executor-judge.md's gate-run clauses above).
+
+| File | BEFORE | AFTER |
+|---|---|---|
+| `agents/product-pm.md` (line 40) | `APP RECON: delegated to executor-fast, with hard output caps in every` | `APP RECON: delegated to executor-fast-read, with hard output caps in every` |
+| `agents/product-ux.md` (line 22) | `JOURNEY RECON: delegated to executor-fast, same output-cap discipline as` | `JOURNEY RECON: delegated to executor-fast-read, same output-cap discipline as` |
+| `agents/product-be.md` (line 26) | `enumerations to executor-fast — storage engines and schemas, the` | `enumerations to executor-fast-read — storage engines and schemas, the` |
+| `agents/product-ui.md` (line 25) | `enumerations to executor-fast — framework, styling system, component` | `enumerations to executor-fast-read — framework, styling system, component` |
+
+`agents/product-qa.md:90` ("Dispatch to executor-fast, by name, exactly these: gate
+runs...") is the named exemption (decision 13) — GATE-shaped, needs a shell, stays on
+`executor-fast`. Not edited.
+
+---
+
+## README.md (T3 group C)
+
+### Edit 1 — Executor family list (line 80, round 3 F5)
+
+BEFORE: `**Executor family** (`executor-fast`, `executor-smart`, `executor-lead`,`
+
+AFTER: `**Executor family** (`executor-fast`, `executor-fast-read`, `executor-smart`, `executor-lead`,`
+
+(The word "executor-fast" itself is not retargeted here — this adds the fifth family
+member, it does not move a dispatch.)
+
+### Edit 2 — executor-fast bullet (lines 86-88, round 2 NF5)
+
+BEFORE:
+```
+- **executor-fast** — runs fully-specified mechanical tasks on a cheap, fast
+  model: bulk edits, test/lint runs, search, extraction, boilerplate,
+  committing, pushing, opening a PR.
+```
+
+AFTER (moves "search, extraction" into a new bullet, per T3):
+```
+- **executor-fast** — runs fully-specified mechanical tasks on a cheap, fast
+  model: bulk edits, test/lint runs, boilerplate, committing, pushing,
+  opening a PR.
+- **executor-fast-read** — runs read-only mechanical tasks on the same
+  cheap, fast tier, holding no shell and no edit: search, extraction,
+  verifying a claim against reality.
+```
+
+### Edit 3 — Architecture, in brief (lines 159-165, round 3 F5)
+
+BEFORE:
+```
+Route every task on its *shape*, never the subject's sophistication: a task
+with every decision already closed and objective acceptance goes to
+`executor-fast`; one task carrying local judgment inside a fixed boundary
+goes to `executor-smart`; a package needing judgment with memory across
+several steps goes to `executor-lead`; a verdict on another intelligence's
+output goes to `executor-judge`. `product-engineering` is a second,
+orthogonal axis — a discipline pipeline, not a judgment tier.
+```
+
+AFTER:
+```
+Route every task on its *shape*, never the subject's sophistication: a task
+with every decision already closed and objective acceptance goes to
+`executor-fast`; the read-only slice of that shape — locating, reproducing,
+or verifying, with no shell and nothing to write — goes to
+`executor-fast-read`; one task carrying local judgment inside a fixed
+boundary goes to `executor-smart`; a package needing judgment with memory
+across several steps goes to `executor-lead`; a verdict on another
+intelligence's output goes to `executor-judge`. `product-engineering` is a
+second, orthogonal axis — a discipline pipeline, not a judgment tier.
+```
+
+---
+
+## skills/advisor-mode/SKILL.md (T9)
+
+### Edit — mechanical class split test
+
+Anchor: the `## Routing` table's `kept` row is the table's last row; the new sentence
+is inserted immediately after the table, before `### Tie-breaks` (decision 10 calls
+for "one sentence near the mechanical row... or a footnote" — a footnote right after
+the table reads better than breaking a table cell, and keeps the table itself
+agent-name-free per its own stated invariant).
+
+BEFORE (last table row, then the section break):
+```
+| kept | Architectural, user-facing judgment. Never for sale. E.g. whether to build the feature at all: delegating it hands away the duty. |
+
+### Tie-breaks
+```
+
+AFTER:
+```
+| kept | Architectural, user-facing judgment. Never for sale. E.g. whether to build the feature at all: delegating it hands away the duty. |
+
+Within mechanical, split by one test: does the task change anything on disk
+or in a running system? No → the read hand. Yes → the write hand.
+
+### Tie-breaks
+```
+
+No agent name appears in the new sentence, preserving the table's stated invariant
+("This table names no agents, the binding record supplies the hands").
