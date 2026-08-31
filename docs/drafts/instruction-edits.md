@@ -48,8 +48,7 @@ description: >
   acceptance objective. Do NOT use for read-only work that changes nothing
   and runs no command — that goes to executor-fast-read. Do NOT use for
   ambiguous refactors, design choices, or any plausible-but-wrong-output
-  task — those go to executor-smart. If the project defines its OWN
-  executor agent, prefer it at the same tier. Do NOT plan or make
+  task — those go to executor-smart. Do NOT plan or make
   architectural calls — those stay with your caller. Do NOT use for web
   research — it holds no web tools; that goes to researcher.
 ```
@@ -58,7 +57,13 @@ Drops the RECON/EXTRACT examples ("grep/glob search, extracting/reformatting
 data") since those modes leave this file (decision 4); the two-pronged test
 replaces the flawed single-prong "changes something on disk" test (decision
 11, revised by gate-03 F1); adds the redirect to `executor-fast-read` for
-read-only, no-command work (decision 21).
+read-only, no-command work (decision 21); drops "If the project defines its
+OWN executor agent, prefer it at the same tier" — owner ruling: this clause
+is an assumption imported from a different repository that this one does not
+hold, and must not be restored as a helpful-looking hint. Slot 5 (the
+scope-deferral slot, shared with "Do NOT plan or make architectural calls")
+loses this sentence but the slot itself survives, so the six-slot count and
+order are unchanged.
 
 Partition check: `executor-fast-read`'s mirrored test is the exact logical
 negation — "changes nothing on disk or in a running system AND requires no
@@ -110,6 +115,29 @@ or answer "how does X work"`, confirmed one hit, as its distinguishing first lin
 
 ## agents/executor-smart.md
 
+### Edit — remove "prefer a project's own executor" clause (owner ruling)
+
+Owner ruling: "If the project defines its OWN executor agent, prefer it at the
+same tier" is an assumption imported from a different repository — this one
+does not hold it — and must be removed, not softened, so a later reader does
+not restore it as a helpful-looking hint.
+
+BEFORE (grep-verified one hit as a contiguous span):
+```
+  cost, or after executor-fast returns blocked. If the project defines its
+  OWN executor agent, prefer it at the same tier. Do NOT use for mechanical,
+```
+
+AFTER:
+```
+  cost, or after executor-fast returns blocked. Do NOT use for mechanical,
+```
+
+This snippet ends exactly where it started relative to the following
+"objective work (bulk edits, test runs, search, extraction, a reliable bug
+repro)..." text, which the next edit below still targets unchanged — the two
+edits apply independently and in either order.
+
 ### Edit — "Do NOT use" clause (T3 group B, round 2 NF5, round 3 F4)
 
 The plan's T3 instruction is "changes the named hand to executor-fast-read... unless
@@ -133,6 +161,36 @@ AFTER:
   executor-fast, cheaper — or read-only search/extraction —
   executor-fast-read, cheaper still. Do NOT make cross-task or architectural
 ```
+
+---
+
+## agents/executor-lead.md
+
+### Edit — remove "prefer a repo-local executor" clause (owner ruling)
+
+Same assumption as the `executor-fast`/`executor-smart` clause above, in the
+body rather than the description: "Prefer a repo-local executor at the same
+tier over a generic one" was imported from a different repository that this
+one does not hold. Read the surrounding CHEAPEST COVERING TIER paragraph
+before cutting — the sentence sits between "however important it is." and
+"Web research goes to researcher", and removing it must leave that paragraph
+reading straight through.
+
+BEFORE (grep-verified one hit as a contiguous span):
+```
+however important it is. Prefer a repo-local executor at the same tier over
+a generic one. Web research goes to researcher — executors stay web-free.
+```
+
+AFTER:
+```
+however important it is. Web research goes to researcher — executors stay web-free.
+```
+
+The paragraph still reads coherently: "a task whose decisions you already
+closed is fast-tier however important it is. Web research goes to
+researcher — executors stay web-free. Verbatim material into artifacts is
+script work..." — no dangling reference, no orphaned clause.
 
 ---
 

@@ -12,8 +12,7 @@ description: >
   any task that changes something on disk or in a running system, or that
   requires running a command — this hand holds no shell and cannot run
   anything; route to executor-fast instead. Do NOT use for ambiguous or
-  judgment-bearing work — executor-smart. If the project defines its OWN
-  executor agent, prefer it at the same tier. Do NOT plan or make
+  judgment-bearing work — executor-smart. Do NOT plan or make
   architectural calls — those stay with your caller. Do NOT use for web
   research — it holds no web tools; that goes to researcher. Holds no shell
   and no edit capability: its only write is filing one bulk result, flat,
