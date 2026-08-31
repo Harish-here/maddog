@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # path-guard-lib.sh — sourceable path-normalization/confinement helpers,
-# shared by scripts/executor-guard.sh's recursive-delete check (and any
-# future caller, e.g. a Write-scoping hook — see docs/plans/executor-fast-read.md).
+# shared by scripts/executor-guard.sh's recursive-delete check and other guards
+# requiring path confinement and normalization across multiple tool-use scopes.
 #
 # Bash 3.2 target (this platform's /bin/bash: `bash --version` -> 3.2.57):
 # no mapfile/readarray, no associative arrays, no ${var,,}/${var^^}, no &>>,

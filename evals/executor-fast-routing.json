@@ -8,7 +8,7 @@
     {"name": "executor-smart", "path": "agents/executor-smart.md"},
     {"name": "researcher", "path": "agents/researcher.md"}
   ],
-  "harness": "evals/run-skill-routing.sh evals/executor-fast-routing.json — same runner as the skill-routing fixtures, pointed at AGENT frontmatter instead (agents/*.md share the same `---`-delimited YAML shape with a `description:` field, so the extractor needs no change; see the executor return's RUNNER CHANGE NEEDED note for the one line that does). NOT RUNNABLE YET: agents/executor-fast-read.md does not exist (only docs/drafts/executor-fast-read.body.md), and agents/executor-fast.md still carries its pre-split single-pronged description, not the two-pronged AFTER text in docs/drafts/instruction-edits.md Edit 1. Once both land at those paths, run as-is — no fixture change needed. executor-smart and researcher are included as candidates (unedited, already shipped) only so the judgment and web-research probes have a real target to route to instead of defaulting to the fast pair or 'none'.",
+  "harness": "evals/run-skill-routing.sh evals/executor-fast-routing.json — same runner as the skill-routing fixtures, pointed at AGENT frontmatter instead (agents/*.md share the same `---`-delimited YAML shape with a `description:` field, so the extractor needs no change; see the executor return's RUNNER CHANGE NEEDED note for the one line that does). executor-smart and researcher are included as candidates (unedited, already shipped) only so the judgment and web-research probes have a real target to route to instead of defaulting to the fast pair or 'none'.",
   "fixtures": [
     {
       "id": "fastread-route-01",

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # executor-fast-read-write-guard.sh — PreToolUse Write guard, scoped to
-# executor-fast-read ONLY (docs/plans/executor-fast-read.md, decision 19).
+# executor-fast-read ONLY — this hand holds Write but no Bash/Edit (decision 21).
 #
 # Purpose: executor-fast-read (decision 5, amended) holds Write but no
 # Bash/Edit — it may file a bulk result under a temp/scratchpad location
