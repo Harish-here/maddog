@@ -24,6 +24,22 @@
 #     what they'd do — neither agent's read-only toolset needs one, so a
 #     denial by binary name costs them nothing real.
 #
+#     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
+#     any path is examined" — the recursive-delete check below (which calls
+#     normalize_path/is_temp_path) runs for all four agents and DOES examine
+#     the path first. lead/judge's file-write denial is unconditional and
+#     simply never depends on that check's outcome: a temp-confined `rm -r`
+#     passes the recursive-delete check, then falls through to this layer's
+#     unconditional "rm deletes a file" denial regardless.
+#
+#     Known limit (chained `cd`, not solved here): the recursive-delete
+#     check resolves a relative path against the PreToolUse payload's .cwd,
+#     which tracks the session's current directory and updates whenever a
+#     standalone `cd` Bash call runs — but NOT a `cd` chained inside the
+#     SAME command as the path (split_command evaluates chained segments
+#     independently, before that `cd` has executed). A `cd` issued as its
+#     own, prior tool call IS reflected correctly.
+#
 # Wiring: plugin-level hooks/hooks.json (session-wide, matcher "Bash") fires
 # this script for every agent and the main conversation. Because that wiring
 # is not agent-scoped, the four-agent scoping is enforced IN-SCRIPT via the
@@ -50,6 +66,20 @@
 
 set -uo pipefail
 
+# path-guard-lib.sh provides normalize_path/is_temp_path, shared with any
+# future caller (e.g. a Write-scoping hook) instead of reimplementing path
+# logic here. Loaded via a path relative to this script's own location so
+# it resolves regardless of the hook's invocation cwd (hooks/hooks.json
+# invokes this script via ${CLAUDE_PLUGIN_ROOT}/scripts/executor-guard.sh;
+# cwd at hook time is the user's project, not this repo). This script sets
+# only `set -uo pipefail` (no -e), so a failed source (file missing,
+# unreadable, or a syntax error) does not itself abort the script — instead
+# normalize_path/is_temp_path are left undefined, and the recursive-delete
+# call site below fails with bash's "command not found" (exit 127, falsy),
+# tripping all_temp=0 and denying the delete: a broken source denies every
+# recursive delete — noisy, never weaker.
+source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
+
 deny() {
   local reason="$1"
   local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions or write files via Bash. STOP and return STATUS: blocked to your caller with this reason — do not attempt the command."
@@ -60,26 +90,28 @@ deny() {
   exit 0
 }
 
-is_temp_path() {
-  case "$1" in
-    *"/tmp/"*|*"/private/tmp/"*|*"/var/folders/"*) return 0 ;;
-    # scratchpad matched as a path COMPONENT, not a substring: "/scratchpad",
-    # "/scratchpad/...", a bare "scratchpad", or "scratchpad/..." — never e.g.
-    # "/Users/me/my-scratchpad-notes", which merely contains the substring.
-    *"/scratchpad"|*"/scratchpad/"*|"scratchpad"|"scratchpad/"*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
 # --- quote-aware walk -------------------------------------------------
 # One shared character-by-character quote-tracking walk (mode-selected),
 # reused everywhere in this file that needs to know whether a character
 # sits inside single/double quotes — a single implementation, not one per
 # call site that can drift out of sync.
 #   mode="chain": splits a full command into pipeline/chain segments on
-#     unquoted &&, ||, ;, and | — e.g. `grep -E "a|rm -rf|b"` stays ONE
-#     segment instead of re-parsing as a pipeline containing a bogus
-#     `rm -rf` stage. Prints one segment (literal) per line.
+#     unquoted, unescaped &&, ||, ;, |, and a bare & (background operator;
+#     excluded when it forms &> / &>> / an fd-duplication or -close form
+#     like >&, 2>&1, >&- with an unescaped preceding >, or when the & itself
+#     is escaped, e.g. find's own \& argument syntax) — e.g.
+#     `grep -E "a|rm -rf|b"` stays ONE segment instead of re-parsing as a
+#     pipeline containing a bogus `rm -rf` stage. A literal newline inside
+#     the command also acts as a segment boundary, but by accident, not as
+#     a case branch here: each finished segment is later fed through a
+#     line-oriented reader by its caller, so a raw newline is indistinguishable
+#     from that reader's own record separator — this happens regardless of
+#     quote state, so a multi-line QUOTED argument is misjudged as multiple
+#     commands too (a known, accepted false-positive source, not fixed here).
+#     Separately, an unquoted leading `(`/`((`/`{` token in a segment (a
+#     subshell, arithmetic command, or brace group) is denied fail-closed by
+#     the caller rather than parsed into — this file does not attempt to see
+#     inside one. Prints one segment (literal) per line.
 #   mode="word": splits one segment into whitespace-separated argument
 #     tokens, respecting quotes so a quoted argument containing spaces
 #     (e.g. an awk/jq program) stays ONE token. In the same pass it builds
@@ -98,7 +130,7 @@ quote_walk() {
   local mode="$1" cmd="$2"
   local -a out=()
   local buf="" mbuf="" c in_single=0 in_double=0
-  local esc=0 esc_next=0
+  local esc=0 esc_next=0 buf_last_esc=0 split_amp=0
   local i=0 len=${#cmd}
   local US=$'\x1f'
   while [ "$i" -lt "$len" ]; do
@@ -170,6 +202,33 @@ quote_walk() {
           i=$((i + 2))
           continue
         fi
+        # Bare, unquoted, UNESCAPED '&' is a chain-mode segment boundary
+        # (mirrors the ';' case below) UNLESS: the next char is '>' (&>/&>>
+        # redirect forms), or the last character already written to buf is
+        # an unescaped '>' (>&, 2>&1, 1>&2, >&- fd-duplication/close forms).
+        # Gated to mode="chain" only — this arm is shared code, also
+        # reached while tokenizing a segment in "word" mode, where a
+        # residual '&' (inside &>/>& or escaped \&) must stay a literal
+        # character, never a token boundary (a boundary here would emit an
+        # out+=() line with no ${US}${mbuf} separator and silently blank
+        # tokens_masked for that token).
+        if [ "$mode" = "chain" ] && [ "$esc" -eq 0 ]; then
+          split_amp=1
+          [ "${cmd:i+1:1}" = ">" ] && split_amp=0
+          if [ "$split_amp" -eq 1 ]; then
+            case "$buf" in
+              *'>')
+                [ "$buf_last_esc" -eq 0 ] && split_amp=0
+                ;;
+            esac
+          fi
+          if [ "$split_amp" -eq 1 ]; then
+            out+=("$buf")
+            buf=""
+            i=$((i + 1))
+            continue
+          fi
+        fi
         buf+="$c"
         mbuf+="$c"
         ;;
@@ -204,6 +263,14 @@ quote_walk() {
         mbuf+="$c"
         ;;
     esac
+    # Bookkeeping for the '&' lookbehind exclusion below: every non-continue
+    # path above (quote literal-appends, the &/|/; literal-append
+    # fallthroughs, and the default *) case) reaches this single point after
+    # writing $c onto buf — record whether THIS just-written character was
+    # itself escaped, so a later lookbehind can tell an escaped trailing '>'
+    # (a literal argument character) from a genuine redirect '>' (reuses the
+    # existing esc/esc_next parity, not a second parser).
+    buf_last_esc="$esc"
     i=$((i + 1))
   done
   if [ "$mode" = "chain" ]; then
@@ -240,6 +307,10 @@ esac
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -z "$cmd" ] && exit 0
 
+# .cwd resolves a relative path token before the recursive-delete check's
+# normalize_path call, below — see the chained-cd known limit in the header.
+cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+
 # --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
 segments_raw="$(split_command "$cmd")"
 
@@ -261,6 +332,22 @@ while IFS= read -r segment; do
     tokens_masked+=("$tok_masked")
   done < <(quote_walk word "$segment")
   [ "${#tokens[@]}" -eq 0 ] && continue
+
+  # --- fail-closed: unquoted leading '(' or '{' cannot be confidently
+  # identified as a command (subshell, ((arithmetic)), or brace group) ---
+  # Tested against tokens_masked[0] (the masked companion, not the raw
+  # tokens[0]) so this is an UNQUOTED-only check: a quoted leading '(' or
+  # '{' is masked to 'Q' and does not match. Deliberately blunt — this also
+  # denies a harmless bare ((x++)) or (cd x && ls); the guard does not
+  # attempt to parse inside a group, only to never silently skip past one.
+  case "${tokens_masked[0]}" in
+    '('*)
+      deny "Cannot confidently identify the leading command — an unquoted '(' starts a subshell, arithmetic command, or command substitution used as the entire leading word, none of which this guard parses into. Rewrite without the wrapper."
+      ;;
+    '{')
+      deny "Cannot confidently identify the leading command — an unquoted '{' brace group is not parsed into by this guard. Rewrite without the wrapper."
+      ;;
+  esac
 
   cmd0="${tokens[0]##*/}"
 
@@ -288,7 +375,16 @@ while IFS= read -r segment; do
         all_temp=0
       else
         for p in "${paths[@]}"; do
-          is_temp_path "$p" || all_temp=0
+          # Decision 7's fail-closed contract: normalize_path's non-zero
+          # return (metacharacter, nonexistent component, cycle/hop-budget,
+          # readlink failure) is treated as NOT-temporary directly — never
+          # call is_temp_path on a partial or absent result. A broken
+          # `source` above (path-guard-lib.sh missing/unreadable/syntax
+          # error) leaves normalize_path undefined, which fails the same
+          # way here (bash "command not found", exit 127, falsy) — denies
+          # closed, per the header note above.
+          resolved_p="$(normalize_path "$p" "$cwd" parent)" || { all_temp=0; continue; }
+          is_temp_path "$resolved_p" || all_temp=0
         done
       fi
       if [ "$all_temp" -eq 0 ]; then

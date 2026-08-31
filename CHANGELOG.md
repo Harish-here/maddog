@@ -9,6 +9,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 - `executor-lead` shape (b)'s mode renamed `CAMPAIGN` → `INVESTIGATION`: the frontmatter description that started it, the numbered mode list and dispatch-contract sentence in the agent body, both `evals/executor-lead.json` fixtures asserting `"mode"`, and README's family summary — the old word read as scale/action-against-something, so a small evidence-driven investigation didn't qualify. The two fixture ids (`lead-campaign-01`, `lead-campaign-02`) keep the old word deliberately — they're opaque keys the harness never reads, so renaming them is churn with no benefit. Minor, not patch: a description change alters which tasks route to this hand, which users experience as changed behavior rather than a repair. Also added "Renting hands to gather evidence stays in scope, wherever that evidence lies." ahead of the prohibitions, so web-sourced evidence work reads as in-scope (`db3ad3d`)
 
+## [2.14.2] - 2026-08-31
+
+### Fixed
+- `scripts/executor-guard.sh`: command-segmentation bypass — a bare `&` (background operator) was not treated as a segment boundary, so commands after it were never examined; bare `&` now ends a segment in chain mode (with redirector exceptions), and segments whose leading word opens a subshell, brace group, or arithmetic construct are refused as unparseable. This does not close the whole class of hiding techniques: a wrapper command, command substitution, or an escaped or quoted leading word still hides the real command; those cases are recorded in `docs/plans/executor-guard-splitter.md` under Scope
+
+## [2.14.1] - 2026-08-31
+
+### Fixed
+- `scripts/executor-guard.sh`: path-confinement bypass in recursive-delete check — paths reaching a protected location through `..`, through a symlink, through a trailing slash, through brace expansion, or through an unexpanded shell variable were treated as temporary and allowed; path resolution now happens before the check, temporary-location prefixes are anchored rather than matched anywhere in the string, and a path token carrying unexpanded shell syntax is refused
+- `scripts/path-guard-lib.sh`: new shared library for path-confinement logic, enabling a second hook to reuse the validation
+
 ## [2.14.0] - 2026-08-30
 
 ### Added
