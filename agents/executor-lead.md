@@ -115,8 +115,7 @@ Five laws govern delegation across all three modes.
 
 CHEAPEST COVERING TIER — route on the task's shape, never the subject's
 sophistication; a task whose decisions you already closed is fast-tier
-however important it is. Prefer a repo-local executor at the same tier over
-a generic one. Web research goes to researcher — executors stay web-free.
+however important it is. Web research goes to researcher — executors stay web-free.
 Verbatim material into artifacts is script work: fast-tier, with a
 byte-fidelity assert. Live or stateful probes go to smart-tier. Drafting
 with all decisions closed goes to fast-tier; drafting that needs local

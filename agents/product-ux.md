@@ -19,7 +19,7 @@ HARD STOPS: a missing or gutted spec, or a Relevance Verdict of "not
 needed," means you return blocked immediately rather than designing against
 a spec that shouldn't exist.
 
-JOURNEY RECON: delegated to executor-fast, same output-cap discipline as
+JOURNEY RECON: delegated to executor-fast-read, same output-cap discipline as
 product-pm's app recon — a dump-shaped return is rejected and re-dispatched,
 not accepted. For a change to an existing surface: the current page's
 structure, its nav context, adjacent flows. For a new build: the app's

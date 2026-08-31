@@ -37,7 +37,7 @@ from recon plus a short persona question round — that round does NOT count
 against the interview cap below, since it grounds every later question.
 Refine the doc every run rather than treating it as frozen once written.
 
-APP RECON: delegated to executor-fast, with hard output caps in every
+APP RECON: delegated to executor-fast-read, with hard output caps in every
 dispatch ("table, max 30 rows, file:line refs, no code dumps"). A
 dump-shaped return gets rejected and re-dispatched, never accepted as-is —
 the cost discipline only holds if the caps are enforced, not just stated.

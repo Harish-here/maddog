@@ -69,7 +69,8 @@ only if it satisfies the structural contract.
 | Class | Structural contract |
 |---|---|
 | adversarial | No Write, no Edit, no exceptions. |
-| mechanical / local / iterated | Needs the task's tools. Where no guard covers an irreversible step, it stays foreground and advisor-supervised. |
+| mechanical — read hand | No shell, no edit capability: cannot change anything or run anything. |
+| mechanical — write hand / local / iterated | Needs the task's tools. Where no guard covers an irreversible step, it stays foreground and advisor-supervised. |
 | web-perception | Needs web tools. None means UNBOUND: web questions block to the user, never guessed. |
 | kept | Exempt. No hand is named. |
 
@@ -80,9 +81,10 @@ confirmation on irreversible steps too. Only the user's explicit
 approval clears an advisor-authored plan to execute in a
 DEGRADED-adversarial repo.
 
-Per class, the binding record names the hand. It also names invariants
-satisfied. It also names any degradation. An unqualified class is DEGRADED or UNBOUND.
-Never substitute a class silently.
+Per class, the binding record names the hand — mechanical names two, one
+per structural contract above. It also names invariants satisfied. It also
+names any degradation. An unqualified class is DEGRADED or UNBOUND. Never
+substitute a class silently.
 
 When classes share one undifferentiated hand, tier pricing is partly
 or wholly unavailable. The binding record names which classes share a
@@ -103,6 +105,10 @@ hands.
 | adversarial | A gate: the verdict decides whether work proceeds. The hand must be unable to fix. E.g. the prompt driving an overnight run: nobody reads it first, so a fix-capable hand cannot verdict it. |
 | web-perception | Facts fetched from outside the machine. Web tools required, returns capped and cited. E.g. current anti-bot tactics on a live site: memory is stale, and the cheap hand holds no web tools. |
 | kept | Architectural, user-facing judgment. Never for sale. E.g. whether to build the feature at all: delegating it hands away the duty. |
+
+Within mechanical, split by one test: does the task change anything on disk
+or in a running system, or require running a command? No to both → the
+read hand. Yes to either → the write hand.
 
 ### Tie-breaks
 

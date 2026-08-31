@@ -77,15 +77,19 @@ only with the plugin install above.
 
 ### Agents (`agents/`)
 
-**Executor family** (`executor-fast`, `executor-smart`, `executor-lead`,
+**Executor family** (`executor-fast`, `executor-fast-read`, `executor-smart`, `executor-lead`,
 `executor-judge`) — one ladder of judgment, bought by task shape. Fast and
-smart do the work; lead holds memory across a package; lead and judge can
-rent fast-tier hands, lead smart-tier too; judge rules on the others'
-output and can never edit. The guard scripts enforce the last part.
+smart do the work; lead holds memory across a package; lead can rent
+fast-tier hands, smart-tier too; judge can rent only the read-only
+fast-tier hand; judge rules on the others' output and can never edit. The
+guard scripts enforce the last part.
 
 - **executor-fast** — runs fully-specified mechanical tasks on a cheap, fast
-  model: bulk edits, test/lint runs, search, extraction, boilerplate,
-  committing, pushing, opening a PR.
+  model: bulk edits, test/lint runs, boilerplate, committing, pushing,
+  opening a PR.
+- **executor-fast-read** — runs read-only mechanical tasks on the same
+  cheap, fast tier, holding no shell and no edit: search, extraction,
+  verifying a claim against reality.
 - **executor-smart** — runs one delegated task needing local judgment but not
   top-tier reasoning: pattern-matching refactors, context-dependent edits,
   small design choices inside a fixed boundary, debugging, migrations,
@@ -158,11 +162,13 @@ auto-trigger on a matching description.
 
 Route every task on its *shape*, never the subject's sophistication: a task
 with every decision already closed and objective acceptance goes to
-`executor-fast`; one task carrying local judgment inside a fixed boundary
-goes to `executor-smart`; a package needing judgment with memory across
-several steps goes to `executor-lead`; a verdict on another intelligence's
-output goes to `executor-judge`. `product-engineering` is a second,
-orthogonal axis — a discipline pipeline, not a judgment tier.
+`executor-fast`; the read-only slice of that shape — locating, reproducing,
+or verifying, with no shell and nothing to write — goes to
+`executor-fast-read`; one task carrying local judgment inside a fixed
+boundary goes to `executor-smart`; a package needing judgment with memory
+across several steps goes to `executor-lead`; a verdict on another
+intelligence's output goes to `executor-judge`. `product-engineering` is a
+second, orthogonal axis — a discipline pipeline, not a judgment tier.
 
 ## Contributing
 

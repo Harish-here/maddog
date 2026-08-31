@@ -11,10 +11,10 @@ description: >
   non-gating review of one artifact against its brief, or live/stateful
   choreography — background-process babysitting, cleanup that runs even on
   failure. Use when correctness matters more than
-  cost, or after executor-fast returns blocked. If the project defines its
-  OWN executor agent, prefer it at the same tier. Do NOT use for mechanical,
-  objective work (bulk edits, test runs, search, extraction, a reliable bug
-  repro) — executor-fast, cheaper. Do NOT make cross-task or architectural
+  cost, or after executor-fast returns blocked. Do NOT use for mechanical,
+  objective work (bulk edits, test runs, a reliable bug repro) —
+  executor-fast, cheaper — or read-only search/extraction —
+  executor-fast-read, cheaper still. Do NOT make cross-task or architectural
   decisions — those stay with your caller.
 tools: Read, Write, Edit, Bash, Glob, Grep, Skill
 ---
