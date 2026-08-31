@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.15.0] - 2026-08-31
+
+### Changed
+- `executor-lead` shape (b)'s mode renamed `CAMPAIGN` → `INVESTIGATION`: the frontmatter description that started it, the numbered mode list and dispatch-contract sentence in the agent body, both `evals/executor-lead.json` fixtures asserting `"mode"`, and README's family summary — the old word read as scale/action-against-something, so a small evidence-driven investigation didn't qualify. The two fixture ids (`lead-campaign-01`, `lead-campaign-02`) keep the old word deliberately — they're opaque keys the harness never reads, so renaming them is churn with no benefit. Minor, not patch: a description change alters which tasks route to this hand, which users experience as changed behavior rather than a repair. Also added "Renting hands to gather evidence stays in scope, wherever that evidence lies." ahead of the prohibitions, so web-sourced evidence work reads as in-scope (`db3ad3d`)
+
 ## [2.14.0] - 2026-08-30
 
 ### Added
