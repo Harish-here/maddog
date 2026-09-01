@@ -4,18 +4,29 @@
 
 **Goal:** Ship multi-select mode classification, the four-slot mode template, and three law fixes into `executor-fast` and `executor-fast-read`, gated and eval-refereed. The version bump is ruled at DECLARE from release §1.2's computed recommendation — this plan pre-commits to no number.
 
-**Architecture:** The change is instruction text, so the pipeline is the author-agent SCALED loop — model (gated 2026-09-01; findings folded; D1–D3 awaiting user ruling) → incumbent sweep → packet → gate → user approval → fast-tier apply → verify — bracketed by baseline and after eval runs, closed by the release ritual. No application code exists; validation is behavioral (CONTRIBUTING.md §Validation).
+**Architecture:** The change is instruction text, so the pipeline is the author-agent SCALED loop — model (two gate rounds folded; round 3 is the executing session's first act) → incumbent sweep → packet → gate → PR-stage text review per the user's delegation ruling → fast-tier apply → verify — bracketed by baseline and after eval runs, closed by the release ritual. No application code exists; validation is behavioral (CONTRIBUTING.md §Validation).
 
 **Tech Stack:** maddog agents (executor-judge for gates, executor-fast for applies, executor-smart for fixture migration), `.claude/workflows/agent-evals.js` invoked as a Workflow run by script path (there is no runner skill in this repo), release skill, git.
 
-**Spec:** `docs/plans/mode-template-package-model.md` — every replacement text, fixture, amendment, and rule this plan applies is defined there by section ID (M0–M7). Executors read both files. The model gate's verdict is filed at `.claude/reviews/2026-09-01-mode-template-package-model-gate.md` (local by policy) and binds later gates as precedent. Execution starts only after the user rules D1 (misroute clause + stale-fixture migration), D2 (incumbent sweep), and D3 (eval scope).
+**Spec:** `docs/plans/mode-template-package-model.md` — every replacement text, fixture, amendment, and rule this plan applies is defined there by section ID (M0–M7). Executors read both files. Two gate verdicts are filed locally and bind every later gate as precedent: `.claude/reviews/2026-09-01-mode-template-package-model-gate.md` and `.claude/reviews/2026-09-01-mode-template-package-fold-regate.md`. Execution starts only after gate round 3 clears this revision and the user's rulings (D1–D3, rework count, version bump, approval delegation) are recorded in M0.
 
 ## Cost (source for the step-0 lines author-agent requires)
 
-- Eval runs, at the runner's own ~66k tokens/fixture: full scope [D3] ≈ 27 fixtures × 2 runs ≈ 3.6M tokens (haiku-priced dispatches plus grading), plus one single-fixture run ≈ 66k. Targeted alternative ≈ 0.7M × 2.
-- Judge dispatches (opus): incumbent sweep [D2] ×1, packet gate ×1, plus one re-gate per rework round; model gate already spent.
-- Apply dispatches (haiku) ×3; fixture-migration authoring (sonnet) ×1.
-- Covered rework rounds: whatever count the user grants at the step-0 green light; each further round is its own green light.
+- Eval runs, at the runner's own ~66k tokens/fixture (re-gate N7): full scope [D3] = 33 fixtures at baseline + 34 at the after-run ≈ 4.5M tokens total (haiku-priced dispatches plus grading), plus one single-fixture run ≈ 66k. Targeted core-only alternative: 17 fixtures ≈ 1.1M per run.
+- Judge dispatches (opus): model gate round 3 ×1, incumbent sweep [D2] ×1, packet gate ×1, plus one re-gate per rework round; two model-gate rounds already spent.
+- Apply dispatches (haiku) ×3; fixture authoring and migration (sonnet) ×1.
+- Covered rework rounds for the packet gate: ONE — granted by the user 2026-09-01; every further round is its own green light. The thread's deliverable is Task 9's closing report, published in the PR body.
+- Model-phase green light, recorded retrospectively (author-agent step 1 SCALED): the user's 2026-09-01 instruction — write the plan, then dispatch executor-judge to review it — green-lit the model phase.
+
+## Overnight profile (unattended execution — user rulings 2026-09-01)
+
+- **Vehicle**: a fresh interactive session on opus (`--model opus`), hosted in tmux. sdd-task-loop is NOT the engine — it executes frozen implementation briefs, and this package is a gated authoring loop with judge rounds. Its LAUNCH CONTRACT is adopted verbatim instead: watchdog and heartbeat, run-start/complete/abort pings via `~/.claude/channels/telegram/notify.sh`, tmux hosting, `~/.claude/watchdogs/resume.state` standing file, workflow runIds persisted, one `resumeFromRunId` retry before paging the user. The kickoff prompt's first order is to invoke the maddog advisor-mode skill.
+- **First act**: model gate round 3 — a fresh judge receives the current model and plan plus BOTH filed verdicts. On clear: record the user's rulings in M0, lock the model, proceed to Task 0. On mechanical findings: fold, one re-gate. On decision-bearing findings: ping the user and halt.
+- **Approval delegation (user ruling)**: the user delegates Task 6's on-screen text approval to the session's gate chain and reviews the final texts at the PR instead. Recorded deviation from author-agent step 5. Consequence: the PR body MUST carry every final agent-body text verbatim (or full per-item diffs) plus the clearing verdict IDs — the PR review IS the text review.
+- **Span**: Tasks 0–9 unattended, then Task 10 through SHIP — push, open the PR with the body above, STOP. The merge is the user's, in the morning. DECLARE uses the user's version pre-ruling recorded in the kickoff prompt; absent one, the session pings and waits at DECLARE.
+- **Preconditions checked at launch, in order**: (1) installed maddog plugin ≥ 2.15.0 (`claude plugin update`; the 2.14.2 cache lacks executor-fast-read); (2) `gh auth status` ok; (3) tmux present; (4) the notify script executable; (5) branch `feat/mode-template-package` checked out clean.
+- **After-run body source (honest limit)**: eval dispatches run the INSTALLED plugin's agents. The baseline correctly tests installed 2.15.0, the current shipped text. After Task 7's applies, the after-run needs the branch's edited bodies installed: the session attempts a local install from the branch checkout; if no supported path exists, it runs the after-run anyway, records the result as UNVERIFIED-against-branch with named debt (the ritual's standing E9 precedent), carries that in the PR, and leaves a post-merge confirmation run as the PR's stated follow-up. Never silently skipped.
+- **Interrupts**: any user message freezes the run — kill or pause in-flight dispatches before replying, and report what was running.
 
 ## Global Constraints
 
@@ -30,6 +41,7 @@
 - Interactive checkpoints (step-0 green light with the Cost values above; D1–D3 rulings; packet approval; release DECLARE/RULE/SHIP) stop and wait for the user; they are never inferred.
 - JSON validation commands (`python3 -c …`) run from the orchestrating session, whose Bash is not scoped by `scripts/executor-guard.sh`; if delegated instead, the hand must hold Write/Edit (the guard refused the read-only judge).
 - The executing session's agent registry must resolve `maddog:executor-fast-read` before any dispatch or eval run — the agent merged 2026-09-01 and registers only after a plugin reload or a fresh session. The runner's preflight aborts the whole run otherwise (observed 2026-09-01: `preflight-agent-resolution` abort).
+- The INSTALLED maddog plugin must be ≥ 2.15.0 before launch — the newest cached install on this machine is 2.14.2, which lacks executor-fast-read entirely; a fresh session alone does not fix that. Run the plugin update first (Overnight profile, precondition 1).
 
 ---
 
@@ -140,9 +152,9 @@ M2 texts ("three", precedence sentence, [D1] misroute sentence per ruling, rule-
 
 Same shared M2 texts with "seven" plus the TRANSFORM reword, M4 TOTALITY attribution and REPRODUCE block verbatim, seven mode blocks conformed to M3. Cuts: only Task 3-indicted lines.
 
-- [ ] **Step 5: Author P4 — stale-fixture migration [D1, if ruled keep-and-migrate]**
+- [ ] **Step 5: Author P4 — fixture migrations and new rule coverage per M6's list [D1]**
 
-`fast-distilled-01`, `fast-hint-01`, `fast-notes-01/02` re-vehicled per M6 — target file, `migrated_from`, preserved intent stated per fixture. Authored at smart tier; rides in the packet so the gate rules on it with the bodies it must match.
+Six items: `fast-hint-01` re-vehicle, `fast-notes-01/02` moves with `migrated_from`, `fast-distilled-01` GATE re-vehicle (stays on fast — the only write-to-file DISTILLED RETURN coverage), new `fastread-distilled-01`, new `fast-misroute-01`, new `fast-precedence-01`. Authored at smart tier within M6's per-fixture specs; each states preserved intent; the packet gate rules on them with the bodies they must match.
 
 - [ ] **Step 6: Self-check** — every item names target + anchor + verbatim text + the M-section or sweep finding it answers; no item touches a file outside M0's target list; P2/P3 contain no runtime tool identifiers.
 
@@ -195,14 +207,14 @@ git commit -m "fix(evals): migrate pre-split fixtures to owning agents with migr
 
 - [ ] **Step 2: Routing probes** — record explicitly: N/A, no frontmatter description changed in this package.
 
-- [ ] **Step 3: Align every naming artifact to the shipped text** — `fast-diagnose-01/02` `mode` → `REPRODUCE`; `fastread-recon-01/02` `law` → `AUTHORITATIVE RESOLUTION`; README schema example's `law` value; grep both eval JSONs and `evals/README.md` for `INFORMATION SCENT`, `DIAGNOSE`, and single-mode classification prose in rubric/`must` fields — update per M6. Validate both JSONs parse. Commit:
+- [ ] **Step 3: Align every naming artifact to the shipped text** — `fast-diagnose-01/02` `mode` → `REPRODUCE`; `fastread-recon-01/02` `law` → `EFFECTIVE VALUE`; README schema example's `law` value; grep both eval JSONs and `evals/README.md` for `INFORMATION SCENT`, `DIAGNOSE`, and single-mode classification prose in rubric/`must` fields — update per M6. Verify the two by-number rule citations still point true after the template amendments (`author-agent/SKILL.md` "rules 1-5… 6-8 and 10… 9"; the template's rule 4 citing "rule 1" and "rules 2-3" — re-gate N4). Validate both JSONs parse. Commit:
 
 ```bash
 git add evals/executor-fast.json evals/executor-fast-read.json evals/README.md
 git commit -m "fix(evals): REPRODUCE and AUTHORITATIVE RESOLUTION renames, single-mode prose sweep"
 ```
 
-- [ ] **Step 4: After-run** — same Workflow invocation and scope as Task 1, then immediately:
+- [ ] **Step 4: After-run** — same Workflow invocation as Task 1, scope = Task 1's scope PLUS every fixture this package added or migrated (under a targeted ruling, extend the `only` list — `only` overrides `core`, re-gate N8), then immediately:
 
 ```bash
 cp evals/last-run.md .claude/reviews/eval-run-2026-09-01-after.md
@@ -245,13 +257,13 @@ git commit -m "chore(plans): retire branch working artifacts; local copies kept 
 - `executor-fast` and `executor-fast-read` now classify with APPLICABLE MODES (multi-select): a chained task names every mode whose actions it contains and holds each law for the actions it governs; when two held laws pull against each other, the prohibition wins; the return line is `MODES:`. A task fitting no mode returns blocked as a misroute
 - Mode blocks in both fast bodies conformed to the four-slot template (definition with capped illustrative instances; law with operational prohibition; example ending at the residue's destination); template and rules added to the review-agent agent template, which now carries a single mode-block spec
 - `executor-fast`'s DIAGNOSE mode rescoped to REPRODUCE: it delivers the trigger that makes a failure fire on demand; naming the cause stays with `executor-smart`
-- RECON's law re-cited: AUTHORITATIVE RESOLUTION (DNS) replaces Information Scent, whose source theory prescribes abandoning a weakening trail — the opposite of the rule it was cited for
+- RECON's law replaced: the coined EFFECTIVE VALUE law replaces Information Scent, whose cited theory prescribes abandoning a weakening trail — the opposite of the rule it was cited for; a first candidate citing DNS failed the same source-alignment check in review
 - TRANSFORM's TOTALITY law gains its missing attribution (total functions, computability)
 - Both fast bodies trimmed against the incumbent-sweep findings under the review gate
 
 ### Added
 - `fastread-chain-01` composite-mode trap fixture; `core`, `requiresDelegation`, and chained-mode schema documentation in `evals/`
-- Pre-2.15.0 executor-fast fixtures migrated to their owning agents with `migrated_from`
+- Pre-2.15.0 executor-fast fixtures migrated to their owning agents with `migrated_from`; new misroute, precedence, and distilled-return fixtures covering the package's new rules
 ```
 
 - [ ] **Step 3: Supply RULE with the spec** — the model's local copy at `.claude/reviews/mode-template-package-model.md`, named in the RULE dispatch as the design artifact (checklist Dimension 1).
@@ -264,5 +276,6 @@ git commit -m "chore(plans): retire branch working artifacts; local copies kept 
 
 - Spec coverage: M0→Task 0 (rulings gate), M1 (doctrine — constrains packet texts), M2→Tasks 4/7/8, M3→Tasks 4(P1)/7, M4→Tasks 4/7/8(step 3), M5→Tasks 3/4 (findings-first cuts), M6→Tasks 1/2/4(P4)/8, M7→Tasks 9/10 (records policy, retirement ordering, bump). No uncovered section.
 - Findings coverage: F1/F1b (local run-record policy, no gitignored adds), F2 (Workflow scriptPath invocations), F3 (core field, args.all, coverage acceptance rewritten), F4 (README rows), F5 (MODES expectation in `must`), F6→D1 (clause marked, migration task P4), F7 (precedence sentence, TRANSFORM and andon rewords in P2/P3), F8 (single mode-block spec, amendment 2), F9 (template block is amendment 1 with anchor), F10→D2 (incumbent sweep Task 3, cuts only against findings), F11 (Cost section + Task 0 step-0 gate), F12 (law-field and README-example renames, Task 8 Step 3), F13 (provenance labeled in M1/M4; no task depends on an eval-held set), F14 (retirement before DECLARE, RULE reads local copy), F15 (bump un-committed, §1.2 presented at DECLARE), C1–C4 folded.
+- Fold re-gate (2026-09-01) coverage: F8 completed (DIMENSION TABLE row + Output slot), F11 residue (exact rework count, named deliverable, retrospective model-phase green light — all in Cost), C1 reworded, N1/N5 (EFFECTIVE VALUE, coined, fresh example), N2/N3 (fixture specs in M6 and Task 4 P4), N4 (rule 11 + Definition-slot rule, numbering frozen, citation check in Task 8), N6 (most-restrictive precedence), N7 (33/34 fixtures, ≈4.5M), N8 (after-run scope union), N9/N10 folded.
 - Placeholders: none — run-time-determined values (ruled version, CHANGELOG date, D1–D3 outcomes) each carry their determination rule.
-- Consistency: `MODES:`, REPRODUCE, AUTHORITATIVE RESOLUTION, fixture ids, task numbers, and local record filenames match across tasks and model sections.
+- Consistency: `MODES:`, REPRODUCE, EFFECTIVE VALUE, fixture ids, task numbers, and local record filenames match across tasks and model sections.

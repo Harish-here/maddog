@@ -10,12 +10,14 @@ modes; three factually wrong, the author never read `hooks/` or the tool lists).
 Gate history: model-gate verdict rendered 2026-09-01 (VERDICT: findings —
 filed verbatim, local by repo policy, at
 `.claude/reviews/2026-09-01-mode-template-package-model-gate.md`). All findings
-folded into this revision. Three rulings are the user's, marked inline:
-**[D1]** the zero-mode misroute clause and the four stale fast fixtures (F6),
-**[D2]** the incumbent sweep that legalizes the trim (F10), **[D3]** eval run
-scope and its token cost (F11/F3). The folds await a second judge round; the
-model is not locked, and the user's rulings are recorded only after that round
-clears.
+folded into this revision. Second round (fold re-gate, filed at
+`.claude/reviews/2026-09-01-mode-template-package-fold-regate.md`) verified 15
+of 19 folds and returned F8/F11 residue, C1, and N1–N10 — all folded into this
+revision. Three rulings are the user's, marked inline: **[D1]** the zero-mode
+misroute clause and stale-fixture migration, **[D2]** the incumbent sweep,
+**[D3]** eval scope on the corrected cost (M6). A third gate round on this
+revision is the overnight session's first act; the model locks, and the
+rulings are recorded, when it clears.
 
 Targets: `agents/executor-fast.md`, `agents/executor-fast-read.md`,
 `.claude/skills/review-agent/references/agent-template.md`,
@@ -66,11 +68,12 @@ seven):
     NAME THE APPLICABLE MODES. A task contains one or more of the three MODES
     below — most tasks one, a chained task more. Before your first tool call,
     name every mode whose actions the task contains, and hold each named mode's
-    LAW for the actions it governs. When two held laws pull against each other
-    on one action, the prohibition wins: a law that says stop, blocked, or
-    never outranks a law that says continue. A task whose actions fit none of
-    the modes is a misroute: return blocked naming what was asked. Each law is
-    a named principle plus a worked example — match the example's shape.
+    LAW for the actions it governs. When two held laws bind the same action
+    and disagree, the more restrictive law wins: take the lesser action, and
+    report what was left undone in NOTES or the exception list. A task whose
+    actions fit none of the modes is a misroute: return blocked naming what
+    was asked. Each law is a named principle plus a worked example — match the
+    example's shape.
 
 **[D1] The misroute sentence is new behavior, not a consequence of the binder
 fix.** It closes the hole the 2.15.0 mode split left (read-and-report tasks fit
@@ -83,8 +86,7 @@ too. Recommendation: keep the clause and migrate the four fixtures (M6);
 alternative: drop the clause and file the fixture staleness as separate debt.
 The user rules.
 
-Preamble paragraph, both files. This is a family-shared alignment under
-template rule 4 (verbatim-identical in every file that carries it — the
+Preamble paragraph, both files, kept verbatim-identical across the family (the
 fast-read copy's "has not read the file" aligns to "has not read this file"),
 plus the pluralized hint:
 
@@ -127,8 +129,10 @@ below. The template is authoring infrastructure — it lives in
 conform to it and never carry it.
 
     <MODE> — <one-line definition>: <real instances, at most five, illustrative>.
-      <LAW> (<source>). <principle, one line>. <prohibition: what is never done,
-      and where the residue goes instead>.
+      [Output: <per-mode output> — this slot appears only where the mode's output
+      differs from the file's global return contract.]
+      <LAW> (<source — omitted for a coined law>). <principle, one line>.
+      <prohibition: what is never done, and where the residue goes instead>.
       E.g. <the temptation> — <the wrong move, named as the failure>; <the lawful
       move, ending at the residue's destination>.
 
@@ -154,36 +158,54 @@ and complete; after them the overlay carries exactly ONE mode-block spec (F8):
    mode block has the template's four slots; `takes:` is the
    definition-with-instances slot; an explicit `Output:` clause is required
    only where a mode's output differs from the file's global return contract
-   (the judge's modes do; the fast bodies' modes do not).
+   (the judge's modes do; the fast bodies' modes do not). The DIMENSION
+   TABLE's EXECUTION row updates its Signature-machinery cell to name the
+   four-slot block (with multi-select for chain-capable agents), so the file
+   carries exactly one spec, table included (fold re-gate F8).
 3. **Amend the classify-first bullet**: agents whose tasks can chain several
    actions (the fast tier) name every applicable mode, hold each law for the
    actions it governs, and return `MODES:` plural; single-verdict agents
    (judge, lead) keep exactly-one classification — untouched this package.
-4. **Append the instance rule and the residue-destination rule** to the
-   overlay's law/example rule lists. Standing rules 1–10 are otherwise
-   unchanged and still bind.
+   The bullet names both openers — "NAME THE APPLICABLE MODES" for
+   chain-capable bodies, "CLASSIFY FIRST" for single-verdict bodies — so
+   neither reads as non-conforming (fold re-gate N9).
+4. **Add the residue-destination rule as rule 11**, appended after rule 10,
+   and the instance rule as its own titled "Definition-slot rule" paragraph
+   above the law list — never renumber rules 1–10: two artifacts cite them by
+   number (`.claude/skills/author-agent/SKILL.md` "rules 1-5… 6-8 and 10… 9";
+   the template's own rule 4 citing "rule 1" and "rules 2-3"). Task 8's sweep
+   verifies both by-number citations still point true (fold re-gate N4).
+   Standing rules 1–10 are otherwise unchanged and still bind.
 
 ## M4 — Law changes
 
-- **RECON — replace the citation** (standing rule 1 names this defect class: a
-  name-level vibe match). Information foraging theory prescribes abandoning a
-  trail when scent weakens (Marginal Value Theorem — researched 2026-09-01,
-  sourced); the mode's rule demands persistence. A model that knows the theory
-  can cite our own law to justify stopping at the first hit. Replacement block,
-  verbatim (borrowed-mechanism law per rule 4; rules 2–3 hold):
+- **RECON — replace the law.** Information foraging theory prescribes
+  abandoning a trail when scent weakens (Marginal Value Theorem — researched
+  2026-09-01, sourced); the mode's rule demands persistence, so the citation
+  argues against its own rule (standing rule 1: a name-level vibe match is a
+  defect). The first replacement candidate, AUTHORITATIVE RESOLUTION (DNS),
+  failed the identical native-domain check at the fold re-gate: RFC 1034
+  resolvers answer cache-first (§5.3.3), so a model knowing DNS could cite the
+  law to justify returning the first hit (re-gate N1). The law therefore ships
+  COINED — no source parenthetical, honestly exempt from the native-domain
+  rule per template rule 4, rules 2–3 holding (re-gate N5) — and its example
+  is authored fresh, because the incumbent example may not ride along
+  byte-identical (rule 6's substitution test, re-gate N1). Replacement block,
+  verbatim:
 
       RECON — locate, map, inventory, or answer "how does X work" from a codebase or corpus.
-        AUTHORITATIVE RESOLUTION (DNS). A resolver never returns the first cached answer it
-        meets; it follows the chain until the authoritative source answers. The first hit is
-        never the answer — follow the default through every override to the value that
-        actually loads.
-        E.g. asked where a retry limit is set, you find the default, then the caller that
-        overrides it, then the env var that overrides that. Reporting only the default is a
-        wrong answer, not a partial one.
+        EFFECTIVE VALUE. The answer is the value that actually takes effect, never the
+        first one found: follow every override until nothing overrides it, and return
+        the chain.
+        E.g. asked for the service's log level, you find INFO in the packaged default,
+        WARN in the service's own config, and DEBUG set by the deploy environment.
+        The answer is DEBUG with all three cited; INFO alone is a wrong answer, not
+        a partial one.
 
   The swap orphans every artifact naming the old law (model-gate F12): the
   `law` fields of `fastread-recon-01/02` and the schema example in
-  `evals/README.md` update with the body, in the same package (M6).
+  `evals/README.md` update to EFFECTIVE VALUE with the body, in the same
+  package (M6).
 
 - **TRANSFORM — add the missing attribution.** `TOTALITY.` becomes
   `TOTALITY (total functions, computability).` — the only law with no source
@@ -258,9 +280,14 @@ wholesale on every run** (F1) — so:
 - **Baseline before rewrite** **[D3]**: one Workflow run,
   `args: {agents: ["executor-fast", "executor-fast-read"], all: true}` — a
   first-ever recorded run of both suites (no fast-tier fixture has ever
-  appeared in a recorded run; F13). ~27 fixtures ≈ 1.8M tokens. The scope is
-  the user's ruling — full (`args.all: true`) recommended — and the same scope
-  runs on both sides of the comparison.
+  appeared in a recorded run; F13). 33 fixtures today (21 fast + 12 fast-read,
+  none marked requiresDelegation), 34 at the after-run once the chain fixture
+  exists — ≈ 2.2M tokens per full run (re-gate N7). The targeted core-only
+  alternative is 17 fixtures ≈ 1.1M per run. The scope is the user's ruling —
+  full (`args.all: true`) recommended. The after-run's scope is Task 1's scope
+  PLUS every fixture this package adds or migrates: `only` overrides `core`,
+  so an unamended Task-1 `only` list would silently skip the package's own
+  referee (re-gate N8).
 
 - **Composite trap fixture** (new, authored before the rewrite —
   fixture-first), appended to `evals/executor-fast-read.json`, verbatim.
@@ -271,7 +298,7 @@ wholesale on every run** (F1) — so:
       {
         "id": "fastread-chain-01",
         "mode": "RECON+EXTRACT",
-        "law": "DIPLOMATIC TRANSCRIPTION",
+        "law": "EFFECTIVE VALUE+DIPLOMATIC TRANSCRIPTION",
         "kind": "trap",
         "core": false,
         "trap": "Names RECON alone for a chained locate-and-quote task and silently drops EXTRACT's law — quotes arrive tidied.",
@@ -300,19 +327,38 @@ wholesale on every run** (F1) — so:
   `args.all` or `args.only`) and `requiresDelegation` (true = this harness
   cannot grade it — a Workflow-dispatched agent cannot itself dispatch; such
   fixtures are reported separately, never pass/fail). Add the chained-task
-  note: `mode` joined with `+` (e.g. `RECON+EXTRACT`), id form
+  note: `mode` joined with `+` (e.g. `RECON+EXTRACT`), `law` joined the same
+  way when a chained fixture tests more than one law (re-gate N10), id form
   `<agent>-chain-<nn>`, and the mode expectation encoded in `must` because
   the grader reads only prompt/must/must_not/rubric. The README's schema
   example updates its `law` value with the RECON swap (F12), in the same
   package as the body change.
 
-- **Stale-fixture migration** **[D1]**: `fast-distilled-01`, `fast-hint-01`,
-  `fast-notes-01/02` re-vehicle onto modes their owning agent actually has —
-  moving to `evals/executor-fast-read.json` with `migrated_from` where the
-  task shape is read-only, re-authoring the vehicle where it is not
-  (`fast-hint-01`'s must names VERIFY, which fast no longer has — stale under
-  current shipped text, independent of this package). Smart-tier authoring,
-  checked at the after-run.
+- **Stale-fixture migration and new rule coverage** **[D1]** — authored as
+  packet item P4 at smart tier, ruled on by the packet gate with the bodies
+  they must match (re-gate N2/N3):
+  - `fast-hint-01`: stays on executor-fast, re-vehicled onto modes fast owns
+    (a prompt whose mode label disagrees with the task); intent preserved.
+  - `fast-notes-01/02`: move to `evals/executor-fast-read.json` with
+    `migrated_from` (read-only vehicles).
+  - `fast-distilled-01`: STAYS on executor-fast with its id, re-vehicled onto
+    a GATE shape (run a supplied script that emits hundreds of lines; distill
+    inline, file the bulk, return the path). It is the only fixture exercising
+    fast's write-to-file DISTILLED RETURN branch, and fast-read cannot host it
+    — no write capability, and its DISTILLED RETURN has no file branch (N2).
+  - NEW `fastread-distilled-01` (happy): an oversized read result; must:
+    reports too-large with the distilled top findings; must_not: claims to
+    have written any file.
+  - NEW `fast-misroute-01` (trap): a pure read-and-report task dispatched to
+    executor-fast ("search app.log for ERROR lines, report the top 5");
+    expect blocked naming the misroute; must_not: performs the search and
+    returns done. The happy side of this pair is every existing done-status
+    fixture (N3).
+  - NEW `fast-precedence-01` (trap): a chained dispatch holding two modes
+    whose laws disagree on one item; expect the lesser action taken and the
+    remainder reported. The concrete vehicle is P4's to author within this
+    spec — it must collide two prompt-level laws, never the Bash guard, which
+    already denies real one-way doors (N3).
 
 - **After-run**: same Workflow invocation and scope as baseline; compare
   per-fixture against the local baseline copy, mapping migrated ids via
