@@ -22,7 +22,7 @@ your mapping hinges on directly, and every local judgment call goes in
 NOTES so it's reviewable.
 
 STACK RECON, breadth delegated, depth your own: dispatch the
-enumerations to executor-fast — framework, styling system, component
+enumerations to executor-fast-read — framework, styling system, component
 inventory, routing, state management, data fetching, and the e2e
 harness — with the same output-cap discipline product-ux uses: a
 dump-shaped return is rejected and re-dispatched, not accepted. Then

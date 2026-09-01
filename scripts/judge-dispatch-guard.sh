@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # judge-dispatch-guard.sh — PreToolUse guard restricting executor-judge's
-# subagent dispatches to executor-fast and researcher only.
+# subagent dispatches to executor-fast-read and researcher only.
 #
 # Purpose: executor-judge's own file already says it may rent only
-# executor-fast or researcher as hands, and never a hand that can make a
+# executor-fast-read or researcher as hands, and never a hand that can make a
 # change (it is fix-less by design — findings route back to the caller, it
 # never repairs). That limit lives only as a sentence in the agent's own
 # description today. This hook is the first attempt at making it structural.
@@ -11,7 +11,7 @@
 # STATUS OF THE PAYLOAD SHAPE — CONFIRMED as of 2026-08-27 against captured
 # payloads. A subagent dispatch always has .tool_name == "Agent". The target
 # subagent is at .tool_input.subagent_type (plugin-namespaced, e.g.
-# "maddog:executor-fast"). The calling subagent is at .agent_type, populated
+# "maddog:executor-fast-read"). The calling subagent is at .agent_type, populated
 # whenever a subagent makes the call (e.g. "general-purpose"), alongside
 # .agent_id; .agent_type is absent entirely when the MAIN conversation
 # dispatches, and that case must always allow.
@@ -27,7 +27,7 @@
 # not an ALLOW. It denies whenever the caller is executor-judge (bare or
 # plugin-namespaced, e.g. "maddog:executor-judge") and the resolved target —
 # absent/empty/null counting as "the default agent" — is neither
-# executor-fast nor researcher (bare or namespaced).
+# executor-fast-read nor researcher (bare or namespaced).
 #
 # Scope: executor-judge only. executor-lead also dispatches subagents and is
 # deliberately left unrestricted here — that is a separate, already-decided
@@ -69,8 +69,8 @@ log_probe() {
 deny() {
   local target="$1"
   local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted to dispatch '${target}'. executor-judge may only rent executor-fast or researcher as hands — renting any hand to make a change is not permitted for executor-judge at all."
-  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast or researcher, never a hand that changes anything. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted to dispatch '${target}'. executor-judge may only rent executor-fast-read or researcher as hands — renting any hand to make a change is not permitted for executor-judge at all."
+  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
@@ -84,8 +84,8 @@ deny() {
 #     tool including Write/Edit. Deny it as what it is, not as a gap. ---
 deny_no_target() {
   local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. executor-judge may only rent executor-fast or researcher as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast or researcher, never a hand that changes anything. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. executor-judge may only rent executor-fast-read or researcher as hands."
+  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
@@ -123,7 +123,7 @@ log_probe "tool_name=${tool_name} agent_type=${agent_type} target=${target:-none
 [ -z "$target" ] && deny_no_target
 
 case "$target" in
-  executor-fast|*:executor-fast) exit 0 ;;
+  executor-fast-read|*:executor-fast-read) exit 0 ;;
   researcher|*:researcher) exit 0 ;;
 esac
 

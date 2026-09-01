@@ -23,7 +23,7 @@ you read the files your contracts hinge on directly, and every local
 judgment call goes in NOTES so it's reviewable.
 
 STACK RECON, breadth delegated, depth your own: dispatch the
-enumerations to executor-fast — storage engines and schemas, the
+enumerations to executor-fast-read — storage engines and schemas, the
 service/port layer, API surface, background jobs, and the repo's layer
 boundaries and failure-handling idioms — with the same output-cap
 discipline product-ux uses: a dump-shaped return is rejected and

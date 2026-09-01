@@ -4,10 +4,26 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.15.0] - 2026-09-01
+
+### Added
+- `executor-fast-read` — a read-only executor on the cheap tier holding no shell and no edit capability, available for reconnaissance, extraction, and verification tasks
+
+### Changed
+- `executor-fast` drops reconnaissance, extraction, and verification modes; now retains seven modes for analysis and implementation tasks
+- Judge's dispatch allowlist now permits only `executor-fast-read` and `researcher`, closing a path by which the judge could hand a fix to a subordinate that writes
+- New hook confines `executor-fast-read`'s writes to temporary locations, which is the sole containment for that hand
+- Removed the "if the project defines its own executor agent, prefer it at the same tier" clause from `executor-fast`, `executor-smart`, and `executor-lead` — an assumption imported from another repository that does not hold generally; `agents/product-ux.md` still carries its own version of this clause, untouched this release
+- The four product agents (`product-be`, `product-pm`, `product-ui`, `product-ux`) and `workflows/sdd-task-loop.js`'s brief-lint step had their reconnaissance/lint dispatches retargeted from `executor-fast` to `executor-fast-read`
+- `skills/advisor-mode`: mechanical class splits into read hand (no shell, no edit capability) and write hand in structural contract; binding record notes mechanical names two; split test routes read-only tasks to read hand, change-or-run tasks to write hand
+
+### Fixed
+- Redirect check that denied `/dev/null` for write-denied agents, which was blocking ordinary reconnaissance for the lead and the judge
+
 ## [2.14.2] - 2026-08-31
 
 ### Fixed
-- `scripts/executor-guard.sh`: command-segmentation bypass — a bare `&` (background operator) was not treated as a segment boundary, so commands after it were never examined; bare `&` now ends a segment in chain mode (with redirector exceptions), and segments whose leading word opens a subshell, brace group, or arithmetic construct are refused as unparseable. This does not close the whole class of hiding techniques: a wrapper command, command substitution, or an escaped or quoted leading word still hides the real command; those cases are recorded in `docs/plans/executor-guard-splitter.md` under Scope
+- `scripts/executor-guard.sh`: command-segmentation bypass — a bare `&` (background operator) was not treated as a segment boundary, so commands after it were never examined; bare `&` now ends a segment in chain mode (with redirector exceptions), and segments whose leading word opens a subshell, brace group, or arithmetic construct are refused as unparseable. This does not close the whole class of hiding techniques: a wrapper command, command substitution, or an escaped or quoted leading word still hides the real command
 
 ## [2.14.1] - 2026-08-31
 

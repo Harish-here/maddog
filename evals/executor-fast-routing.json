@@ -1,0 +1,102 @@
+{
+  "agent": "executor-fast-read",
+  "candidates_type": "agents",
+  "version": 1,
+  "candidates": [
+    {"name": "executor-fast", "path": "agents/executor-fast.md"},
+    {"name": "executor-fast-read", "path": "agents/executor-fast-read.md"},
+    {"name": "executor-smart", "path": "agents/executor-smart.md"},
+    {"name": "researcher", "path": "agents/researcher.md"}
+  ],
+  "harness": "evals/run-skill-routing.sh evals/executor-fast-routing.json — same runner as the skill-routing fixtures, pointed at AGENT frontmatter instead (agents/*.md share the same `---`-delimited YAML shape with a `description:` field, so the extractor needs no change; see the executor return's RUNNER CHANGE NEEDED note for the one line that does). executor-smart and researcher are included as candidates (unedited, already shipped) only so the judgment and web-research probes have a real target to route to instead of defaulting to the fast pair or 'none'.",
+  "fixtures": [
+    {
+      "id": "fastread-route-01",
+      "kind": "happy",
+      "core": true,
+      "prompt": "Rename every occurrence of `oldHelper` to `newHelper` across the src/ directory and commit the change with message 'rename oldHelper'.",
+      "expect": "executor-fast",
+      "note": "Unambiguous write control. A cold-harness fault (both descriptions scoring zero, or 'none' every time) shows up here first, distinguishing a broken run from a genuinely hard probe."
+    },
+    {
+      "id": "fastread-route-02",
+      "kind": "happy",
+      "core": true,
+      "prompt": "List every file under src/ that imports the `Logger` class, with file:line for each import.",
+      "expect": "executor-fast-read",
+      "note": "Unambiguous read control, paired with 01. A misread keyed to executor-fast's OLD description (which itself still claims 'grep/glob search') answers executor-fast instead."
+    },
+    {
+      "id": "fastread-route-03",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Run the linter across the repo and report which files fail and why.",
+      "expect": "executor-fast",
+      "note": "The case that broke the old single-pronged test: nothing on disk changes, so a 'changes something on disk?' test alone misroutes this to executor-fast-read. The two-pronged test (disk/running-system change OR requires a command) is what saves it — a build missing the second prong answers executor-fast-read here."
+    },
+    {
+      "id": "fastread-route-04",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "The default page-size constant appears in three places under src/. Find out which one the production API handler actually uses at runtime, and report the effective value with where it comes from.",
+      "expect": "executor-fast-read",
+      "note": "Pure RECON, one of the two directions of the moved boundary. A misread still crediting executor-fast's pre-split 'grep/glob search' clause answers executor-fast."
+    },
+    {
+      "id": "fastread-route-05",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Reproduce the exact contents of config/production.yaml, verbatim, including comments and indentation.",
+      "expect": "executor-fast-read",
+      "note": "Pure EXTRACT, the other direction of the moved boundary. A misread still crediting executor-fast's pre-split 'extracting/reformatting data' clause answers executor-fast."
+    },
+    {
+      "id": "fastread-route-06",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "The deploy service is stuck on a stale lock file. Clear the lock and restart the service.",
+      "expect": "executor-fast",
+      "note": "The task that STAYS with executor-fast (distinct from control 01, so the pair isn't tested only once). A misread over-applying 'no shell, no edit' to anything touching running-system state sends this to executor-fast-read, which cannot restart anything."
+    },
+    {
+      "id": "fastread-route-07",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Confirm whether config/timeouts.json currently sets the request timeout to 30 seconds.",
+      "expect": "executor-fast-read",
+      "note": "VERIFY answerable purely by reading. A misread that treats any 'confirm/verify' wording as needing a command run answers executor-fast."
+    },
+    {
+      "id": "fastread-route-08",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Confirm the test suite currently passes by running it, and report the exit code and any failing test names.",
+      "expect": "executor-fast",
+      "note": "VERIFY answerable only by running something (an exit code). A misread that treats any 'confirm/verify' wording as read-only VERIFY work answers executor-fast-read, which holds no shell and cannot run the suite."
+    },
+    {
+      "id": "fastread-route-09",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "There are hundreds of TODO comments scattered across the repo. Extract every one into a single list and save it to the scratchpad directory, since the full list is too long to return inline.",
+      "expect": "executor-fast-read",
+      "note": "The bulk-output case: filing a large result to an existing temp/scratchpad location is the read hand's one permitted write. A misread that equates 'save it to a file' with needing the write hand answers executor-fast."
+    },
+    {
+      "id": "fastread-route-10",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Two modules duplicate the same validation logic. Decide the best way to factor it into a shared helper, matching the patterns already used elsewhere in this codebase, and make the change.",
+      "expect": "executor-smart",
+      "note": "Judgment-bearing (a design choice, not a closed decision) — must land on executor-smart from either fast-tier description, so the pair does not swallow work that isn't theirs. A misread of either fast description as covering 'any refactor' answers executor-fast or executor-fast-read."
+    },
+    {
+      "id": "fastread-route-11",
+      "kind": "boundary",
+      "core": true,
+      "prompt": "Look up how Stripe's API documents webhook signature verification and summarize the pattern with sources.",
+      "expect": "researcher",
+      "note": "Web research — both fast-tier descriptions explicitly disclaim web tools. A misread of executor-fast-read's 'locating where something lives' as covering external lookups answers executor-fast-read, which holds no web tools at all."
+    }
+  ]
+}
