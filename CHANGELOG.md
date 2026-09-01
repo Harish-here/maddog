@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.14.2] - 2026-08-31
 
 ### Fixed
-- `scripts/executor-guard.sh`: command-segmentation bypass — a bare `&` (background operator) was not treated as a segment boundary, so commands after it were never examined; bare `&` now ends a segment in chain mode (with redirector exceptions), and segments whose leading word opens a subshell, brace group, or arithmetic construct are refused as unparseable. This does not close the whole class of hiding techniques: a wrapper command, command substitution, or an escaped or quoted leading word still hides the real command; those cases are recorded in `docs/plans/executor-guard-splitter.md` under Scope
+- `scripts/executor-guard.sh`: command-segmentation bypass — a bare `&` (background operator) was not treated as a segment boundary, so commands after it were never examined; bare `&` now ends a segment in chain mode (with redirector exceptions), and segments whose leading word opens a subshell, brace group, or arithmetic construct are refused as unparseable. This does not close the whole class of hiding techniques: a wrapper command, command substitution, or an escaped or quoted leading word still hides the real command
 
 ## [2.14.1] - 2026-08-31
 

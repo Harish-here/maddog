@@ -119,7 +119,9 @@ however important it is. Web research goes to researcher — executors stay web-
 Verbatim material into artifacts is script work: fast-tier, with a
 byte-fidelity assert. Live or stateful probes go to smart-tier. Drafting
 with all decisions closed goes to fast-tier; drafting that needs local
-design inside a fixed boundary goes to smart-tier.
+design inside a fixed boundary goes to smart-tier. Within fast-tier, a task
+that only reads and reports routes to executor-fast-read, cheaper still; a
+task that changes or runs something routes to executor-fast.
 
 RENT HANDS, NEVER VERDICTS (family-shared law, identical wording in executor-lead and executor-judge)
 — delegate location, extraction, computation, gate-running; every delegated

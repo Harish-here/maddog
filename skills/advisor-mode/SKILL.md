@@ -106,9 +106,9 @@ hands.
 | web-perception | Facts fetched from outside the machine. Web tools required, returns capped and cited. E.g. current anti-bot tactics on a live site: memory is stale, and the cheap hand holds no web tools. |
 | kept | Architectural, user-facing judgment. Never for sale. E.g. whether to build the feature at all: delegating it hands away the duty. |
 
-Within mechanical, split by one test: does the task change anything on disk
-or in a running system, or require running a command? No to both → the
-read hand. Yes to either → the write hand.
+Within mechanical, split by one test: does the task only read and report,
+or does it change or run something? Only reads and reports → the read
+hand. Changes or runs something → the write hand.
 
 ### Tie-breaks
 

@@ -579,16 +579,32 @@ while IFS= read -r segment; do
     # form.
     # (fd duplication/close forms like 2>&1, &>&2, 2>&- are not file writes;
     # a target of /dev/null, decision 22, discards output rather than
-    # persisting it to a file — exempted the same way, alongside them)
+    # persisting it to a file — exempted the same way, alongside them. The
+    # target is read from the RAW token, not the masked one, and re-derived
+    # from the next token when a space separates the operator from its
+    # target (`2> /dev/null`), so both a glued and a spaced /dev/null are
+    # recognized; one layer of surrounding quotes is stripped before the
+    # comparison so `'/dev/null'` and `"/dev/null"` match too. Widened no
+    # further than /dev/null.)
+    redirect_i=0
     for mtok in "${tokens_masked[@]}"; do
       if [[ "$mtok" =~ [0-9]*(\>\>?|\&\>\>?)([^[:space:]]*)$ ]]; then
         rest="${BASH_REMATCH[2]}"
-        if [[ "$rest" =~ ^\&[0-9]+$ ]] || [ "$rest" = "&-" ] || [ "$rest" = "/dev/null" ]; then
+        raw_tok="${tokens[$redirect_i]}"
+        target="${raw_tok:$((${#raw_tok} - ${#rest}))}"
+        if [ -z "$target" ] && [ $((redirect_i + 1)) -lt "${#tokens[@]}" ]; then
+          target="${tokens[$((redirect_i + 1))]}"
+        fi
+        if [[ "$target" == \"*\" && "$target" == *\" ]] || [[ "$target" == \'*\' && "$target" == *\' ]]; then
+          target="${target:1:$((${#target} - 2))}"
+        fi
+        if [[ "$rest" =~ ^\&[0-9]+$ ]] || [ "$rest" = "&-" ] || [ "$target" = "/dev/null" ]; then
           : # fd duplication/close, or /dev/null (decision 22) — not a file write
         else
           deny "output redirection (>, >>, &>) writes to a file — this executor may not write files via Bash."
         fi
       fi
+      redirect_i=$((redirect_i + 1))
     done
   fi
 
