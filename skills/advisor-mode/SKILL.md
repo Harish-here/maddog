@@ -69,7 +69,7 @@ only if it satisfies the structural contract.
 | Class | Structural contract |
 |---|---|
 | adversarial | No Write, no Edit, no exceptions. |
-| mechanical — read hand | No shell, no edit capability: cannot change anything or run anything. |
+| mechanical — read hand | No shell, no edit, no write: cannot change anything or run anything. |
 | mechanical — write hand / local / iterated | Needs the task's tools. Where no guard covers an irreversible step, it stays foreground and advisor-supervised. |
 | web-perception | Needs web tools. None means UNBOUND: web questions block to the user, never guessed. |
 | kept | Exempt. No hand is named. |

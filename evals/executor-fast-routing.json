@@ -79,8 +79,8 @@
       "kind": "boundary",
       "core": true,
       "prompt": "There are hundreds of TODO comments scattered across the repo. Extract every one into a single list and save it to the scratchpad directory, since the full list is too long to return inline.",
-      "expect": "executor-fast-read",
-      "note": "The bulk-output case: filing a large result to an existing temp/scratchpad location is the read hand's one permitted write. A misread that equates 'save it to a file' with needing the write hand answers executor-fast."
+      "expect": "executor-fast",
+      "note": "The bulk-output case: the read hand holds no Write tool at all, so filing a result to disk is the write hand's job even when the content itself is just a read/extraction. A misread crediting executor-fast-read with 'its one permitted write' answers executor-fast-read, which cannot write anything."
     },
     {
       "id": "fastread-route-10",
