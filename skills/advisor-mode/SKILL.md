@@ -99,7 +99,7 @@ hands.
 
 | Class | Shape |
 |---|---|
-| mechanical | Atoms: no judgment bonds, objective, independent — recon, extraction, raw-material reading. Decisions closed, DONE-WHEN objective. E.g. quoting retry clauses across five services with file:line: looks deep, but it's extraction. |
+| mechanical | Atoms: no judgment bonds, objective, independent — recon, extraction, raw-material reading (read hand); or a decided edit/run with nothing left to word — a bulk edit, a test/lint run, a commit (write hand). Decisions closed, DONE-WHEN objective. E.g. quoting retry clauses across five services with file:line: looks deep, but it's extraction; applying that same already-worded fix across those five files is the same shape, just written instead of read. |
 | local | Molecules: bonded by one shared judgment context — one spec, style, or intent. One task, one boundary, per-item DONE-WHENs. E.g. applying six findings that still need wording: looks exact, but the wording is the work. |
 | iterated | Compounds: bonded by reactions, one step's judgment choosing the next. One package, memory, burst-dispatched. E.g. an overnight campaign where each finding re-scopes the next probe: sliced as local jobs, memory dies each dispatch. |
 | adversarial | A gate: the verdict decides whether work proceeds. The hand must be unable to fix. E.g. the prompt driving an overnight run: nobody reads it first, so a fix-capable hand cannot verdict it. |

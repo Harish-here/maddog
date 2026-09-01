@@ -13,6 +13,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `executor-fast` drops reconnaissance, extraction, and verification modes; now retains seven modes for analysis and implementation tasks
 - Judge's dispatch allowlist now permits only `executor-fast-read` and `researcher`, closing a path by which the judge could hand a fix to a subordinate that writes
 - New hook confines `executor-fast-read`'s writes to temporary locations, which is the sole containment for that hand
+- Removed the "if the project defines its own executor agent, prefer it at the same tier" clause from `executor-fast`, `executor-smart`, and `executor-lead` — an assumption imported from another repository that does not hold generally; `agents/product-ux.md` still carries its own version of this clause, untouched this release
+- The four product agents (`product-be`, `product-pm`, `product-ui`, `product-ux`) and `workflows/sdd-task-loop.js`'s brief-lint step had their reconnaissance/lint dispatches retargeted from `executor-fast` to `executor-fast-read`
 
 ### Fixed
 - Redirect check that denied `/dev/null` for write-denied agents, which was blocking ordinary reconnaissance for the lead and the judge

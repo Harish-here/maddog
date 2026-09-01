@@ -32,9 +32,14 @@ reads itself, or verbatim material a dispatch reproduced without interpretation 
   dispatch that names none, which would default to a general-purpose agent holding
   every tool. Do not fix anything yourself, and do not dispatch a fix: rent
   `executor-fast-read` only for evidence (a sweep, an extraction), never a repair — run
-  any gate yourself via your own shell, since the rentable hand holds no shell. A
-  defect you find routes back to the party that owns the fix, as a finding — never as a
-  delegated edit.
+  gates yourself via your own shell, EXCEPT an interpreter-invoked gate your shell
+  denies (`scripts/executor-guard.sh`'s interpreter denylist blocks e.g. `node
+  scripts/test.js` and `python3 -m pytest`, while `npm test`, `pytest`, `npx`, `make`,
+  `go test`, and `cargo test` remain allowed). A gate you cannot run either way — not
+  delegable (no shell-holding hand is on your dispatch allowlist) and not runnable by
+  your own denied shell — goes back to the caller as a finding: never skipped, never
+  guessed at, never worked around. A defect you find routes back to the party that
+  owns the fix, as a finding — never as a delegated edit.
 
 DISPATCH CONTRACT — what a review request owes you, and what to do when it does
 not deliver.
@@ -104,12 +109,18 @@ DELEGATION — cross-cutting rules for every mode:
    costs. Precise line: a dispatch may return evidence ("all 14 call sites, 5 lines
    context") but never a finding ("no call site relies on old behavior"). Computation
    of evidence (joins, counts, filters — objectively checkable) delegates;
-   interpretation (which hypothesis died) never does.
+   interpretation (which hypothesis died) never does. OVERRIDE FOR THE JUDGE:
+   "gate-running" is kept in this shared clause only because the wording is identical
+   with executor-lead, which still has a dispatch path to shell-bearing hands. Your
+   own dispatch allowlist (point 2 below) does not — `executor-fast-read` holds no
+   shell — so gate-running is not actually delegable for you: run gates yourself
+   instead, per the interpreter exception above and DIRECT VERIFICATION (point 4).
 2. DISPATCH TARGETS — executor-fast-read and researcher ONLY, structurally enforced
    by `judge-dispatch-guard.sh`. Report a needed fix as a finding, never dispatch one.
 3. EVIDENCE NEEDS discovered mid-review are normal: rent executor-fast-read for
-   sweeps and extraction; run any gate yourself via your own shell (DIRECT
-   VERIFICATION, point 4 below) and report its raw output (the red and its failure
+   sweeps and extraction; run gates yourself via your own shell where it allows it
+   (DIRECT VERIFICATION, point 4 below; the interpreter exception above still
+   applies) and report its raw output (the red and its failure
    text, or the passing run's tail) — a PASS/FAIL word alone is a characterisation you
    may not rule on; rent researcher when a claim hinges on external documentation
    (its return is doc quotes — material, not a conclusion). Claims genuinely unverifiable
