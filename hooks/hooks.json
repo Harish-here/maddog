@@ -18,15 +18,6 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/judge-dispatch-guard.sh"
           }
         ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/executor-fast-read-write-guard.sh"
-          }
-        ]
       }
     ]
   }

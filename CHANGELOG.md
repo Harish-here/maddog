@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.16.0] - 2026-09-01
+
+### Changed
+- `executor-fast-read` loses the Write capability: it now holds exactly Read, Glob, Grep, Skill and changes nothing at all, resolving the contradiction between its read-only description and its one permitted write
+- Bulk extraction that needs its result filed to disk now routes to `executor-fast`, which already holds Write
+
+### Removed
+- `scripts/executor-fast-read-write-guard.sh` and its `hooks/hooks.json` `Write` matcher — the hand's sole containment mechanism, no longer needed once it holds no Write tool
+
 ## [2.15.0] - 2026-09-01
 
 ### Added
