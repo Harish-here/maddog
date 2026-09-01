@@ -10,11 +10,11 @@ modes; three factually wrong, the author never read `hooks/` or the tool lists).
 Gate history: model-gate verdict rendered 2026-09-01 (VERDICT: findings —
 filed verbatim, local by repo policy, at
 `.claude/reviews/2026-09-01-mode-template-package-model-gate.md`). All findings
-folded into this revision. Three rulings remain the user's, marked inline:
-**[D1]** the zero-mode misroute clause and the four stale fast fixtures (F6),
-**[D2]** the incumbent sweep that legalizes the trim (F10), **[D3]** eval run
-scope and its token cost (F11/F3). The model is not locked until those three
-are ruled.
+folded into this revision. Ruled by the user 2026-09-01: **[D1]** keep the
+misroute clause and migrate the four stale fixtures; **[D2]** run the incumbent
+sweep; **[D3]** full-scope eval runs, identical on both sides. Step-0 green
+light granted with ONE covered rework round for the packet gate. The model is
+LOCKED.
 
 Targets: `agents/executor-fast.md`, `agents/executor-fast-read.md`,
 `.claude/skills/review-agent/references/agent-template.md`,
@@ -68,9 +68,8 @@ seven):
     LAW for the actions it governs. When two held laws pull against each other
     on one action, the prohibition wins: a law that says stop, blocked, or
     never outranks a law that says continue. A task whose actions fit none of
-    the modes is a misroute: return blocked naming what was asked. **[D1]**
-    Each law is a named principle plus a worked example — match the example's
-    shape.
+    the modes is a misroute: return blocked naming what was asked. Each law is
+    a named principle plus a worked example — match the example's shape.
 
 **[D1] The misroute sentence is new behavior, not a consequence of the binder
 fix.** It closes the hole the 2.15.0 mode split left (read-and-report tasks fit
@@ -79,9 +78,7 @@ fixtures whose vehicles predate that split — `fast-distilled-01` (RECON,
 core=true), `fast-hint-01` (VERIFY, core=true, whose `must` demands naming a
 mode fast no longer has), `fast-notes-01/02` (EXTRACT, law "NOTES CONTRACT",
 absent from the body). Those fixtures are stale under the CURRENT shipped text
-too. Recommendation: keep the clause and migrate the four fixtures (M6);
-alternative: drop the clause and file the fixture staleness as separate debt.
-The user rules.
+too. Ruled 2026-09-01: the clause stays; the four fixtures migrate (M6).
 
 Preamble paragraph, both files. This is a family-shared alignment under
 template rule 4 (verbatim-identical in every file that carries it — the
@@ -235,10 +232,8 @@ No numeric size target: a target would be Goodhart's Law aimed at our own
 file. The fixture suite is the referee (M6); efficient-md WARM form governs
 the survivors — binding text at top and bottom, one exemplar over paragraphs.
 
-**[D2]** The incumbent sweep is one additional top-tier dispatch. Without it,
-the honest alternative is a far smaller trim: only lines the two gate verdicts
-themselves indict. Recommendation: run the sweep — it is what makes "brutally
-trim every section" legal under the loop. The user rules.
+**[D2]** Ruled 2026-09-01: the sweep runs (plan Task 3) — it is what makes
+"brutally trim every section" legal under the loop.
 
 ## M6 — Validation
 
@@ -260,10 +255,9 @@ wholesale on every run** (F1) — so:
 - **Baseline before rewrite** **[D3]**: one Workflow run,
   `args: {agents: ["executor-fast", "executor-fast-read"], all: true}` — a
   first-ever recorded run of both suites (no fast-tier fixture has ever
-  appeared in a recorded run; F13). ~27 fixtures ≈ 1.8M tokens. The cheaper
-  alternative is a targeted `args.only` subset (~10 fixtures ≈ 0.7M) at the
-  price of a partial referee. Recommendation: full. The user rules the scope,
-  and the same scope runs on both sides of the comparison.
+  appeared in a recorded run; F13). ~27 fixtures ≈ 1.8M tokens. Scope ruled
+  2026-09-01: full (`args.all: true`), identical on both sides of the
+  comparison.
 
 - **Composite trap fixture** (new, authored before the rewrite —
   fixture-first), appended to `evals/executor-fast-read.json`, verbatim.
