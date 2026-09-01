@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.15.0] - 2026-09-01
+
+### Added
+- `executor-fast-read` — a read-only executor on the cheap tier holding no shell and no edit capability, available for reconnaissance, extraction, and verification tasks
+
+### Changed
+- `executor-fast` drops reconnaissance, extraction, and verification modes; now retains seven modes for analysis and implementation tasks
+- Judge's dispatch allowlist now permits only `executor-fast-read` and `researcher`, closing a path by which the judge could hand a fix to a subordinate that writes
+- New hook confines `executor-fast-read`'s writes to temporary locations, which is the sole containment for that hand
+
+### Fixed
+- Redirect check that denied `/dev/null` for write-denied agents, which was blocking ordinary reconnaissance for the lead and the judge
+
 ## [2.14.2] - 2026-08-31
 
 ### Fixed
