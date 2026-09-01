@@ -29,6 +29,7 @@
 - The packet is the single authority for apply dispatches — never chat memory (author-agent step 2).
 - Interactive checkpoints (step-0 green light with the Cost values above; D1–D3 rulings; packet approval; release DECLARE/RULE/SHIP) stop and wait for the user; they are never inferred.
 - JSON validation commands (`python3 -c …`) run from the orchestrating session, whose Bash is not scoped by `scripts/executor-guard.sh`; if delegated instead, the hand must hold Write/Edit (the guard refused the read-only judge).
+- The executing session's agent registry must resolve `maddog:executor-fast-read` before any dispatch or eval run — the agent merged 2026-09-01 and registers only after a plugin reload or a fresh session. The runner's preflight aborts the whole run otherwise (observed 2026-09-01: `preflight-agent-resolution` abort).
 
 ---
 
