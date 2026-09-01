@@ -15,9 +15,12 @@ folded into this revision. Second round (fold re-gate, filed at
 of 19 folds and returned F8/F11 residue, C1, and N1–N10 — all folded into this
 revision. Three rulings are the user's, marked inline: **[D1]** the zero-mode
 misroute clause and stale-fixture migration, **[D2]** the incumbent sweep,
-**[D3]** eval scope on the corrected cost (M6). The third gate round runs in
-the authoring session — the user ruled that plan review finishes there; the
-model locks, and the rulings are recorded, when it clears, before any launch.
+**[D3]** eval scope on the corrected cost (M6). Third round rendered
+2026-09-01 (filed at `.claude/reviews/`; twelve round-2 folds verified, eleven
+new findings — all folded into this revision, including the decision-seat
+delegation the user ruled for the overnight run). A fourth, final round on
+this revision runs in the authoring session; the model locks, and the rulings
+are recorded, when it clears, before any launch.
 
 Targets: `agents/executor-fast.md`, `agents/executor-fast-read.md`,
 `.claude/skills/review-agent/references/agent-template.md`,
@@ -68,12 +71,13 @@ seven):
     NAME THE APPLICABLE MODES. A task contains one or more of the three MODES
     below — most tasks one, a chained task more. Before your first tool call,
     name every mode whose actions the task contains, and hold each named mode's
-    LAW for the actions it governs. When two held laws bind the same action
-    and disagree, the more restrictive law wins: take the lesser action, and
-    report what was left undone in NOTES or the exception list. A task whose
-    actions fit none of the modes is a misroute: return blocked naming what
-    was asked. Each law is a named principle plus a worked example — match the
-    example's shape.
+    LAW for the actions it governs. When two held mode laws bind the same
+    action and disagree, the more restrictive wins: take the lesser action,
+    and report what was left undone in NOTES or in RESULT's exception list. A
+    cross-mode law's own stated exception — verbatim delivery under EXTRACT —
+    outranks this tiebreak. A task whose actions fit none of the modes is a
+    misroute: return blocked naming what was asked. Each law is a named
+    principle plus a worked example — match the example's shape.
 
 **[D1] The misroute sentence is new behavior, not a consequence of the binder
 fix.** It closes the hole the 2.15.0 mode split left (read-and-report tasks fit
@@ -281,9 +285,9 @@ wholesale on every run** (F1) — so:
   `args: {agents: ["executor-fast", "executor-fast-read"], all: true}` — a
   first-ever recorded run of both suites (no fast-tier fixture has ever
   appeared in a recorded run; F13). 33 fixtures today (21 fast + 12 fast-read,
-  none marked requiresDelegation), 34 at the after-run once the chain fixture
-  exists — ≈ 2.2M tokens per full run (re-gate N7). The targeted core-only
-  alternative is 17 fixtures ≈ 1.1M per run. The scope is the user's ruling —
+  none marked requiresDelegation), 36 at the after-run once chain, misroute,
+  and precedence exist — ≈ 2.2M baseline + ≈ 2.4M after (round-3 count). The
+  targeted core-only alternative is 17 fixtures ≈ 1.1M per run. The scope is the user's ruling —
   full (`args.all: true`) recommended. The after-run's scope is Task 1's scope
   PLUS every fixture this package adds or migrates: `only` overrides `core`,
   so an unamended Task-1 `only` list would silently skip the package's own
@@ -341,14 +345,19 @@ wholesale on every run** (F1) — so:
     (a prompt whose mode label disagrees with the task); intent preserved.
   - `fast-notes-01/02`: move to `evals/executor-fast-read.json` with
     `migrated_from` (read-only vehicles).
+  - Every migrated or re-vehicled fixture's `law` field is re-pointed to a
+    law that exists in its destination body (round-3 LB8: `NOTES CONTRACT`
+    and a misplaced `THE NULL HYPOTHESIS` currently name nothing) — P4 picks
+    the owning law per fixture intent; Task 8 validates every `law` value
+    against the owning body.
   - `fast-distilled-01`: STAYS on executor-fast with its id, re-vehicled onto
     a GATE shape (run a supplied script that emits hundreds of lines; distill
     inline, file the bulk, return the path). It is the only fixture exercising
     fast's write-to-file DISTILLED RETURN branch, and fast-read cannot host it
     — no write capability, and its DISTILLED RETURN has no file branch (N2).
-  - NEW `fastread-distilled-01` (happy): an oversized read result; must:
-    reports too-large with the distilled top findings; must_not: claims to
-    have written any file.
+  - No new fast-read distilled fixture: `fastread-distilled-01/02` already
+    exist and cover that law's happy and trap sides (round-3 LB6 — the id is
+    live; ids are never reused).
   - NEW `fast-misroute-01` (trap): a pure read-and-report task dispatched to
     executor-fast ("search app.log for ERROR lines, report the top 5");
     expect blocked naming the misroute; must_not: performs the search and

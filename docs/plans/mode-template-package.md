@@ -12,7 +12,7 @@
 
 ## Cost (source for the step-0 lines author-agent requires)
 
-- Eval runs, at the runner's own ~66k tokens/fixture (re-gate N7): full scope [D3] = 33 fixtures at baseline + 34 at the after-run ≈ 4.5M tokens total (haiku-priced dispatches plus grading), plus one single-fixture run ≈ 66k. Targeted core-only alternative: 17 fixtures ≈ 1.1M per run.
+- Eval runs, at the runner's own ~66k tokens/fixture (re-gate N7, round-3 count): full scope [D3] = 33 fixtures at baseline + 36 at the after-run (chain, misroute, precedence added) ≈ 4.6M tokens total (haiku-priced dispatches plus grading), plus one single-fixture run ≈ 66k. Targeted core-only alternative: 17 fixtures ≈ 1.1M per run.
 - Judge dispatches (opus): model gate round 3 ×1, incumbent sweep [D2] ×1, packet gate ×1, plus one re-gate per rework round; two model-gate rounds already spent.
 - Apply dispatches (haiku) ×3; fixture authoring and migration (sonnet) ×1.
 - Covered rework rounds for the packet gate: ONE — granted by the user 2026-09-01; every further round is its own green light. The thread's deliverable is Task 9's closing report, published in the PR body.
@@ -22,11 +22,12 @@
 
 - **Vehicle**: a fresh interactive session on opus (`--model opus`), hosted in tmux. sdd-task-loop is NOT the engine — it executes frozen implementation briefs, and this package is a gated authoring loop with judge rounds. Its LAUNCH CONTRACT is adopted verbatim instead: watchdog and heartbeat, run-start/complete/abort pings via `~/.claude/channels/telegram/notify.sh`, tmux hosting, `~/.claude/watchdogs/resume.state` standing file, workflow runIds persisted, one `resumeFromRunId` retry before paging the user. The kickoff prompt's first order is to invoke the maddog advisor-mode skill.
 - **First act**: verify the model is LOCKED — M0 must record the user's rulings and the clearing round-3 verdict, both produced in the authoring session (user ruling: plan review finishes there; the overnight session implements only). If M0 is not locked, ping the user and halt; author nothing.
-- **Approval delegation (user ruling)**: the user delegates Task 6's on-screen text approval to the session's gate chain and reviews the final texts at the PR instead. Recorded deviation from author-agent step 5. Consequence: the PR body MUST carry every final agent-body text verbatim (or full per-item diffs) plus the clearing verdict IDs — the PR review IS the text review.
+- **Decision-seat delegation (user ruling, 2026-09-01, superseding the narrower approval delegation)**: for this run the user delegates their decision seat to the session. Wherever doctrine says page-and-wait — author-agent step 5's on-screen approval, absent.md §2's instruction-file blocker, every interactive checkpoint this plan names — the session decides as the user's delegate, records each decision at the moment it is made in `.claude/reviews/overnight-judgment-ledger.md` (timestamp, the question, the decision, rationale ≤2 lines), and pings a one-line summary. This direct user instruction outranks the skills' page-and-wait defaults for this run and nothing else: the supervision stack (including absent.md's ledger under `~/.claude/ledgers/`), pings, and freeze-on-message stand. The user reviews the judgment ledger and the final texts at the PR, whose body MUST carry every final agent-body text verbatim (or full per-item diffs) plus the clearing verdict IDs.
 - **Span**: Tasks 0–9 unattended, then Task 10 through SHIP — push, open the PR with the body above, STOP. The merge is the user's, in the morning. DECLARE uses the user's version pre-ruling recorded in the kickoff prompt; absent one, the session pings and waits at DECLARE.
-- **Preconditions checked at launch, in order**: (1) installed maddog plugin ≥ 2.15.0 (`claude plugin update`; the 2.14.2 cache lacks executor-fast-read); (2) `gh auth status` ok; (3) tmux present; (4) the notify script executable; (5) branch `feat/mode-template-package` checked out clean.
-- **After-run body source (honest limit)**: eval dispatches run the INSTALLED plugin's agents. The baseline correctly tests installed 2.15.0, the current shipped text. After Task 7's applies, the after-run needs the branch's edited bodies installed: the session attempts a local install from the branch checkout; if no supported path exists, it runs the after-run anyway, records the result as UNVERIFIED-against-branch with named debt (the ritual's standing E9 precedent), carries that in the PR, and leaves a post-merge confirmation run as the PR's stated follow-up. Never silently skipped.
+- **Preconditions checked at launch, in order**: (1) installed maddog plugin ≥ 2.16.0 — the current release; a 2.15.0 install carries a Write-holding executor-fast-read and is a materially different baseline; (2) `gh auth status` ok; (3) tmux present; (4) the notify script executable; (5) branch `feat/mode-template-package` checked out clean; (6) the watchdog LaunchAgent actually bootstrapped (`launchctl list` shows `com.maddog.watchdog-resume`), per absent.md's stack check; (7) determine NOW whether a branch-local plugin install path exists — this answer gates Task 8's after-run and must be known before Task 1 spends the baseline.
+- **After-run body source (honest limit)**: eval dispatches run the INSTALLED plugin's agents. The baseline correctly tests the installed current release (2.16.0 at prep time). After Task 7's applies, the after-run needs the branch's edited bodies installed — the launch precondition (7) already determined whether that path exists. If it does, install and run. If it does not, the after-run is SKIPPED and recorded as UNVERIFIED-against-branch with named debt (the ritual's standing E9 precedent), carried in the PR with a post-merge confirmation run as the stated follow-up — it is never run as a comparison of the same installed bodies against themselves, which measures nothing at ≈2.4M tokens.
 - **Interrupts**: any user message freezes the run — kill or pause in-flight dispatches before replying, and report what was running.
+- **Close-out**: DELETE `~/.claude/watchdogs/resume.state` (the launch contract's own rule) so the watchdog never relaunches a completed run; then send the completion ping.
 
 ## Global Constraints
 
@@ -38,7 +39,7 @@
 - Fixture ids are never renumbered; cross-file moves carry `migrated_from` (`evals/README.md` §Fields).
 - Every apply dispatch states verbatim: the working tree's uncommitted changes are the deliverable; git checkout, restore, stash, and clean are forbidden; DONE-WHENs describe the dispatch's own delta ("your edits touch only X"), never tree state (author-agent step 6).
 - The packet is the single authority for apply dispatches — never chat memory (author-agent step 2).
-- Interactive checkpoints (step-0 green light with the Cost values above; D1–D3 rulings; packet approval; release DECLARE/RULE/SHIP) stop and wait for the user; they are never inferred.
+- Interactive checkpoints (step-0 green light with the Cost values above; D1–D3 rulings; packet approval; release DECLARE/RULE/SHIP) stop and wait for the user in attended execution. In the overnight run, the user's decision-seat delegation (Overnight profile) governs instead: the session decides as delegate and the judgment ledger is the record.
 - JSON validation commands (`python3 -c …`) run from the orchestrating session, whose Bash is not scoped by `scripts/executor-guard.sh`; if delegated instead, the hand must hold Write/Edit (the guard refused the read-only judge).
 - The executing session's agent registry must resolve `maddog:executor-fast-read` before any dispatch or eval run — the agent merged 2026-09-01 and registers only after a plugin reload or a fresh session. The runner's preflight aborts the whole run otherwise (observed 2026-09-01: `preflight-agent-resolution` abort).
 - The INSTALLED maddog plugin must be ≥ 2.15.0 before launch — the newest cached install on this machine is 2.14.2, which lacks executor-fast-read entirely; a fresh session alone does not fix that. Run the plugin update first (Overnight profile, precondition 1).
@@ -142,7 +143,7 @@ git commit -m "fix(evals): add fastread-chain-01 composite-mode trap; document c
 
 - [ ] **Step 2: Author P1 — `.claude/skills/review-agent/references/agent-template.md`**
 
-All four M3 amendments, each with its anchor: (1) insert the template block verbatim after the rewritten mode-block spec; (2) rewrite the mode-block spec at its current `takes:`/`Output:` paragraph so the overlay carries exactly one spec; (3) amend the classify-first bullet for chain-capable agents; (4) append the instance and residue-destination rules to the rule lists. Rules 1–10 otherwise untouched.
+All four M3 amendments, each with its anchor: (1) insert the template block verbatim after the rewritten mode-block spec; (2) rewrite the mode-block spec at its current `takes:`/`Output:` paragraph AND the DIMENSION TABLE's EXECUTION Signature-machinery cell, so the file carries exactly one spec, table included; (3) amend the classify-first bullet for chain-capable agents, naming both openers; (4) add the residue-destination rule as rule 11 after rule 10, and the instance rule as its own titled "Definition-slot rule" paragraph above the law list — NEVER renumber rules 1–10 (model amendment 4; two artifacts cite them by number).
 
 - [ ] **Step 3: Author P2 — `agents/executor-fast-read.md` body revision**
 
@@ -168,9 +169,9 @@ Six items: `fast-hint-01` re-vehicle, `fast-notes-01/02` moves with `migrated_fr
 
 - [ ] **Step 2: Rework loop per author-agent step 4** — fold named cuts exactly; rework REWORK items per their findings; re-gate only changed items, same judge while fresh or a fresh judge supplied every prior ruling verbatim. Each round beyond the covered count needs its own green light. The author never self-clears an item.
 
-### Task 6: User approval (author-agent step 5 — interactive stop)
+### Task 6: Text approval
 
-- [ ] **Step 1: Present final verbatim texts on screen by item ID, each citing the gate verdict that cleared it.** Wait for explicit approval. No apply before it.
+- [ ] **Step 1 (attended execution): Present final verbatim texts on screen by item ID, each citing the gate verdict that cleared it; wait for explicit approval — no apply before it.** In the overnight run, the user's decision-seat delegation (Overnight profile) discharges this step: the session approves as delegate, records the decision with the item IDs and verdict IDs in the judgment ledger, and the user's review happens at the PR, whose body carries the same texts verbatim.
 
 ### Task 7: Apply (author-agent step 6)
 
@@ -197,7 +198,7 @@ git commit -m "fix(evals): migrate pre-split fixtures to owning agents with migr
 ### Task 8: Verify (author-agent step 7) + after-run referee
 
 **Files:**
-- Modify: `evals/executor-fast.json` (diagnose `mode` → `REPRODUCE`, ids kept), `evals/executor-fast-read.json` (`law` fields → `AUTHORITATIVE RESOLUTION` on `fastread-recon-01/02`), `evals/README.md` (schema example `law` value; any remaining single-mode or DIAGNOSE prose)
+- Modify: `evals/executor-fast.json` (diagnose `mode` → `REPRODUCE`, ids kept), `evals/executor-fast-read.json` (`law` fields → `EFFECTIVE VALUE` on `fastread-recon-01/02`), `evals/README.md` (schema example `law` value; any remaining single-mode or DIAGNOSE prose)
 
 **Interfaces:**
 - Consumes: packet (fidelity reference), Task 1/2 local baseline records.
@@ -207,11 +208,11 @@ git commit -m "fix(evals): migrate pre-split fixtures to owning agents with migr
 
 - [ ] **Step 2: Routing probes** — record explicitly: N/A, no frontmatter description changed in this package.
 
-- [ ] **Step 3: Align every naming artifact to the shipped text** — `fast-diagnose-01/02` `mode` → `REPRODUCE`; `fastread-recon-01/02` `law` → `EFFECTIVE VALUE`; README schema example's `law` value; grep both eval JSONs and `evals/README.md` for `INFORMATION SCENT`, `DIAGNOSE`, and single-mode classification prose in rubric/`must` fields — update per M6. Verify the two by-number rule citations still point true after the template amendments (`author-agent/SKILL.md` "rules 1-5… 6-8 and 10… 9"; the template's rule 4 citing "rule 1" and "rules 2-3" — re-gate N4). Validate both JSONs parse. Commit:
+- [ ] **Step 3: Align every naming artifact to the shipped text** — `fast-diagnose-01/02` `mode` → `REPRODUCE`; `fastread-recon-01/02` `law` → `EFFECTIVE VALUE`; README schema example's `law` value; grep both eval JSONs and `evals/README.md` for `INFORMATION SCENT`, `DIAGNOSE`, and single-mode classification prose in rubric/`must` fields — update per M6. Verify the two by-number rule citations still point true after the template amendments (`author-agent/SKILL.md` "rules 1-5… 6-8 and 10… 9"; the template's rule 4 citing "rule 1" and "rules 2-3" — re-gate N4). Validate every fixture's `law` value names a law present in its owning body — the migrated `fast-notes-01/02` and `fast-hint-01` get their `law` re-pointed in P4 to the destination body's owning law (round-3 LB8: NOTES CONTRACT and a misplaced NULL HYPOTHESIS currently name nothing). Validate both JSONs parse. Commit:
 
 ```bash
 git add evals/executor-fast.json evals/executor-fast-read.json evals/README.md
-git commit -m "fix(evals): REPRODUCE and AUTHORITATIVE RESOLUTION renames, single-mode prose sweep"
+git commit -m "fix(evals): REPRODUCE and EFFECTIVE VALUE renames, law-field validation, single-mode prose sweep"
 ```
 
 - [ ] **Step 4: After-run** — same Workflow invocation as Task 1, scope = Task 1's scope PLUS every fixture this package added or migrated (under a targeted ruling, extend the `only` list — `only` overrides `core`, re-gate N8), then immediately:
@@ -230,7 +231,7 @@ Compare per-fixture against the baseline copies, mapping migrated ids via `migra
 - Consumes: gate verdicts, placement results, probe records, fixture entries, the run comparison.
 - Produces: `.claude/reviews/2026-09-01-mode-template-package-close.md` (LOCAL — never committed). Its full text is the release PR's body content (M7 records policy): that is how the record publishes.
 
-- [ ] **Step 1: Write the report** — per item: clearing verdict ID, placement result, probe output or explicit N/A, fixture or fixture-debt entry; plus the baseline/after comparison table. An item missing any of the four is not closed; say so.
+- [ ] **Step 1: Write the report** — per item: clearing verdict ID, placement result, probe output or explicit N/A, fixture or fixture-debt entry; plus the baseline/after comparison table; plus EVERY final agent-body text verbatim (or full per-item diffs) with its clearing verdict ID — the PR body inherits this report whole, and the verbatim texts are the user's delegated text review (round-3 LB5). An item missing any element is not closed; say so.
 
 ### Task 10: Release (release skill — interactive at DECLARE, RULE, SHIP)
 
