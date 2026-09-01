@@ -15,9 +15,9 @@ folded into this revision. Second round (fold re-gate, filed at
 of 19 folds and returned F8/F11 residue, C1, and N1–N10 — all folded into this
 revision. Three rulings are the user's, marked inline: **[D1]** the zero-mode
 misroute clause and stale-fixture migration, **[D2]** the incumbent sweep,
-**[D3]** eval scope on the corrected cost (M6). A third gate round on this
-revision is the overnight session's first act; the model locks, and the
-rulings are recorded, when it clears.
+**[D3]** eval scope on the corrected cost (M6). The third gate round runs in
+the authoring session — the user ruled that plan review finishes there; the
+model locks, and the rulings are recorded, when it clears, before any launch.
 
 Targets: `agents/executor-fast.md`, `agents/executor-fast-read.md`,
 `.claude/skills/review-agent/references/agent-template.md`,
