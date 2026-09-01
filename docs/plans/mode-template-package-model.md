@@ -15,12 +15,28 @@ folded into this revision. Second round (fold re-gate, filed at
 of 19 folds and returned F8/F11 residue, C1, and N1–N10 — all folded into this
 revision. Three rulings are the user's, marked inline: **[D1]** the zero-mode
 misroute clause and stale-fixture migration, **[D2]** the incumbent sweep,
-**[D3]** eval scope on the corrected cost (M6). Third round rendered
-2026-09-01 (filed at `.claude/reviews/`; twelve round-2 folds verified, eleven
-new findings — all folded into this revision, including the decision-seat
-delegation the user ruled for the overnight run). A fourth, final round on
-this revision runs in the authoring session; the model locks, and the rulings
-are recorded, when it clears, before any launch.
+**[D3]** eval scope on the corrected cost (M6).
+
+**The model is LOCKED.** Locked 2026-09-01, night, in the authoring session,
+after FOUR gate rounds, all filed verbatim under `.claude/reviews/`
+(`…-model-gate.md`, `…-fold-regate.md`, `…-round3.md`, `…-round4.md`). Round 4
+returned six load-bearing findings with its own named one-line fixes; the
+authoring session folded them exactly as the verdict prescribed — no creative
+license — and locked without a fifth round under the user's delegated
+fold-and-lock authority for tonight; the morning review covers those folds,
+and the packet gate receives all four verdicts as precedent.
+
+USER RULINGS OF RECORD (2026-09-01):
+- D1: misroute clause stays; the stale fixtures migrate/re-vehicle per M6.
+- D2: the incumbent sweep runs (plan Task 3).
+- D3: FULL eval scope, `args.all: true`, both sides; ≈4.6M tokens accepted.
+- Packet-gate covered rework rounds: ONE; further rounds need a green light,
+  answered by the delegate under the decision-seat ruling, ledger-recorded.
+- Version at DECLARE: MAJOR — 3.0.0.
+- Decision-seat delegation for the overnight run: the session answers
+  page-and-wait questions as the user's delegate and records each in
+  `.claude/reviews/overnight-judgment-ledger.md`; the user reviews the ledger
+  and the PR in the morning; the merge is the user's hand only.
 
 Targets: `agents/executor-fast.md`, `agents/executor-fast-read.md`,
 `.claude/skills/review-agent/references/agent-template.md`,
@@ -73,11 +89,11 @@ seven):
     name every mode whose actions the task contains, and hold each named mode's
     LAW for the actions it governs. When two held mode laws bind the same
     action and disagree, the more restrictive wins: take the lesser action,
-    and report what was left undone in NOTES or in RESULT's exception list. A
-    cross-mode law's own stated exception — verbatim delivery under EXTRACT —
-    outranks this tiebreak. A task whose actions fit none of the modes is a
-    misroute: return blocked naming what was asked. Each law is a named
-    principle plus a worked example — match the example's shape.
+    and report what was left undone in NOTES. A cross-mode law's own stated
+    exception (DISTILLED RETURN's verbatim carve-out) outranks this tiebreak.
+    A task whose actions fit none of the modes is a misroute: return blocked
+    naming what was asked. Each law is a named principle plus a worked
+    example — match the example's shape.
 
 **[D1] The misroute sentence is new behavior, not a consequence of the binder
 fix.** It closes the hole the 2.15.0 mode split left (read-and-report tasks fit
@@ -347,9 +363,11 @@ wholesale on every run** (F1) — so:
     `migrated_from` (read-only vehicles).
   - Every migrated or re-vehicled fixture's `law` field is re-pointed to a
     law that exists in its destination body (round-3 LB8: `NOTES CONTRACT`
-    and a misplaced `THE NULL HYPOTHESIS` currently name nothing) — P4 picks
-    the owning law per fixture intent; Task 8 validates every `law` value
-    against the owning body.
+    and a misplaced `THE NULL HYPOTHESIS` currently name nothing). Named
+    candidates (round-4 C-j): `fast-hint-01` takes the law of the mode its
+    new vehicle actually is; `fast-notes-01/02` take DIPLOMATIC TRANSCRIPTION
+    in fast-read — the original discipline rides in `must` lines either way.
+    Task 8 validates every `law` value against the owning body.
   - `fast-distilled-01`: STAYS on executor-fast with its id, re-vehicled onto
     a GATE shape (run a supplied script that emits hundreds of lines; distill
     inline, file the bulk, return the path). It is the only fixture exercising
