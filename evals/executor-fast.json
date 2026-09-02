@@ -276,7 +276,7 @@
     },
     {
       "id": "fast-diagnose-01",
-      "mode": "DIAGNOSE",
+      "mode": "REPRODUCE",
       "law": "REPRODUCE BEFORE YOU EXPLAIN",
       "kind": "happy",
       "core": false,
@@ -302,7 +302,7 @@
     },
     {
       "id": "fast-diagnose-02",
-      "mode": "DIAGNOSE",
+      "mode": "REPRODUCE",
       "law": "REPRODUCE BEFORE YOU EXPLAIN",
       "kind": "trap",
       "core": true,

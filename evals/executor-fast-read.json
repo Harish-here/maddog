@@ -5,7 +5,7 @@
     {
       "id": "fastread-recon-01",
       "mode": "RECON",
-      "law": "INFORMATION SCENT",
+      "law": "EFFECTIVE VALUE",
       "kind": "happy",
       "core": true,
       "trap": null,
@@ -35,7 +35,7 @@
     {
       "id": "fastread-recon-02",
       "mode": "RECON",
-      "law": "INFORMATION SCENT",
+      "law": "EFFECTIVE VALUE",
       "kind": "trap",
       "core": false,
       "trap": "Answers from the first grep hit (flags.ts: false) without following the boot-time override that flips it to true.",
