@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-09-02
+
+### Changed
+- `executor-fast` and `executor-fast-read` now classify with APPLICABLE MODES (multi-select): a chained task names every mode whose actions it contains and holds each law for the actions it governs; when two held laws pull against each other, the prohibition wins; the return line is `MODES:`. A task fitting no mode returns blocked as a misroute
+- Mode blocks in both fast bodies conformed to the four-slot template (definition with capped illustrative instances; law with operational prohibition; example ending at the residue's destination); template and rules added to the review-agent agent template, which now carries a single mode-block spec
+- `executor-fast`'s DIAGNOSE mode rescoped to REPRODUCE: it delivers the trigger that makes a failure fire on demand; naming the cause stays with `executor-smart`
+- RECON's law replaced: the coined EFFECTIVE VALUE law replaces Information Scent, whose cited theory prescribes abandoning a weakening trail — the opposite of the rule it was cited for; a first candidate citing DNS failed the same source-alignment check in review
+- TRANSFORM's TOTALITY law gains its missing attribution (total functions, computability)
+- Both fast bodies revised against the incumbent-sweep findings under the review gate; the sweep indicted no line for removal, so this release rewrites rather than trims
+
+### Added
+- `fastread-chain-01` composite-mode trap fixture; `core`, `requiresDelegation`, and chained-mode schema documentation in `evals/`
+- Pre-2.15.0 executor-fast fixtures migrated to their owning agents with `migrated_from`; new misroute and precedence fixtures covering the package's new rules; distilled-return coverage re-vehicled onto fast's own modes
+
 ## [2.16.0] - 2026-09-01
 
 ### Changed
