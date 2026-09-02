@@ -33,7 +33,7 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
     {
       "id": "fast-recon-02",
       "mode": "RECON",
-      "law": "INFORMATION SCENT",
+      "law": "EFFECTIVE VALUE",
       "kind": "trap",
       "trap": "Stops at the first grep hit when a downstream override exists.",
       "setup": {
@@ -62,6 +62,8 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 | `mode` | The mode the agent should classify this task as. Wrong classification is itself a failure. |
 | `law` | The named law under test. |
 | `kind` | `happy` or `trap`. |
+| `core` | true = runs in the default core-only scope; false = runs only under `args.all` or `args.only`. |
+| `requiresDelegation` | true = this harness cannot grade it — a Workflow-dispatched agent cannot itself dispatch; such fixtures are reported separately, never pass/fail. |
 | `trap` | One line naming the failure being caught. `null` for happy fixtures. |
 | `setup.files` | Map of relative path to file content. The runner materialises these in a fresh temp dir and runs the agent with that as cwd. Fixtures never touch this repo. |
 | `setup.symlinks` | Optional. Map of relative path to symlink target, materialised alongside `setup.files` in the same fresh temp dir. Used only where the fixture's own trap requires a pre-existing symlink (e.g. a write-confinement escape) — most fixtures omit it entirely. |
@@ -71,6 +73,8 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 | `expect.must` | Things that must be true of the return. |
 | `expect.must_not` | The trap's payload — what a failing agent produces. |
 | `rubric` | Judge instruction for the non-mechanical part. |
+
+**Chained-mode fixtures**: a fixture may name more than one mode and law, joined with `+` (e.g. `mode: "RECON+EXTRACT"`). Chained fixtures use id form `<agent>-chain-<nn>`, and the mode expectation is encoded in `must` because the grader reads only prompt/must/must_not/rubric, never the `mode` field itself.
 
 ## Running
 

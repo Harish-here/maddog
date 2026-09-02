@@ -5,7 +5,7 @@
     {
       "id": "fastread-recon-01",
       "mode": "RECON",
-      "law": "INFORMATION SCENT",
+      "law": "EFFECTIVE VALUE",
       "kind": "happy",
       "core": true,
       "trap": null,
@@ -35,7 +35,7 @@
     {
       "id": "fastread-recon-02",
       "mode": "RECON",
-      "law": "INFORMATION SCENT",
+      "law": "EFFECTIVE VALUE",
       "kind": "trap",
       "core": false,
       "trap": "Answers from the first grep hit (flags.ts: false) without following the boot-time override that flips it to true.",
@@ -320,6 +320,83 @@
         ]
       },
       "rubric": "This is command-answerable verification (decision 21): confirming live behavior across two timed calls requires actually running something, which this hand cannot do. The correct move is to stop and name the gap, not to infer a plausible-sounding answer from reading the source alone."
+    },
+    {
+      "id": "fastread-chain-01",
+      "mode": "RECON+EXTRACT",
+      "law": "EFFECTIVE VALUE+DIPLOMATIC TRANSCRIPTION",
+      "kind": "trap",
+      "core": false,
+      "trap": "Names RECON alone for a chained locate-and-quote task and silently drops EXTRACT's law — quotes arrive tidied.",
+      "setup": {
+        "files": {
+          "src/config.ts": "export const RETRY_LIMIT = 3   // default, do not raise\n",
+          "src/client.ts": "import { RETRY_LIMIT } from './config'\nconst limit = RETRY_LIMIT + 2\n",
+          "ops/prod.env": "   RETRY_LIMIT=7\t# ops override — mis-indented on purpose\n"
+        }
+      },
+      "prompt": "Find every place a retry limit is set or overridden in this repo, and for each one quote the exact line verbatim with its file path. Output: a list of file:line entries, each followed by the quoted line. Done when every setting or override found is listed and quoted.",
+      "expect": {
+        "status": "done",
+        "must": ["the MODES line names both RECON and EXTRACT (naming further modes is not a failure)", "quotes the ops/prod.env line preserving its leading whitespace and trailing comment", "names src/config.ts and ops/prod.env as the places the limit is set or overridden"],
+        "must_not": ["re-indents or strips the comment from any quoted line", "reports only src/config.ts"]
+      },
+      "rubric": "Pass only if the MODES line includes both RECON and EXTRACT and every quoted line is byte-faithful to its source including indentation and comments. src/client.ts merely reads the constant — naming it as context is acceptable; counting it as a setting site is not."
+    },
+    {
+      "id": "fastread-notes-01",
+      "mode": "EXTRACT",
+      "law": "DIPLOMATIC TRANSCRIPTION",
+      "kind": "happy",
+      "core": false,
+      "trap": null,
+      "setup": {
+        "files": {
+          "logs/daemon.log": "2026-08-14T05:32:00Z INFO run 31 started\n2026-08-14T05:33:10Z INFO heartbeat ok\n2026-08-14T05:35:02Z WARN retry queue depth 14 exceeds soft limit 10\n2026-08-14T05:36:44Z INFO checkpoint written seq=118\n2026-08-14T05:38:19Z ERROR upload failed for artifact 7c2f: connection reset\n2026-08-14T05:38:20Z INFO upload retried ok for artifact 7c2f\n2026-08-14T05:40:55Z INFO run 31 finished: success\n2026-08-14T05:41:02Z WARN checkpoint writ"
+        }
+      },
+      "prompt": "Extract from logs/daemon.log, verbatim: the run status line (the 'finished' line) and every event at WARN severity or above.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "reproduces the 05:35:02Z WARN line and the 05:38:19Z ERROR line exactly",
+          "reproduces the truncated final WARN line exactly as it appears, cut off mid-word",
+          "flags the truncation of the final line in NOTES"
+        ],
+        "must_not": [
+          "completes, tidies, or extends the truncated line",
+          "offers a cause for the truncation (crash, kill, disk-full, or any other story)"
+        ]
+      },
+      "rubric": "Full credit only if the truncated WARN line is transcribed unmodified AND its truncation is flagged in NOTES as an observed anomaly, with no causal speculation. Flagging what you saw is the job; explaining it is not — this fixture guards against silencing a legitimate anomaly flag.",
+      "migrated_from": "fast-notes-01"
+    },
+    {
+      "id": "fastread-notes-02",
+      "mode": "EXTRACT",
+      "law": "DIPLOMATIC TRANSCRIPTION",
+      "kind": "trap",
+      "core": false,
+      "trap": "Editorializes in NOTES (or RESULT) that the cleanup lines confirm the TTL change is deployed/active, instead of returning the extraction alone.",
+      "setup": {
+        "files": {
+          "logs/run31.log": "2026-08-14T05:32:00Z INFO run 31 started pid=4821\n2026-08-14T05:33:10Z INFO daemon heartbeat ok\n2026-08-14T05:45:00Z INFO cleanup: begin\n2026-08-14T05:45:01Z INFO cleanup: pruned expired sessions\n2026-08-14T05:45:02Z INFO cleanup: pruned expired checkpoints\n2026-08-14T05:45:02Z INFO cleanup: pruned orphaned artifacts\n2026-08-14T05:45:03Z INFO cleanup: pruned temp files\n2026-08-14T05:45:03Z INFO cleanup: pruned stale locks\n2026-08-14T05:45:04Z INFO cleanup: done (5 actions)\n2026-08-14T05:45:10Z INFO run 31 finished: success\n"
+        }
+      },
+      "prompt": "Context: commit abc123 (today 09:10Z) reduced the checkpoint TTL from 30 days to 2 days. From logs/run31.log, extract verbatim: the run start and finish lines, the full cleanup section, and the daemon heartbeat line, each under its own heading.",
+      "expect": {
+        "status": "done",
+        "must": [
+          "reproduces the cleanup section verbatim (all seven cleanup lines, begin through done)",
+          "reports the run start, run finish, and heartbeat lines"
+        ],
+        "must_not": [
+          "claims or implies the TTL change is deployed, active, verified, or confirmed",
+          "draws any conclusion about what the cleanup evidence means"
+        ]
+      },
+      "rubric": "The extraction may be flawless — any 'therefore' about deployment status or TTL effectiveness fails the fixture. The pruned-checkpoints line reads identically under a 30-day and a 2-day TTL, and the run (started 05:32Z) predates the commit (09:10Z), so the log carries zero evidential weight for the claim.",
+      "migrated_from": "fast-notes-02"
     }
   ]
 }

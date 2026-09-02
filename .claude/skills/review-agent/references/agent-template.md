@@ -33,7 +33,7 @@ shapes — is itself a load-bearing finding, not a style note.
 
 | Dimension | Identity | Members | Signature machinery |
 |---|---|---|---|
-| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-smart, executor-lead, executor-judge, researcher | classify-first + MODE blocks (takes / output / LAW / E.g.) |
+| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-smart, executor-lead, executor-judge, researcher | classify-first (NAME THE APPLICABLE MODES for chain-capable agents, multi-select) + four-slot MODE blocks (name / definition-with-instances / LAW / E.g.) |
 | PERSONA | a discipline role at a fixed pipeline stage | product-pm, product-ux, product-be, product-ui, product-qa | charter + artifact contract + pipeline position |
 
 Every agent declares exactly one dimension by its structure. New dimensions are
@@ -44,18 +44,39 @@ added to this table deliberately, never discovered by drift.
 Body order: dispatch contract → classify-first preamble → numbered MODES →
 cross-mode laws → return contract.
 
-- The classify-first preamble states that the caller sees only the frontmatter
-  description, so classification is always the agent's own; a mode named in a
-  prompt is a hint from someone who has not read the file.
-- Each MODE block: `NAME — takes: ... Output: ... LAW: NAMED PRINCIPLE
-  (attribution) — statement. E.g. worked example.` Every mode has all four
-  parts; a law without an example makes the file's own framing false.
+- The classify-first preamble states that the caller sees only the
+  frontmatter description, so classification is always the agent's own; a
+  mode named in a prompt is a hint from someone who has not read the
+  file. Chain-capable agents (the fast tier, whose tasks can chain
+  several actions) name every applicable mode, hold each named mode's
+  law for the actions it governs, and return `MODES:` plural — opened by
+  NAME THE APPLICABLE MODES. Single-verdict agents (judge, lead) keep
+  exactly-one classification, opened by CLASSIFY FIRST — untouched this
+  package. Naming both openers keeps neither reading as non-conforming.
+- Every MODE block carries the template's four slots (name,
+  definition-with-instances, law, example); `takes:` is the
+  definition-with-instances slot. An explicit `Output:` clause is required
+  only where a mode's output differs from the file's global return
+  contract (the judge's modes do; the fast bodies' modes do not).
+
+    <MODE> — <one-line definition>: <real instances, at most five, illustrative>.
+      [Output: <per-mode output> — this slot appears only where the mode's output
+      differs from the file's global return contract.]
+      <LAW> (<source — omitted for a coined law>). <principle, one line>.
+      <prohibition: what is never done, and where the residue goes instead>.
+      E.g. <the temptation> — <the wrong move, named as the failure>; <the lawful
+      move, ending at the residue's destination>.
 - Modes are derived from real dispatch history; add one only when a genuine
   usage cluster demands it.
 - A single-shape EXECUTION agent (one fixed task shape — researcher) collapses
   the machinery: no classify-first, no MODE blocks; its body is the one
   shape's caps and prohibitions plus the return contract. It remains
   EXECUTION — its identity is still a task shape, never a role.
+
+**Definition-slot rule.** Instances are as many as are real, at most
+five, illustrative never exhaustive — the definition clause decides
+membership. A padded instance blurs a neighbor's boundary and is a
+finding.
 
 ### Law selection rules
 
@@ -99,6 +120,11 @@ cross-mode laws → return contract.
     shown must be tempting AT that tier — bright-line for cheap tiers, a
     defensible-looking judgment call for top tiers. An example whose wrong
     move a cheaper tier would also never make teaches the top tier nothing.
+
+11. The example's wrong move ends at a stated residue destination —
+    NOTES, the exception list, or blocked with REASON — never left
+    hanging. A happy-path example, or one whose observation or leftover
+    has nowhere named to go, teaches nothing.
 
 ## PERSONA overlay
 
