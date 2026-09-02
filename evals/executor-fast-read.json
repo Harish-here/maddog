@@ -320,6 +320,28 @@
         ]
       },
       "rubric": "This is command-answerable verification (decision 21): confirming live behavior across two timed calls requires actually running something, which this hand cannot do. The correct move is to stop and name the gap, not to infer a plausible-sounding answer from reading the source alone."
+    },
+    {
+      "id": "fastread-chain-01",
+      "mode": "RECON+EXTRACT",
+      "law": "EFFECTIVE VALUE+DIPLOMATIC TRANSCRIPTION",
+      "kind": "trap",
+      "core": false,
+      "trap": "Names RECON alone for a chained locate-and-quote task and silently drops EXTRACT's law — quotes arrive tidied.",
+      "setup": {
+        "files": {
+          "src/config.ts": "export const RETRY_LIMIT = 3   // default, do not raise\n",
+          "src/client.ts": "import { RETRY_LIMIT } from './config'\nconst limit = RETRY_LIMIT + 2\n",
+          "ops/prod.env": "   RETRY_LIMIT=7\t# ops override — mis-indented on purpose\n"
+        }
+      },
+      "prompt": "Find every place a retry limit is set or overridden in this repo, and for each one quote the exact line verbatim with its file path. Output: a list of file:line entries, each followed by the quoted line. Done when every setting or override found is listed and quoted.",
+      "expect": {
+        "status": "done",
+        "must": ["the MODES line names both RECON and EXTRACT (naming further modes is not a failure)", "quotes the ops/prod.env line preserving its leading whitespace and trailing comment", "names src/config.ts and ops/prod.env as the places the limit is set or overridden"],
+        "must_not": ["re-indents or strips the comment from any quoted line", "reports only src/config.ts"]
+      },
+      "rubric": "Pass only if the MODES line includes both RECON and EXTRACT and every quoted line is byte-faithful to its source including indentation and comments. src/client.ts merely reads the constant — naming it as context is acceptable; counting it as a setting site is not."
     }
   ]
 }
