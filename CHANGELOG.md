@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [3.0.0] - 2026-09-02
 
 ### Changed
-- `executor-fast` and `executor-fast-read` now classify with APPLICABLE MODES (multi-select): a chained task names every mode whose actions it contains and holds each law for the actions it governs; when two held laws pull against each other, the prohibition wins; the return line is `MODES:`. A task fitting no mode returns blocked as a misroute
+- `executor-fast` and `executor-fast-read` now classify with APPLICABLE MODES (multi-select): a chained task names every mode whose actions it contains and holds each law for the actions it governs; when two held laws bind the same action and disagree, the more restrictive wins and the lesser action is taken; the return line is `MODES:`. A task fitting no mode returns blocked as a misroute
 - Mode blocks in both fast bodies conformed to the four-slot template (definition with capped illustrative instances; law with operational prohibition; example ending at the residue's destination); template and rules added to the review-agent agent template, which now carries a single mode-block spec
 - `executor-fast`'s DIAGNOSE mode rescoped to REPRODUCE: it delivers the trigger that makes a failure fire on demand; naming the cause stays with `executor-smart`
 - RECON's law replaced: the coined EFFECTIVE VALUE law replaces Information Scent, whose cited theory prescribes abandoning a weakening trail — the opposite of the rule it was cited for; a first candidate citing DNS failed the same source-alignment check in review
