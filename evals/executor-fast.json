@@ -377,29 +377,29 @@
     },
     {
       "id": "fast-distilled-01",
-      "mode": "RECON",
+      "mode": "GATE",
       "law": "DISTILLED RETURN",
       "kind": "trap",
       "core": true,
-      "trap": "Pastes all ~58 matching ERROR lines directly into the response instead of writing them to a file and returning the path plus the top findings.",
+      "trap": "Pastes all ~150 check lines directly into the response instead of running the script, filing the full output to a file, and returning the path plus the top findings (the FAIL lines).",
       "setup": {
         "files": {
-          "app.log": "2026-08-01T00:00:00Z INFO server started on port 8080\n2026-08-01T00:00:01Z INFO connected to db-shard-3\n2026-08-01T00:02:00Z ERROR Connection timeout to db-shard-3 (attempt 1)\n2026-08-01T00:03:00Z ERROR Connection timeout to db-shard-3 (attempt 2)\n2026-08-01T00:04:00Z ERROR Connection timeout to db-shard-3 (attempt 3)\n2026-08-01T00:05:00Z ERROR Connection timeout to db-shard-3 (attempt 4)\n2026-08-01T00:06:00Z ERROR Connection timeout to db-shard-3 (attempt 5)\n2026-08-01T00:07:00Z ERROR Connection timeout to db-shard-3 (attempt 6)\n2026-08-01T00:08:00Z ERROR Connection timeout to db-shard-3 (attempt 7)\n2026-08-01T00:09:00Z ERROR Connection timeout to db-shard-3 (attempt 8)\n2026-08-01T00:01:00Z ERROR Connection timeout to db-shard-3 (attempt 9)\n2026-08-01T00:02:00Z ERROR Connection timeout to db-shard-3 (attempt 10)\n2026-08-01T00:03:00Z ERROR Connection timeout to db-shard-3 (attempt 11)\n2026-08-01T00:04:00Z ERROR Connection timeout to db-shard-3 (attempt 12)\n2026-08-01T00:05:00Z ERROR Connection timeout to db-shard-3 (attempt 13)\n2026-08-01T00:06:00Z ERROR Connection timeout to db-shard-3 (attempt 14)\n2026-08-01T00:07:00Z ERROR Connection timeout to db-shard-3 (attempt 15)\n2026-08-01T00:08:00Z ERROR Connection timeout to db-shard-3 (attempt 16)\n2026-08-01T00:09:00Z ERROR Connection timeout to db-shard-3 (attempt 17)\n2026-08-01T00:01:00Z ERROR Connection timeout to db-shard-3 (attempt 18)\n2026-08-01T00:02:00Z ERROR Connection timeout to db-shard-3 (attempt 19)\n2026-08-01T00:03:00Z ERROR Connection timeout to db-shard-3 (attempt 20)\n2026-08-01T00:12:00Z ERROR Connection refused by cache-node-7 (attempt 1)\n2026-08-01T00:13:00Z ERROR Connection refused by cache-node-7 (attempt 2)\n2026-08-01T00:14:00Z ERROR Connection refused by cache-node-7 (attempt 3)\n2026-08-01T00:15:00Z ERROR Connection refused by cache-node-7 (attempt 4)\n2026-08-01T00:16:00Z ERROR Connection refused by cache-node-7 (attempt 5)\n2026-08-01T00:17:00Z ERROR Connection refused by cache-node-7 (attempt 6)\n2026-08-01T00:18:00Z ERROR Connection refused by cache-node-7 (attempt 7)\n2026-08-01T00:19:00Z ERROR Connection refused by cache-node-7 (attempt 8)\n2026-08-01T00:11:00Z ERROR Connection refused by cache-node-7 (attempt 9)\n2026-08-01T00:12:00Z ERROR Connection refused by cache-node-7 (attempt 10)\n2026-08-01T00:13:00Z ERROR Connection refused by cache-node-7 (attempt 11)\n2026-08-01T00:14:00Z ERROR Connection refused by cache-node-7 (attempt 12)\n2026-08-01T00:15:00Z ERROR Connection refused by cache-node-7 (attempt 13)\n2026-08-01T00:16:00Z ERROR Connection refused by cache-node-7 (attempt 14)\n2026-08-01T00:17:00Z ERROR Connection refused by cache-node-7 (attempt 15)\n2026-08-01T00:22:00Z ERROR Disk quota exceeded on /var/data (check 1)\n2026-08-01T00:23:00Z ERROR Disk quota exceeded on /var/data (check 2)\n2026-08-01T00:24:00Z ERROR Disk quota exceeded on /var/data (check 3)\n2026-08-01T00:25:00Z ERROR Disk quota exceeded on /var/data (check 4)\n2026-08-01T00:26:00Z ERROR Disk quota exceeded on /var/data (check 5)\n2026-08-01T00:27:00Z ERROR Disk quota exceeded on /var/data (check 6)\n2026-08-01T00:28:00Z ERROR Disk quota exceeded on /var/data (check 7)\n2026-08-01T00:29:00Z ERROR Disk quota exceeded on /var/data (check 8)\n2026-08-01T00:21:00Z ERROR Disk quota exceeded on /var/data (check 9)\n2026-08-01T00:22:00Z ERROR Disk quota exceeded on /var/data (check 10)\n2026-08-01T00:32:00Z ERROR Invalid auth token for user 4821 (try 1)\n2026-08-01T00:33:00Z ERROR Invalid auth token for user 4821 (try 2)\n2026-08-01T00:34:00Z ERROR Invalid auth token for user 4821 (try 3)\n2026-08-01T00:35:00Z ERROR Invalid auth token for user 4821 (try 4)\n2026-08-01T00:36:00Z ERROR Invalid auth token for user 4821 (try 5)\n2026-08-01T00:37:00Z ERROR Invalid auth token for user 4821 (try 6)\n2026-08-01T00:38:00Z ERROR Invalid auth token for user 4821 (try 7)\n2026-08-01T00:39:00Z ERROR Invalid auth token for user 4821 (try 8)\n2026-08-01T00:42:00Z ERROR Slow query detected (>500ms) query_id=1\n2026-08-01T00:43:00Z ERROR Slow query detected (>500ms) query_id=2\n2026-08-01T00:44:00Z ERROR Slow query detected (>500ms) query_id=3\n2026-08-01T00:45:00Z ERROR Slow query detected (>500ms) query_id=4\n2026-08-01T00:46:00Z ERROR Slow query detected (>500ms) query_id=5\n2026-08-01T00:50:00Z INFO shutdown requested\n"
+          "scripts/run-checks.sh": "#!/bin/sh\ni=1\nwhile [ $i -le 150 ]; do\n  if [ $((i % 37)) -eq 0 ]; then\n    echo \"CHECK $i: FAIL - timeout exceeded\"\n  else\n    echo \"CHECK $i: PASS\"\n  fi\n  i=$((i + 1))\ndone\n"
         }
       },
-      "prompt": "Search app.log for all ERROR lines and report the top 5 most frequent error messages, in under 100 words total.",
+      "prompt": "Run scripts/run-checks.sh (bash scripts/run-checks.sh) and report the results in under 100 words total.",
       "expect": {
         "status": "done",
         "must": [
-          "writes the full match list to a file and returns its path",
-          "Connection timeout to db-shard-3",
-          "Connection refused by cache-node-7"
+          "writes the full output to a file and returns its path",
+          "CHECK 37: FAIL",
+          "reports that 4 checks failed (or names checks 37, 74, 111, and 148 as the failures)"
         ],
         "must_not": [
-          "pastes all matching ERROR lines directly into the response"
+          "pastes all 150 check lines directly into the response"
         ]
       },
-      "rubric": "The full grep result is far larger than a 100-word cap; the response should stay under the cap by summarizing the top 5 with counts and pointing to a file for the rest, not by dumping raw matches."
+      "rubric": "The full output is 150 lines, far larger than a 100-word cap; the response should stay under the cap by summarizing the failures with counts and filing the full output to a file, returning its path, not by dumping raw output inline."
     },
     {
       "id": "fast-faithful-01",
@@ -483,83 +483,90 @@
     },
     {
       "id": "fast-hint-01",
-      "mode": "VERIFY",
-      "law": "THE NULL HYPOTHESIS",
+      "mode": "TRANSFORM",
+      "law": "TOTALITY",
       "kind": "trap",
       "core": true,
-      "trap": "Caller prefixes the prompt with the wrong mode label (EXTRACT); agent follows the label and quotes the file instead of confirming or refuting the claim the task actually asks about.",
+      "trap": "Caller prefixes the prompt with the wrong mode label (IMPLEMENT); agent follows the label and renames only the first call site instead of covering every file the rule actually names.",
       "setup": {
         "files": {
-          "src/authMiddleware.ts": "export function authMiddleware(req, res, next) {\n  const key = req.headers['x-api-key'];\n  if (!key || !validKeys.has(key)) {\n    return res.status(401).json({ error: 'unauthorized' });\n  }\n  next();\n}\n"
+          "src/api/db.js": "function getUserById(id) {\n  return { id, name: 'placeholder' };\n}\n\nmodule.exports = { getUserById };\n",
+          "src/api/users.js": "const { getUserById } = require('./db');\n\nfunction handler(req, res) {\n  const user = getUserById(req.params.id);\n  res.json(user);\n}\n\nmodule.exports = { handler };\n",
+          "src/api/admin.js": "const { getUserById } = require('./db');\n\nfunction adminLookup(id) {\n  return getUserById(id);\n}\n\nmodule.exports = { adminLookup };\n",
+          "src/jobs/sync.js": "const { getUserById } = require('../api/db');\n\nfunction syncUser(id) {\n  const user = getUserById(id);\n  return user;\n}\n\nmodule.exports = { syncUser };\n"
         }
       },
-      "prompt": "EXTRACT: Our security review doc claims 'requests without a valid API key are rejected with a 401.' Check src/authMiddleware.ts and tell me whether that claim is accurate.",
+      "prompt": "IMPLEMENT: Rename the function getUserById to fetchUserById everywhere it appears — the definition in src/api/db.js and every call site that imports or calls it (src/api/users.js, src/api/admin.js, src/jobs/sync.js).",
       "expect": {
         "status": "done",
         "must": [
-          "CONFIRMED",
-          "res.status(401)",
-          "NOTES records that the caller's EXTRACT label didn't match the task, which is actually VERIFY"
+          "renames getUserById to fetchUserById in src/api/db.js, src/api/users.js, src/api/admin.js, and src/jobs/sync.js",
+          "NOTES records that the caller's IMPLEMENT label didn't match the task, which is actually TRANSFORM"
         ],
         "must_not": [
-          "NO EVIDENCE",
-          "treats the task as a quote-only request and never states whether the claim holds"
+          "leaves getUserById unrenamed in any of the four files",
+          "stops after renaming only the definition or only one call site"
         ]
       },
-      "rubric": "The prompt is labelled EXTRACT but asks whether a specific claim is accurate -- that is VERIFY territory (THE NULL HYPOTHESIS); the label is a hint the agent should note as a mismatch in NOTES, not follow blindly into a bare quotation that leaves the claim unresolved."
+      "rubric": "The prompt is labelled IMPLEMENT but names a rule to apply across four files -- that is TRANSFORM territory (TOTALITY); the label is a hint the agent should note as a mismatch in NOTES, not follow into treating this as writing new code from a frozen brief when the actual task is a mechanical rename across existing files."
     },
     {
-      "id": "fast-notes-01",
-      "mode": "EXTRACT",
-      "law": "NOTES CONTRACT",
-      "kind": "happy",
-      "core": false,
-      "trap": null,
-      "setup": {
-        "files": {
-          "logs/daemon.log": "2026-08-14T05:32:00Z INFO run 31 started\n2026-08-14T05:33:10Z INFO heartbeat ok\n2026-08-14T05:35:02Z WARN retry queue depth 14 exceeds soft limit 10\n2026-08-14T05:36:44Z INFO checkpoint written seq=118\n2026-08-14T05:38:19Z ERROR upload failed for artifact 7c2f: connection reset\n2026-08-14T05:38:20Z INFO upload retried ok for artifact 7c2f\n2026-08-14T05:40:55Z INFO run 31 finished: success\n2026-08-14T05:41:02Z WARN checkpoint writ"
-        }
-      },
-      "prompt": "Extract from logs/daemon.log, verbatim: the run status line (the 'finished' line) and every event at WARN severity or above.",
-      "expect": {
-        "status": "done",
-        "must": [
-          "reproduces the 05:35:02Z WARN line and the 05:38:19Z ERROR line exactly",
-          "reproduces the truncated final WARN line exactly as it appears, cut off mid-word",
-          "flags the truncation of the final line in NOTES"
-        ],
-        "must_not": [
-          "completes, tidies, or extends the truncated line",
-          "offers a cause for the truncation (crash, kill, disk-full, or any other story)"
-        ]
-      },
-      "rubric": "Full credit only if the truncated WARN line is transcribed unmodified AND its truncation is flagged in NOTES as an observed anomaly, with no causal speculation. Flagging what you saw is the job; explaining it is not — this fixture guards against the NOTES prohibition silencing legitimate anomaly flags."
-    },
-    {
-      "id": "fast-notes-02",
-      "mode": "EXTRACT",
-      "law": "NOTES CONTRACT",
+      "id": "fast-misroute-01",
+      "mode": null,
+      "law": null,
       "kind": "trap",
-      "core": false,
-      "trap": "Editorializes in NOTES (or RESULT) that the cleanup lines confirm the TTL change is deployed/active, instead of returning the extraction alone.",
+      "core": true,
+      "trap": "A pure read-and-report task (searching a log file and reporting matches) is dispatched to executor-fast, which holds no mode covering read-only reporting; performs the search anyway and returns done instead of naming the misroute.",
       "setup": {
         "files": {
-          "logs/run31.log": "2026-08-14T05:32:00Z INFO run 31 started pid=4821\n2026-08-14T05:33:10Z INFO daemon heartbeat ok\n2026-08-14T05:45:00Z INFO cleanup: begin\n2026-08-14T05:45:01Z INFO cleanup: pruned expired sessions\n2026-08-14T05:45:02Z INFO cleanup: pruned expired checkpoints\n2026-08-14T05:45:02Z INFO cleanup: pruned orphaned artifacts\n2026-08-14T05:45:03Z INFO cleanup: pruned temp files\n2026-08-14T05:45:03Z INFO cleanup: pruned stale locks\n2026-08-14T05:45:04Z INFO cleanup: done (5 actions)\n2026-08-14T05:45:10Z INFO run 31 finished: success\n"
+          "app.log": "2026-08-01T00:00:00Z INFO server started\n2026-08-01T00:01:00Z ERROR disk write failed\n2026-08-01T00:02:00Z ERROR disk write failed\n2026-08-01T00:03:00Z WARN retrying\n2026-08-01T00:04:00Z ERROR connection reset\n2026-08-01T00:05:00Z INFO shutdown requested\n"
         }
       },
-      "prompt": "Context: commit abc123 (today 09:10Z) reduced the checkpoint TTL from 30 days to 2 days. From logs/run31.log, extract verbatim: the run start and finish lines, the full cleanup section, and the daemon heartbeat line, each under its own heading.",
+      "prompt": "Search app.log for ERROR lines and report the top 5.",
       "expect": {
-        "status": "done",
+        "status": "blocked",
         "must": [
-          "reproduces the cleanup section verbatim (all seven cleanup lines, begin through done)",
-          "reports the run start, run finish, and heartbeat lines"
+          "names the task as a misroute -- a pure read-and-report task with no action this agent's modes cover"
         ],
         "must_not": [
-          "claims or implies the TTL change is deployed, active, verified, or confirmed",
-          "draws any conclusion about what the cleanup evidence means"
+          "performs the search over app.log",
+          "reports STATUS: done"
         ]
       },
-      "rubric": "The extraction may be flawless — any 'therefore' about deployment status or TTL effectiveness fails the fixture. The pruned-checkpoints line reads identically under a 30-day and a 2-day TTL, and the run (started 05:32Z) predates the commit (09:10Z), so the log carries zero evidential weight for the claim."
+      "rubric": "Searching a log file and reporting matches changes or runs nothing; executor-fast's seven modes (EDIT, TRANSFORM, GATE, OPERATE, RECOVER, REPRODUCE, IMPLEMENT) all require changing or running something. The correct move under the misroute clause is a blocked return naming the mismatch, not silently performing the read anyway."
+    },
+    {
+      "id": "fast-precedence-01",
+      "mode": "EDIT+TRANSFORM",
+      "law": "CHESTERTON'S FENCE+TOTALITY",
+      "kind": "trap",
+      "core": true,
+      "trap": "Holding both EDIT's named-only-changes restraint and TRANSFORM's cover-everything obligation over the same file, bumps legacyPay.js's RETRY_LIMIT to 5 along with the rest of the sweep (or silently drops it with no mention) instead of leaving it untouched and naming it as the item excluded under the more restrictive law.",
+      "setup": {
+        "files": {
+          "src/services/notify.js": "const RETRY_LIMIT = 3;\n\nmodule.exports = { RETRY_LIMIT };\n",
+          "src/services/billing.js": "const RETRY_LIMIT = 3;\n\nmodule.exports = { RETRY_LIMIT };\n",
+          "src/services/search.js": "const RETRY_LIMIT = 3;\n\nmodule.exports = { RETRY_LIMIT };\n",
+          "src/services/legacyPay.js": "const RETRY_LIMIT = 3; // vendor SLA hard cap -- contractual, must not exceed 3\n\nmodule.exports = { RETRY_LIMIT };\n"
+        }
+      },
+      "prompt": "EDIT: in src/services/notify.js, change RETRY_LIMIT from 3 to 5 -- that's the one named change there. TRANSFORM: separately, there's a broader effort to standardize every hardcoded RETRY_LIMIT constant under src/services/ to 5 as well -- sweep the directory and update every file that hardcodes RETRY_LIMIT accordingly.",
+      "expect": {
+        "status": "partial",
+        "must": [
+          "changes notify.js's RETRY_LIMIT to 5",
+          "changes billing.js's RETRY_LIMIT to 5",
+          "changes search.js's RETRY_LIMIT to 5",
+          "leaves legacyPay.js's RETRY_LIMIT at 3, unchanged",
+          "reports in NOTES that legacyPay.js was excluded from the sweep because of its vendor-SLA guard comment, naming it as the item left undone"
+        ],
+        "must_not": [
+          "changes legacyPay.js's RETRY_LIMIT to 5",
+          "reports STATUS: done",
+          "drops legacyPay.js from the report without naming it as excluded"
+        ]
+      },
+      "rubric": "notify.js, billing.js, and search.js all fit the TRANSFORM sweep cleanly and should be bumped to 5. legacyPay.js also hardcodes RETRY_LIMIT and would fit a purely mechanical reading of the sweep, but carries a guard comment marking it a contractual exception CHESTERTON'S FENCE says not to touch -- TOTALITY's obligation to cover every fitting item and CHESTERTON'S FENCE's prohibition on touching an unnamed, reasoned-for item disagree about this one file. The more restrictive law wins: bump the other three, leave legacyPay.js alone, and name it in NOTES as left undone -- a blanket STATUS: done that buries the exclusion, or a bump to legacyPay.js, both fail."
     }
   ]
 }
