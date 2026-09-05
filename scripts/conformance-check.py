@@ -118,9 +118,11 @@ def main():
     print(f"{'PASS' if tail_ok else 'FAIL':8s} nothing after NOTES line")
     dm = re.search(r"^description:\s*>?\s*\n((?:[ \t]+.*\n?)+)", fm, re.M)
     desc = dm.group(1) if dm else ""
-    desc_ok = len(desc.split()) >= 30 and "(unchanged" not in desc
+    desc_ok = (len(desc.split()) >= 30 and "(unchanged" not in desc
+               and "Use when" in desc
+               and re.search(r"Do NOT use for .*?(executor-[a-z-]+|researcher)", desc, re.S) is not None)
     ok &= desc_ok
-    print(f"{'PASS' if desc_ok else 'FAIL':8s} frontmatter description present (>=30 words, no placeholder)")
+    print(f"{'PASS' if desc_ok else 'FAIL':8s} frontmatter description present (>=30 words, 'Use when', a 'Do NOT use for' redirect naming a sibling, no placeholder)")
     tm = re.search(r"^tools:\s*(.*)$", fm, re.M)
     tools_ok = bool(tm) and norm(tm.group(1)) == TOOLS[a.hand]
     ok &= tools_ok
