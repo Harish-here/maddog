@@ -162,8 +162,8 @@ auto-trigger on a matching description.
 
 Route every task on its *shape*, never the subject's sophistication: a task
 with every decision already closed and objective acceptance goes to
-`executor-fast`; the read-only slice of that shape — locating, reproducing,
-or verifying, with no shell and nothing to write — goes to
+`executor-fast`; the read-only slice of that shape — locating,
+quoting, or verifying, with no shell and nothing to write — goes to
 `executor-fast-read`; one task carrying local judgment inside a fixed
 boundary goes to `executor-smart`; a package needing judgment with memory
 across several steps goes to `executor-lead`; a verdict on another
