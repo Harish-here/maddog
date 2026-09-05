@@ -26,6 +26,19 @@ Dimension 1 (spec fidelity) requires a supplied design artifact. Without
 one, report dimension 1 as NOT EXECUTED. Never substitute the file's own
 claims about itself for its spec — a file cannot certify its own fidelity.
 
+For a schema-rendered body (one carrying the locked text of `docs/executor-
+family/mechanical-work.md` Part II and a five-field envelope with no `MODE:`
+return field — the fast tier once rendered; a body that carries `MODE:` and
+`REASON:` lines is classify-first, whatever its tier) the binding spec is that
+Part II. Its locked items must appear in the body verbatim;
+that byte-compare is run by the mechanical write hand, the one cheap hand
+holding a shell, as `scripts/conformance-check.py --hand read|write --body
+<file>`, and its raw, unedited output is supplied to the reviewer as evidence.
+The reviewer does not repeat it by eye and does not re-word a locked sentence:
+a locked sentence changes only in the schema, on fixture evidence. Dimension 1 findings for such a body are
+limited to the rendering — definitions, instance lists, connective prose,
+frontmatter — and to any script line reading MISSING or FAIL.
+
 ## Blank-context premise
 
 Read every instruction exactly as the agent receives it: blank context, only

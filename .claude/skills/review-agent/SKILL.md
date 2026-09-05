@@ -25,7 +25,12 @@ metadata:
    `references/checklist.md` as the review contract, `references/agent-template.md`
    as its structural reference, and, when any target is a `SKILL.md` frontmatter
    description, `references/description-standard.md` as the binding contract for
-   that dimension. Do not name any agent's internal mode taxonomy
+   that dimension.    When a target is a schema-rendered body (a body carrying Part II's locked text
+   and the five-field envelope with no `MODE:` return line — the fast tier once
+   rendered), first have the mechanical write hand — the one cheap hand holding a
+   shell — run `scripts/conformance-check.py --hand read|write
+   --body <file>` and pass its raw, unedited output to the reviewer as evidence,
+   naming `docs/executor-family/mechanical-work.md` as the binding spec. Do not name any agent's internal mode taxonomy
    in the dispatch.
 3. Triage findings yourself. Fold accepted fixes via a dispatched executor.
    Convert any finding worth keeping permanently into an eval fixture
