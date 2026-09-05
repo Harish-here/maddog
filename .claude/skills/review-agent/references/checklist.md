@@ -126,16 +126,17 @@ per agent. A missing or reordered slot is a finding.
 Each boundary is stated ONCE: an inline counter-example inside a shape
 clause that repeats a trailing Do-NOT redirect is duplication — flag it.
 
-Exemplar — executor-fast, slots labelled:
+Exemplar — executor-fast (the shipped description), slots labelled:
 [1] "Runs fully-specified MECHANICAL tasks on a cheap, fast model:"
-[2] "bulk find/replace, applying a known edit across many files, running
-tests or linters, grep/glob search, extracting or reformatting data,
-scaffolding boilerplate."
-[3] "Use when the task has objective acceptance criteria and needs zero
-judgment."
-[4] "Do NOT use for ambiguous refactors, design choices, or any task where
-a plausible-but-wrong output is likely — those go to executor-smart." (plus
-the repo-local tie-break and the Advisor redirect)
+[2] "a decided edit, one rule across many files, test and build runs, git
+and service operations, state recovery, bug reproduction, code from a
+frozen brief."
+[3] "Use when the task changes or runs something, and every decision is
+already closed with acceptance objective."
+[4] "Do NOT use for a task that only reads and reports — that goes to
+executor-fast-read. Do NOT use for ambiguous refactors, design choices, or
+any plausible-but-wrong-output task — those go to executor-smart. Do NOT
+use for web research — it holds no web tools; that goes to researcher."
 [5] absent — optional here; executor-judge's "it holds no Write or Edit,
 and a judge that fixes has stopped being a judge" is the canonical instance.
 
