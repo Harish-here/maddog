@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.17.0] - 2026-09-06
+
+### Added
+- `docs/executor-family/mechanical-work.md` — the reasoning behind the cheap tier's design and the locked schema it renders from: eight failure rows, cross-cutting laws, the return envelope, and the mapping from rows to modes (`128244e`)
+- `scripts/conformance-check.py` — checks that a rendered agent body carries the schema's locked text (each law's name and sentence, the cross-cutting laws, the stance, the stop list, the envelope) verbatim for its hand, and that its tools line matches (`b8648b7`, `b0e7cf3`)
+
+### Changed
+- `executor-fast` and `executor-fast-read` are now renderings of the locked schema in `docs/executor-family/mechanical-work.md`, with ten named modes — RECON, EXTRACT, VERIFY, EDIT, TRANSFORM, GATE, OPERATE, RECOVER, REPRODUCE, IMPLEMENT — each carrying its law by name and sentence; the return envelope (STATUS/BLOCKED-ON/RESULT/NOT DONE/NOTES) no longer carries a MODE line (`92a7e24`, `4b33b2d`)
+- Mode DIAGNOSE is renamed REPRODUCE: the fast hand delivers the trigger it found, never a claimed cause (`92a7e24`, `128244e`)
+- Both fast hands lose the Skill tool: `executor-fast` now holds Read, Write, Edit, Bash, Glob, Grep; `executor-fast-read` now holds Read, Glob, Grep (`92a7e24`, `4b33b2d`)
+- `review-agent` gains a schema-rendered review tier: for a body carrying the locked schema text, conformance is checked by `scripts/conformance-check.py` first, and the reviewer's own judgment is then limited to the rendering — definitions, instance lists, connective prose, frontmatter; `author-agent`'s authoring loop learned the same split (`f9fbc33`, `e66fcf6`)
+- Behavioural fixtures for both fast hands rewritten against the schema's laws, with happy and trap coverage per law; each fixture's `law` field now names the schema's law exactly as it appears on its LAW line — 33 fixtures in `evals/executor-fast.json`, 22 in `evals/executor-fast-read.json` (`e675160`)
+- README's routing paragraph reworded for the read hand: it locates, quotes, or verifies, rather than "reproduces" — the read hand never reproduces a failure, only the write hand does (`4b33b2d`)
+- `.gitignore` now excludes `__pycache__/` (`b8648b7`)
+
+Frontmatter descriptions of both agents are unchanged; routing between them is
+unaffected.
+
 ## [2.16.0] - 2026-09-01
 
 ### Changed
