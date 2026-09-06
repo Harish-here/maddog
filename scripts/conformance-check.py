@@ -66,10 +66,10 @@ def cross_laws(doc, hand):
     m = re.search(r"X3 ([^—\n]+?) — (.*?)(?=\n\n)", s4, re.S); out["X3"] = m.group(1).strip() + " — " + m.group(2)
     return out
 
-def stance_blocks(doc):
+def stance_blocks(doc, hand):
     s6 = section(doc, "## II.4", "## II.5")
     st = re.search(r"Stance: (.*?)(?=\n\n)", s6, re.S).group(1)
-    stops = re.search(r"(Return `blocked`, naming the gap.*?)(?=\n\n)", s6, re.S).group(1)
+    stops = re.search(r"Stop list \(" + hand + r" hand\) — (.*?)(?=\n\n)", s6, re.S).group(1)
     cord = re.search(r"(THE ANDON CORD — .*?)(?=\n\n|\n## |\Z)", s6, re.S).group(1)
     comp = re.search(r"Composition: (.*?)(?=\n\n)", s6, re.S).group(1)
     return {"II.4 stance": st, "II.4 composition": comp, "II.4 stop list": stops, "II.4 cord": cord}
@@ -88,7 +88,7 @@ def main():
     for rid in rows_for_hand(doc, a.hand):
         items[f"{rid} LAW"] = law_line(doc, rid, a.hand)
     items.update(cross_laws(doc, a.hand))
-    items.update(stance_blocks(doc))
+    items.update(stance_blocks(doc, a.hand))
     ok = True
     for k, v in items.items():
         hit = norm(v) in b
@@ -112,10 +112,13 @@ def main():
     ok &= pr
     print(f"{'PRESENT' if pr else 'MISSING':8s} II.3 partial rule")
     mn = list(re.finditer(r"^[ \t]*NOTES:", body, re.M))
-    tail = body[mn[-1].start():].split("\n", 1)[1] if mn else "x"
-    tail_ok = tail.strip() == ""
+    if mn:
+        parts = body[mn[-1].start():].split("\n", 1)
+        tail_ok = len(parts) < 2 or parts[1].strip() == ""
+    else:
+        tail_ok = False
     ok &= tail_ok
-    print(f"{'PASS' if tail_ok else 'FAIL':8s} nothing after NOTES line")
+    print(f"{'PRESENT' if tail_ok else 'MISSING':8s} nothing after NOTES line")
     dm = re.search(r"^description:\s*>?\s*\n((?:[ \t]+.*\n?)+)", fm, re.M)
     desc = dm.group(1) if dm else ""
     desc_ok = (len(desc.split()) >= 30 and "(unchanged" not in desc

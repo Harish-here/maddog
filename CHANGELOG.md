@@ -18,6 +18,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - Behavioural fixtures for both fast hands rewritten against the schema's laws, with happy and trap coverage per law; each fixture's `law` field now names the schema's law exactly as it appears on its LAW line — 33 fixtures in `evals/executor-fast.json`, 22 in `evals/executor-fast-read.json` (`e675160`)
 - README's routing paragraph reworded for the read hand: it locates, quotes, or verifies, rather than "reproduces" — the read hand never reproduces a failure, only the write hand does (`4b33b2d`)
 - `.gitignore` now excludes `__pycache__/` (`b8648b7`)
+- The executor-family schema's locked spans were compressed to a 32-word-per-block budget, with three write-hand exceptions at 42 (the reproduction law, DISTILLED, ONE-WAY DOORS) and one read-hand exception at 33 (DISTILLED); every law keeps its substance, laws render as their own blocks after the kinds they bind, and no block carries a cross-reference. `executor-fast` is now 648 words and `executor-fast-read` 467, down from 1084 and 732. `scripts/conformance-check.py` now reads the schema's per-hand stop list and fails cleanly, rather than raising, on a body missing its `NOTES:` line.
 
 Frontmatter descriptions of both agents are unchanged; routing between them is
 unaffected.
