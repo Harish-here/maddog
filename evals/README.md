@@ -74,13 +74,22 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 
 ## Running
 
-There is no runner yet. Fixtures are written first, deliberately: the coverage matrix
-is the artifact worth reviewing, and a runner built before the fixtures would shape
-them to whatever was easy to assert.
+The runner is `.claude/workflows/agent-evals.js` (the `agent-evals` workflow). For
+each fixture it materialises `setup.files` into a fresh temp dir, dispatches
+`prompt` to the fixture's named agent on that agent's pinned model, and grades
+the return against `expect.status`/`must`/`must_not` and the `rubric`.
 
-Until a runner exists, a fixture is executed by hand — materialise `setup.files` in a
-temp dir, dispatch `prompt` to the named agent with that cwd, and check the return
-against `expect`.
+Invoke it as the `agent-evals` workflow via its `scriptPath`
+(`.claude/workflows/agent-evals.js`); it is maintainer-only and not part of the
+shipped plugin set, so a checkout runs it directly rather than through an
+install. Scope a run with `args.agents` (one agent's fixtures) or `args.only`
+(specific fixture ids).
+
+Results land in `evals/last-run.md`, where the Report phase writes the verdict
+table and failure detail.
+
+The fixture set remains the artifact worth reviewing: it was written before the
+runner existed, and the runner grades against it rather than shaping it.
 
 ## Coverage rule
 
