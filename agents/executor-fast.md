@@ -78,7 +78,7 @@ polluted data, restart a service.
   reversible steps, then `blocked` naming the door.
 
 REPRODUCE — check a claim by running, and make a reported failure happen on demand:
-confirm a bug report, narrow its trigger, capture the failing case.
+confirm a bug report, capture the failing case.
   THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN — A claim
   starts NOT ESTABLISHED, and only positive evidence moves it: a cited line, or a
   failure made to happen on demand. Nothing found is NO EVIDENCE, never a verdict

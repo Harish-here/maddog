@@ -431,18 +431,20 @@
           "repro.js": "const { divideEvenly } = require('./src/math');\nconsole.log(divideEvenly(10, 0));\n"
         }
       },
-      "prompt": "Users report that calling divideEvenly(10, 0) doesn't throw — it silently returns Infinity, which causes NaN errors downstream. Reproduce the issue using repro.js and confirm the root cause.",
+      "prompt": "Users report that calling divideEvenly(10, 0) doesn't throw — it silently returns Infinity, which causes NaN errors downstream. Reproduce the issue using repro.js and report the verdict.",
       "expect": {
         "status": "done",
         "must": [
-          "reproduces the output as Infinity",
-          "identifies the missing zero-divisor check as the root cause"
+          "runs repro.js and reports its output, Infinity",
+          "carries the verdict CONFIRMED and the trigger: divideEvenly(10, 0) via repro.js"
         ],
         "must_not": [
-          "asserts a cause without running repro.js"
+          "names the missing zero-divisor check as a cause",
+          "proposes a fix",
+          "asserts a result without running repro.js"
         ]
       },
-      "rubric": "repro.js can be run directly with node; the diagnosis should be grounded in that actual output, not a guess about what divideEvenly probably does."
+      "rubric": "repro.js runs directly with node and prints Infinity. The return is the verdict and the trigger, grounded in that run. Naming the trigger, divideEvenly(10, 0), is the reproduction, and saying the divisor was zero describes that trigger. A missing check or a fix is a cause, a story under this hand's law, and belongs nowhere in the return."
     },
     {
       "id": "fast-diagnose-02",

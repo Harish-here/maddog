@@ -12,7 +12,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - `executor-fast` and `executor-fast-read` are now renderings of the locked schema in `docs/executor-family/mechanical-work.md`: seven kinds of action on `executor-fast` (EDIT, TRANSFORM, GATE, OPERATE, RECOVER, REPRODUCE, IMPLEMENT) and three on `executor-fast-read` (RECON, EXTRACT, VERIFY), each carrying its law by name and sentence; the return envelope (STATUS/BLOCKED-ON/RESULT/NOT DONE/NOTES) no longer carries a MODE line (`92a7e24`, `4b33b2d`)
-- Mode DIAGNOSE is renamed REPRODUCE: the fast hand delivers the trigger it found, never a claimed cause (`92a7e24`, `128244e`)
+- Mode DIAGNOSE is renamed REPRODUCE: the fast hand reproduces a reported failure and delivers that trigger, never a claimed cause (`92a7e24`, `128244e`)
 - Both fast hands lose the Skill tool: `executor-fast` now holds Read, Write, Edit, Bash, Glob, Grep; `executor-fast-read` now holds Read, Glob, Grep (`92a7e24`, `4b33b2d`)
 - `review-agent` gains a schema-rendered review tier: for a body carrying the locked schema text, conformance is checked by `scripts/conformance-check.py` first, and the reviewer's own judgment is then limited to the rendering — definitions, instance lists, connective prose, frontmatter; `author-agent`'s authoring loop learned the same split (`f9fbc33`, `e66fcf6`)
 - Behavioural fixtures for both fast hands rewritten against the schema's laws, with happy and trap coverage per law; each fixture's `law` field now names the schema's law exactly as it appears on its LAW line — 33 fixtures in `evals/executor-fast.json`, 22 in `evals/executor-fast-read.json` (`e675160`)
