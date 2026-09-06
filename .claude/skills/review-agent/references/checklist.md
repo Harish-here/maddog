@@ -26,6 +26,19 @@ Dimension 1 (spec fidelity) requires a supplied design artifact. Without
 one, report dimension 1 as NOT EXECUTED. Never substitute the file's own
 claims about itself for its spec — a file cannot certify its own fidelity.
 
+For a schema-rendered body (one carrying the locked text of `docs/executor-
+family/mechanical-work.md` Part II and a five-field envelope with no `MODE:`
+return field — the fast tier once rendered; a body that carries `MODE:` and
+`REASON:` lines is classify-first, whatever its tier) the binding spec is that
+Part II. Its locked items must appear in the body verbatim;
+that byte-compare is run by the mechanical write hand, the one cheap hand
+holding a shell, as `scripts/conformance-check.py --hand read|write --body
+<file>`, and its raw, unedited output is supplied to the reviewer as evidence.
+The reviewer does not repeat it by eye and does not re-word a locked sentence:
+a locked sentence changes only in the schema, on fixture evidence. Dimension 1 findings for such a body are
+limited to the rendering — definitions, instance lists, connective prose,
+frontmatter — and to any script line reading MISSING or FAIL.
+
 ## Blank-context premise
 
 Read every instruction exactly as the agent receives it: blank context, only
@@ -113,16 +126,17 @@ per agent. A missing or reordered slot is a finding.
 Each boundary is stated ONCE: an inline counter-example inside a shape
 clause that repeats a trailing Do-NOT redirect is duplication — flag it.
 
-Exemplar — executor-fast, slots labelled:
+Exemplar — executor-fast (the shipped description), slots labelled:
 [1] "Runs fully-specified MECHANICAL tasks on a cheap, fast model:"
-[2] "bulk find/replace, applying a known edit across many files, running
-tests or linters, grep/glob search, extracting or reformatting data,
-scaffolding boilerplate."
-[3] "Use when the task has objective acceptance criteria and needs zero
-judgment."
-[4] "Do NOT use for ambiguous refactors, design choices, or any task where
-a plausible-but-wrong output is likely — those go to executor-smart." (plus
-the repo-local tie-break and the Advisor redirect)
+[2] "a decided edit, one rule across many files, test and build runs, git
+and service operations, state recovery, bug reproduction, code from a
+frozen brief."
+[3] "Use when the task changes or runs something, and every decision is
+already closed with acceptance objective."
+[4] "Do NOT use for a task that only reads and reports — that goes to
+executor-fast-read. Do NOT use for ambiguous refactors, design choices, or
+any plausible-but-wrong-output task — those go to executor-smart. Do NOT
+use for web research — it holds no web tools; that goes to researcher."
 [5] absent — optional here; executor-judge's "it holds no Write or Edit,
 and a judge that fixes has stopped being a judge" is the canonical instance.
 

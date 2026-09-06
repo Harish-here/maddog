@@ -50,8 +50,10 @@ metadata:
      mixing dimensions is stillborn, not fixable later. Author the
      description against the checklist's Dimension 2 slots (the checklist
      is the template's sibling, `references/checklist.md`) and the body
-     against the matching overlay — for EXECUTION, laws per rules 1-5,
-     examples per 6-8 and 10, artifact tooth per 9; for PERSONA, the
+     against the matching overlay — for classify-first EXECUTION, laws per
+     rules 1-5, examples per 6-8 and 10, artifact tooth per 9; for a
+     schema-rendered body, the locked text is copied verbatim from the schema
+     and only the rendering is authored; for PERSONA, the
      overlay's element order (charter, ARTIFACT CONTRACT, WRITE BOUNDARY,
      pipeline-position slot). Before gating, run the routing partition
      against every existing description yourself: the newcomer must not

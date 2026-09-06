@@ -33,7 +33,7 @@ shapes — is itself a load-bearing finding, not a style note.
 
 | Dimension | Identity | Members | Signature machinery |
 |---|---|---|---|
-| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-smart, executor-lead, executor-judge, researcher | classify-first + MODE blocks (takes / output / LAW / E.g.) |
+| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-fast-read, executor-smart, executor-lead, executor-judge, researcher | fast tier (once rendered): schema-rendered MODE blocks (name — definition: instances / LAW NAME — sentence, verbatim from `docs/executor-family/mechanical-work.md`); other tiers: classify-first + MODE blocks (takes / output / LAW / E.g.) |
 | PERSONA | a discipline role at a fixed pipeline stage | product-pm, product-ux, product-be, product-ui, product-qa | charter + artifact contract + pipeline position |
 
 Every agent declares exactly one dimension by its structure. New dimensions are
@@ -41,13 +41,40 @@ added to this table deliberately, never discovered by drift.
 
 ## EXECUTION overlay
 
-Body order: dispatch contract → classify-first preamble → numbered MODES →
-cross-mode laws → return contract.
+Two renderings exist. A body is SCHEMA-RENDERED when it carries the locked text
+of `docs/executor-family/mechanical-work.md` Part II and the five-field envelope
+with no `MODE:` return field; a body that carries `MODE:` and `REASON:` lines is
+classify-first, whatever its tier. The fast tier (`executor-fast`, `executor-
+fast-read`) is schema-rendered from the change that introduces that schema;
+every other tier is classify-first, except the single-shape agent below. A
+rendered tier is added to the DIMENSION TABLE deliberately, never discovered by
+drift.
+
+Schema-rendered body order: stance → stop list → cord paragraph → MODE blocks →
+cross-cutting laws → return envelope. Locked text — each row's LAW line as
+`NAME — sentence`, the three cross-cutting laws, the stance, the stop list, the
+cord paragraph, and the envelope block — appears verbatim for that hand and is
+checked by `scripts/conformance-check.py --hand read|write --body <file>`; the
+reviewer does not re-check it by eye and never rewords it.
+Each MODE block: `NAME — one-line definition: real instances, at most five.`
+then the row's LAW line verbatim. Examples are optional; any example present
+follows rules 6–8 and 10 below and, like the LAW sentence, ends at the field the
+row's residue goes to. The return carries no `MODE:` field: RESULT's shape is
+the classification. A rendered body names capabilities and laws, never a row id,
+a section mark, or a runtime tool identifier. Law-selection rules 1–5 and rule 9
+bind the schema's rows, not the body. Dimension 1 findings for a rendered body
+are limited to definitions, instance lists, connective prose, frontmatter, body
+order, each LAW line's placement in its own mode block, and any runtime tool
+identifier in the prose, plus any script line reading MISSING or FAIL; every
+other dimension applies to the whole body as usual.
+
+Classify-first body order: dispatch contract → classify-first preamble →
+numbered MODES → cross-mode laws → return contract.
 
 - The classify-first preamble states that the caller sees only the frontmatter
   description, so classification is always the agent's own; a mode named in a
   prompt is a hint from someone who has not read the file.
-- Each MODE block: `NAME — takes: ... Output: ... LAW: NAMED PRINCIPLE
+- Classify-first — each MODE block: `NAME — takes: ... Output: ... LAW: NAMED PRINCIPLE
   (attribution) — statement. E.g. worked example.` Every mode has all four
   parts; a law without an example makes the file's own framing false.
 - Modes are derived from real dispatch history; add one only when a genuine

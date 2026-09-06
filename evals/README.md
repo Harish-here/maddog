@@ -59,8 +59,8 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 | Field | Meaning |
 |---|---|
 | `id` | Stable, `<agent>-<mode>-<nn>`. Never renumber — results are tracked by id. |
-| `mode` | The mode the agent should classify this task as. Wrong classification is itself a failure. |
-| `law` | The named law under test. |
+| `mode` | The mode the fixture targets, for coverage bookkeeping. The return envelope carries no mode line, so this is never graded from the agent's output — a wrong classification shows up as a failed `must`/`must_not` on the behaviour that mode's law demands, not as a missing or wrong mode token. |
+| `law` | The named law under test. Must equal the schema's LAW-line name(s) exactly, as written in `docs/executor-family/mechanical-work.md` Part II (e.g. `TOTALITY, EFFECTIVE VALUE`, `THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN`); cross-cutting fixtures use `FAITHFUL`, `DISTILLED`, `NOTES CONTRACT`, `THE ANDON CORD`. |
 | `kind` | `happy` or `trap`. |
 | `trap` | One line naming the failure being caught. `null` for happy fixtures. |
 | `setup.files` | Map of relative path to file content. The runner materialises these in a fresh temp dir and runs the agent with that as cwd. Fixtures never touch this repo. |
@@ -74,13 +74,22 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 
 ## Running
 
-There is no runner yet. Fixtures are written first, deliberately: the coverage matrix
-is the artifact worth reviewing, and a runner built before the fixtures would shape
-them to whatever was easy to assert.
+The runner is `.claude/workflows/agent-evals.js` (the `agent-evals` workflow). For
+each fixture it materialises `setup.files` into a fresh temp dir, dispatches
+`prompt` to the fixture's named agent on that agent's pinned model, and grades
+the return against `expect.status`/`must`/`must_not` and the `rubric`.
 
-Until a runner exists, a fixture is executed by hand — materialise `setup.files` in a
-temp dir, dispatch `prompt` to the named agent with that cwd, and check the return
-against `expect`.
+Invoke it as the `agent-evals` workflow via its `scriptPath`
+(`.claude/workflows/agent-evals.js`); it is maintainer-only and not part of the
+shipped plugin set, so a checkout runs it directly rather than through an
+install. Scope a run with `args.agents` (one agent's fixtures) or `args.only`
+(specific fixture ids).
+
+Results land in `evals/last-run.md`, where the Report phase writes the verdict
+table and failure detail.
+
+The fixture set remains the artifact worth reviewing: it was written before the
+runner existed, and the runner grades against it rather than shaping it.
 
 ## Coverage rule
 
