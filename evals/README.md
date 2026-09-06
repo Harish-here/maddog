@@ -59,8 +59,8 @@ One JSON file per agent: `executor-fast.json`, `executor-fast-read.json`, `execu
 | Field | Meaning |
 |---|---|
 | `id` | Stable, `<agent>-<mode>-<nn>`. Never renumber — results are tracked by id. |
-| `mode` | The mode the agent should classify this task as. Wrong classification is itself a failure. |
-| `law` | The named law under test. |
+| `mode` | The mode the fixture targets, for coverage bookkeeping. The return envelope carries no mode line, so this is never graded from the agent's output — a wrong classification shows up as a failed `must`/`must_not` on the behaviour that mode's law demands, not as a missing or wrong mode token. |
+| `law` | The named law under test. Must equal the schema's LAW-line name(s) exactly, as written in `docs/executor-family/mechanical-work.md` Part II (e.g. `TOTALITY, EFFECTIVE VALUE`, `THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN`); cross-cutting fixtures use `FAITHFUL`, `DISTILLED`, `NOTES CONTRACT`, `THE ANDON CORD`. |
 | `kind` | `happy` or `trap`. |
 | `trap` | One line naming the failure being caught. `null` for happy fixtures. |
 | `setup.files` | Map of relative path to file content. The runner materialises these in a fresh temp dir and runs the agent with that as cwd. Fixtures never touch this repo. |
