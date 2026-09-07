@@ -1,0 +1,33 @@
+{
+  "skill": "plain-english",
+  "version": 1,
+  "candidates": [
+    {"name": "plain-english", "path": "skills/plain-english/SKILL.md"},
+    {"name": "efficient-md", "path": "skills/efficient-md/SKILL.md"},
+    {"name": "mine-session", "path": "skills/mine-session/SKILL.md"}
+  ],
+  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p, multi-sampled. Fixtures written 2026-09-07 during the efficient-md description rework (packet gated over four judge rounds). Baseline on the pre-rework description: emd-probe-01 5/5, emd-probe-02 3/5 (misses were discursive answers, not a skill), emd-probe-03 not run. Post-rework, two runs: all three 5/5 each run. A stable new failure after a description change is information about the description, never a fixture to adjust.",
+  "fixtures": [
+    {
+      "id": "emd-probe-01",
+      "kind": "happy",
+      "core": true,
+      "expect": "efficient-md",
+      "prompt": "hey can u help me tighten up this skill file, its like 900 lines and idk what goes in skill vs references, also the frontmatter desc feels weak, can you fix it."
+    },
+    {
+      "id": "emd-probe-02",
+      "kind": "negative",
+      "core": true,
+      "expect": "none",
+      "prompt": "the release skill's SKILL.md has a bug where it seems to merge without asking — can you look and tell me what's wrong."
+    },
+    {
+      "id": "emd-probe-03",
+      "kind": "happy",
+      "core": true,
+      "expect": "efficient-md",
+      "prompt": "our CLAUDE.md has grown to like 300 lines and half of it is stuff the agent never needs every session, can u cut it down and move the rest somewhere sensible"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
     {"name": "efficient-md", "path": "skills/efficient-md/SKILL.md"},
     {"name": "mine-session", "path": "skills/mine-session/SKILL.md"}
   ],
-  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p, multi-sampled. Routing fixtures are runnable today. The `behaviour` fixtures have NO runner (run-skill-routing.sh measures routing only): run them by hand with `claude -p` after invoking the skill and grade by must/must_not. Runner debt recorded 2026-08-25. plain-route-05 and plain-route-06 are core:false pending a measured baseline: efficient-md's description does not claim README, so a README prompt has no shipped owner (description debt for efficient-md, recorded 2026-08-25; re-promote after that description is reworked, do not bend the fixtures). NOT MEASURED BY ANY FIXTURE HERE: persistence of the register past turn 1 (decay is the failure mode the evidence file predicts), and the session-start invocation, which lives in the user's CLAUDE.md and cannot be exercised by a stateless one-shot probe.",
+  "harness": "evals/run-skill-routing.sh — fresh-session routing probes via claude -p, multi-sampled. Routing fixtures are runnable today. The `behaviour` fixtures have NO runner (run-skill-routing.sh measures routing only): run them by hand with `claude -p` after invoking the skill and grade by must/must_not. Runner debt recorded 2026-08-25. efficient-md's description claims README as of 2026-09-07. plain-route-05 and plain-route-06 were promoted to core the same day on two measured runs with that description: 05 scored 4/5 in both (one efficient-md over-trigger per run, 5/5 at baseline), 06 scored 5/5 in both (4/5 at baseline); do not bend the fixtures. NOT MEASURED BY ANY FIXTURE HERE: persistence of the register past turn 1 (decay is the failure mode the evidence file predicts), and the session-start invocation, which lives in the user's CLAUDE.md and cannot be exercised by a stateless one-shot probe.",
   "fixtures": [
     {
       "id": "plain-route-01",
@@ -39,14 +39,14 @@
     {
       "id": "plain-route-05",
       "kind": "negative",
-      "core": false,
+      "core": true,
       "prompt": "Fix the typo in the README heading.",
       "expect": "none"
     },
     {
       "id": "plain-route-06",
       "kind": "boundary",
-      "core": false,
+      "core": true,
       "prompt": "Make this repo's README readable for a non-engineer who will clone it and follow the setup steps.",
       "expect": "efficient-md"
     }

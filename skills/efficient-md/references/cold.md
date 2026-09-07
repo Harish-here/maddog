@@ -10,3 +10,7 @@ licenses no compression — a prior ruling travels verbatim.
 Exemplar (an index line over a filed ruling, correction appended):
 
     - rulings/gate3.md — upheld; corrected by rulings/gate3-corr.md (root cause revised)
+
+Anti-pattern: rewriting or compressing a filed record instead of
+appending a correcting entry beside it, or summarising a ruling into
+a dispatch instead of carrying it verbatim.

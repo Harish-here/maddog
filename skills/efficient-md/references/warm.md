@@ -16,3 +16,6 @@ Exemplar (a brief's load-bearing frame — top and bottom carry it):
     INPUTS: services/ (read-only). Optional background: services/README.md.
     ...body...
     NOTES (required): claims to verify, anomalies, anything blocked.
+
+Anti-pattern: a brief padded with paragraphs of background before
+its load-bearing PURPOSE/DONE-WHEN frame.
