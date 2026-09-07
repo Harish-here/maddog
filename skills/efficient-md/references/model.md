@@ -23,7 +23,7 @@ alone.
 
 | Class | Residency | Instances |
 |---|---|---|
-| HOT | loaded every session by standing machinery | CLAUDE.md, memory index, frontmatter descriptions |
+| HOT | loaded every session by standing machinery | AGENTS.md, memory index, frontmatter descriptions |
 | WARM | loaded per dispatch or reference | SKILL.md bodies, briefs, specs, blueprints, research tables, living state artifacts |
 | COLD | write-once, verbatim, never rewritten | filed rulings, post-mortems, transcripts |
 | CHANNEL | resident in the orchestrator for the whole session | dispatch prompts, subagent returns, the session ledger |

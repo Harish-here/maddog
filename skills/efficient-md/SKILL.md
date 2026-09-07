@@ -1,11 +1,13 @@
 ---
 name: efficient-md
 description: >
-  Use when writing or restructuring any of: CLAUDE.md, a memory
-  index, a frontmatter description, a SKILL.md body, a brief, spec,
-  or blueprint, a state or handover file, a decision ledger, or a
-  dispatch prompt's OUTPUT FORMAT. Not for reviewing or rendering a
-  verdict on text that already exists.
+  Shapes a markdown artifact's length and structure by how long it
+  stays loaded and who reads it, agent or person. Use when writing
+  or restructuring an AGENTS.md or README, a skill description or
+  body, a memory index, a brief, spec, or blueprint, a state or
+  handover file, a decision ledger, or a dispatch's output format.
+  Not for reviewing or rendering a verdict on text that already
+  exists — do that directly, no skill.
 ---
 
 One axis prices what a multi-agent system authors for a context: how
@@ -15,7 +17,7 @@ evidence: references/model.md.
 
 | Class | Residency | Author with |
 |---|---|---|
-| HOT | loaded every session by standing machinery (CLAUDE.md, memory index, frontmatter descriptions) | references/hot.md |
+| HOT | loaded every session by standing machinery (AGENTS.md, memory index, frontmatter descriptions) | references/hot.md |
 | WARM | loaded per dispatch or reference (skill bodies, briefs, specs, research tables, living state files) | references/warm.md |
 | COLD | write-once, verbatim, never rewritten (filed rulings, post-mortems, transcripts) | references/cold.md |
 | CHANNEL | resident in the orchestrator all session (dispatch prompts, returns, the session ledger) | references/channel.md |
@@ -48,10 +50,10 @@ lives beside the law it extends and ships only where that law ships.
    follow their contract.
 3. Load the class's reference; author under its template and laws.
 4. On class change, re-price: inline content becomes a pointer.
-5. SHIP RULE (a ship-time step, the mover's, not the author's): a
-   shipped file may cite only what
-   ships with it — replace unconditional session-scoped citations
-   with self-contained statements or in-repo pointers; a citation
-   guarded by an existence check is the sanctioned fallback, not a
-   violation. Any compact rendering keeps the carve-out or drops the
-   whole step.
+5. SHIP RULE (a ship-time step, the mover's, not the author's):
+   a shipped file may cite only what ships with it — replace
+   unconditional citations of session-scoped or absent artifacts
+   with self-contained statements or in-repo pointers; a
+   citation guarded by an existence check is the sanctioned
+   fallback, not a violation. Any compact rendering keeps the
+   carve-out or drops the whole step.

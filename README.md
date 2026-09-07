@@ -140,10 +140,10 @@ the workflow via its `scriptPath`.
 
 - **advisor-mode** — runs a session as the Advisor: holds architecture,
   routing, and acceptance judgment while delegating everything else.
-- **efficient-md** — authoring doctrine for anything an agent loads
-  (CLAUDE.md, a memory index, a frontmatter description, a SKILL.md body, a
-  brief, a state file, a decision ledger, a dispatch prompt's output
-  format).
+- **efficient-md** — shapes a markdown artifact's length and structure by how
+  long it stays loaded and who reads it, agent or person (AGENTS.md or README,
+  a memory index, a frontmatter description, a SKILL.md body, a brief, a state
+  file, a decision ledger, a dispatch prompt's output format).
 - **mine-session** — extracts reusable collaboration patterns from a working
   session; arm it at session start, distill at session end.
 - **plain-english** — governs how replies and questions are worded for the
