@@ -7,13 +7,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [2.18.0] - 2026-09-07
 
 ### Added
-- `evals/efficient-md.json` — three routing fixtures for efficient-md's trigger boundary
+- `evals/efficient-md.json` — seven routing fixtures for efficient-md's trigger boundary (one report-only; `emd-probe-02` non-gating because its misses are answer format, never a skill name)
 
 ### Changed
 - `efficient-md` description rewritten to the description standard's four-slot shape: claims README, names `AGENTS.md` as the generic instruction file in place of `CLAUDE.md`, seven grouped trigger situations; the class table and `references/model.md` updated to match
 - README's efficient-md bullet states the same scope as the description
 - `references/warm.md` and `references/cold.md` gain an Anti-pattern paragraph, matching `hot.md` and `channel.md`
-- `evals/plain-english.json`: `plain-route-05` and `plain-route-06` promoted to core on two measured runs (05: 4/5 both runs, one over-trigger each; 06: 5/5 both)
+- `evals/plain-english.json`: `plain-route-05` and `plain-route-06` promoted to core on three measured runs (05: 4/5, 4/5, 5/5, one over-trigger on two of them; 06: 5/5 on all three)
 
 ### Fixed
 - `SKILL.md` SHIP RULE step 5 restores "or absent", dropped in an earlier compaction, matching `references/model.md`
