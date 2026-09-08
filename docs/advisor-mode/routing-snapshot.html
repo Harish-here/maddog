@@ -14,11 +14,15 @@ svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1A1A18
 .thin{fill:#fff;stroke:#1A1A18;stroke-width:1.5}
 .e{stroke:#1A1A18;stroke-width:1.8;fill:none;marker-end:url(#a)}
 .ret{stroke:#9C9A92;stroke-width:1.5;fill:none;marker-end:url(#al)}
+.lead{stroke:#4A4A46;stroke-width:1.5;fill:none;stroke-dasharray:7 5;marker-end:url(#ag)}
+.judge{stroke:#4A4A46;stroke-width:1.5;fill:none;stroke-dasharray:2 4;marker-end:url(#ag)}
+.lab{font-size:13px;fill:#4A4A46}
 </style></head><body>
-<svg width="1600" height="860" viewBox="0 0 1600 860">
+<svg width="1600" height="930" viewBox="0 0 1600 930">
 <defs>
 <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1A1A18"/></marker>
 <marker id="al" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9C9A92"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4A4A46"/></marker>
 </defs>
 
 <text x="40" y="54" class="h">How advisor-mode routes work</text>
@@ -108,19 +112,28 @@ svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1A1A18
 <text x="1450" y="590" text-anchor="middle" class="q">today? Cite it.</text>
 </g>
 
+<!-- lead delegates: dashed at y=660 to fast-read, fast, smart, researcher -->
+<path d="M930 632 L930 660 L110 660 L110 634" class="lead"/>
+<path d="M930 660 L370 660 L370 634" class="lead"/>
+<path d="M930 660 L630 660 L630 634" class="lead"/>
+<path d="M930 660 L1410 660 L1410 634" class="lead"/>
+<rect x="960" y="651" width="200" height="18" fill="#fff"/><text x="1060" y="665" text-anchor="middle" class="lab">lead hands out its steps</text>
+<!-- judge gathers evidence: dotted at y=684 to fast-read, researcher -->
+<path d="M1190 632 L1190 684 L190 684 L190 634" class="judge"/>
+<path d="M1190 684 L1490 684 L1490 634" class="judge"/>
+<rect x="940" y="675" width="240" height="18" fill="#fff"/><text x="1060" y="689" text-anchor="middle" class="lab">judge checks facts, never fixes</text>
 <!-- returns -->
-<path d="M150 632 L150 690" class="ret"/>
-<path d="M410 632 L410 690" class="ret"/>
-<path d="M670 632 L670 690" class="ret"/>
-<path d="M930 632 L930 690" class="ret"/>
-<path d="M1190 632 L1190 690" class="ret"/>
-<path d="M1450 632 L1450 690" class="ret"/>
-<line x1="150" y1="690" x2="1450" y2="690" stroke="#9C9A92" stroke-width="1.5"/>
-<path d="M800 690 L800 728" class="ret"/>
+<path d="M150 632 L150 750" class="ret"/>
+<path d="M410 632 L410 750" class="ret"/>
+<path d="M670 632 L670 750" class="ret"/>
+<path d="M930 632 L930 750" class="ret"/>
+<path d="M1190 632 L1190 750" class="ret"/>
+<path d="M1450 632 L1450 750" class="ret"/>
+<line x1="150" y1="750" x2="1450" y2="750" stroke="#9C9A92" stroke-width="1.5"/>
+<path d="M800 750 L800 788" class="ret"/>
+<rect x="360" y="790" width="880" height="76" rx="8" class="thin"/>
+<text x="800" y="820" text-anchor="middle" class="t">Short reports come back to the advisor</text>
+<text x="800" y="846" text-anchor="middle" class="d">It checks them, and brings you only the decisions and approvals. Nothing irreversible runs without the judge's yes.</text>
 
-<rect x="360" y="730" width="880" height="76" rx="8" class="thin"/>
-<text x="800" y="760" text-anchor="middle" class="t">Short reports come back to the advisor</text>
-<text x="800" y="786" text-anchor="middle" class="d">It checks them, and brings you only the decisions and approvals. Nothing irreversible runs without the judge's yes.</text>
-
-<text x="40" y="842" class="role">Cheap models take the bulk. Expensive models are bought only for judgment. A hard subject does not buy a smarter model; an open decision does.</text>
+<text x="40" y="902" class="role">Cheap models take the bulk. Expensive models are bought only for judgment. A hard subject does not buy a smarter model; an open decision does.</text>
 </svg></body></html>
