@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+:root{--ink:#1A1A18;--sec:#4A4A46;--muted:#6E6E68;--grey:#D9D8D2;--amber:#8A5E12;--amberbg:#FFF6E0}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.35}
+.mono{font-family:ui-monospace,SFMono-Regular,"DejaVu Sans Mono",Consolas,monospace}
+.page{width:1600px;padding:40px 50px 36px}
+h1{font-size:30px;font-weight:600;margin:0 0 4px}
+.sub{color:var(--sec);font-size:16px;margin:0 0 22px}
+.band{display:grid;grid-template-columns:250px 1fr;border:1.5px solid var(--ink);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.band.heavy{border-width:2px}
+.lab{background:#F4F3EF;border-right:1.5px solid var(--ink);padding:14px 16px}
+.lab .k{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;letter-spacing:.14em;color:var(--muted)}
+.lab .t{font-size:17px;font-weight:600;margin-top:2px}
+.lab .s{font-size:12.5px;color:var(--muted);margin-top:4px}
+.body{padding:12px 18px}
+.body p{margin:0;color:var(--sec)}
+.body p b{color:var(--ink);font-weight:600}
+table{border-collapse:collapse;width:100%}
+td{padding:6px 10px 6px 0;vertical-align:top;border-bottom:1px solid var(--grey);color:var(--sec)}
+tr:last-child td{border-bottom:0}
+td.a{width:210px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:600;color:var(--ink);font-size:13.5px}
+td.l{width:300px;font-weight:600;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.chip{display:inline-block;border:1px solid var(--ink);border-radius:4px;padding:2px 8px;margin:2px 4px 2px 0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
+.ret{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13.5px;line-height:1.6;color:var(--ink)}
+.ret span{color:var(--muted)}
+.strip{margin-top:8px;padding-top:8px;border-top:1px dashed var(--grey);font-size:13px;color:var(--sec)}
+.strip b{color:var(--ink)}
+.andon{background:var(--amberbg);border-color:var(--amber)}
+.andon .lab{background:#FBEFD0;border-right-color:var(--amber)}
+.foot{color:var(--muted);font-size:13px;margin-top:6px}
+</style></head><body><div class="page">
+<h1>Anatomy of an executor</h1>
+<p class="sub">Every <span class="mono">executor-*</span> has the same body. What differs is which actions it may take and which laws guard them. Shown: <span class="mono">executor-fast</span>.</p>
+
+<div class="band">
+  <div class="lab"><div class="k">1 · TOOLS</div><div class="t">What it can touch</div><div class="s">set in the file header, not in prose</div></div>
+  <div class="body"><p><span class="chip">read</span><span class="chip">write</span><span class="chip">edit</span><span class="chip">shell</span> &nbsp; The judge has no write or edit at all, and a guard script denies its shell write forms. <b>A rule that must hold is built into the structure.</b> Prose only says what an agent must not do; the tool list makes it impossible.</p></div>
+</div>
+
+<div class="band">
+  <div class="lab"><div class="k">2 · DISPATCH</div><div class="t">What a task must bring</div><div class="s">it starts blank and cannot ask</div></div>
+  <div class="body"><p>Paths, error text, decisions already made, the output format, and a DONE-WHEN it can check itself. <b>Anything missing is not a guess, it is a stop:</b> return <span class="mono">blocked</span> and name the gap.</p></div>
+</div>
+
+<div class="band heavy">
+  <div class="lab"><div class="k">3 · ACTIONS → LAWS</div><div class="t">Each action carries a law</div><div class="s">laws forbid; two kinds means obeying both</div></div>
+  <div class="body">
+  <table>
+   <tr><td class="a">EDIT · IMPLEMENT · OPERATE</td><td class="l">Chesterton's fence, YAGNI</td><td>Change, build, or stage only what was named. Anything nearby that looks wrong goes in NOTES, untouched.</td></tr>
+   <tr><td class="a">RECOVER</td><td class="l">One-way doors · Order of volatility</td><td>Capture pid, stack, log tail first, then remedy. Never force-push, rewrite history, or delete what the dispatch did not name.</td></tr>
+   <tr><td class="a">TRANSFORM</td><td class="l">Totality</td><td>One rule across many items: cover every fit, list every misfit, follow chains to the end. Stopping early fails.</td></tr>
+   <tr><td class="a">GATE</td><td class="l">Goodhart's law</td><td>Run the test or lint exactly as named. Never touch inputs, thresholds, or snapshots. A red run is a result, not a stop.</td></tr>
+   <tr><td class="a">REPRODUCE</td><td class="l">The null hypothesis</td><td>A bug claim starts NOT ESTABLISHED. Only a cited line or an on-demand failure moves it. No story without evidence.</td></tr>
+  </table>
+  <div class="strip"><b><span class="mono">executor-smart</span> works the same way with eight modes:</b> BUILD → conceptual integrity (Brooks) · PORT → characterization tests (Feathers) · AUTHOR → design by contract (Meyer) · DECOMPOSE → information hiding (Parnas) · FIX → null hypothesis · REVIEW → normalization of deviance (Vaughan) · DIAGNOSE → reproduce before you explain (Zeller) · CHOREOGRAPH → RAII (Stroustrup).</div>
+  </div>
+</div>
+
+<div class="band andon">
+  <div class="lab"><div class="k">4 · ALWAYS</div><div class="t">Laws that always hold</div><div class="s">the same four in every executor</div></div>
+  <div class="body two">
+   <p><b>The andon cord.</b> Two readings, two targets, or the tree contradicts the task: stop and say so. Picking the likelier one fails.</p>
+   <p><b>Faithful.</b> Claim only what happened. Every skipped step and unfound item is written down, whatever STATUS says.</p>
+   <p><b>Distilled.</b> Return the answer, not the material. Past the cap, file it and return the path. Never truncate silently.</p>
+   <p><b>Notes contract.</b> Report, never interpret. RESULT carries what was asked. NOTES carries anomalies, never conclusions.</p>
+  </div>
+</div>
+
+<div class="band">
+  <div class="lab"><div class="k">5 · RETURN</div><div class="t">Exactly this shape</div><div class="s">so the advisor can check it, not read it</div></div>
+  <div class="body ret">STATUS: done | partial | blocked <span>&nbsp; partial whenever NOT DONE is not "none"</span><br>BLOCKED-ON: <span>the gap or the door, only when blocked</span><br>RESULT: <span>in the format the dispatch set</span><br>NOT DONE: <span>every step skipped, item unfound, misfit left, or "none"</span><br>NOTES: <span>anomalies seen, assumptions made, never conclusions</span></div>
+</div>
+
+<p class="foot">Laws are named after the engineering principle they enforce, so a reviewer can argue with the principle instead of the prose. The evals in <span class="mono">evals/</span> check that each law actually fires on its pinned model.</p>
+</div></body></html>
