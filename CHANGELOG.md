@@ -11,7 +11,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - Laws 1, 4, 6, and 7 each gain one sentence giving the reason behind the rule; law 3 gains a counter-example pairing "the decision lives upstream" with "the platform team decides this first"; law 8 loses its duplicate third sentence. Body grows from 291 to 356 words, longest sentence 23 words, no em-dashes
 - `evals/plain-english.json` gains two routing fixtures: `plain-route-07` (proactive cue, expects `plain-english`; 5/5 on the new description, 0/5 on the old) and `plain-route-08` (dense design doc, expects `efficient-md`; 5/5), both non-core pending a second measured run; the harness note records `plain-route-04` as pre-existing flaky debt (23/30 old description, 25/35 new, every miss "none"), owned by mine-session's description
 
-Gated over two executor-judge rounds (round 1: four REWORK findings; round 2: all APPLY), findings G1–G11 and H1–H4 filed in the author-agent packet; full-fixture verification run scored 8/8 at 5/5.
+Gated over two executor-judge rounds (round 1: four REWORK findings; round 2: all APPLY), findings G1–G11 and H1–H4 filed in the author-agent packet; three full-fixture runs on the shipped text: one 8/8 with every fixture 5/5, one 8/8 with plain-route-04 at 4/5, one 7/8 with core plain-route-02 at 3/5 whose two misses were conversational replies rather than skill names; route-02 re-measured at 9/10 on both the old and the new description, one conversational stray each.
 
 ## [2.18.0] - 2026-09-07
 
