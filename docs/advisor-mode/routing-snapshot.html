@@ -1,0 +1,126 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#fff}
+svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1A1A18}
+.mono{font-family:ui-monospace,SFMono-Regular,"DejaVu Sans Mono",Consolas,monospace}
+.h{font-size:30px;font-weight:600}
+.sub{font-size:16px;fill:#4A4A46}
+.t{font-size:19px;font-weight:600}
+.d{font-size:15px;fill:#4A4A46}
+.n{font-size:17px;font-weight:600}
+.m{font-size:15px;fill:#4A4A46}
+.role{font-size:13.5px;fill:#6E6E68}
+.q{font-size:14px}
+.box{fill:#fff;stroke:#1A1A18;stroke-width:2}
+.thin{fill:#fff;stroke:#1A1A18;stroke-width:1.5}
+.e{stroke:#1A1A18;stroke-width:1.8;fill:none;marker-end:url(#a)}
+.ret{stroke:#9C9A92;stroke-width:1.5;fill:none;marker-end:url(#al)}
+</style></head><body>
+<svg width="1600" height="860" viewBox="0 0 1600 860">
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1A1A18"/></marker>
+<marker id="al" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9C9A92"/></marker>
+</defs>
+
+<text x="40" y="54" class="h">How advisor-mode routes work</text>
+<text x="40" y="82" class="sub">One goal comes in. The advisor keeps the decisions and hands every task to the cheapest agent that fits it. Model in parentheses.</text>
+
+<!-- goal -->
+<rect x="500" y="118" width="600" height="70" rx="8" class="thin"/>
+<text x="800" y="146" text-anchor="middle" class="t">You</text>
+<text x="800" y="171" text-anchor="middle" class="d">“Move five payment services onto one shared retry helper. Ship it overnight.”</text>
+<path d="M800 188 L800 228" class="e"/>
+
+<!-- advisor -->
+<rect x="420" y="230" width="760" height="112" rx="8" class="box"/>
+<text x="800" y="262" text-anchor="middle" class="t">advisor <tspan class="m">(your session model)</tspan></text>
+<text x="800" y="290" text-anchor="middle" class="d">Keeps the calls only you should make: build the helper at all? which service first?</text>
+<text x="800" y="314" text-anchor="middle" class="d">Everything else it sorts by shape and sends out. It never does the work itself.</text>
+
+<!-- fan-out: from advisor bottom to 6 hands -->
+<path d="M800 342 L800 380" stroke="#1A1A18" stroke-width="1.8" fill="none"/>
+<line x1="150" y1="380" x2="1450" y2="380" stroke="#1A1A18" stroke-width="1.8"/>
+<path d="M150 380 L150 428" class="e"/>
+<path d="M410 380 L410 428" class="e"/>
+<path d="M670 380 L670 428" class="e"/>
+<path d="M930 380 L930 428" class="e"/>
+<path d="M1190 380 L1190 428" class="e"/>
+<path d="M1450 380 L1450 428" class="e"/>
+
+<!-- hands: x=35+i*260, w=230, y=430, h=200 -->
+<g>
+<rect x="35" y="430" width="230" height="200" rx="8" class="thin"/>
+<text x="150" y="460" text-anchor="middle" class="n mono">executor-fast-read</text>
+<text x="150" y="482" text-anchor="middle" class="m">(haiku)</text>
+<text x="150" y="508" text-anchor="middle" class="role">look things up, change nothing</text>
+<line x1="55" y1="522" x2="245" y2="522" stroke="#D9D8D2"/>
+<text x="150" y="550" text-anchor="middle" class="q">Find every retry call in</text>
+<text x="150" y="570" text-anchor="middle" class="q">the five services and</text>
+<text x="150" y="590" text-anchor="middle" class="q">quote them, with lines.</text>
+</g>
+<g>
+<rect x="295" y="430" width="230" height="200" rx="8" class="thin"/>
+<text x="410" y="460" text-anchor="middle" class="n mono">executor-fast</text>
+<text x="410" y="482" text-anchor="middle" class="m">(haiku)</text>
+<text x="410" y="508" text-anchor="middle" class="role">apply a decided change, run things</text>
+<line x1="315" y1="522" x2="505" y2="522" stroke="#D9D8D2"/>
+<text x="410" y="550" text-anchor="middle" class="q">Swap those calls for the</text>
+<text x="410" y="570" text-anchor="middle" class="q">helper in all five files.</text>
+<text x="410" y="590" text-anchor="middle" class="q">Run the tests.</text>
+</g>
+<g>
+<rect x="555" y="430" width="230" height="200" rx="8" class="thin"/>
+<text x="670" y="460" text-anchor="middle" class="n mono">executor-smart</text>
+<text x="670" y="482" text-anchor="middle" class="m">(sonnet)</text>
+<text x="670" y="508" text-anchor="middle" class="role">one task that needs judgment</text>
+<line x1="575" y1="522" x2="765" y2="522" stroke="#D9D8D2"/>
+<text x="670" y="550" text-anchor="middle" class="q">One payments test broke.</text>
+<text x="670" y="570" text-anchor="middle" class="q">Work out why and fix it,</text>
+<text x="670" y="590" text-anchor="middle" class="q">inside that package.</text>
+</g>
+<g>
+<rect x="815" y="430" width="230" height="200" rx="8" class="thin"/>
+<text x="930" y="460" text-anchor="middle" class="n mono">executor-lead</text>
+<text x="930" y="482" text-anchor="middle" class="m">(opus)</text>
+<text x="930" y="508" text-anchor="middle" class="role">many steps, each decides the next</text>
+<line x1="835" y1="522" x2="1025" y2="522" stroke="#D9D8D2"/>
+<text x="930" y="550" text-anchor="middle" class="q">Run the overnight rollout.</text>
+<text x="930" y="570" text-anchor="middle" class="q">Each failure decides what</text>
+<text x="930" y="590" text-anchor="middle" class="q">to try next.</text>
+</g>
+<g>
+<rect x="1075" y="430" width="230" height="200" rx="8" class="box"/>
+<text x="1190" y="460" text-anchor="middle" class="n mono">executor-judge</text>
+<text x="1190" y="482" text-anchor="middle" class="m">(opus)</text>
+<text x="1190" y="508" text-anchor="middle" class="role">says yes or no, cannot fix</text>
+<line x1="1095" y1="522" x2="1285" y2="522" stroke="#D9D8D2"/>
+<text x="1190" y="550" text-anchor="middle" class="q">Is the overnight plan safe</text>
+<text x="1190" y="570" text-anchor="middle" class="q">to run unattended?</text>
+<text x="1190" y="590" text-anchor="middle" class="q">Is the push safe?</text>
+</g>
+<g>
+<rect x="1335" y="430" width="230" height="200" rx="8" class="thin"/>
+<text x="1450" y="460" text-anchor="middle" class="n mono">researcher</text>
+<text x="1450" y="482" text-anchor="middle" class="m">(haiku)</text>
+<text x="1450" y="508" text-anchor="middle" class="role">fetch facts from the web</text>
+<line x1="1355" y1="522" x2="1545" y2="522" stroke="#D9D8D2"/>
+<text x="1450" y="550" text-anchor="middle" class="q">What retry headers does</text>
+<text x="1450" y="570" text-anchor="middle" class="q">the upstream API document</text>
+<text x="1450" y="590" text-anchor="middle" class="q">today? Cite it.</text>
+</g>
+
+<!-- returns -->
+<path d="M150 632 L150 690" class="ret"/>
+<path d="M410 632 L410 690" class="ret"/>
+<path d="M670 632 L670 690" class="ret"/>
+<path d="M930 632 L930 690" class="ret"/>
+<path d="M1190 632 L1190 690" class="ret"/>
+<path d="M1450 632 L1450 690" class="ret"/>
+<line x1="150" y1="690" x2="1450" y2="690" stroke="#9C9A92" stroke-width="1.5"/>
+<path d="M800 690 L800 728" class="ret"/>
+
+<rect x="360" y="730" width="880" height="76" rx="8" class="thin"/>
+<text x="800" y="760" text-anchor="middle" class="t">Short reports come back to the advisor</text>
+<text x="800" y="786" text-anchor="middle" class="d">It checks them, and brings you only the decisions and approvals. Nothing irreversible runs without the judge's yes.</text>
+
+<text x="40" y="842" class="role">Cheap models take the bulk. Expensive models are bought only for judgment. A hard subject does not buy a smarter model; an open decision does.</text>
+</svg></body></html>
