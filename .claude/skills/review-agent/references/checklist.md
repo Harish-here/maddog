@@ -13,12 +13,13 @@ Agent definitions and always-resident skill text (`agents/*.md`,
 ## Evidence set
 
 Assemble before reviewing: the target file(s); every file in `agents/`;
-every `skills/*/SKILL.md` plus its `references/`; `README.md`; `CLAUDE.md`;
-`.claude-plugin/*.json`; `install.sh`; and the binding design artifact for
-this change (spec, decision ledger, or approved proposal).
+every `skills/*/SKILL.md` plus its `references/`; every
+`.claude/skills/*/SKILL.md` plus its `references/`; `README.md`;
+`CLAUDE.md`; `.claude-plugin/*.json`; `install.sh`; and the binding design
+artifact for this change (spec, decision ledger, or approved proposal).
 
-Dimensions 2 and 6 are family-wide and cannot be executed on the target file
-alone — they require the full evidence set above, every time.
+Dimensions 2, 6, and 9 are family-wide and cannot be executed on the target
+file alone — they require the full evidence set above, every time.
 
 ## Binding spec
 
@@ -48,7 +49,7 @@ conversation the agent has no path to reach.
 
 ## Ordering & budget
 
-Run dimensions in this order: 0 first, then 2, 3, 4, 5, 1, 6, 7, 8. Dimension
+Run dimensions in this order: 0 first, then 2, 3, 4, 5, 1, 6, 7, 8, 9. Dimension
 0 is cheap and is the precondition the others assume — reasoning about a
 file's content before confirming it is well-formed risks reasoning about raw
 tool-call residue as if it were intent. Cap dimension 8 (token-weight) at
@@ -153,7 +154,9 @@ mode-specific laws all count as normative. Check every obligation against
 every prohibition in the same file — prohibition wins in practice, so a
 cancelled obligation is a defect even if never stated as an exception. An
 identity claim contradicted by an operating rule reads as agent failure just
-as loudly as two rules contradicting each other.
+as loudly as two rules contradicting each other. An example is a normative
+statement; its illustrated move is checked against every law in the file;
+a move any law refuses is a contradicting pair.
 **Output shape:** one finding per contradicting pair, quoting both
 statements and naming which one the agent will actually follow.
 
@@ -221,6 +224,19 @@ not filed where it can only be read after the decision it should have
 informed.
 **Output shape:** one finding per movable block, per stale duplicate, per
 misfiled prerequisite, with the correct home named.
+
+### 9. ROUTING EDGES
+**Subject:** every text that routes work to the file under review — the
+advisor-mode routing table and its examples, and any skill or agent
+dispatching it by name.
+**Procedure:** enumerate every router; check promises against its laws.
+A promise counts when the router names this hand, or names the class or
+role this hand is bound to; work a router sends to a different hand or
+class is that hand's edge, not this one's. For a skill, the hand is the
+skill; NOT EXECUTED replaces checked-clean when zero.
+**Output shape:** one line per edge (`<router file:line> → <hand>: no
+refused promise | finding`); one per refusal; NOT EXECUTED: no router
+names this hand or its class.
 
 ---
 

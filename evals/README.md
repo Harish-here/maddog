@@ -97,6 +97,10 @@ Every mode and every standing law in both agent files carries at least one `happ
 and one `trap` fixture. Adding a law to an agent means adding its pair here; a law
 with no trap fixture is untested no matter how many happy fixtures it has.
 
+review-agent ROUTING EDGES has no behavioural fixture home; planted-contradiction
+fixture (a body whose law refuses a router's promise must yield a ROUTING EDGES
+finding) is debt until a review-agent fixture file exists.
+
 ## Skill routing fixtures (evals/<skill>.json + run-skill-routing.sh)
 
 Skill fixtures probe description ROUTING, not agent behavior. kind is
