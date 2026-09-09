@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# judge-dispatch-guard.sh — PreToolUse guard restricting executor-judge's
-# subagent dispatches to executor-fast-read and researcher only.
+# judge-dispatch-guard.sh — PreToolUse guard restricting subagent dispatches per
+# caller: executor-judge → executor-fast-read, researcher; executor-smart → executor-fast, executor-fast-read.
 #
 # Purpose: executor-judge's own file already says it may rent only
 # executor-fast-read or researcher as hands, and never a hand that can make a
@@ -29,9 +29,8 @@
 # absent/empty/null counting as "the default agent" — is neither
 # executor-fast-read nor researcher (bare or namespaced).
 #
-# Scope: executor-judge only. executor-lead also dispatches subagents and is
-# deliberately left unrestricted here — that is a separate, already-decided
-# design choice, not an oversight.
+# Scope: executor-judge and executor-smart. executor-lead is deliberately left
+# unrestricted here — a separate, already-decided design choice, not an oversight.
 #
 # Diagnostic logging: OFF by default. The full payload of every dispatch
 # includes the complete prompt text handed to the subagent — a shipped hook
@@ -50,6 +49,7 @@
 # never change the allow/deny outcome either.
 
 set -uo pipefail
+caller=""; allowed_desc=""; why=""
 
 PROBE_LOG="${TMPDIR:-/tmp}/maddog-dispatch-probe.log"
 
@@ -69,8 +69,8 @@ log_probe() {
 deny() {
   local target="$1"
   local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted to dispatch '${target}'. executor-judge may only rent executor-fast-read or researcher as hands — renting any hand to make a change is not permitted for executor-judge at all."
-  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted to dispatch '${target}'. ${caller} may only rent ${allowed_desc} as hands."
+  ctx="Blocked by judge-dispatch-guard.sh: ${why}. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
@@ -84,8 +84,8 @@ deny() {
 #     tool including Write/Edit. Deny it as what it is, not as a gap. ---
 deny_no_target() {
   local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: executor-judge attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. executor-judge may only rent executor-fast-read or researcher as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. ${caller} may only rent ${allowed_desc} as hands."
+  ctx="Blocked by judge-dispatch-guard.sh: ${why}. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
@@ -105,10 +105,20 @@ command -v jq >/dev/null 2>&1 || exit 0
 tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
 [ "$tool_name" = "Agent" ] || exit 0
 
-# --- scope: only act for executor-judge (bare or plugin-namespaced) ---
+# --- scope: act for executor-judge and executor-smart (bare or namespaced);
+#     every other caller, and the main conversation (no agent_type), ALLOWS ---
 agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 case "$agent_type" in
-  executor-judge|*:executor-judge) : ;;
+  executor-judge|*:executor-judge)
+    caller="executor-judge"
+    allow_re='^([^:]+:)?(executor-fast-read|researcher)$'
+    allowed_desc="executor-fast-read or researcher"
+    why="this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything — renting any hand to make a change is not permitted for executor-judge at all" ;;
+  executor-smart|*:executor-smart)
+    caller="executor-smart"
+    allow_re='^([^:]+:)?(executor-fast|executor-fast-read)$'
+    allowed_desc="executor-fast or executor-fast-read"
+    why="this executor may rent only the two cheap hands for work whose decisions it has closed; judgment, review, and research stay home or return to the caller" ;;
   *) exit 0 ;;
 esac
 
@@ -122,9 +132,7 @@ log_probe "tool_name=${tool_name} agent_type=${agent_type} target=${target:-none
 
 [ -z "$target" ] && deny_no_target
 
-case "$target" in
-  executor-fast-read|*:executor-fast-read) exit 0 ;;
-  researcher|*:researcher) exit 0 ;;
-esac
-
+if printf '%s' "$target" | grep -Eq "$allow_re"; then
+  exit 0
+fi
 deny "$target"
