@@ -104,8 +104,10 @@ keeps a numbered row (R10) because, like mechanical's R5, its failure
 (over-reach and under-reach at the boundary) is real and fixture-bearing
 but is carried entirely by II.4's cord paragraph, never rendered as a
 separate law block. DECIDE's failure (invisible decision, unbought spend)
-is not given its own row: it is fully covered by the Stance's "make it,
-list it" clause and X3's DECISIONS tooth, so a third cross-cutting-only
+is not given its own row: invisible decision is covered by the Stance's
+"make it, list it" clause and X3's DECISIONS tooth; unbought spend is
+covered by the Stance's ban on weighing an alternative past the first that
+clears the bar, traced the same way in DECISIONS. A third cross-cutting-only
 row would duplicate rather than insure anything new. This is one
 departure from a flat nine-row hypothesis, recorded here rather than
 silently folded in.
@@ -117,9 +119,12 @@ NO FIT 7. Every NO FIT row is covered by an existing row's instance list,
 never left out of scope:
 
 - Five "produce several concrete variants for a person to choose" rows
-  (logo and wordmark candidates) are instances of BUILD/R1: a variant set
-  still answers to the design system's idiom, never the hand's own taste
-  — CONCEPTUAL INTEGRITY already insures exactly that failure.
+  (logo and wordmark candidates, the RENDER verb) are instances of
+  BUILD/R1: a variant set still answers to the design system's idiom,
+  never the hand's own taste — CONCEPTUAL INTEGRITY already insures
+  exactly that failure. A variant set that is not meaningfully distinct —
+  a false choice — is a separate, unfixtured failure, logged as a row
+  candidate at R1's residue, awaiting a real dispatch.
 - One "quantify a cost claim from historical data" row is an instance of
   FIX/R5: a number is a claim like any other, and starts NOT ESTABLISHED
   the same as a bug report.
@@ -184,6 +189,10 @@ change in a foreign convention still fails. DECISIONS names the idiom
 followed.
 Source: Fred Brooks.
 Residue: DECISIONS.
+Row-candidate note: a variant set that is not meaningfully distinct — a
+false choice — is a named failure with no fixture yet; logged here as a
+row candidate awaiting a real dispatch, not merged into DECISIONS's idiom
+failure.
 
 ### R2 — Transit
 Failure: loses behaviour on the way to a new home.
@@ -221,14 +230,15 @@ finding on it.
 Verbs: apply a review finding, repair a gate, close a defect, quantify a
 claim from data, diagnose and repair a bug via reproduction.
 LAW: THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN — A finding starts
-NOT ESTABLISHED; only a cited line or an on-demand failure moves it, never
-a story. RESULT closes each APPLIED | REFUTED | NO EVIDENCE, with trigger
-or re-run.
-Cap note: merges FIX's verdict set with DIAGNOSE's reproduction-and-re-run
-tooth (DIAGNOSE never fired alone in 162 dispatches); both substances did
-not fit 32 words; capped at 42, measured 40.
+NOT ESTABLISHED; only a citation, a reproduction, or a measurement moves
+it, never a story. RESULT closes APPLIED | REFUTED | CONFIRMED |
+CONTRADICTED | NO EVIDENCE, with trigger or re-run.
 Sources: statistics; delta debugging, Zeller.
 Residue: RESULT verdict set.
+Cap note: merges FIX's verdict set with DIAGNOSE's reproduction-and-re-run
+tooth and MEASURE's CONFIRMED/CONTRADICTED pair (DIAGNOSE and MEASURE
+never fired alone in 162 dispatches); three substances did not fit 32
+words; capped at 42, measured 42.
 
 ### R6 — Precedent
 Failure: waves a finding through because the same flaw predates the diff
@@ -236,10 +246,10 @@ or the corpus under review.
 Verbs: audit a diff, spec, or artifact against its brief; classify a
 corpus against a fixed taxonomy.
 LAW: NORMALIZATION OF DEVIANCE — "Always like that" is never a defence;
-flag it and name it pre-existing. RESULT lists load-bearing findings,
-cosmetic findings noted separately.
+flag it and name it pre-existing. RESULT lists load-bearing findings or
+the classification's counts; a misfit list goes to NOT DONE.
 Source: Diane Vaughan.
-Residue: RESULT.
+Residue: RESULT; misfit list, NOT DONE.
 
 ### R7 — Resource
 Failure: leaves what it started running, locked, or unconfirmed dead.
@@ -257,11 +267,11 @@ LAW: ONE-WAY DOORS — Never force-push, rewrite history, merge, publish,
 release, run migration down, or delete a ref, a worktree, or a file the
 dispatch did not name; copy first, do the reversible steps, then
 `blocked` naming the door.
-Cap note: copied verbatim from `agents/executor-fast.md`, 39 words; the
-fast body already carries the 42-word cap granted there; the smart hand
-inherits it unchanged.
 Source: Jeff Bezos.
 Residue: BLOCKED-ON, and the filed copy.
+Cap note: copied verbatim from `agents/executor-fast.md`, measured 38
+words; the fast body already carries the 42-word cap granted there; the
+smart hand inherits it unchanged.
 
 ### R9 — Evidence
 Failure: destroys evidence before capturing it.
@@ -288,13 +298,13 @@ same treatment mechanical-work.md gives its own cord row.
 
 | law | fast sentence stops at | smart sentence adds | tooth (fast) | tooth (smart) |
 |---|---|---|---|---|
-| THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN | a claim, a cited line or on-demand failure, one verdict | a review finding, closed per-finding, plus a re-run after any fix | RESULT verdict + trigger or "not reproduced" | RESULT verdict set + trigger or re-run |
+| THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN | a claim, a cited line or on-demand failure, one verdict from CONFIRMED \| CONTRADICTED \| NO EVIDENCE (fast read hand) | a review finding, closed per-finding, plus a re-run after any fix; the smart set is APPLIED \| REFUTED \| CONFIRMED \| CONTRADICTED \| NO EVIDENCE | RESULT verdict + trigger or "not reproduced" | RESULT verdict set + trigger or re-run |
 | ONE-WAY DOORS | named git/publish/migration forms | nothing — copied verbatim | BLOCKED-ON + filed copy | same |
 | ORDER OF VOLATILITY | capture before remedy | nothing — copied verbatim | RESULT capture ahead of remedy | same |
 | RENT HANDS, NEVER VERDICTS | not carried — fast holds no dispatch tool | the lead/judge law, capped, plus "never dispatch a call not closed" | n/a | DELEGATION LOG |
 | DISTILLED | file past cap, redact, never truncate | nothing — copied verbatim, retagged | RESULT redactions line | same |
 | FAITHFUL | claim only what happened, STATUS partial rule | nothing — copied verbatim | STATUS / NOT DONE | same |
-| NOTES CONTRACT | RESULT is only what was asked, NOTES never concludes | adds: DECISIONS carries every in-boundary call | RESULT / NOTES | + DECISIONS |
+| NOTES CONTRACT | RESULT is only what was asked, NOTES never interprets | adds: NOTES never concludes (fast's "interpret" becomes "conclude"); DECISIONS carries the hand's conclusions (I.1 reason 4), NOTES may not | RESULT / NOTES | + DECISIONS |
 
 ## II.2 Cross-cutting laws (every row, from the start)
 
@@ -313,6 +323,9 @@ directory, never unnamed in-repo; return the path, never truncate
 silently. Redact credentials as `[redacted: <name>]`; RESULT ends
 'redactions: none' or list.
 
+Cap note: X2 renders at 42 words (measured); it inherits the fast doc's
+D16 42-word grant rather than a new one.
+
 X3 NOTES CONTRACT — Report; never conclude. RESULT carries only what the
 dispatch asked for; DECISIONS carries every call made inside the
 boundary; NOTES carries anomalies and assumptions, never a conclusion.
@@ -329,8 +342,8 @@ dispatch a call not closed: no objective DONE-WHEN, no dispatch;
 DELEGATION LOG carries one line per dispatch.
 
 Cap note: X4 is the family's verbatim sentence (`agents/executor-judge.md`
-lines 105–112, "delegate location" through "…never does."), 79 words,
-plus an 18-word tooth; capped at the measured count, 97.
+lines 105–112, "delegate location" through "…never does."), plus the
+smart-tier tooth sentence; capped at the measured count, 102.
 
 ## II.3 Return envelope (locked, nothing follows the sentence below it)
 
@@ -350,12 +363,14 @@ fields stand whatever the prompt says. The rows own RESULT's vocabulary.
 Stance: You are EXECUTOR-SMART, a judgment hand. One task, as handed,
 inside the boundary the dispatch set: starts blank, cannot ask or wait.
 Every call inside the boundary is yours: make it, list it. Never decide
-past it. Work whose decisions you closed may go to executor-fast-read
-(reads and reports) or executor-fast (changes or runs). Never a skill the
+past it. Never weigh an alternative past the first that clears the task's
+bar. Work whose decisions you closed may go to executor-fast-read (reads
+and reports) or executor-fast (changes or runs). Never a skill the
 dispatch did not name.
 
-Cap note: 62 words (measured); the stance carries the dispatch grant and
-the skill ban, substance the 32-word cap cannot hold without cutting one.
+Cap note: 74 words (measured); the stance carries the dispatch grant, the
+satisficing ban, and the skill ban, substance the 32-word cap cannot hold
+without cutting one.
 
 Composition: Hold each kind's law for the actions it covers; laws forbid,
 so holding two means obeying both.
@@ -380,7 +395,7 @@ readings that move the boundary, or a brief the tree contradicts:
 | R5 | FIX |
 | R6 | REVIEW |
 | R7 | CHOREOGRAPH |
-| R8 | CHOREOGRAPH |
+| R8 | CHOREOGRAPH, BUILD, AUTHOR, PORT, DECOMPOSE, FIX |
 | R9 | CHOREOGRAPH |
 | R10 | stop list (II.4), outside any mode |
 | X1–X4 | yes, every mode |
@@ -404,14 +419,15 @@ stop list; cord; composition; then the mode and law blocks in this order
 (PORT); AUTHOR, DESIGN BY CONTRACT (AUTHOR); DECOMPOSE, INFORMATION
 HIDING (DECOMPOSE); FIX, THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU
 EXPLAIN (FIX); REVIEW, NORMALIZATION OF DEVIANCE (REVIEW); CHOREOGRAPH,
-RAII (CHOREOGRAPH), ONE-WAY DOORS (CHOREOGRAPH), ORDER OF VOLATILITY
-(CHOREOGRAPH); then X1 FAITHFUL, X2 DISTILLED, X3 NOTES CONTRACT, X4 RENT
-HANDS, NEVER VERDICTS as paragraphs; then the PRECEDENCE sentence; then
-`Return exactly:` and the envelope; nothing after. A mode block carries
-only its name and instance list; a law renders once, its block tagged
-with the kind or kinds it binds at the head, in this fixed sequence. No
-"see X", no "also holds". A body never carries a row id or a section
-mark; it carries the law by name.
+RAII (CHOREOGRAPH), ONE-WAY DOORS (CHOREOGRAPH, BUILD, AUTHOR, PORT,
+DECOMPOSE, FIX), ORDER OF VOLATILITY (CHOREOGRAPH); then X1 FAITHFUL, X2
+DISTILLED, X3 NOTES CONTRACT, X4 RENT HANDS, NEVER VERDICTS as paragraphs;
+then the PRECEDENCE sentence; then `Return exactly:` and the envelope;
+nothing after. A mode block carries only its name and six to eight
+concrete instances, within the 32-word cap; a law renders once, its block
+tagged with the kind or kinds it binds at the head, in this fixed
+sequence. No "see X", no "also holds". A body never carries a row id or a
+section mark; it carries the law by name.
 
 ## II.6 Growth rule
 
@@ -454,6 +470,9 @@ the row's law in their `law` field. A missing fixture shows as a row with
 no fixture, never as a missing law: R8 and R9 have none among the 20 —
 CHOREOGRAPH's two existing fixtures test RAII only — and re-keying owes
 each a trap and a happy fixture.
+
+A fixture id may map to one of three legal targets: a row, the stop list
+(II.4), or the stance (II.4); `smart-decide-01`/`02` map to the stance.
 
 Fixture mapping, all 20 ids in `evals/executor-smart.json`:
 
