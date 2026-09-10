@@ -118,8 +118,15 @@ is local. One live job, however contingent, is local. Exact texts are
 mechanical. Findings still needing wording are local. A frozen plan is
 never iterated. Dispatch it directly, or run it as a workflow. A
 routine review against its own brief is local, not a gate. A
-4,000-line local log is still mechanical extraction. It is not
-web-perception. It needs file tools, never web tools.
+4,000-line local log is still mechanical extraction — within cap, the read
+hand, else the write hand, path named. It is not web-perception; it needs
+file tools, never web tools.
+
+Route extraction by what the return is for: an answer the advisor reads
+goes to the read hand; material for a file or another hand goes to the
+write hand, path named; doubt goes to the write hand. A read-hand return
+naming a cut is never resumed — dispatch the write hand fresh, with the
+path.
 
 Buy iterated only when the iterated hand's own description says the
 package qualifies. If you catch yourself constructing a reason this
@@ -179,7 +186,9 @@ Examples:
 - A one-line JSON fix → mechanical dispatch. "Briefing an agent costs
   more than the edit" is the thought that means you are about to break
   this rule.
-- "Is the plist present?" → mechanical VERIFY, not your own ls.
+- "Is the plist present at that path?" → mechanical VERIFY, the path and
+  the filename pattern both named, and the dispatch stating that a clean
+  search of them counts as CONTRADICTED.
 - "I'll read the spec so I can write the brief" → the hand reads the
   spec. The brief gives the path.
 - Draft the CHANGELOG → a local hand drafts it, you review, and the
@@ -234,6 +243,10 @@ Every dispatch includes: paths, error text, closed decisions marked
 "do not redesign," PURPOSE, exact OUTPUT FORMAT, objective DONE-WHEN,
 and a required NOTES section. PURPOSE states why, not just what.
 
+An absence VERIFY dispatch names its scope and patterns and states that
+a clean search of them counts as CONTRADICTED; without that statement
+the return is NO EVIDENCE.
+
 Batch independent dispatches. Run write and edit work in the
 foreground. Confirm a long dispatch started.
 
@@ -253,9 +266,10 @@ to a file, and the return carries the path plus the top findings. A
 section may carry its own count too: "table, max 30 rows, file:line
 refs, no code dumps".
 
-Cap every return to status, deltas, decisions, and NOTES. Send back an
-oversized return once, with the limit stated. A second oversized
-return is a second failure.
+Cap every return to the hand's return envelope; bulk goes to a file.
+OUTPUT FORMAT shapes what goes inside RESULT; the envelope's fields stand
+whatever the prompt says. Send back an oversized return once, with the
+limit stated. A second oversized return is a second failure.
 
 ## Acceptance
 
@@ -291,18 +305,21 @@ WHEN NOT — skip a verdict when the user reads the result anyway, a
 command can answer the question, or the rounds are spent.
 - The user reads the return: your review is the whole review.
 - A command answers it: does this path exist, does the diff touch
-  only these files, is this referenced anywhere. That question is
-  mechanical VERIFY, never a judge, even when a running skill calls
-  that step a gate.
+  only these files, does a search of a named scope for named patterns
+  find nothing. That question is mechanical VERIFY, never a judge, even
+  when a running skill calls that step a gate.
 - Three rounds per artifact is the limit, per Resume. A round three
   ending BLOCKED goes to the user.
 
 Examples:
 - "Write the PM brief and run it," user present → no gate. Review the
   return.
-- "Is deleting these four cache dirs safe?" → grep for references.
-  "Safer to have the judge look" is the thought that means you are
-  about to break this rule.
+- "Is deleting these four cache dirs safe?" → grep for references to
+  the four paths, naming them and the patterns — the searched claim is
+  "these dirs are referenced somewhere"; a clean search of the named
+  paths for the named patterns counts as CONTRADICTED of that claim.
+  "Safer to have the judge look" is the thought that means you are about
+  to break this rule.
 - Round three came back BLOCKED → give the user the ruling. "One more
   round will clear it" is the same thought.
 

@@ -100,10 +100,15 @@ def main():
         m = re.search(r"^[ \t]*" + re.escape(f), body, re.M)
         pos.append(m.start() if m else -1)
     env_ok = all(p >= 0 for p in pos) and pos == sorted(pos)
-    # whole envelope block, verbatim (whitespace-normalized), from II.3's code block
+    # whole envelope block, verbatim (whitespace-normalized), from II.3's per-hand code block
     s5 = section(doc, "## II.3", "## II.4")
-    env_lines = [l.strip() for l in s5.splitlines() if l.startswith("    ") and l.strip()]
-    env_block_ok = norm(" ".join(env_lines)) in b
+    marker = {"read": "Read hand:", "write": "Write hand:"}.get(a.hand)
+    try:
+        hs = section(s5, marker, "\n\n") if marker else None
+    except ValueError:
+        hs = None
+    env_lines = [l.strip() for l in hs.splitlines() if l.startswith("    ") and l.strip()] if hs else []
+    env_block_ok = len(env_lines) == 5 and norm(" ".join(env_lines)) in b
     ok &= env_block_ok
     print(f"{'PRESENT' if env_block_ok else 'MISSING':8s} II.3 envelope block verbatim")
     ok &= env_ok
