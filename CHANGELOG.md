@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.21.0] - 2026-09-10
+
+### Added
+- `docs/executor-family/local-work.md` — the smart tier's design doc and locked schema: governing sentence (grant or forbid, never coach), failure rows derived from judgment verbs, seven-field envelope with DECISIONS and DELEGATION LOG, tier-line table for laws shared with the fast hands. STATUS: ADOPTED on the filed after-run (no original fixture lost against the baseline).
+- `scripts/conformance-check.py --hand smart` — refereeing the smart body against local-work.md; an unknown hand now stops with an error instead of reading the write column.
+- `evals/runs/executor-smart-baseline.md` and `evals/runs/executor-smart-after.md` — filed baseline (old body, 9/13 originals) and after-run (new body, 11/13 originals, 16/22 core).
+
+### Changed
+- `executor-smart` is now a rendering of the locked schema: composition of seven kinds (no MODE line), stance / stop list / boundary-split cord up front, laws as bans with return-field teeth, no worked examples, one scope connective before the four cross-cutting laws, and the Agent tool added with a guard-enforced allowlist of executor-fast and executor-fast-read. Description gains three instances (a variant set, quantifying a claim, classifying a corpus) and one clause: it may sub-dispatch the fast hands for a slice whose decisions it has closed.
+- `scripts/judge-dispatch-guard.sh` now also scopes executor-smart's dispatches to executor-fast and executor-fast-read.
+- Authoring template (`.claude/skills/review-agent/references/agent-template.md`) admits the smart tier as schema-rendered from local-work.md; checker sentence lists `--hand read|write|smart`.
+- `evals/executor-smart.json` v2: 20 fixtures re-keyed to the new laws; 11 added (tooth, cord, delegation, one-way doors, order of volatility, distilled).
+
 ## [2.20.0] - 2026-09-10
 
 ### Added
