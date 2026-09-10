@@ -24,14 +24,14 @@ No unattended dispatch until all three exist. Evidence: 2026-08-05 lost
   what a fresh session needs to relaunch this exact work — for a workflow harness, its script
   path and run id; for a hosted session, its name and a one-line resume
   prompt; for anything else, the command that restarts it.
-- LEDGER: the ledger opened already, at the launch decision for this
-  dispatch. If this launch is the departure and it has not opened yet,
-  it opens now — as one file on a durable path outside session scratch
-  (e.g. ~/.claude/ledgers/<slug>/), with the binding record from
-  session open as its first entry; create no second one. Two files
+- DURABLE STATE: the package's durable-state artifact exists already,
+  created at the launch decision for this dispatch. If this launch is
+  the departure and it has not been created yet, it is created now —
+  as one file on a durable path outside session scratch (e.g.
+  ~/.claude/state/<slug>/state.md); create no second one. Two files
   leave with you: the handover file says what the user must do; the
-  ledger says what was decided. A citation the returning user or a
-  fresh session cannot open is not a citation.
+  durable-state artifact says what was decided. A citation the
+  returning user or a fresh session cannot open is not a citation.
 If the work is a workflow that carries its own LAUNCH CONTRACT in its
 whenToUse header, execute that contract too — it encodes post-mortems the
 generic stack does not.
@@ -40,10 +40,11 @@ If scripts/unattended-start.sh exists in the family repo, dispatch a
 mechanical hand to run it — it discharges this whole section in one command.
 
 ## 2. DECISIONS WHILE ABSENT (the OPEN + ABSENT cell)
-- Within the boundary: decide, append the entry per ledger.md,
+- Within the boundary: decide, record it in the durable-state artifact,
   continue. No stalls for callable judgment.
-- Surface the ledger as ONE batch at closure or on the user's return —
-  never as a drip, never silently absorbed.
+- Surface the durable-state artifact's decisions as ONE batch at
+  closure or on the user's return — never as a drip, never silently
+  absorbed.
 - HARD BLOCKERS — pause the run and page, never decide alone: boundary-
   crossing scope, security, user data, contract/instruction-file changes,
   and any hard-to-reverse outward action not pre-authorized in the
@@ -75,16 +76,17 @@ mechanical hand to run it — it discharges this whole section in one command.
 ## 5. CLOSURE
 - A mechanical hand sends the run-complete (or aborted) ping through the
   same channel that got the run-start.
-- The closure report is the batch: ledger decisions, deviations, blocked
-  items, and the verification artifacts that prove DONE-WHEN — claims
-  cited to artifacts, per the core's acceptance law.
+- The closure report is the batch: the durable-state artifact's
+  decisions, deviations, blocked items, and the verification artifacts
+  that prove DONE-WHEN — claims cited to artifacts, per the core's
+  acceptance law.
 - On the user's return mid-run: interrupt rule from the core applies —
   freeze, then surface this batch immediately.
 
 ## 6. MID-FLIGHT DEPARTURE — the user leaves while a dispatch already runs
 On the user's word:
 - Read this file, if it has not been read this session.
-- Open the ledger, if it is not already open.
+- Create the durable-state artifact, if it does not already exist.
 - A mechanical hand writes the resume record and starts the watchdog
   for the dispatch already in flight. It also sends the run-start
   ping via the session's notify channel.

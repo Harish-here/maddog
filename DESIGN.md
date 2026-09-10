@@ -15,11 +15,11 @@ conversational sentence rules — see `PHILOSOPHY.md` and the
 
 | # | Principle | Traced to (PHILOSOPHY.md) |
 |---|---|---|
-| 1 | Black and white is the constant | Harness-neutral core — renders the same everywhere |
-| 2 | Colour and shape are named, never memorised | Tokens are the new currency — every value is a token |
-| 3 | Colour is the exception | Spend your attention on what matters — a colourful page is a wrong page |
-| 4 | The rule outranks the drawing | Architect the integrity. Don't just instruct the agent. |
-| 5 | Cheapest mark that reads | Intelligence is a budget — the mark is text; it ships wherever text ships |
+| 1 | Black and white is the constant | 5 Separate responsibility from mechanism — renders the same everywhere |
+| 2 | Colour and shape are named, never memorised | 2 Work is paid once — every value is a token, reused not memorised |
+| 3 | Colour is the exception | 4 Human judgment is scarce — a colourful page is a wrong page |
+| 4 | The rule outranks the drawing | 3 Authority follows responsibility |
+| 5 | Cheapest mark that reads | 1 Judgment is expensive — the mark is text; it ships wherever text ships |
 
 **Tone standard.** Every visual surface reads in one line as: neat,
 minimal, strong, detail-oriented.
