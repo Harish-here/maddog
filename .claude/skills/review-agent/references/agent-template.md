@@ -35,7 +35,7 @@ shapes — is itself a load-bearing finding, not a style note.
 
 | Dimension | Identity | Members | Signature machinery |
 |---|---|---|---|
-| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-fast-read, executor-smart, executor-lead, executor-judge, researcher | fast tier (once rendered): schema-rendered MODE blocks (name — definition: instances / LAW NAME — sentence, verbatim from `docs/executor-family/mechanical-work.md`); other tiers: classify-first + MODE blocks (takes / output / LAW / E.g.) |
+| EXECUTION | a judgment class — what shape of task it takes | executor-fast, executor-fast-read, executor-smart, executor-lead, executor-judge, researcher | fast tier: schema-rendered from `docs/executor-family/mechanical-work.md`; smart tier: schema-rendered from `docs/executor-family/local-work.md`; lead and judge: classify-first + MODE blocks (takes / output / LAW / E.g.) |
 | PERSONA | a discipline role at a fixed pipeline stage | product-pm, product-ux, product-be, product-ui, product-qa | charter + artifact contract + pipeline position |
 
 Every agent declares exactly one dimension by its structure. New dimensions are
@@ -43,23 +43,16 @@ added to this table deliberately, never discovered by drift.
 
 ## EXECUTION overlay
 
-Two renderings exist. A body is SCHEMA-RENDERED when it carries the locked text
-of `docs/executor-family/mechanical-work.md` Part II and the five-field envelope
-with no `MODE:` return field; a body that carries `MODE:` and `REASON:` lines is
-classify-first, whatever its tier. The fast tier (`executor-fast`, `executor-
-fast-read`) is schema-rendered from the change that introduces that schema;
-every other tier is classify-first, except the single-shape agent below. A
+Two renderings exist. A body is SCHEMA-RENDERED when it carries the locked text of its tier's schema Part II — `docs/executor-family/mechanical-work.md` for the fast tier, `docs/executor-family/local-work.md` for the smart tier — and that schema's envelope with no `MODE:` return field; a body that carries `MODE:` and `REASON:` lines is classify-first, whatever its tier. The fast tier (`executor-fast`, `executor-fast-read`) and the smart tier (`executor-smart`) are schema-rendered from the change that introduces each schema; the lead and judge tiers are classify-first, except the single-shape agent below. A
 rendered tier is added to the DIMENSION TABLE deliberately, never discovered by
 drift.
 
-Schema-rendered body order: stance → stop list → cord paragraph → MODE blocks →
-cross-cutting laws → return envelope. Locked text — each row's LAW line as
+Schema-rendered body order: stance → stop list → cord paragraph → composition → MODE blocks (each followed by the law block(s) it binds, tag at the head) → cross-cutting laws → the schema's precedence sentence, where the schema has one → return envelope. Locked text — each row's LAW line as
 `NAME — sentence`, the three cross-cutting laws, the stance, the stop list, the
 cord paragraph, and the envelope block — appears verbatim for that hand and is
-checked by `scripts/conformance-check.py --hand read|write --body <file>`; the
+checked by `scripts/conformance-check.py --hand read|write|smart --body <file>`; the
 reviewer does not re-check it by eye and never rewords it.
-Each MODE block: `NAME — one-line definition: real instances, at most five.`
-then the row's LAW line verbatim. Examples are optional; any example present
+Each MODE block: `NAME — one-line definition: real instances`, at most five on the fast tier, as many as fit the schema's block cap on the smart tier; the row's LAW line verbatim follows in its own block, tagged with the kinds it binds. Examples are optional; any example present
 follows rules 6–8 and 10 below and, like the LAW sentence, ends at the field the
 row's residue goes to. The return carries no `MODE:` field: RESULT's shape is
 the classification. A rendered body names capabilities and laws, never a row id,
