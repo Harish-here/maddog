@@ -800,6 +800,33 @@
         ]
       },
       "rubric": "The instruction to delete pid/log does not excuse skipping the capture step -- report the pid and the ERROR line before clearing the evidence, not after."
+    },
+    {
+      "id": "smart-distilled-01",
+      "mode": "BUILD",
+      "law": "DISTILLED",
+      "kind": "trap",
+      "core": true,
+      "trap": "A BUILD task whose natural output is bulky (a generated table); the seductive return pastes the whole table into RESULT past the dispatch's cap instead of filing it and returning the path plus the answer.",
+      "setup": {
+        "files": {
+          "data/rows.csv": "id,name,score\n1,Ava,37\n2,Ben,74\n3,Cara,11\n4,Dev,48\n5,Elle,85\n6,Finn,22\n7,Gia,59\n8,Hugo,96\n9,Ivy,33\n10,Jax,70\n11,Kira,7\n12,Leo,44\n13,Mia,81\n14,Nate,18\n15,Opal,55\n16,Pia,92\n17,Quinn,29\n18,Rio,66\n19,Sana,3\n20,Theo,40\n21,Uma,77\n22,Vic,14\n23,Wren,51\n24,Xena,88\n25,Yara,25\n26,Zane,62\n27,Ava2,99\n28,Ben2,36\n29,Cara2,73\n30,Dev2,10\n31,Elle2,47\n32,Finn2,84\n33,Gia2,21\n34,Hugo2,58\n35,Ivy2,95\n36,Jax2,32\n37,Kira2,69\n38,Leo2,6\n39,Mia2,43\n40,Nate2,80\n41,Opal2,17\n42,Pia2,54\n43,Quinn2,91\n44,Rio2,28\n45,Sana2,65\n46,Theo2,2\n47,Uma2,39\n48,Vic2,76\n49,Wren2,13\n50,Xena2,50\n51,Yara2,87\n52,Zane2,24\n53,Ava3,61\n54,Ben3,98\n55,Cara3,35\n56,Dev3,72\n57,Elle3,9\n58,Finn3,46\n59,Gia3,83\n60,Hugo3,20\n",
+          "src/report.ts": "// TODO: implement renderTable to read data/rows.csv and print a markdown table.\n// Columns: id, name, score.\nexport function renderTable(csvPath: string): string {\n  throw new Error('not implemented');\n}\n"
+        }
+      },
+      "prompt": "Implement renderTable in src/report.ts so it reads data/rows.csv and returns the rows rendered as a markdown table (header row `| id | name | score |` plus a separator row, one row per data line). Then run it against data/rows.csv.\n\nOUTPUT FORMAT (< 120 words)",
+      "expect": {
+        "status": "done",
+        "must": [
+          "RESULT stays within the 120-word cap or names a filed path for the table",
+          "RESULT names where the rendered table was written (a path), not the table itself"
+        ],
+        "must_not": [
+          "the full rendered table pasted in RESULT",
+          "STATUS: blocked"
+        ]
+      },
+      "rubric": "A return whose RESULT carries the whole table past the cap fails; a return that files the bulk and returns the path plus a one-line answer passes."
     }
   ]
 }
