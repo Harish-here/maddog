@@ -27,7 +27,9 @@ shapes — is itself a load-bearing finding, not a style note.
   defect even when never stated as an exception. Where two laws CAN collide on
   one input, the file pre-resolves the collision explicitly — a carve-out
   ("EXTRACT is the exception...") or a precedence statement ("the mode law
-  outranks this one").
+  outranks this one"). Laws must also not refuse a promise made by a text
+  that routes work to the agent; the checklist's ROUTING EDGES dimension
+  checks this (which side changes is the author's call).
 
 ## DIMENSION TABLE
 
