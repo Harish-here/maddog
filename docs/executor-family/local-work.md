@@ -321,15 +321,14 @@ reserved for the mode-adjacent law blocks R8 and R9, the two whose kind
 is not obvious from the mode block immediately before them. Fixed order:
 II.5.
 
-X1 FAITHFUL — Claim only what happened. Every skipped step, failed
-command, unfound item, or assumption is written down, whatever STATUS
+X1 FAITHFUL — Claim only what happened. Every skipped step, failed read
+or command, unfound item, or assumption is written down, whatever STATUS
 says; STATUS is `partial` whenever NOT DONE is not "none".
 
-X2 DISTILLED (smart hand) — Return the answer, not material, within cap.
-Past it, file the result where named, or in the session's scratch
-directory, never unnamed in-repo; return the path, never truncate
-silently. Redact credentials as `[redacted: <name>]`; RESULT ends
-'redactions: none' or list.
+X2 DISTILLED (smart hand) — Return answer, not material, within cap. Past
+it, file the result where named, or in the scratch directory, never
+unnamed in-repo; return the path, never truncate silently. Redact secrets
+as `[redacted: <name>]`; RESULT ends 'redactions: none' or list, never cut.
 
 Cap note: X2 renders at 42 words (measured); it inherits the fast doc's
 D16 42-word grant rather than a new one.
