@@ -316,7 +316,10 @@ same treatment mechanical-work.md gives its own cord row.
 
 X1–X4 hold on every row from the start, rendered as paragraphs, never
 inside a mode block, and never tagged with a kind — untagged is decision
-6's shape for a cross-cutting law. The "(KIND, KIND)" head tag is
+6's shape for a cross-cutting law. One scope connective renders
+immediately before X1, verbatim: "The four laws below hold on every
+kind." It is connective prose, not a law, and carries no tooth. The
+"(KIND, KIND)" head tag is
 reserved for the mode-adjacent law blocks R8 and R9, the two whose kind
 is not obvious from the mode block immediately before them. Fixed order:
 II.5.
@@ -435,14 +438,16 @@ stop list; cord; composition; then the mode and law blocks in this order
 HIDING (DECOMPOSE); FIX, THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU
 EXPLAIN (FIX); REVIEW, NORMALIZATION OF DEVIANCE (REVIEW); CHOREOGRAPH,
 RAII (CHOREOGRAPH), ONE-WAY DOORS (CHOREOGRAPH, BUILD, AUTHOR, PORT,
-DECOMPOSE, FIX), ORDER OF VOLATILITY (CHOREOGRAPH); then X1 FAITHFUL, X2
-DISTILLED, X3 NOTES CONTRACT, X4 RENT HANDS, NEVER VERDICTS as paragraphs;
-then the PRECEDENCE sentence; then `Return exactly:` and the envelope;
-nothing after. A mode block carries only its name and six to eight
-concrete instances, within the 32-word cap; a law renders once, its block
-tagged with the kind or kinds it binds at the head, in this fixed
-sequence. No "see X", no "also holds". A body never carries a row id or a
-section mark; it carries the law by name.
+DECOMPOSE, FIX), ORDER OF VOLATILITY (CHOREOGRAPH); then the scope
+connective (verbatim, II.2); then X1 FAITHFUL, X2 DISTILLED, X3 NOTES
+CONTRACT, X4 RENT HANDS, NEVER VERDICTS as paragraphs; then the
+PRECEDENCE sentence; then `Return exactly:` and the envelope; nothing
+after. A mode block carries only its name and six to eight concrete
+instances, within the 32-word cap; a law renders once; only R8 and R9's
+blocks are tagged with the kind or kinds they bind at the head, every
+other law block rendering untagged; in this fixed sequence. No "see X",
+no "also holds". A body never carries a row id or a section mark; it
+carries the law by name.
 
 Rendering guidance: the rows own RESULT's vocabulary.
 
@@ -542,3 +547,5 @@ N5 — II.1's cap rule names X4 (102) and the stance (74) as the two
   exceptions above the 42-word grant.
 N6 — R6's cosmetic-findings split restored under a Cap note, measured 36.
 N7 — R1's Row-candidate note folded into its Residue line.
+G2 — one scope connective permitted before X1 (II.2, II.5); the generic
+  tag phrase in II.5 scoped to R8, R9.
