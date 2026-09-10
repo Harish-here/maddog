@@ -446,8 +446,8 @@ after. A mode block carries only its name and six to eight concrete
 instances, within the 32-word cap; a law renders once; only R8 and R9's
 blocks are tagged with the kind or kinds they bind at the head, every
 other law block rendering untagged; in this fixed sequence. No "see X",
-no "also holds". A body never carries a row id or a section mark; it
-carries the law by name.
+no "also holds", except the one scope connective II.2 names. A body
+never carries a row id or a section mark; it carries the law by name.
 
 Rendering guidance: the rows own RESULT's vocabulary.
 
