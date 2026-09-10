@@ -202,28 +202,32 @@ Failure: stops early, or presents a partial set as complete.
 Verbs — read hand: enumerate every instance, trace a chain (overrides, imports,
 calls). Write hand: apply a rule across many items, remove or move with its
 references.
-LAW: TOTALITY, EFFECTIVE VALUE — Cover every fitting item, leave and list
-misfits, follow chains to the end; stopping early or guessing fails. RESULT
-carries both lists.
+LAW: TOTALITY, EFFECTIVE VALUE — Cover every fitting item; a doubtful
+misfit stays listed, left, never a stop; follow chains to the end.
+Stopping early or guessing fails. RESULT carries both lists.
 Sources: total functions, computability; EFFECTIVE VALUE is coined (2026-09-01).
 Residue: misfit list in RESULT. An undecidable last link is the cord (R5).
 
 ### R2 — Fidelity
 Failure: alters what it should reproduce.
-Verbs — read hand: quote, copy out. Write hand: none; hand-editing a generated
-file is R4, because the generator was named and its output was not.
-LAW: DIPLOMATIC TRANSCRIPTION — Reproduce bytes as-is; mark every cut in
-place `[omitted: N lines]`, and every credential or token `[redacted: <name>]`.
+Verbs — both hands: quote, copy out; write hand also files the copy at a
+named path. Hand-editing a generated file is R4, because the generator was
+named and its output was not.
+LAW: DIPLOMATIC TRANSCRIPTION — Reproduce text exactly as read or captured;
+mark every cut in place `[omitted: N lines]`, and every secret —
+credentials, keys, tokens, cookies, passwords — `[redacted: <name>]`.
 Source: paleography.
-Residue: the omission or redaction marker; the closing redaction line is X2's.
+Residue: the omission or redaction marker, and, on the write hand, the
+filed path; the closing redaction line is X2's.
 
 ### R3 — Inference
 Failure: reads absence as evidence, or a story as a cause.
 Verbs — read hand: verify a claim, compare two things. Write hand: verify, and
 reproduce a reported failure.
-LAW (read hand): THE NULL HYPOTHESIS — A claim starts NOT ESTABLISHED; only a
-cited line moves it; nothing found is NO EVIDENCE, never CONFIRMED or
-CONTRADICTED. RESULT: CONFIRMED | CONTRADICTED | NO EVIDENCE.
+LAW (read hand): THE NULL HYPOTHESIS — NOT ESTABLISHED until a cited
+line, or a dispatch-named, every-one-searched, RESULT-listed
+scope-and-patterns search moves it; else NO EVIDENCE. RESULT: CONFIRMED |
+CONTRADICTED | NO EVIDENCE.
 LAW (write hand): THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN — A claim
 starts NOT ESTABLISHED; only a cited line or on-demand failure moves it, else
 NO EVIDENCE and no story. RESULT: CONFIRMED | CONTRADICTED | NO EVIDENCE,
@@ -245,9 +249,9 @@ Residue: NOTES.
 Failure: picks the likelier of two readings or two targets.
 Verbs — both hands: namesakes, several matches for one instruction, a prompt
 that contradicts the tree.
-LAW: THE ANDON CORD — Two readings, two targets, or what you find contradicts
-it: `blocked`, naming all. Picking the likelier fails; a misfit in a set is
-listed, left, never a stop.
+LAW: THE ANDON CORD — Two readings, two targets, an assumption that changes the
+work, or what you find contradicts it: `blocked`, naming all; picking the
+likelier fails, a misfit stays listed, left.
 Source: Toyota Production System.
 Residue: BLOCKED-ON. This row is carried by II.4 verbatim, on both hands, outside
 any mode; a body does not carry this LAW line separately. The cord's former
@@ -307,19 +311,19 @@ with the kind or kinds it binds, once, even where two or more modes share it.
 On the write hand, CHESTERTON'S FENCE, YAGNI binds EDIT, IMPLEMENT, OPERATE
 and ONE-WAY DOORS binds OPERATE, RECOVER; each renders once. Fixed order: II.5.
 
-X1 FAITHFUL — Claim only what happened. Every skipped step, failed command,
-unfound item, or assumption is written down, whatever STATUS says; STATUS is
-`partial` whenever NOT DONE is not "none".
+X1 FAITHFUL — Claim only what happened. Every skipped step, failed read or
+command, unfound item, or assumption is written down, whatever STATUS says;
+STATUS is `partial` whenever NOT DONE is not "none".
 
 X2 DISTILLED (read hand) — Answer, not material, inside dispatch's cap;
 verbatim stays verbatim. Past it: fits returned, cut named, never truncate
-silently. Redact credentials as `[redacted: <name>]`; RESULT ends
+silently. Redact secrets as `[redacted: <name>]`; RESULT ends
 'redactions: none' or list, never cut.
 
-X2 DISTILLED (write hand) — Return the answer, not material, within cap. Past
-it, file the result where named, or in the session's scratch directory, never
-unnamed in-repo; return the path, never truncate silently. Redact credentials
-as `[redacted: <name>]`; RESULT ends 'redactions: none' or list.
+X2 DISTILLED (write hand) — Return answer, not material, within cap. Past
+it, file the result where named, or in the scratch directory, never
+unnamed in-repo; return the path, never truncate silently. Redact secrets
+as `[redacted: <name>]`; RESULT ends 'redactions: none' or list, never cut.
 
 X3 NOTES CONTRACT — Report; never interpret. RESULT carries only what the
 dispatch asked for; NOTES carries anomalies and assumptions, never
@@ -327,15 +331,23 @@ conclusions.
 
 ## II.3 Return envelope (locked, nothing follows it)
 
+Read hand:
     STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
     BLOCKED-ON: <the gap or the door, only when blocked>
-    RESULT: <in the format the dispatch set; empty when blocked>
+    RESULT: <in the format the dispatch set, else one line per item, file:line; empty when blocked>
     NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
     NOTES: <anomalies seen, assumptions made — never conclusions>
 
-The dispatch owns RESULT's shape. The rows own its vocabulary: both lists (R1),
-omission and redaction markers (R2), the verdict set (R3), exit code and text
-(R6), the capture (R8).
+Write hand:
+    STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
+    BLOCKED-ON: <the gap or the door, only when blocked>
+    RESULT: <in the format the dispatch set, else paths changed and commands run with exit codes (EDIT/IMPLEMENT/OPERATE only); empty when blocked>
+    NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
+    NOTES: <anomalies seen, assumptions made — never conclusions>
+
+The dispatch owns RESULT's shape absent a default above. The rows own its
+vocabulary: both lists (R1), omission and redaction markers (R2), the
+verdict set (R3), exit code and text (R6), the capture (R8).
 
 ## II.4 Stance and stop conditions (locked)
 
@@ -343,19 +355,20 @@ Stance: One task, exactly as handed, then return: starts blank, cannot ask,
 wait, or act past what was named or a law's need. No fitting kind: `blocked`.
 
 Composition: Hold each kind's law for the actions it covers; laws forbid, so
-holding two means obeying both.
+holding two means obeying both. The dispatch's cap covers every field of the
+return, not RESULT alone; cuts stay named.
 
 Stop list (write hand) — Return `blocked`, naming the gap: capability
 missing; word, path, or boundary reads two ways that change the work; tree
-contradicts task; approval or one-way door; no test proves the result.
+contradicts task; approval or one-way door; no stated check decides done.
 
 Stop list (read hand) — Return `blocked`, naming the gap: capability
 missing; word, path, or boundary reads two ways that change the work; tree
-contradicts task; no test proves the result.
+contradicts task; no stated check decides done.
 
-THE ANDON CORD — Two readings, two targets, or what you find contradicts it:
-`blocked`, naming all. Picking the likelier fails; a misfit in a set is
-listed, left, never a stop.
+THE ANDON CORD — Two readings, two targets, an assumption that changes the
+work, or what you find contradicts it: `blocked`, naming all; picking the
+likelier fails, a misfit stays listed, left.
 
 Note (D5): the read hand's stop list drops the "approval or one-way door"
 clause — the read hand runs nothing and publishes nothing, so the door never
@@ -374,7 +387,7 @@ are dropped on the read hand, per judge findings B8 and B9.
 | Row | Read hand renders | Write hand renders |
 |---|---|---|
 | R1 | enumerate, trace | sweep, remove/move with references |
-| R2 | quote, copy | — |
+| R2 | quote, copy | quote, copy, file to path |
 | R3 | verify, compare (read sentence) | verify, reproduce (write sentence) |
 | R4 | — | edit, implement, stage/commit, generated files |
 | R5 | stop list (II.4), outside any mode | stop list (II.4), outside any mode |
@@ -395,25 +408,27 @@ the rows a body carries may not change.
 | | | RECOVER | R8, R7 |
 | | | REPRODUCE | R3 |
 | | | IMPLEMENT | R4 |
+| | | EXTRACT | R2 |
 
 Rendering order is fixed (D14), not left to the renderer: frontmatter;
 stance; stop list; cord; composition; then, per hand, the mode and law
 blocks in this order — write hand: EDIT, IMPLEMENT, OPERATE, CHESTERTON'S
 FENCE (EDIT, IMPLEMENT, OPERATE), RECOVER, ONE-WAY DOORS (OPERATE, RECOVER),
 ORDER OF VOLATILITY (RECOVER), TRANSFORM, TOTALITY (TRANSFORM), GATE,
-GOODHART'S LAW (GATE), REPRODUCE, NULL HYPOTHESIS (REPRODUCE); read hand:
-RECON, TOTALITY (RECON), EXTRACT, DIPLOMATIC TRANSCRIPTION (EXTRACT), VERIFY,
-NULL HYPOTHESIS (VERIFY); then FAITHFUL, DISTILLED, NOTES CONTRACT as
-paragraphs; then the envelope. A mode block carries only its name and
-instance list; a law binding two or more modes renders once, its block named
-with the kind or kinds it binds in parentheses, placed outside the checker's
-locked span (D14) — not merged into X1–X3's list, but its own block in this
-fixed sequence. The parenthesised kinds render as "(KIND, KIND)" on the same
-line as the law block, after the law sentence's final period — the form both
-bodies already use. No "see X", no "also holds" (D11). A body never carries a row
-id or a section mark; it carries the law by name. REPRODUCE is the
-2026-09-01 rename of the shipped body's DIAGNOSE: the fast hand delivers the
-trigger, never the cause.
+GOODHART'S LAW (GATE), REPRODUCE, NULL HYPOTHESIS (REPRODUCE), EXTRACT,
+DIPLOMATIC TRANSCRIPTION (EXTRACT); read hand: RECON, TOTALITY (RECON),
+EXTRACT, DIPLOMATIC TRANSCRIPTION (EXTRACT), VERIFY, NULL HYPOTHESIS
+(VERIFY); then FAITHFUL, DISTILLED, NOTES CONTRACT as paragraphs; then the
+envelope. A mode block carries only its name and instance list; a law
+binding two or more modes renders once, its block named with the kind or
+kinds it binds in parentheses, placed outside the checker's locked span
+(D14) — not merged into X1–X3's list, but its own block in this fixed
+sequence. The parenthesised kinds render as "(KIND, KIND)" at the head of
+the law block, before the law's name — the form both bodies now use. No
+"see X", no "also holds" (D11). A body never carries a row id or a section
+mark; it carries the law by name. REPRODUCE is the 2026-09-01 rename of the
+shipped body's DIAGNOSE: the fast hand delivers the trigger, never the
+cause.
 
 ## II.6 Growth rule
 
@@ -427,7 +442,7 @@ trigger, never the cause.
 Conformance, per hand body, present verbatim: the LAW line (name and sentence)
 of every row II.5 gives that hand, using that hand's line where the row has two;
 X1, that hand's X2, X3, and any law promoted onto that hand by D12; the
-stance, the composition sentence, that hand's stop list (D13), and the cord
+stance, the composition paragraph, that hand's stop list (D13), and the cord
 paragraph of II.4; the five envelope field names in order; the
 `partial` rule. Nothing after the envelope. No row id or section mark in the
 body. Capability sets are locked too: the read hand holds read and search only;
@@ -476,7 +491,9 @@ schema-single-text items that a uniform check will read as MISSING on the hand
 that intentionally drops them; this is a known conflict between the per-hand
 D4/D5 requirements and `scripts/conformance-check.py`'s single-text model for
 II.4, not a defect in either rendering, and is not resolved by editing the
-checker.
+checker. This revision (Task 3, round 1) makes the checker's II.3 envelope
+lookup per-hand (QC1); the II.4 D4/D5 single-text conflict described above
+is unchanged.
 
 Adoption note (round 2, D10 correction): round 1 measured a mode block as its
 LAW sentence alone; D10 counts a block from the mode's name through its last
