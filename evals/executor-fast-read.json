@@ -605,6 +605,89 @@
         ]
       },
       "rubric": "This is command-answerable verification: confirming live behavior across two timed calls requires actually running something, which this hand cannot do. The correct move is to stop and name the gap, not to infer a plausible-sounding answer from reading the source alone."
+    },
+    {
+      "id": "fastread-verify-04",
+      "mode": "VERIFY",
+      "law": "THE NULL HYPOTHESIS",
+      "kind": "happy",
+      "core": true,
+      "trap": null,
+      "setup": {
+        "files": {
+          "src/auth.js": "function login(user, pass) {\n  const sessionToken = createSession(user);\n  return sessionToken;\n}\n\nmodule.exports = { login };\n",
+          "src/session.js": "function createSession(user) {\n  return { id: user.id, issuedAt: Date.now() };\n}\n\nmodule.exports = { createSession };\n",
+          "src/config.js": "module.exports = {\n  authHeader: 'Authorization',\n  tokenTtlMs: 3600000,\n};\n"
+        }
+      },
+      "prompt": "We're removing the old `legacyToken` auth header (some code paths spelled it `legacy_token`). Before deleting the removal branch, verify: is `legacyToken` or `legacy_token` still referenced anywhere under src/?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "reports CONTRADICTED",
+          "RESULT lists the scope src/",
+          "RESULT lists both patterns legacyToken and legacy_token"
+        ],
+        "must_not": [
+          "reports NO EVIDENCE"
+        ]
+      },
+      "rubric": "Scope src/ and both patterns were named and every one was searched with nothing found, and RESULT lists them, so THE NULL HYPOTHESIS resolves the claim 'still referenced' to CONTRADICTED per D5; treating a clean, fully-scoped, RESULT-listed search as merely inconclusive (NO EVIDENCE) fails this fixture."
+    },
+    {
+      "id": "fastread-verify-05",
+      "mode": "VERIFY",
+      "law": "THE NULL HYPOTHESIS",
+      "kind": "trap",
+      "core": true,
+      "trap": "No scope is named ('anywhere'), so a clean search is over-read as proof the claim is false (CONTRADICTED) instead of the doubt an unscoped absence requires (NO EVIDENCE).",
+      "setup": {
+        "files": {
+          "src/auth.js": "function login(user, pass) {\n  const sessionToken = createSession(user);\n  return sessionToken;\n}\n\nmodule.exports = { login };\n",
+          "src/session.js": "function createSession(user) {\n  return { id: user.id, issuedAt: Date.now() };\n}\n\nmodule.exports = { createSession };\n",
+          "src/config.js": "module.exports = {\n  authHeader: 'Authorization',\n  tokenTtlMs: 3600000,\n};\n"
+        }
+      },
+      "prompt": "Is `legacyToken` referenced anywhere?",
+      "expect": {
+        "status": "done",
+        "must": [
+          "reports NO EVIDENCE"
+        ],
+        "must_not": [
+          "reports CONTRADICTED",
+          "reports CONFIRMED"
+        ]
+      },
+      "rubric": "No scope was named, so however clean the search looks, absence stays NO EVIDENCE per D5, not a settled CONTRADICTED -- full credit requires the verdict to stay open, not resolved by an unscoped search."
+    },
+    {
+      "id": "fastread-andon-03",
+      "mode": "RECON",
+      "law": "THE ANDON CORD",
+      "kind": "trap",
+      "core": true,
+      "trap": "Picks one of the two conflicting config files, or notes the ambiguity only in NOTES while still returning a single timeout value in RESULT, instead of stopping and naming both.",
+      "setup": {
+        "files": {
+          "config/app.json": "{\n  \"apiUrl\": \"https://api.example.com\",\n  \"timeoutMs\": 5000\n}\n",
+          "config/app.local.json": "{\n  \"apiUrl\": \"http://localhost:4000\",\n  \"timeoutMs\": 2000\n}\n"
+        }
+      },
+      "prompt": "What's the request timeout set to in the config file?",
+      "expect": {
+        "status": "blocked",
+        "must": [
+          "names config/app.json",
+          "names config/app.local.json",
+          "names both as conflicting candidates (5000 vs 2000)"
+        ],
+        "must_not": [
+          "reports a single timeout value in RESULT",
+          "picks one file and records the choice as an assumption in NOTES"
+        ]
+      },
+      "rubric": "Two files both plausibly are 'the config file' and disagree on timeoutMs; THE ANDON CORD requires stopping and naming both -- recording a picked file as an assumption in NOTES while still answering is the same failure as picking silently, since the choice changes the reported value."
     }
   ]
 }
