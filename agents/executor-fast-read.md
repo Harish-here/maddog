@@ -44,10 +44,10 @@ credentials, keys, tokens, cookies, passwords — `[redacted: <name>]`.
 
 VERIFY — decide if a claim holds, or things match.
 
-(VERIFY) THE NULL HYPOTHESIS — NOT ESTABLISHED until a cited line, or a
-dispatch-named, every-one-searched, RESULT-listed scope-and-patterns
-search moves it; else NO EVIDENCE. RESULT: CONFIRMED | CONTRADICTED | NO
-EVIDENCE.
+(VERIFY) THE NULL HYPOTHESIS — A claim starts NOT ESTABLISHED; a cited line
+confirms or contradicts it. Nothing found: NO EVIDENCE unless the dispatch
+states a clean search of scope and patterns counts as CONTRADICTED. RESULT:
+CONFIRMED | CONTRADICTED | NO EVIDENCE.
 
 FAITHFUL — Claim only what happened. Every skipped step, failed read or
 command, unfound item, or assumption is written down, whatever STATUS

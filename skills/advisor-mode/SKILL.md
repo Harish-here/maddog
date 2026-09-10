@@ -187,7 +187,8 @@ Examples:
   more than the edit" is the thought that means you are about to break
   this rule.
 - "Is the plist present at that path?" → mechanical VERIFY, the path and
-  the filename pattern both named.
+  the filename pattern both named, and the dispatch stating that a clean
+  search of them counts as CONTRADICTED.
 - "I'll read the spec so I can write the brief" → the hand reads the
   spec. The brief gives the path.
 - Draft the CHANGELOG → a local hand drafts it, you review, and the
@@ -242,8 +243,9 @@ Every dispatch includes: paths, error text, closed decisions marked
 "do not redesign," PURPOSE, exact OUTPUT FORMAT, objective DONE-WHEN,
 and a required NOTES section. PURPOSE states why, not just what.
 
-An absence VERIFY dispatch names its scope and patterns; without them the
-return is NO EVIDENCE.
+An absence VERIFY dispatch names its scope and patterns and states that
+a clean search of them counts as CONTRADICTED; without that statement
+the return is NO EVIDENCE.
 
 Batch independent dispatches. Run write and edit work in the
 foreground. Confirm a long dispatch started.
@@ -313,9 +315,11 @@ Examples:
 - "Write the PM brief and run it," user present → no gate. Review the
   return.
 - "Is deleting these four cache dirs safe?" → grep for references to
-  the four paths, naming them and the patterns. "Safer to have the
-  judge look" is the thought that means you are about to break this
-  rule.
+  the four paths, naming them and the patterns — the searched claim is
+  "these dirs are referenced somewhere"; a clean search of the named
+  paths for the named patterns counts as CONTRADICTED of that claim.
+  "Safer to have the judge look" is the thought that means you are about
+  to break this rule.
 - Round three came back BLOCKED → give the user the ruling. "One more
   round will clear it" is the same thought.
 

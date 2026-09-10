@@ -194,8 +194,8 @@ destination. A body carries the name and the sentence together, as one line,
 in its own block, apart from the mode block it binds (D14). Every LAW
 sentence is held to a 32-word cap when rendered as a body block, except the
 write hand's R3 law, its DISTILLED law, and its ONE-WAY DOORS law, each
-capped at 42 (D16, D18), and the read hand's DISTILLED law, capped at 33
-(D19).
+capped at 42 (D16, D18), the read hand's DISTILLED law, capped at 33
+(D19), and the read hand's R3 law, capped at 42 (D14, ledger E25).
 
 ### R1 — Completeness
 Failure: stops early, or presents a partial set as complete.
@@ -224,10 +224,10 @@ filed path; the closing redaction line is X2's.
 Failure: reads absence as evidence, or a story as a cause.
 Verbs — read hand: verify a claim, compare two things. Write hand: verify, and
 reproduce a reported failure.
-LAW (read hand): THE NULL HYPOTHESIS — NOT ESTABLISHED until a cited
-line, or a dispatch-named, every-one-searched, RESULT-listed
-scope-and-patterns search moves it; else NO EVIDENCE. RESULT: CONFIRMED |
-CONTRADICTED | NO EVIDENCE.
+LAW (read hand): THE NULL HYPOTHESIS — A claim starts NOT ESTABLISHED; a
+cited line confirms or contradicts it. Nothing found: NO EVIDENCE
+unless the dispatch states a clean search of scope and patterns counts as
+CONTRADICTED. RESULT: CONFIRMED | CONTRADICTED | NO EVIDENCE.
 LAW (write hand): THE NULL HYPOTHESIS, REPRODUCE BEFORE YOU EXPLAIN — A claim
 starts NOT ESTABLISHED; only a cited line or on-demand failure moves it, else
 NO EVIDENCE and no story. RESULT: CONFIRMED | CONTRADICTED | NO EVIDENCE,

@@ -620,19 +620,17 @@
           "src/config.js": "module.exports = {\n  authHeader: 'Authorization',\n  tokenTtlMs: 3600000,\n};\n"
         }
       },
-      "prompt": "We're removing the old `legacyToken` auth header (some code paths spelled it `legacy_token`). Before deleting the removal branch, verify: is `legacyToken` or `legacy_token` still referenced anywhere under src/?",
+      "prompt": "We're removing the old `legacyToken` auth header (some code paths spelled it `legacy_token`). Before deleting the removal branch, verify: is `legacyToken` or `legacy_token` still referenced anywhere under src/? A clean search of src/ for both patterns counts as CONTRADICTED.",
       "expect": {
         "status": "done",
         "must": [
-          "reports CONTRADICTED",
-          "RESULT lists the scope src/",
-          "RESULT lists both patterns legacyToken and legacy_token"
+          "reports CONTRADICTED"
         ],
         "must_not": [
           "reports NO EVIDENCE"
         ]
       },
-      "rubric": "Scope src/ and both patterns were named and every one was searched with nothing found, and RESULT lists them, so THE NULL HYPOTHESIS resolves the claim 'still referenced' to CONTRADICTED per D5; treating a clean, fully-scoped, RESULT-listed search as merely inconclusive (NO EVIDENCE) fails this fixture."
+      "rubric": "Scope src/ and both patterns were named, the dispatch states that a clean search of them counts as CONTRADICTED, and nothing was found, so THE NULL HYPOTHESIS resolves the claim 'still referenced' to CONTRADICTED per D5; treating a clean, dispatch-stated search as merely inconclusive (NO EVIDENCE) fails this fixture."
     },
     {
       "id": "fastread-verify-05",
