@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.20.0] - 2026-09-10
+
+### Added
+- `docs/executor-family/postmortems/2026-09-09-fast-tier.md` — the fast-tier postmortem for `executor-fast` and `executor-fast-read`, filed verbatim
+- `.claude/skills/review-agent/references/checklist.md` gains dimension 9, ROUTING EDGES: for every router promising work to a hand under review (advisor-mode's dispatch contract and examples; any skill or agent dispatching that hand by name), checks the promise against the hand's own laws, one line per edge checked, one finding per refused promise; dimension 3 gains one sentence naming an example as a normative statement, checked against every law in the file the same way — ships via its own PR (#42, `feat/review-routing-edges`), gated ahead of and merged before this release
+- `evals/executor-fast-read.json` gains a happy/trap pair for THE NULL HYPOTHESIS's absence rule (`fastread-verify-04`, `fastread-verify-05`: scoped absence resolves to CONTRADICTED, unscoped absence stays NO EVIDENCE) and a THE ANDON CORD trap (`fastread-andon-03`: two conflicting config files, both must be named)
+- `evals/executor-fast.json` gains a TOTALITY, EFFECTIVE VALUE membership-doubt trap (`fast-transform-04`: a minified vendor file is a misfit, listed and left, never a stop), the write-hand pair to the new ANDON fixture (`fast-andon-04`), and a happy/trap pair for the write hand's new EXTRACT kind (`fast-extract-01`, `fast-extract-02`: copying a named log range preserves trailing whitespace and a misspelling verbatim, cleanup-tempting prompt included)
+
+### Changed
+- `docs/executor-family/mechanical-work.md`: the cord gains an "assumption that changes the work" trigger, with the misfit's own disposition — stays listed, left, never a stop — carried on TOTALITY's law line instead; the read hand's absence rule now returns CONTRADICTED only when the dispatch named its scope and patterns, every one was searched, and RESULT lists them, staying NO EVIDENCE otherwise; the write hand's stop-list line "no test proves the result" reads "no stated check decides done"; DIPLOMATIC TRANSCRIPTION's "reproduce bytes as-is" reads "reproduce text exactly as read or captured" and now binds the write hand too, via a new EXTRACT kind that copies lines, blocks, files, or log ranges to a named file; "credential or token" reads "secrets: credentials, keys, tokens, cookies, passwords" wherever it appears; every rendered law block opens with the kind(s) it binds, e.g. `(EDIT, IMPLEMENT, OPERATE)`; the return envelope (II.3) splits into a read-hand and a write-hand block, each keeping its own RESULT default (read: one line per item, file:line; write: paths changed and commands run with exit codes, EDIT/IMPLEMENT/OPERATE only)
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` re-rendered from the schema changes above, including the new EXTRACT law block and the per-hand envelope; `scripts/conformance-check.py`'s II.3 envelope check becomes per-hand, matching that split, with guards against a partial-field match or an unrecognized hand
+- `skills/advisor-mode/SKILL.md`: an absence VERIFY dispatch now must name its scope and patterns, or the return is NO EVIDENCE; the cap sentence generalizes to "cap every return to the hand's return envelope; bulk goes to a file"; the extraction tie-break routes by what the return is for rather than sending over-cap extraction to the read hand; the two Gates examples that asked "is this referenced anywhere" now name scope and patterns
+
+Harness: the `agent-evals` run against the seven fixtures above (`fastread-verify-04`, `fastread-verify-05`, `fastread-andon-03`, `fast-transform-04`, `fast-andon-04`, `fast-extract-01`, `fast-extract-02`) is recorded in `evals/last-run.md`, filed at the release's BEHAVIOR phase.
+
 ## [2.19.0] - 2026-09-08
 
 ### Changed
