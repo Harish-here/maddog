@@ -178,7 +178,11 @@ destination. A body carries the name and sentence together, as one line,
 in its own block, apart from the mode block it binds. Each block — mode
 block, and law block — is held to a 32-word cap (`wc -w`, name through
 last word), except where a `Cap note:` states which substance did not fit
-and the measured count, capped at 42.
+and the measured count, capped at 42. A head tag, where a law block
+carries one, sits outside this count — the count starts at the law's
+name, after the tag. Two blocks exceed even the 42-word grant and are
+named here as their own exception: X4 RENT HANDS, NEVER VERDICTS,
+measured at 102, and the II.4 stance, measured at 74.
 
 ### R1 — Idiom
 Failure: implements correctly but in a convention foreign to the system.
@@ -188,9 +192,8 @@ LAW: CONCEPTUAL INTEGRITY — Match the system's existing idiom; a correct
 change in a foreign convention still fails. DECISIONS names the idiom
 followed.
 Source: Fred Brooks.
-Residue: DECISIONS.
-Row-candidate note: a variant set that is not meaningfully distinct — a
-false choice — is a named failure with no fixture yet; logged here as a
+Residue: DECISIONS; a variant set that is not meaningfully distinct — a
+false choice — is a named failure with no fixture yet, logged here as a
 row candidate awaiting a real dispatch, not merged into DECISIONS's idiom
 failure.
 
@@ -246,10 +249,13 @@ or the corpus under review.
 Verbs: audit a diff, spec, or artifact against its brief; classify a
 corpus against a fixed taxonomy.
 LAW: NORMALIZATION OF DEVIANCE — "Always like that" is never a defence;
-flag it and name it pre-existing. RESULT lists load-bearing findings or
-the classification's counts; a misfit list goes to NOT DONE.
+flag it and name it pre-existing. RESULT lists load-bearing findings,
+cosmetic findings noted separately, or the classification's counts; a
+misfit list goes to NOT DONE.
 Source: Diane Vaughan.
 Residue: RESULT; misfit list, NOT DONE.
+Cap note: restores the load-bearing/cosmetic split D11's 32-word fix
+dropped; measured 36, capped at 42 — a REVIEW tooth outranks ten words.
 
 ### R7 — Resource
 Failure: leaves what it started running, locked, or unconfirmed dead.
@@ -309,9 +315,11 @@ same treatment mechanical-work.md gives its own cord row.
 ## II.2 Cross-cutting laws (every row, from the start)
 
 X1–X4 hold on every row from the start, rendered as paragraphs, never
-inside a mode block. Each renders once even where it binds several modes;
-its block is tagged at the head with the kind or kinds it binds, as
-"(KIND, KIND)". Fixed order: II.5.
+inside a mode block, and never tagged with a kind — untagged is decision
+6's shape for a cross-cutting law. The "(KIND, KIND)" head tag is
+reserved for the mode-adjacent law blocks R8 and R9, the two whose kind
+is not obvious from the mode block immediately before them. Fixed order:
+II.5.
 
 X1 FAITHFUL — Claim only what happened. Every skipped step, failed
 command, unfound item, or assumption is written down, whatever STATUS
@@ -355,8 +363,11 @@ smart-tier tooth sentence; capped at the measured count, 102.
     NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
     NOTES: <anomalies seen, assumptions made — never conclusions>
 
+The PRECEDENCE sentence is locked and checked verbatim, its own
+paragraph, nothing after it in II.3:
+
 The dispatch's OUTPUT FORMAT shapes what goes inside RESULT; the outer
-fields stand whatever the prompt says. The rows own RESULT's vocabulary.
+fields stand whatever the prompt says.
 
 ## II.4 Stance and stop conditions (locked)
 
@@ -400,6 +411,11 @@ readings that move the boundary, or a brief the tree contradicts:
 | R10 | stop list (II.4), outside any mode |
 | X1–X4 | yes, every mode |
 
+This column names the kinds a row binds, never a second render position:
+R8 (ONE-WAY DOORS) binds all six kinds listed, but renders once,
+immediately after CHOREOGRAPH's block, tagged with all six — the Mode →
+Rows table below lists it only under CHOREOGRAPH for that reason.
+
 Mode names and the rows they carry. A rendering may rename or regroup;
 the rows a body carries may not change.
 
@@ -429,6 +445,8 @@ tagged with the kind or kinds it binds at the head, in this fixed
 sequence. No "see X", no "also holds". A body never carries a row id or a
 section mark; it carries the law by name.
 
+Rendering guidance: the rows own RESULT's vocabulary.
+
 ## II.6 Growth rule
 
 - A verb with no new failure joins an existing row's instance list. No
@@ -456,13 +474,17 @@ agents/executor-smart.md`, which maps the capability set onto the
 runtime's tool identifiers: `Read, Write, Edit, Bash, Glob, Grep, Skill,
 Agent`.
 
-Two locked bans carry no return-field tooth, named here rather than left
-a silent gap. The skill ban ("never a skill the dispatch did not name")
-has none because a skill invocation leaves no trace in the return, and
-the eval harness exposes no tool-call log to grade it. The delegation
-bans (X4's tooth; the dispatch allowlist) are graded outside the harness,
-because the harness cannot let a dispatched agent itself dispatch — they
-are checked by the guard's payload tests and one live dispatch instead.
+Three locked bans carry no return-field tooth, named here rather than
+left a silent gap. The skill ban ("never a skill the dispatch did not
+name") has none because a skill invocation leaves no trace in the
+return, and the eval harness exposes no tool-call log to grade it. The
+delegation bans (X4's tooth; the dispatch allowlist) are graded outside
+the harness, because the harness cannot let a dispatched agent itself
+dispatch — they are checked by the guard's payload tests and one live
+dispatch instead. The stance's alternatives ban ("Never weigh an
+alternative past the first that clears the task's bar") is knowingly
+uninsured the same way: DECISIONS cannot fail it, since a hand that
+benchmarked five alternatives before choosing files the identical line.
 
 Each row needs at least one fixture whose trap is its failure and one
 that shows the law kept; fixtures under `evals/executor-smart.json` name
@@ -508,3 +530,16 @@ per-row comparison. A row that loses in the after-run gets its worked
 example restored as rendering on that row only, capped at 32 words, and
 the restoration is recorded here. The schema leaves DRAFT when the
 after-run named above is filed.
+
+Adoption note — gate-02 findings applied, one line each:
+N1 — the stance's alternatives ban named knowingly uninsured, above.
+N2 — X1–X4 render untagged; "(KIND, KIND)" scoped to R8, R9; head tag
+  exempted from II.1's word count.
+N3 — II.5's two tables reconciled: the row table's column names render
+  position; R8 binds six kinds but renders once, with CHOREOGRAPH.
+N4 — the PRECEDENCE sentence named and isolated in II.3; "The rows own
+  RESULT's vocabulary." moved to II.5 as rendering guidance.
+N5 — II.1's cap rule names X4 (102) and the stance (74) as the two
+  exceptions above the 42-word grant.
+N6 — R6's cosmetic-findings split restored under a Cap note, measured 36.
+N7 — R1's Row-candidate note folded into its Residue line.
