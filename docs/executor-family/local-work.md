@@ -1,6 +1,7 @@
 # Local work — why executor-smart is built this way
 
-STATUS: DRAFT. Adoption is gated on the fixture run named in II.7.
+STATUS: ADOPTED 2026-09-10. Body rendered at agents/executor-smart.md
+(commit fc76d3d); after-run filed at evals/runs/executor-smart-after.md.
 
 This document is for someone meeting the local-judgment tier for the first
 time: a reader who knows Claude Code and agents, and wants to understand,
@@ -549,3 +550,10 @@ N6 — R6's cosmetic-findings split restored under a Cap note, measured 36.
 N7 — R1's Row-candidate note folded into its Residue line.
 G2 — one scope connective permitted before X1 (II.2, II.5); the generic
   tag phrase in II.5 scoped to R8, R9.
+
+Adoption record — baseline run wf_94f8c48b-a9f on the published 2.19.0
+body, originals 9/13 (evals/runs/executor-smart-baseline.md); after-run
+wf_3ad0bfc5-2db on the dev-installed body fc76d3d, 16/22 core, originals
+11/13, GAINED smart-decompose-01 and smart-andon-01, LOST none, new
+fixtures 5/9 (evals/runs/executor-smart-after.md). No row lost: the
+example rule did not fire. Left DRAFT 2026-09-10.
