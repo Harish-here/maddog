@@ -1,21 +1,34 @@
 #!/usr/bin/env python3
 """Conformance check: is an agent body a faithful rendering of the mechanical-work schema?
 
-Usage: conformance-check.py --hand read|write --body agents/<file>.md [--schema docs/executor-family/mechanical-work.md]
+Usage: conformance-check.py --hand read|write|smart --body agents/<file>.md [--schema <doc>]  (schema defaults per hand)
 
 Checks, per hand, that every LOCKED item of the schema appears verbatim (whitespace-normalized) in the body:
-  - the LAW line (name + sentence) of every row II.5's first table gives this hand (R5 is carried by II.4)
-  - X1, this hand's X2, X3
+  - the LAW line (name + sentence) of every row II.5's first table gives this hand (the cord row is carried by II.4)
+  - X1, this hand's X2, X3 (smart hand also: X4)
   - II.4 stance paragraph, stop list, cord paragraph
-  - II.3 envelope field names in order, and the `partial` rule
+  - II.3 envelope field names in order, and the `partial` rule (smart hand also: the PRECEDENCE sentence)
 Also checks: nothing after the NOTES: line; frontmatter tools: line equals the hand's tool set;
-no schema row ids (R1..R8) or section marks (§) leak into the body.
+no schema row ids (R1, R2, …) or section marks (§) leak into the body.
 Exit 0 iff every check passes. Prints one line per item.
 """
 import argparse, re, sys
 
-TOOLS = {"read": "Read, Glob, Grep", "write": "Read, Write, Edit, Bash, Glob, Grep"}
-FIELDS = ["STATUS:", "BLOCKED-ON:", "RESULT:", "NOT DONE:", "NOTES:"]
+TOOLS = {
+    "read": "Read, Glob, Grep",
+    "write": "Read, Write, Edit, Bash, Glob, Grep",
+    "smart": "Read, Write, Edit, Bash, Glob, Grep, Skill, Agent",
+}
+FIELDS = {
+    "read": ["STATUS:", "BLOCKED-ON:", "RESULT:", "NOT DONE:", "NOTES:"],
+    "write": ["STATUS:", "BLOCKED-ON:", "RESULT:", "NOT DONE:", "NOTES:"],
+    "smart": ["STATUS:", "BLOCKED-ON:", "RESULT:", "DECISIONS:", "DELEGATION LOG:", "NOT DONE:", "NOTES:"],
+}
+SCHEMA = {
+    "read": "docs/executor-family/mechanical-work.md",
+    "write": "docs/executor-family/mechanical-work.md",
+    "smart": "docs/executor-family/local-work.md",
+}
 PARTIAL_RULE = '(partial whenever NOT DONE is not "none")'
 
 def norm(s):
@@ -28,7 +41,10 @@ def section(doc, start, end):
 
 def rows_for_hand(doc, hand):
     s7 = section(doc, "## II.5", "## II.6")
-    want = "Read hand renders" if hand == "read" else "Write hand renders"
+    cols = {"read": "Read hand renders", "write": "Write hand renders", "smart": "Smart hand renders"}
+    if hand not in cols:
+        raise SystemExit(f"schema: no II.5 column known for hand '{hand}'")
+    want = cols[hand]
     col = None
     rows = []
     for line in s7.splitlines():
@@ -37,11 +53,11 @@ def rows_for_hand(doc, hand):
             if cells[:1] == ["Row"] and want in cells:
                 col = cells.index(want)
             continue
-        m = re.match(r"R\d$", cells[0]) if cells else None
+        m = re.match(r"R\d+$", cells[0]) if cells else None
         if not m or len(cells) <= col:
             continue
         cell = cells[col]
-        if cell and cell != "—" and cells[0] != "R5":
+        if cell and cell != "—" and "stop list" not in cell:
             rows.append(cells[0])
     if col is None:
         raise SystemExit("schema: II.5 table header does not name '%s'" % want)
@@ -64,6 +80,8 @@ def cross_laws(doc, hand):
     m = re.search(r"X1 ([^—\n]+?) — (.*?)(?=\n\n)", s4, re.S); out["X1"] = m.group(1).strip() + " — " + m.group(2)
     m = re.search(r"X2 ([^—\n(]+?) \(" + hand + r" hand\) — (.*?)(?=\n\n)", s4, re.S); out["X2"] = m.group(1).strip() + " — " + m.group(2)
     m = re.search(r"X3 ([^—\n]+?) — (.*?)(?=\n\n)", s4, re.S); out["X3"] = m.group(1).strip() + " — " + m.group(2)
+    if hand == "smart":
+        m = re.search(r"X4 ([^—\n]+?) — (.*?)(?=\n\n)", s4, re.S); out["X4"] = m.group(1).strip() + " — " + m.group(2)
     return out
 
 def stance_blocks(doc, hand):
@@ -76,10 +94,12 @@ def stance_blocks(doc, hand):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--hand", required=True, choices=["read", "write"])
+    ap.add_argument("--hand", required=True, choices=["read", "write", "smart"])
     ap.add_argument("--body", required=True)
-    ap.add_argument("--schema", default="docs/executor-family/mechanical-work.md")
+    ap.add_argument("--schema", default=None)
     a = ap.parse_args()
+    if a.schema is None:
+        a.schema = SCHEMA[a.hand]
     doc = open(a.schema).read()
     raw = open(a.body).read()
     fm, body = raw.split("---", 2)[1:3] if raw.startswith("---") else ("", raw)
@@ -89,6 +109,12 @@ def main():
         items[f"{rid} LAW"] = law_line(doc, rid, a.hand)
     items.update(cross_laws(doc, a.hand))
     items.update(stance_blocks(doc, a.hand))
+    if a.hand == "smart":
+        s5 = section(doc, "## II.3", "## II.4")
+        m = re.search(r"(The dispatch's OUTPUT FORMAT .*?)(?=\n\n)", s5, re.S)
+        if not m:
+            raise SystemExit("schema: no PRECEDENCE sentence in II.3")
+        items["II.3 precedence"] = m.group(1)
     ok = True
     for k, v in items.items():
         hit = norm(v) in b
@@ -96,19 +122,21 @@ def main():
         print(f"{'PRESENT' if hit else 'MISSING':8s} {k}")
     # envelope order
     pos = []
-    for f in FIELDS:
+    for f in FIELDS[a.hand]:
         m = re.search(r"^[ \t]*" + re.escape(f), body, re.M)
         pos.append(m.start() if m else -1)
     env_ok = all(p >= 0 for p in pos) and pos == sorted(pos)
     # whole envelope block, verbatim (whitespace-normalized), from II.3's per-hand code block
+    # (smart hand has no "Smart hand:" marker: II.3 carries a single envelope block, so the
+    # whole section is scanned for the indented lines instead of a marker-scoped slice)
     s5 = section(doc, "## II.3", "## II.4")
     marker = {"read": "Read hand:", "write": "Write hand:"}.get(a.hand)
     try:
-        hs = section(s5, marker, "\n\n") if marker else None
+        hs = section(s5, marker, "\n\n") if marker else s5
     except ValueError:
         hs = None
     env_lines = [l.strip() for l in hs.splitlines() if l.startswith("    ") and l.strip()] if hs else []
-    env_block_ok = len(env_lines) == 5 and norm(" ".join(env_lines)) in b
+    env_block_ok = len(env_lines) == len(FIELDS[a.hand]) and norm(" ".join(env_lines)) in b
     ok &= env_block_ok
     print(f"{'PRESENT' if env_block_ok else 'MISSING':8s} II.3 envelope block verbatim")
     ok &= env_ok
@@ -135,7 +163,7 @@ def main():
     tools_ok = bool(tm) and norm(tm.group(1)) == TOOLS[a.hand]
     ok &= tools_ok
     print(f"{'PASS' if tools_ok else 'FAIL':8s} tools line == {TOOLS[a.hand]!r}")
-    leak = re.findall(r"\bR[1-8]\b|§", body)
+    leak = re.findall(r"\bR[0-9]+\b|§", body)
     ok &= not leak
     print(f"{'PASS' if not leak else 'FAIL':8s} no schema ids in body" + (f" (found {sorted(set(leak))})" if leak else ""))
     print("RESULT:", "CONFORMS" if ok else "NONCONFORMING")
