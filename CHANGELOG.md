@@ -22,6 +22,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `executor-smart`: skill layout; laws ordered by impact with "Judgment is expensive"; widened boundary stop; bulleted delegation rules with Fast and Fast-Read dispatch fields inline; blocked returns carry the evidence; description routes by judgment shape (`0860182`, `0512f74`)
 - `executor-fast` and `executor-fast-read`: rewritten lean around execution/reporting and escalation; one-way doors cover every action; a failing VERIFY or not-reproduced REPRODUCE is reported, never a stop; a contradicted claim is a VERIFY result; executor-fast-read gains web tools (`0860182`, `0512f74`)
 - `workflows/sdd-task-loop.js`: a haiku implementer returning `partial` aborts to the advisor instead of escalating (`0512f74`)
+- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` descriptions now present maddog as delegated intelligence, routing each task by the judgment it needs to executors holding only their role's authority, replacing "cheapest capable hand" and "by intelligence needed" (`d0aad1f`)
 - `PHILOSOPHY.md` replaced by the six adopted principles; README, DESIGN.md, efficient-md, the review-agent checklist, and author-agent re-pointed, with author-agent's re-gate step restating prior rulings (`0860182`, `53ce36e`, `0512f74`)
 - `docs/executor-family/local-work.md` and `docs/executor-family/mechanical-work.md` marked SUPERSEDED (`0860182`)
 
