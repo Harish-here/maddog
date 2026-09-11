@@ -103,9 +103,9 @@ metadata:
    grown heavy, resuming re-pays the whole transcript uncached, and a
    fresh judge supplied every prior ruling verbatim (the filed rulings
    are compact) is the cheaper equivalent and counts as the same re-gate.
-   Either way the earlier precedents bind and the judge audits the
-   cut-folding. A fresh judge with no precedents supplied is never a
-   re-gate. Repeat until every item clears. The author never self-clears
+   Either way the earlier precedents bind, the re-gate dispatch restates
+   them verbatim, and the judge audits the cut-folding. A fresh judge with
+   no precedents supplied is never a re-gate. Repeat until every item clears. The author never self-clears
    an item, whatever the round count.
 
 5. USER APPROVAL. Final verbatim texts on screen, referenced by item ID,

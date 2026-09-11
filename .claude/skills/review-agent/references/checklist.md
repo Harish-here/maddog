@@ -227,7 +227,7 @@ misfiled prerequisite, with the correct home named.
 
 ### 9. ROUTING EDGES
 **Subject:** every text that routes work to the file under review — the
-advisor-mode routing table and its examples, and any skill or agent
+advisor-mode Work Classification table and its examples, and any skill or agent
 dispatching it by name.
 **Procedure:** enumerate every router; check promises against its laws.
 A promise counts when the router names this hand, or names the class or

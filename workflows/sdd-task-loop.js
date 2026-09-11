@@ -58,8 +58,8 @@ implementers degraded with nothing in the run recording it.`,
 //              omitted effort silently inherits the launching session's, not the brief's.
 //              deps = task numbers that must be DONE first. Omitted deps = depends on
 //              every earlier task (the v1 sequential behavior, always safe).
-//              Note this inverts advisor-mode's fast-tier default: a loop implementer
-//              commits, runs gates, and must STOP on contract contradiction — sonnet is
+//              Note: a loop implementer commits, runs gates, and must STOP on
+//              contract contradiction — sonnet is
 //              the floor, haiku the earned exception for zero-deviation briefs.
 //   gate:      shell command that must exit 0 after every task (e.g. 'bash -c "npm run check"')
 //   baseRef:   git ref to diff against for the end review (e.g. 'main-everything-db')

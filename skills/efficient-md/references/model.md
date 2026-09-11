@@ -26,7 +26,7 @@ alone.
 | HOT | loaded every session by standing machinery | AGENTS.md, memory index, frontmatter descriptions |
 | WARM | loaded per dispatch or reference | SKILL.md bodies, briefs, specs, blueprints, research tables, living state artifacts |
 | COLD | write-once, verbatim, never rewritten | filed rulings, post-mortems, transcripts |
-| CHANNEL | resident in the orchestrator for the whole session | dispatch prompts, subagent returns, the session ledger |
+| CHANNEL | resident in the orchestrator for the whole session | dispatch prompts, subagent returns |
 
 HUMAN is not a fifth residency class — it is an AUDIENCE OVERLAY on
 any class. It attaches only where a person is the PRIMARY audience —
@@ -105,8 +105,7 @@ An artifact whose governance outgrows class law carries a named
 contract (precedence rule 3). A contract lives BESIDE the law it
 extends and ships only where that law ships — never in the generic
 doctrine, because a contract citing law its reader cannot load fails
-the blank-context test. Instance: this repo's decision-ledger
-contract, which lives in advisor-mode's references/ in this repo.
+the blank-context test.
 
 ## Skill packaging directive
 
