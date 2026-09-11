@@ -134,7 +134,7 @@ const TASK_RESULT = {
   required: ['task', 'status', 'commit', 'gateSummary', 'notes'],
   properties: {
     task: { type: 'number' },
-    status: { enum: ['done', 'blocked'] },
+    status: { enum: ['done', 'partial', 'blocked'] },
     commit: { type: 'string' },
     gateSummary: { type: 'string' },
     deviations: { type: 'string' },
@@ -353,7 +353,7 @@ if (!A.parallelize) {
           `In ${A.worktree}: git cherry-pick ${b.r.commit} (the commit exists in a sibling worktree sharing this repo's object store). Resolve NOTHING silently — if the pick conflicts, git cherry-pick --abort and return status blocked with the conflict summary. Then run "${A.gate}" and verify exit 0. Return task=${b.t.n}, status, the NEW commit hash on this branch, gateSummary, notes.`,
           { label: `merge-task-${b.t.n}`, phase: 'Implement', schema: TASK_RESULT, agentType: 'executor-fast', model: 'haiku' },
         )
-        if (!merged || merged.status !== 'done') return { aborted: `merge of task ${b.t.n} conflicted — lower parallelism or fix deps`, results, blocked: merged ?? null }
+        if (!merged || merged.status !== 'done') return { aborted: `merge of task ${b.t.n} conflicted or failed the gate — lower parallelism or fix deps`, results, blocked: merged ?? null }
         results.push(merged)
         done.add(b.t.n)
         if (b.t.flagged) {

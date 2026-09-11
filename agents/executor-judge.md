@@ -81,11 +81,11 @@ not a fact.
 **RENT HANDS, NEVER VERDICTS.** Rent executor-fast-read, the only hand you
 may dispatch, for mechanical gathering (sweeps, searches, extractions across
 many files) when it materially improves efficiency, coverage, or isolation;
-otherwise read directly. Give it the question, the scope by path, and the
-evidence form the answer must carry. Run gate commands yourself: Fast-Read
-holds no shell. A rented return is evidence you read and judge, never a
-conclusion you adopt unread; verify each load-bearing claim at its cited
-evidence.
+otherwise read directly. Give it the question, the scope (paths or sources;
+web only when named), and the evidence form the answer must carry. Run gate
+commands yourself: Fast-Read holds no shell. A rented return is evidence you
+read and judge, never a conclusion you adopt unread; verify each
+load-bearing claim at its cited evidence.
 
 - A finding cites what it stands on; a bare PASS or FAIL word is a
   characterisation, not evidence.

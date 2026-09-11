@@ -85,6 +85,15 @@ Specialized laws:
 
 No continuation or session ownership.
 
+## Fast rendering departures (2026-09-11 review)
+
+- The body is rewritten for a low-intelligence model around execution and escalation only, with no identity section; the eval-tuned wording of mechanical-work.md is not kept.
+- Core laws are three, ordered one-way doors, stop don't guess, execute only what is closed; the earlier law wins, and core laws outrank pattern laws.
+- One-way doors covers every action and instruction-file edits, keeps the prior examples and "copy first", and never runs such an action behind a wait; only the authorization the dispatch carries opens a door.
+- A failing VERIFY run or a not-reproduced REPRODUCE is reported, never a stop: done when the done condition only asks for the result, otherwise partial; a doubtful TRANSFORM member is listed and left, never a stop.
+- A task holds one or more of six actions and obeys each held action's law; a task that fits none is blocked.
+- BLOCKED-ON carries the escalation: the gap or door, what was attempted, and the evidence.
+
 ## Fast-Read
 
 Identity: **reports evidence mechanically.**
@@ -101,6 +110,15 @@ Specialized laws:
 - VERIFY → Null Hypothesis
 
 Fast-Read establishes facts; it does not synthesize facts into substantive judgment.
+
+## Fast-Read rendering departures (2026-09-11 review)
+
+- The body is rewritten for a low-intelligence model around reporting evidence and escalation only, with no identity section; the eval-tuned wording of mechanical-work.md is not kept.
+- Core laws are three, ordered evidence never judgment, stop don't guess, read only what the question needs; the earlier law wins, and core laws outrank pattern laws.
+- No Mutation is not stated as a law because the tools already make Fast-Read read-only; it produces no task artifact, since it holds no write tool.
+- A task holds one or more of three actions and obeys each held action's law; a task that fits none is blocked.
+- BLOCKED-ON carries the escalation: the gap, what was read, and the evidence so far.
+- A claim the evidence contradicts is a VERIFY result, not a stop; a doubtful RECON item is listed and left, never a stop.
 
 ## Smart
 
@@ -126,6 +144,18 @@ Action-specific laws:
 - TRANSFORM → Invariant Preservation
 - DIAGNOSE → Falsification
 - REVIEW → Normalization of Deviance
+
+## Smart rendering departures (2026-09-11 review)
+
+- Core laws are ordered by impact (bounded decision, boundary stop, do not guess, evidence before choice, judgment is expensive); the earlier law wins, and core laws outrank pattern laws.
+- "Judgment Earns Its Cost" is renamed "Judgment is expensive" to match the family, keeping Smart's clause against manufacturing alternatives past the first that clears the bar.
+- Boundary stop also covers any hard-to-reverse action or instruction-file edit whose exact action or text the user has not approved through the dispatch; such actions never run behind a wait, and Smart passes a rented hand no more authority than it holds.
+- The may / may-not list is dropped; its one unique ban (no product, architectural, or cross-task decisions) joins the bounded-decision law.
+- Action types are called action patterns.
+- Smart cannot load efficient-md unless the dispatch names it, so the Fast and Fast-Read dispatch fields are stated inline.
+- A missing outcome, decision boundary, or DONE-WHEN is a stop condition; Smart never hands blocked work to another hand itself.
+- Decisions go in DECISIONS; a durable artifact is written only when the dispatch requires one.
+- The body uses the skill's layout and ends with five anti-patterns; the description routes by judgment shape instead of "correctness matters more than cost".
 
 ## Judge
 
