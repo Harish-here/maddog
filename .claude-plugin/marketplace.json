@@ -1,12 +1,12 @@
 {
   "name": "maddog",
   "owner": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
-  "description": "maddog: agents and skills for delegating tasks by intelligence needed.",
+  "description": "maddog: delegated intelligence, with agents and skills that route work by the judgment it needs and the authority it takes.",
   "plugins": [
     {
       "name": "maddog",
       "source": "./",
-      "description": "Agents and skills that route each task to the cheapest capable hand, plus a planning-to-PR pipeline for building features."
+      "description": "An advisor routes each task by the judgment it needs to executors holding only their role's authority, plus a planning-to-PR pipeline for building features."
     }
   ]
 }

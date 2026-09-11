@@ -1,7 +1,7 @@
 {
   "name": "maddog",
   "version": "3.0.0",
-  "description": "Agents and skills that route each task to the cheapest capable hand, from mechanical steps up to hard judgment calls, plus a full planning-to-PR pipeline for building features.",
+  "description": "Delegated intelligence: an advisor routes each task by the judgment it needs (closed, bounded, or evolving) to executors that hold only the authority their role requires, plus a planning-to-PR pipeline for building features.",
   "author": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
   "homepage": "https://github.com/Harish-here/maddog",
   "repository": "https://github.com/Harish-here/maddog",
