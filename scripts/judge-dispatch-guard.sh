@@ -70,7 +70,7 @@ deny() {
   local target="$1"
   local reason ctx reason_json ctx_json
   reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted to dispatch '${target}'. ${caller} may only rent ${allowed_desc} as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: ${why}. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  ctx="Blocked by judge-dispatch-guard.sh: ${why}. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
@@ -85,7 +85,7 @@ deny() {
 deny_no_target() {
   local reason ctx reason_json ctx_json
   reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. ${caller} may only rent ${allowed_desc} as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: ${why}. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return STATUS: blocked to your caller with this reason — do not attempt the dispatch."
+  ctx="Blocked by judge-dispatch-guard.sh: ${why}. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the dispatch."
   reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
   if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
