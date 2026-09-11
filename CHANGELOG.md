@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-09-11
+
+### Removed
+- `skills/advisor-mode/references/ledger.md` and `skills/advisor-mode/references/absent.md` — the session ledger and the unattended/absence procedure leave advisor-mode; unattended rules are to return as a separately acquired skill (`0860182`, `53ce36e`)
+- advisor-mode's mandatory session-open, bind, ledger, and close steps; Researcher is no longer part of Advisor routing (it stays for the product pipeline) (`0860182`)
+
+### Added
+- `docs/executor-family/design-decisions.md` — the executor-family design record, with rendering departures recorded for Advisor, Lead, Fast, Fast-Read, Smart, and Judge (`0860182`, `53ce36e`, `0512f74`)
+- Named laws for Lead's work patterns: PLAN → Last Responsible Moment, CAMPAIGN → Value of Information, DIAGNOSE → Multiple Working Hypotheses, DELIVER → Fallacy of Composition (`53ce36e`)
+- `workflows/sdd-task-loop.js`: TASK_RESULT status accepts `partial` (`0512f74`)
+
+### Changed
+- `advisor-mode` rewritten from the finalized spec: core laws in precedence order (earlier law wins), a User Authority section, judgment-based work classification with a Judge row, a per-hand dispatch table shared byte-for-byte with executor-lead, a cheapest-sufficient gate ladder, questions to the human typed as Approval / Escalation / Clarification, sections in the Advisor's loop order, five anti-patterns (`0860182`, `53ce36e`)
+- `executor-lead`: skill layout and order; core and package laws with precedence; a frozen plan returns to Advisor unless integration needs judgment or delivery was asked; boundary stop covers unapproved irreversible actions and instruction-file edits; a rule for Lead's own context running out; five anti-patterns (`0860182`, `53ce36e`)
+- `executor-judge`: verdicts PASS | FAIL | STOP; a fourth core law (judgment is expensive); bans in order of harm; action patterns; an explicit STOP-vs-FAIL line; a prior verdict counts only when the dispatch restates it, even when the judge is resumed (`0860182`, `53ce36e`, `0512f74`)
+- `executor-smart`: skill layout; laws ordered by impact with "Judgment is expensive"; widened boundary stop; bulleted delegation rules with Fast and Fast-Read dispatch fields inline; blocked returns carry the evidence; description routes by judgment shape (`0860182`, `0512f74`)
+- `executor-fast` and `executor-fast-read`: rewritten lean around execution/reporting and escalation; one-way doors cover every action; a failing VERIFY or not-reproduced REPRODUCE is reported, never a stop; a contradicted claim is a VERIFY result; executor-fast-read gains web tools (`0860182`, `0512f74`)
+- `workflows/sdd-task-loop.js`: a haiku implementer's `partial` aborts to the advisor without escalating, and a merge that fails its gate says so in its abort message (`0512f74`)
+- `scripts/executor-guard.sh` and `scripts/judge-dispatch-guard.sh`: deny messages tell executor-judge to return `VERDICT: STOP` instead of a STATUS field it no longer has (`f11cf24`)
+- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` descriptions now present maddog as delegated intelligence, routing each task by the judgment it needs to executors holding only their role's authority, replacing "cheapest capable hand" and "by intelligence needed" (`d0aad1f`)
+- `PHILOSOPHY.md` replaced by the six adopted principles; README, DESIGN.md, efficient-md, the review-agent checklist, and author-agent re-pointed, with author-agent's re-gate step restating prior rulings (`0860182`, `53ce36e`, `0512f74`)
+- `docs/executor-family/local-work.md` and `docs/executor-family/mechanical-work.md` marked SUPERSEDED (`0860182`)
+
 ## [2.21.0] - 2026-09-10
 
 ### Added

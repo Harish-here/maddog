@@ -1,9 +1,6 @@
 # Mechanical work — why executor-fast and executor-fast-read are built this way
 
-STATUS: DRAFT. Adoption is gated on the fixture run named in II.7. This
-revision shrinks every locked block in Part II to a 32-word cap
-(rendered-body count), except three write-hand blocks D16/D18 cap at 42;
-see the note at the end of II.7 for what that cost.
+STATUS: SUPERSEDED 2026-09-11 by design-decisions.md. Kept as design history; the locked schema in Part II no longer governs agents/executor-fast.md or agents/executor-fast-read.md.
 
 This document is for someone meeting the cheap tier for the first time: a
 reader who knows Claude Code and agents, and wants to understand, review, or
@@ -25,7 +22,7 @@ the tests, renaming a symbol in fifty files, quoting a config block, checking
 whether a claim about the code is true. The cheap hand exists so the expensive
 mind never does that work. Four reasons, in the order they mattered.
 
-1. **It makes the bottom price exist.** "Intelligence is a budget" only works
+1. **It makes the bottom price exist.** "Judgment is expensive" only works
    if there is a cheapest hand to buy. Without it, every delegation starts at
    the mid tier. A hard subject does not buy a smart model; an open decision
    does. A decided edit across fifty files is hard to look at and trivial to

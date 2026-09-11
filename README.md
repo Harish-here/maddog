@@ -24,17 +24,23 @@ as a plugin for Claude; soon, for every other ecosystem.
 
 ## Design philosophy
 
-- **Intelligence is a budget.** Every task is routed by its shape to the
-  cheapest hand that covers it.
-- **Tokens are the new currency. Never pay twice.** A token spent on
-  something is never spent again on the same thing.
-- **Architect the integrity. Don't just instruct the agent.** A rule that
-  must hold is built into the structure: the judge holds no edit tools, a
-  hook denies the write, a guard blocks the shell form.
-- **Spend your attention on what matters.** There is enough technology to
-  carry the mechanical work.
-- **Harness-neutral core.** The roles, laws, and contracts are plain prose
-  that any agent runtime could load.
+- **Judgment is expensive.** Spend intelligence where decisions change
+  outcomes — judgment shape routes the task, not subject difficulty.
+- **Work is paid once.** Reuse completed work — evidence, decisions,
+  artifacts — until its basis changes; a downstream agent should not
+  rediscover it.
+- **Authority follows responsibility.** An agent gets only the authority
+  and capabilities its responsibility requires; structural boundaries hold
+  this, not role instructions alone.
+- **Human judgment is scarce.** Spend human judgment only on decisions
+  requiring human authority; escalate a compressed decision, not raw
+  uncertainty.
+- **Separate responsibility from mechanism.** Roles, responsibilities,
+  authority, and contracts define behavior; runtime mechanisms implement
+  them, so the core never depends on one harness's mechanics.
+- **Outcome over activity.** Every action must earn its cost — change the
+  outcome, resolve uncertainty, or produce reusable evidence — or it does
+  not happen.
 
 See `PHILOSOPHY.md` for the full statement of each point.
 
@@ -79,32 +85,40 @@ only with the plugin install above.
 
 **Executor family** (`executor-fast`, `executor-fast-read`, `executor-smart`, `executor-lead`,
 `executor-judge`) — one ladder of judgment, bought by task shape. Fast and
-smart do the work; lead holds memory across a package; lead can rent
-fast-tier hands, smart-tier too; judge can rent only the read-only
-fast-tier hand; judge rules on the others' output and can never edit. The
-guard scripts enforce the last part.
+smart do the work; lead holds memory across a package and orchestrates
+fast-read, fast, smart, and judge inside it; judge can rent only the
+read-only fast-tier hand and rules on the others' output with a PASS,
+FAIL, or STOP verdict — it can never edit. The guard scripts enforce the
+last part.
 
-- **executor-fast** — runs fully-specified mechanical tasks on a cheap, fast
-  model: bulk edits, test/lint runs, boilerplate, committing, pushing,
-  opening a PR.
-- **executor-fast-read** — runs read-only mechanical tasks on the same
-  cheap, fast tier, holding no shell and no edit: search, extraction,
-  verifying a claim against reality.
-- **executor-smart** — runs one delegated task needing local judgment but not
-  top-tier reasoning: pattern-matching refactors, context-dependent edits,
-  small design choices inside a fixed boundary, debugging, migrations,
-  splitting an oversized file, or live/stateful choreography.
-- **executor-lead** — holds judgment with memory across one bursted work
-  package: freezing an open decomposition into a plan, running an
-  unfreezable evidence-driven campaign, or delivering one decided-scope
-  package entangled with live/hazardous reality.
-- **executor-judge** — renders adversarial gate verdicts on another
-  intelligence's output: design review before execution, change review
-  after, and adjudication of gating disputes. Cannot fix anything it rules
-  on — no Write/Edit.
+- **executor-fast** — runs fully-specified mechanical tasks on a cheap,
+  fast model: a decided edit, one rule across many files, test and build
+  runs, git and service operations, state recovery, bug reproduction, code
+  from a frozen brief.
+- **executor-fast-read** — runs fully-specified read-only mechanical tasks
+  on the same cheap, fast tier, holding no shell and no edit: where
+  something lives, what the source says verbatim, whether a claim holds;
+  holds web access (WebSearch, WebFetch) when the dispatch names web
+  sources.
+- **executor-smart** — runs one delegated task needing local judgment but
+  inside a fixed boundary, on a mid-tier model: a feature or refactor
+  matching existing patterns, transforming a structure across versions or
+  modules without losing behavior, diagnosing an uncertain cause from
+  bounded evidence, or reviewing an artifact against explicit criteria.
+- **executor-lead** — owns evolving work inside a delegated boundary on a
+  high-tier model: adaptive decomposition, evidence-driven sequencing,
+  package-level judgment with memory across steps; orchestrates
+  executor-fast-read, executor-fast, executor-smart, and executor-judge
+  inside its package, and never judges its own package.
+- **executor-judge** — renders independent acceptance verdicts on another
+  intelligence's output, on a high-tier model: plan/design review before
+  execution, and review of an executed outcome against its acceptance bar;
+  issues PASS, FAIL, or STOP, can rent only executor-fast-read, and holds
+  no Write/Edit — it cannot fix anything it rules on.
 
-**Researcher** — exists so the executors stay web-free; the only hand with
-web tools, returns capped and cited.
+**Researcher** — a separate role from executor routing, kept for the
+product pipeline's web research needs; web access inside executor routing
+lives on `executor-fast-read` when a dispatch names web sources.
 
 - **researcher** — mechanical web research on a cheap model: runs the
   searches it's handed and returns a capped, source-cited findings table,
@@ -138,8 +152,9 @@ the workflow via its `scriptPath`.
 
 ### Skills (`skills/`)
 
-- **advisor-mode** — runs a session as the Advisor: holds architecture,
-  routing, and acceptance judgment while delegating everything else.
+- **advisor-mode** — runs a session as the Advisor: classifies work by
+  judgment shape, delegates it or does small work directly, and accepts
+  what comes back.
 - **efficient-md** — shapes a markdown artifact's length and structure by how
   long it stays loaded and who reads it, agent or person (AGENTS.md or README,
   a memory index, a frontmatter description, a SKILL.md body, a brief, a state

@@ -58,8 +58,8 @@ implementers degraded with nothing in the run recording it.`,
 //              omitted effort silently inherits the launching session's, not the brief's.
 //              deps = task numbers that must be DONE first. Omitted deps = depends on
 //              every earlier task (the v1 sequential behavior, always safe).
-//              Note this inverts advisor-mode's fast-tier default: a loop implementer
-//              commits, runs gates, and must STOP on contract contradiction — sonnet is
+//              Note: a loop implementer commits, runs gates, and must STOP on
+//              contract contradiction — sonnet is
 //              the floor, haiku the earned exception for zero-deviation briefs.
 //   gate:      shell command that must exit 0 after every task (e.g. 'bash -c "npm run check"')
 //   baseRef:   git ref to diff against for the end review (e.g. 'main-everything-db')
@@ -134,7 +134,7 @@ const TASK_RESULT = {
   required: ['task', 'status', 'commit', 'gateSummary', 'notes'],
   properties: {
     task: { type: 'number' },
-    status: { enum: ['done', 'blocked'] },
+    status: { enum: ['done', 'partial', 'blocked'] },
     commit: { type: 'string' },
     gateSummary: { type: 'string' },
     deviations: { type: 'string' },
@@ -353,7 +353,7 @@ if (!A.parallelize) {
           `In ${A.worktree}: git cherry-pick ${b.r.commit} (the commit exists in a sibling worktree sharing this repo's object store). Resolve NOTHING silently — if the pick conflicts, git cherry-pick --abort and return status blocked with the conflict summary. Then run "${A.gate}" and verify exit 0. Return task=${b.t.n}, status, the NEW commit hash on this branch, gateSummary, notes.`,
           { label: `merge-task-${b.t.n}`, phase: 'Implement', schema: TASK_RESULT, agentType: 'executor-fast', model: 'haiku' },
         )
-        if (!merged || merged.status !== 'done') return { aborted: `merge of task ${b.t.n} conflicted — lower parallelism or fix deps`, results, blocked: merged ?? null }
+        if (!merged || merged.status !== 'done') return { aborted: `merge of task ${b.t.n} conflicted or failed the gate — lower parallelism or fix deps`, results, blocked: merged ?? null }
         results.push(merged)
         done.add(b.t.n)
         if (b.t.flagged) {

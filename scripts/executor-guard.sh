@@ -82,7 +82,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
 
 deny() {
   local reason="$1"
-  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions or write files via Bash. STOP and return STATUS: blocked to your caller with this reason — do not attempt the command."
+  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions or write files via Bash. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the command."
   local reason_json ctx_json
   reason_json="$(printf '%s' "$reason" | jq -Rs .)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"

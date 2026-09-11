@@ -20,7 +20,7 @@ evidence: references/model.md.
 | HOT | loaded every session by standing machinery (AGENTS.md, memory index, frontmatter descriptions) | references/hot.md |
 | WARM | loaded per dispatch or reference (skill bodies, briefs, specs, research tables, living state files) | references/warm.md |
 | COLD | write-once, verbatim, never rewritten (filed rulings, post-mortems, transcripts) | references/cold.md |
-| CHANNEL | resident in the orchestrator all session (dispatch prompts, returns, the session ledger) | references/channel.md |
+| CHANNEL | resident in the orchestrator all session (dispatch prompts, returns) | references/channel.md |
 
 ## Human Audience Overlay
 

@@ -1,7 +1,6 @@
 # Local work — why executor-smart is built this way
 
-STATUS: ADOPTED 2026-09-10. Body rendered at agents/executor-smart.md
-(commit fc76d3d); after-run filed at evals/runs/executor-smart-after.md.
+STATUS: SUPERSEDED 2026-09-11 by design-decisions.md. Kept as design history; the locked schema in Part II no longer governs agents/executor-smart.md.
 
 This document is for someone meeting the local-judgment tier for the first
 time: a reader who knows Claude Code and agents, and wants to understand,
