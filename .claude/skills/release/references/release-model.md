@@ -58,7 +58,7 @@ check nobody can run under pressure is not a check.
   them; a missing tag yields `no-matching-tag` only for constrained
   dependents, never for any directory.
 - E4: CI validate.yml checks exactly three things: frontmatter YAML parses,
-  JSON parses (.claude-plugin/*.json, evals/*.json — NOT hooks/hooks.json),
+  JSON parses (.claude-plugin/*.json — NOT hooks/hooks.json),
   plugin.json version == CHANGELOG top entry (first-match regex — internal
   parity only, no uniqueness against history). On pull_request its checkout
   is the MERGE REF. It never lints or executes shell.
@@ -66,8 +66,8 @@ check nobody can run under pressure is not a check.
   required reviews; no required_status_checks key; enforce_admins=false.
 - E6: CLAUDE.md canon: conventional commits, scoped; bump plugin.json
   version when the shipped agent/skill set changes.
-- E7: eval harness exists (evals/ + run-skill-routing.sh); CI parse-checks
-  fixture JSON but never runs the harness; nor does any release step.
+- E7: no eval harness: evals/, run-skill-routing.sh and the agent-evals
+  workflow were removed 2026-09-15; no release step runs behavioural fixtures.
 - E8: 2.2.0: manifest enumerations + cross-refs fixed by hand-driven sweep;
   nothing mechanical checks manifests match what ships.
 - E9: standing debt: plugin-only bare-name agent-resolution probe never run.
@@ -136,7 +136,7 @@ check nobody can run under pressure is not a check.
   users receive (the class governs triggers, not distribution).
 - GATE-INFRA: .github/, hooks/, scripts/ — what enforces or
   wires the gate and the guard.
-- INTERNAL: .claude/, evals/ — except .claude/skills/release/, which is
+- INTERNAL: .claude/ — except .claude/skills/release/, which is
   GATE-INFRA (self-application: a broken gate is a broken factory).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md,
   LICENSE, .gitignore, PHILOSOPHY.md, DESIGN.md, assets/, skills.sh.json.
@@ -187,8 +187,8 @@ GitHub-native; no push-to-main needed. THE RELEASE PR IS THE RECORD:
    - Manifest enumerations re-derived from the filesystem, diffed against
      both manifests (L4). Repo-wide sweep for added/renamed/removed names.
    - CHANGELOG entry present + styled — validating what DECLARE ruled.
-3. BEHAVIOR — probes, pre-merge: run-skill-routing.sh where a fixture home
-   exists (else cite E13); fresh-session claude -p probes per changed
+3. BEHAVIOR — probes, pre-merge: no fixture home exists (E7); fresh-session
+   claude -p probes per changed
    description (happy path + moved boundaries); plugin-mode probe where
    relevant (E9). Unrunnable ⇒ UNVERIFIED with named debt (under L1).
 4. RULE — the gate: adversarial release-review by a fix-less judge;

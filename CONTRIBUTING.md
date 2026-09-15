@@ -19,7 +19,8 @@ or a test runner. A change is validated by exercising it:
   confirm it follows the new instruction, rather than assuming it will.
 - **Agent/skill description change** → this is routing, not documentation.
   Confirm the intended task shape still selects the agent and neighbouring
-  shapes still don't — `evals/run-skill-routing.sh` runs the routing probes.
+  shapes still don't — fresh-session `claude -p` probes, as the release
+  skill's BEHAVIOR step describes.
 - **Workflow change** (`workflows/*.js`) → launch it with the `scriptPath`
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.

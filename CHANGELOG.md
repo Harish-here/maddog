@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.1] - 2026-09-15
+
+### Removed
+- `evals/` — the behavioural fixture suite for the executor family and advisor-mode, the skill routing fixtures, the run records under `evals/runs/`, and `run-skill-routing.sh`; `.claude/workflows/agent-evals.js`, the runner for those fixtures (`26db95b`)
+
+### Changed
+- `release` skill: BEHAVIOR step 1 records that no fixture home exists; INTERNAL class is `.claude/` alone; E7 in `references/release-model.md` records the harness removal (`26db95b`)
+- `author-agent` skill step (c): keeper findings are recorded as named fixture-debt, since no fixture home exists (`26db95b`)
+- `.github/workflows/validate.yml`: JSON parse check covers `.claude-plugin/*.json` only (`26db95b`)
+- README, CONTRIBUTING, `.gitignore`, `docs/executor-family/local-work.md` and `docs/executor-family/mechanical-work.md` no longer point at the removed files; the design docs keep their measurement history (`26db95b`)
+
 ## [3.0.0] - 2026-09-11
 
 ### Removed

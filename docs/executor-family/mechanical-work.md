@@ -452,9 +452,10 @@ is reviewed for prose only. The referee is
 capability sets onto the runtime's tool identifiers.
 
 Each row needs at least one fixture whose trap is its failure and one that shows
-the law kept; the fixture files under `evals/` name the row's law in their `law`
-field, re-keyed to these names as part of adoption. A missing fixture shows as a
-row with no fixture, never as a missing law.
+the law kept. A missing fixture shows as a row with no fixture, never as a
+missing law. The fixture files under `evals/` were removed from the repo on
+2026-09-15; the adoption record below is kept as history of how this schema
+was measured.
 
 Adoption gate: the full fixture suite runs on the previous bodies and again on
 the renderings, and the two runs are filed side by side. Against the 2026-09-01

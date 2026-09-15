@@ -112,8 +112,8 @@ row would duplicate rather than insure anything new. This is one
 departure from a flat nine-row hypothesis, recorded here rather than
 silently folded in.
 
-**History check.** `evals/runs/executor-smart-dispatch-census.md` (162
-dispatches, 2026-08-13 to 2026-09-09) gives: AUTHOR 66+3, FIX 26+12,
+**History check.** A census of 162 executor-smart dispatches (2026-08-13 to
+2026-09-09; its record left the repo with `evals/` on 2026-09-15) gives: AUTHOR 66+3, FIX 26+12,
 CHOREOGRAPH 22+11, BUILD 17+2, REVIEW 7, DIAGNOSE 0+2, PORT 1, DECOMPOSE 1,
 NO FIT 7. Every NO FIT row is covered by an existing row's instance list,
 never left out of scope:
@@ -491,11 +491,10 @@ uninsured the same way: DECISIONS cannot fail it, since a hand that
 benchmarked five alternatives before choosing files the identical line.
 
 Each row needs at least one fixture whose trap is its failure and one
-that shows the law kept; fixtures under `evals/executor-smart.json` name
-the row's law in their `law` field. A missing fixture shows as a row with
-no fixture, never as a missing law: R8 and R9 have none among the 20 —
-CHOREOGRAPH's two existing fixtures test RAII only — and re-keying owes
-each a trap and a happy fixture.
+that shows the law kept. A missing fixture shows as a row with no fixture,
+never as a missing law. The fixture suite (`evals/executor-smart.json`) and
+its run records were removed from the repo on 2026-09-15; the mapping and
+adoption record below are kept as history of how this schema was measured.
 
 A fixture id may map to one of three legal targets: a row, the stop list
 (II.4), or the stance (II.4); `smart-decide-01`/`02` map to the stance.

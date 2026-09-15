@@ -23,7 +23,7 @@ metadata:
 - GATE-INFRA: .github/, hooks/, scripts/ — what enforces the gate and
   the guard. `.claude/skills/release/` is GATE-INFRA even though it lives under
   `.claude/` (self-application).
-- INTERNAL: `.claude/`, `evals/` (except release/, above).
+- INTERNAL: `.claude/` (except release/, above).
 - DOCS: README.md, CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, SECURITY.md, LICENSE,
   .gitignore, PHILOSOPHY.md, DESIGN.md, assets/, skills.sh.json.
 - DEFAULT: any unclassified path is GATE-INFRA until classified above — fail
@@ -62,7 +62,7 @@ branch until whole (L9). SHIP pushes it and opens the PR.
    mismatch as a READY failure. Otherwise run the extracted script verbatim
    (`python3`, pyyaml installed) against the candidate tree. Today it checks:
    frontmatter YAML parses on `skills/*/SKILL.md`, `.claude/skills/*/SKILL.md`,
-   `agents/*.md`; JSON parses on `.claude-plugin/*.json` and `evals/*.json`;
+   `agents/*.md`; JSON parses on `.claude-plugin/*.json`;
    `plugin.json`'s `version` equals CHANGELOG.md's first `## [...]` heading.
 2. **Shell gate (E14):** `bash -n` on every GATE-INFRA shell file
    (`scripts/*.sh`); JSON-parse `hooks/hooks.json`; every hook
@@ -78,10 +78,9 @@ branch until whole (L9). SHIP pushes it and opens the PR.
 
 ## 3. BEHAVIOR — pre-merge probes: steps 1, 3 fast-tier; step 2 MID-TIER (M67)
 
-1. `run-skill-routing.sh` where a fixture home exists — derive the list from
-   `evals/*.json` on the candidate tree, never from memory (L4's spirit); for
-   each changed surface with no fixture home, record UNVERIFIED + named debt
-   (E13 recorded the coverage gap at adoption; re-derive, don't re-quote).
+1. Routing fixtures: none exist — the fixture home (`evals/`) was removed on
+   2026-09-15 (E7). Step 2's probes are the only routing evidence; for each
+   changed surface they cannot cover, record UNVERIFIED + named debt.
 2. For every description added or changed: fresh-session `claude -p` probes —
    happy path plus each moved routing boundary, both directions. MID-TIER
    hand: deriving which boundaries moved from the description diff and
