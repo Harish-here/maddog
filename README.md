@@ -166,12 +166,15 @@ the workflow via its `scriptPath`.
 - **product-engineering** — orchestrates the full PM → UX → BE → UI →
   execution → QA pipeline for one feature; not for small tweaks or single
   bug fixes.
+- **section-by-section** — reviews one existing skill or agent file with the
+  user, section by section, closing each with a verdict; produces a draft
+  and a verdict ledger and never edits the target.
 
 `author-agent`, `release`, and `review-agent` live under `.claude/skills/`
 and are repo-internal maintainer tooling — they never ship in the plugin.
-`advisor-mode` and `product-engineering` are slash-command only
-(`disable-model-invocation: true`) — invoke them by name, they don't
-auto-trigger on a matching description.
+`advisor-mode`, `product-engineering` and `section-by-section` are
+slash-command only (`disable-model-invocation: true`) — invoke them by
+name, they don't auto-trigger on a matching description.
 
 ## Architecture, in brief
 

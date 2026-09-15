@@ -9,8 +9,8 @@
     },
     {
       "title": "Writing for agents",
-      "description": "Authoring doctrine for text an agent loads, from CLAUDE.md to a dispatch prompt's output format.",
-      "skills": ["efficient-md"]
+      "description": "Authoring doctrine for text an agent loads, from CLAUDE.md to a dispatch prompt's output format, and a section-by-section review of an existing skill or agent file.",
+      "skills": ["efficient-md", "section-by-section"]
     },
     {
       "title": "Product pipeline",
