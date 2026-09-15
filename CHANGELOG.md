@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.0] - 2026-09-15
+
+### Added
+- `skills/section-by-section/SKILL.md` — reviews one existing skill or agent file with the user, section by section, testing each section against the file's stated intent and closing it with one of eight verdicts (KEEP, REMOVE, COMPRESS, REWORD, RESHAPE, MOVE, MERGE, SPLIT) plus HOLD and GAP markers; produces a draft and a verdict ledger, never edits the target; slash-only (`disable-model-invocation: true`); gated through author-agent, verdicts SBS-GATE-1..3 (`42bb650`)
+- `docs/section-by-section/` — the design spec and the three filed gate rulings (`42bb650`)
+
+### Changed
+- README §Skills lists `section-by-section` and names it among the slash-command-only skills; `skills.sh.json` groups it under Writing for agents (`42bb650`)
+- `.claude-plugin/plugin.json` version 3.0.1 → 3.1.0
+
+### Debt
+- `skills/efficient-md/SKILL.md` description still redirects "reviewing text that already exists" to "do that directly, no skill" (author-agent finding F7); accepted for a later gated pass, harmless while section-by-section is slash-only
+
 ## [3.0.1] - 2026-09-15
 
 ### Removed
