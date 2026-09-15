@@ -134,7 +134,7 @@ its closure writes a ledger row under the reserved id `DESC`.
        | id | title | verdict | reason | evidence | detail |
        |---|---|---|---|---|---|
        | S4 | Return format | MERGE | duplicate of S9 | O1 | partner S9 |
-       | S7 | Escalation | GAP | O2 names a failure no section covers | O2 | — |
+       | — | Escalation | GAP | O2 names a failure no section covers | O2 | — |
 
 3. Report: unaddressed observations, counts per verdict, and the line count
    before and after.
