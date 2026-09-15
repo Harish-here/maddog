@@ -198,8 +198,8 @@ Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
 `.claude-plugin/`) or a GATE-INFRA surface (`.github/`, `hooks/`,
 `scripts/`) headed for `main` goes through the `release` skill
 (`.claude/skills/release/SKILL.md`) — DECLARE, READY, BEHAVIOR, RULE, and
-SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/`,
-`evals/` — except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
+SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/` —
+except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
 (this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
 `LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`,
 `skills.sh.json`) take READY alone. The release

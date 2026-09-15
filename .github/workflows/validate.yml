@@ -42,7 +42,7 @@ jobs:
                       errors.append(f'{md_file}: {e}')
 
           # Validate JSON files
-          for pattern in ['.claude-plugin/*.json', 'evals/*.json']:
+          for pattern in ['.claude-plugin/*.json']:
               for json_file in Path('.').glob(pattern):
                   try:
                       json.loads(json_file.read_text())

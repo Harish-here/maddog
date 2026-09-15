@@ -133,10 +133,9 @@ metadata:
        the neighbors'. A CREATE also probes the new agent on one
        representative task. If a probe cannot run in this environment,
        the item is recorded UNVERIFIED — never silently skipped;
-   (c) fixtures — where a fixture home exists (evals/<agent>.json; the
-       runner's file list must learn a CREATEd agent's fixture), keeper
-       findings become eval fixtures. Where no home exists, record the
-       finding as named fixture-debt instead of pretending.
+   (c) fixtures — this repo has no fixture home (evals/ was removed
+       2026-09-15); record each keeper finding as named fixture-debt
+       instead of pretending.
 
 8. CLOSING REPORT. Per item: the verdict ID that cleared it, its
    placement result, its probe output or UNVERIFIED marker, its fixture
