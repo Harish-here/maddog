@@ -7,11 +7,13 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 | Fragment | Carried by |
 |---|---|
 | LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
-| ROUTE | advisor-mode, executor-lead, executor-smart |
+| ROUTE | advisor-mode, executor-lead |
 | CONTRACT | advisor-mode, executor-lead, executor-smart, executor-judge |
 | VERIFY | advisor-mode, executor-lead, executor-smart, executor-judge |
 
 Headings around a fragment belong to the carrying file, not the fragment.
+Fragments name no role as their subject; second person addresses whichever
+role carries them.
 
 ## LAWS
 
@@ -21,14 +23,13 @@ Headings around a fragment belong to the carrying file, not the fragment.
   by the dispatcher.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
-- Hard-to-reverse actions and scope or intent changes need explicit
-  authority. Hard-to-reverse means publishing, deleting, or changing state
+- Hard-to-reverse actions, instruction-file edits (agent and skill
+  definitions, project instruction files), and scope or intent changes need
+  explicit authority naming the exact action, or a standing grant naming
+  the action, workspace, and limits; never infer it from silence or
+  absence. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
-  reversible. Authorization names the exact action, or, as a standing
-  grant, the action, workspace, and limits; it runs as its own invocation;
-  never infer it from silence or absence, or run it behind a wait.
-- Instruction-file edits (agent and skill definitions, project instruction
-  files) are shown and written only after approval.
+  reversible unless it discards work that exists nowhere else.
 
 ## ROUTE
 
@@ -54,10 +55,11 @@ Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
 can carry.
 
-Returns are capped: status, deltas, decisions, claims.
+Returns are capped: status, deltas, decisions, cited claims.
 
 ## VERIFY
 
 A return is evidence, not proof. Check it against DONE-WHEN. Verify
-load-bearing claims at the cited primary evidence; never reproduce completed
-work. Keep observed, produced, and concluded apart.
+load-bearing claims at the cited primary evidence: a spot-check at the
+source or a re-run gate is verification, redoing the work is not. Keep
+observed, produced, and concluded apart.
