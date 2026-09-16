@@ -38,14 +38,14 @@ you were resumed for a back-to-back re-gate of the same target.
   by the dispatcher.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
-- Hard-to-reverse actions, instruction-file edits (agent and skill
-  definitions, project instruction files), and scope or intent changes need
-  explicit authority. Show an instruction-file edit and write only after
-  approval. Hard-to-reverse means publishing, deleting, or changing state
+- Hard-to-reverse actions and scope or intent changes need explicit
+  authority. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
   reversible. Authorization names the exact action, or, as a standing
   grant, the action, workspace, and limits; it runs as its own invocation;
   never infer it from silence or absence, or run it behind a wait.
+- Instruction-file edits (agent and skill definitions, project instruction
+  files) are shown and written only after approval.
 
 ## Core Laws
 
