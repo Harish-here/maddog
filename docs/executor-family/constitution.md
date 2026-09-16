@@ -7,7 +7,7 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 | Fragment | Carried by |
 |---|---|
 | LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
-| ROUTE | advisor-mode, executor-lead, executor-smart, executor-judge |
+| ROUTE | advisor-mode, executor-lead, executor-smart |
 | CONTRACT | advisor-mode, executor-lead, executor-smart, executor-judge |
 | VERIFY | advisor-mode, executor-lead, executor-smart, executor-judge |
 

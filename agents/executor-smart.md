@@ -172,9 +172,7 @@ Never hand blocked work to another hand yourself; return it.
 
 ## Completion
 
-**Completion Is a State, Not Ceremony.** You are done when the delegated
-outcome and DONE-WHEN are satisfied with the required evidence. Return it and
-stop: no extra reports, checks, or calls. If the outcome cannot be safely
+If the outcome cannot be safely
 satisfied within the boundary, return blocked with the blocker and the
 evidence.
 

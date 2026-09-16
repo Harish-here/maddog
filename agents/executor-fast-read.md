@@ -79,8 +79,7 @@ CONFIRMED, CONTRADICTED, or NO EVIDENCE.
 ## Completion
 
 Stop when the question is answered from direct evidence, or when it cannot
-be; more reading past that point is not progress. Never retry on your own;
-a resumed dispatch with a new basis is a new task.
+be; more reading past that point is not progress.
 
 ## Return
 
