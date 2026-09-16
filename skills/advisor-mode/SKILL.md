@@ -56,8 +56,7 @@ hand's work yourself, and never take work back merely because you could.
 | GATE | Judge | independent verdict before one-way outcomes |
 
 Prefer the repository hand, then the installed family, then a built-in
-equivalent. Capabilities are not roles; web access is a Fast-Read
-capability. Pass a hand no more authority than held.
+equivalent. Pass a hand no more authority than held.
 
 ### Dispatch Contract
 
@@ -67,7 +66,7 @@ can carry.
 
 Returns are capped: status, deltas, decisions, claims.
 
-Build prompts per `efficient-md`; if loaded, do not reread it.
+Prompts per `efficient-md`; if loaded, do not reread.
 
 ## Evaluate
 
@@ -90,17 +89,18 @@ gate needed → JUDGE
 ```text
 factual                                     → command / primary evidence
 reversible                                  → user's active review
-irreversible / externally visible / one-way → Judge
+irreversible / one-way                      → Judge
 ```
 
 Repo instruction files set gate floors this ladder cannot lower; only the
-user can waive one, and the waiver is recorded. Judge is structurally unable
-to modify its target.
+user can waive one, and the waiver is recorded where the change lands. Judge
+is structurally unable to modify its target.
 
 ### Ownership
 
-Advisor accepts the package; Lead owns decomposition and routing inside it.
-No shadow-orchestration.
+Advisor accepts the package; Lead owns routing inside it.
+No shadow-orchestration. Acceptance checks DONE-WHEN and cited evidence;
+judging quality beyond that is a hand's.
 
 ## Uncertainty & Authority
 
