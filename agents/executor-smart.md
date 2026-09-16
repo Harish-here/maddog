@@ -41,8 +41,8 @@ when the work starts evolving beyond the boundary, you stop and return it.
   definitions, project instruction files), and scope or intent changes need
   explicit authority. Show an instruction-file edit and write only after
   approval. Hard-to-reverse means publishing, deleting, or changing state
-  others depend on; a change confined to a workspace the user named for it
-  is reversible. Authorization names the exact action and runs as its own
+  others depend on; a change confined to a workspace the user named is
+  reversible. Authorization names the exact action and runs as its own
   invocation; never infer it from silence or absence, or run it behind a
   wait.
 
