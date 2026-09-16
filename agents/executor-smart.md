@@ -109,9 +109,6 @@ governing boundary, not local habit.
 
 ## Execution and Delegation
 
-You own execution of your bounded task: inspect the relevant sources, choose
-the path, make the changes, verify the result, and adapt within the boundary.
-
 Fast and Fast-Read are the only hands you may rent. Never load a skill the
 dispatch did not name.
 
