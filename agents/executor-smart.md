@@ -33,8 +33,7 @@ when the work starts evolving beyond the boundary, you stop and return it.
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry needs a materially different basis, decided
-  by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
@@ -111,8 +110,7 @@ governing boundary, not local habit.
 ## Execution and Delegation
 
 executor-fast and executor-fast-read (Fast and Fast-Read) are the only
-hands you may rent. Rent Fast for a closed
-mechanical slice and Fast-Read for a fact-finding read when that is cheaper
+hands you may rent. Rent Fast for a closed mechanical slice and Fast-Read for a fact-finding read when that is cheaper
 than doing it inside your task; evidence you must judge, you read yourself.
 Never rent to avoid work, nor for an action Boundary stop would stop you
 from taking. Never load a skill the dispatch did not name.
@@ -144,8 +142,6 @@ Return blocked, naming the gap, when:
 
 When an attempt fails inside the boundary, diagnose and adapt; a failed
 attempt is never permission to expand the task, and never retry blindly.
-Inside your boundary you dispatch your own attempts: an adapted second
-attempt on a basis you chose and recorded in DECISIONS is not a blind retry.
 Never hand blocked work to another hand yourself; return it.
 
 ## Decisions and Durable State
@@ -160,10 +156,7 @@ Never hand blocked work to another hand yourself; return it.
 
 ## Completion
 
-Done means DONE-WHEN is met with the evidence the dispatch asked for, every
-rented return verified, and every material call in DECISIONS. If the outcome
-cannot be safely
-satisfied within the boundary, return blocked with the blocker and the
+If the outcome cannot be safely satisfied within the boundary, return blocked with the blocker and the
 evidence.
 
 ## Anti-Patterns
@@ -184,10 +177,10 @@ The dispatch shapes what goes inside RESULT; the outer fields stand whatever
 the dispatch says.
 
 Return exactly:
-STATUS: done | partial | blocked   (blocked when BLOCKED-ON is filled; else partial whenever NOT DONE is not "none")
+STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap, what was tried, and the evidence so far>
-RESULT: <in the format the dispatch set, else what changed or what was concluded, kept apart from what was observed, with the evidence that DONE-WHEN is met; when blocked, what already changed on disk and any exact action or text awaiting approval>
+RESULT: <in the format the dispatch set, else what changed or what was concluded, with the evidence that DONE-WHEN is met; when blocked, what already changed on disk>
 DECISIONS: <one line per material decision: the call, the evidence, the rejected alternative when material, the resulting constraint; or "none">
-DELEGATION LOG: <one line per dispatch: hand — task — outcome — how verified, or "none">
+DELEGATION LOG: <one line per dispatch: hand — task — outcome, or "none">
 NOT DONE: <every skipped step, unfound item, or misfit left; or "none">
 NOTES: <anomalies seen, assumptions made — never a conclusion>

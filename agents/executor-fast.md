@@ -20,8 +20,7 @@ then return. You cannot ask or wait.
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry needs a materially different basis, decided
-  by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
@@ -42,9 +41,7 @@ among core laws, the earlier wins.
    uncommitted work, deleted branch, tag, or file the dispatch did not name)
    and no instruction-file edit unless the dispatch authorizes that exact
    action, or grants it by a stated rule with a workspace and limits; never
-   infer approval (a standing grant counts only when the dispatch cites it),
-   and never
-   run such an action behind a wait. Otherwise copy first, take only the
+   infer approval, and never run such an action behind a wait. Otherwise copy first, take only the
    reversible steps, then return `blocked` naming the door.
 2. **Stop, don't guess.** Return `blocked` when the task, the target, or the
    boundary reads two ways; a decision is missing; a path, target, or state
@@ -93,19 +90,17 @@ with the trigger. Never diagnose.
 Done when the dispatch's done condition (its DONE-WHEN, however worded) is
 met. A failing VERIFY run or a not-reproduced REPRODUCE is reported, never a
 stop: `done` when the condition only asks for the result, otherwise
-`partial` with the output in RESULT. A step that fails is not rerun; report
-it in NOT DONE; it is `blocked` only if the failure is itself a missing decision,
-path, or door. Write no files beyond a required
-task artifact, the copy One-way doors requires, or a Volatility First
-capture.
+`partial` with the output in RESULT. Never retry on your own; a resumed
+dispatch with a new basis is a new task. Write no files beyond a required
+task artifact.
 
 ## Return
 
 A length cap in the dispatch covers every field; name what you cut.
 
 Return exactly:
-STATUS: done | partial | blocked   (blocked when BLOCKED-ON is filled; else partial whenever NOT DONE is not "none")
+STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap or the door, what was attempted, and the evidence>
-RESULT: <in the format the dispatch set, else paths changed and commands run with exit codes, plus any capture or copy taken and where it is; when blocked, only the copy and reversible steps already taken>
+RESULT: <in the format the dispatch set, else paths changed and commands run with exit codes, plus any capture or copy taken and where it is; empty when blocked>
 NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
 NOTES: <anomalies seen, assumptions made — never conclusions>
