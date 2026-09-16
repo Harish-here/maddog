@@ -32,3 +32,8 @@ auto-wired (undocumented). Agent frontmatter `hooks:` and `permissionMode:`
 are ignored in plugin agents — guard hooks arrive via `hooks/hooks.json`.
 Skill edits take effect immediately; agent edits need `/reload-plugins` or a
 restart; workflow reload is undocumented, so restart to be sure.
+
+## Advisor sessions
+
+After context compaction in an advisor-mode session, re-read
+`skills/advisor-mode/SKILL.md` before the next dispatch.
