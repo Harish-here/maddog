@@ -40,20 +40,31 @@ docs/executor-family/constitution.md:
 
 | Fragment | Content | Carriers |
 |---|---|---|
-| LAWS | completion is a state; never retry blindly; durable state off by default; authority (hard-to-reverse, instruction files, reversibility test, exact-action or standing grant, no inference, no waiting) | all six |
-| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead, Smart |
-| CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns | Advisor, Lead, Smart, Judge |
-| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence; never reproduce; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
+| LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test with the discarded-work exception) | all six |
+| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead |
+| CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims | Advisor, Lead, Smart, Judge |
+| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check or re-run gate is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 
 Decisions that fix the mechanism:
 
-- Fragments hold no role-relative words (no "you", "your package", no role
-  name as subject). Headings around a fragment belong to the carrying file.
+- Fragments name no role as their subject; second person addresses whichever
+  role carries them. Headings around a fragment belong to the carrying file.
 - No tier-specific additions inside a fragment. What varies by role is
   stated in the role's own body in one line each: which hands it may rent,
   what its direct work is, what acceptance means for it.
-- The fast tier carries LAWS only; it dispatches nothing. Judge carries LAWS,
-  CONTRACT, and VERIFY but not ROUTE: it rents one hand and never routes.
+- ROUTE is carried only by roles that own no execution, Advisor and Lead.
+  Smart does its own work and rents two hands under its own rule; Judge
+  rents one hand and never routes; the fast tier dispatches nothing and
+  carries LAWS only.
+- LAWS holds only what every role can act on. "Show an edit and write after
+  approval" and "an irreversible action runs as its own dispatch" are the
+  Advisor's vantage (it can show, wait, and dispatch); each executee already
+  states the hand-side form in its own law ("the dispatch authorizes that
+  exact action", "never behind a wait"), so those two sentences live in the
+  Advisor body.
+- Every executor body ranks the Standing Laws explicitly: they bound every
+  hand and never license what a core law forbids; among core laws the
+  earlier wins.
 - A fragment is edited in constitution.md and propagated; a copy is never
   edited in place. `scripts/fragment-check.py` byte-compares every
   (carrier, fragment) pair and is the conformance gate for this family.
@@ -69,6 +80,8 @@ Decisions that fix the mechanism:
   in Fast's one-way-doors law.
 - A standing grant is a defined form of authorization: it names the action,
   the workspace, and its limits. A grant without limits is not a grant.
+- A change confined to a user-named workspace is reversible unless it
+  discards work that exists nowhere else (a reset, a clean, a force-push).
 
 ## Advisor
 
@@ -104,9 +117,14 @@ order, the four work patterns with their laws, batching prohibition, gates,
 continuation and retry, ambiguity and escalation, durable state, unattended
 work, completion, anti-patterns, return envelope.
 
-Rendered from fragments: Orchestration keeps Lead's three lines (classify
-each slice never the whole package; a merely hard slice is not Lead's; direct
-work is reading, read-only commands, reasoning) above ROUTE. Dispatch Contract
+Rendered from fragments: Orchestration keeps Lead's lines above ROUTE:
+classify each slice never the whole package; a merely hard slice is not
+Lead's; direct work is reasoning plus the reads its judgment must hold
+first-hand (verification, carried investigation), with fact-gathering to
+Fast-Read and every change, whatever its size, to a hand. Below ROUTE: an
+evolving slice inside the package stays Lead's, one that is its own package
+is a boundary stop. Batching: a hard-to-reverse action always runs as its
+own dispatch. Dispatch Contract
 is CONTRACT plus Lead's efficient-md line and "each slice independently
 executable." Returns is Lead's acceptance line (a slice is accepted only to
 decide the next move; Advisor accepts the package) around VERIFY, then
@@ -120,13 +138,18 @@ opener) are removed; Lead-specific continuation and partial-return rules stay.
 Unchanged: identity, core laws, action patterns with laws, stop conditions,
 decisions and durable state, completion, anti-patterns, return envelope.
 
-Rendered from fragments: the RENT HANDS bullets are replaced by two Smart
-lines (Fast and Fast-Read are the only hands it may rent; never load a skill
-the dispatch did not name) followed by ROUTE, CONTRACT, VERIFY as their own
-sections. Smart carries ROUTE because it routes between Fast and Fast-Read;
-the EVOLVING and GATE rows grant nothing, since its own line names its
-rentable hands. The Execution intro that restated its opening paragraph and
-the Completion opener that restated LAWS are removed.
+Rendered from fragments: the RENT HANDS bullets are replaced by Smart's own
+rent rule (Fast for a closed mechanical slice, Fast-Read for a fact-finding
+read, when cheaper than doing it inside the task; evidence it must judge it
+reads itself; never rent to avoid work or past Boundary stop; never load an
+unnamed skill) followed by CONTRACT and VERIFY. Smart does not carry ROUTE:
+the coherence review showed "ALWAYS goes to Fast" and "never do a hand's
+work yourself" telling the doer to rent out its own job. Added from the
+same review: inside its boundary Smart dispatches its own attempts, so an
+adapted retry on a recorded basis is not blind; RESULT carries what already
+changed on disk when blocked, and a conclusion for DIAGNOSE and REVIEW;
+Completion states what done means. The Execution intro and the Completion
+opener that restated other text are removed.
 
 ## Judge
 
@@ -136,16 +159,22 @@ completion, anti-patterns, return envelope, opus pin.
 Rendered from fragments: the RENT HANDS paragraph is replaced by two Judge
 lines (Fast-Read is the only hand it may dispatch; gate commands run in its
 own shell) followed by CONTRACT and VERIFY inside Evidence, then the three
-evidence bullets. Judge carries no ROUTE: it never routes, and the table's
-inert rows were the family's largest carried-not-used text. The Completion
-opener and the retry sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
+evidence bullets. Judge carries no ROUTE: it never routes. From the
+coherence review: a gate that would change the checkout or a shared service
+is a finding, never run; FINDINGS may be "none" on STOP; NOTES names the
+pattern applied when it differs from the hint. The Completion opener and the
+retry sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
 tool list and stated once in Advisor's gate section.
 
 ## Fast and Fast-Read
 
-Unchanged except: LAWS is inserted before Core Laws, and the Completion
-sentence that restated LAWS bullet 2 is removed. Their bodies were not
-otherwise re-rendered; the 2026-09-11 departures for both hands stand.
+Unchanged except: LAWS is inserted before Core Laws, the Completion
+sentence that restated LAWS bullet 2 is removed, and the Standing Laws are
+ranked. Fast, from the coherence review: One-way doors lists a reset or
+clean that discards uncommitted work, and accepts authorization by a stated
+rule with a workspace and limits (TRANSFORM's glob shapes); RESULT carries
+the copy and reversible steps already taken when blocked; a failed step is
+run once and reported. The 2026-09-11 departures for both hands stand.
 
 ## Evidence
 
@@ -166,6 +195,17 @@ answers scenarios with what it would do, citing the deciding line.
 - Decay: every run re-read the same three regions most, the authority law,
   the gate ladder with its floor line, and the BOUNDED boundaries. No new
   region appeared as edits landed.
+- Coherence review, one blank-context reviewer per executor, six checks
+  each (contradiction, role leak, inert or misleading, seam gap, return-field
+  matrix, trigger realism): four of five INCOHERENT before the fixes above.
+  The load-bearing findings were all the same shape: fragment sentences
+  written from the Advisor's vantage (show, wait, own invocation, ALWAYS
+  dispatch, never reproduce) landing in a role that does the work or runs
+  the gate. Fixed by narrowing LAWS and ROUTE to what every carrier can act
+  on and moving the rest to the Advisor body, plus one seam line per role.
+  Also surfaced and fixed: the unranked Standing Laws, STATUS blocked being
+  unreachable under the partial rule, and RESULT "empty when blocked" hiding
+  changes already on disk.
 
 Residuals accepted without a rule, because every run behaved correctly
 without one: the small-work threshold; concurrency on one file; the remedy
@@ -188,6 +228,8 @@ The design intentionally does **not** introduce:
 - Lead mode-transition ceremony
 - continuation for Fast / Fast-Read / Smart / Judge
 - rules for behavior the probes showed correct without them
+- a size threshold for "targeted reads", the same elastic zone as the
+  small-work exception
 
 ## Debt
 
