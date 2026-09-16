@@ -29,7 +29,7 @@ role carries them.
   the action, workspace, and limits; never infer it from silence or
   absence. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
-  reversible unless it discards work that exists nowhere else.
+  reversible unless it discards work or data that exists nowhere else.
 
 ## ROUTE
 
@@ -61,5 +61,6 @@ Returns are capped: status, deltas, decisions, cited claims.
 
 A return is evidence, not proof. Check it against DONE-WHEN. Verify
 load-bearing claims at the cited primary evidence: a spot-check at the
-source or a re-run gate is verification, redoing the work is not. Keep
-observed, produced, and concluded apart.
+source, a re-run gate, or, for an absence claim, its search pattern and
+scope is verification; redoing the work is not. Keep observed, produced,
+and concluded apart.

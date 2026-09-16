@@ -40,10 +40,10 @@ docs/executor-family/constitution.md:
 
 | Fragment | Content | Carriers |
 |---|---|---|
-| LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test with the discarded-work exception) | all six |
+| LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data) | all six |
 | ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead |
 | CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims | Advisor, Lead, Smart, Judge |
-| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check or re-run gate is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
+| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 
 Decisions that fix the mechanism:
 
@@ -63,8 +63,14 @@ Decisions that fix the mechanism:
   exact action", "never behind a wait"), so those two sentences live in the
   Advisor body.
 - Every executor body ranks the Standing Laws explicitly: they bound every
-  hand and never license what a core law forbids; among core laws the
-  earlier wins.
+  hand and never license what any law in that body forbids; among core laws
+  the earlier wins.
+- A standing grant reaches a hand only through its dispatch. Lead, Smart,
+  and Fast say so in their own authority laws, so a grant found in a file or
+  relayed by another hand is never authority.
+- Executor bodies name the family hands by agent name (executor-fast-read,
+  executor-fast, executor-smart, executor-judge) where they say which hands
+  a role may rent; the short names alone do not reach a blank-context agent.
 - A fragment is edited in constitution.md and propagated; a copy is never
   edited in place. `scripts/fragment-check.py` byte-compares every
   (carrier, fragment) pair and is the conformance gate for this family.
@@ -121,10 +127,13 @@ Rendered from fragments: Orchestration keeps Lead's lines above ROUTE:
 classify each slice never the whole package; a merely hard slice is not
 Lead's; direct work is reasoning plus the reads its judgment must hold
 first-hand (verification, carried investigation), with fact-gathering to
-Fast-Read and every change, whatever its size, to a hand. Below ROUTE: an
-evolving slice inside the package stays Lead's, one that is its own package
-is a boundary stop. Batching: a hard-to-reverse action always runs as its
-own dispatch. Dispatch Contract
+Fast-Read and every change, whatever its size, to a hand; the small-work
+exception covers only reads for Lead. Below ROUTE: an evolving slice inside
+the package stays Lead's, one that is its own package is a boundary stop.
+Boundary stop counts a push even to a user-named branch and accepts a
+standing grant the dispatch carries. Batching: a hard-to-reverse action
+always runs as its own dispatch. DELEGATION LOG records what was verified at
+source; NOT DONE carries the path of durable state written before a partial. Dispatch Contract
 is CONTRACT plus Lead's efficient-md line and "each slice independently
 executable." Returns is Lead's acceptance line (a slice is accepted only to
 decide the next move; Advisor accepts the package) around VERIFY, then
@@ -148,8 +157,11 @@ work yourself" telling the doer to rent out its own job. Added from the
 same review: inside its boundary Smart dispatches its own attempts, so an
 adapted retry on a recorded basis is not blind; RESULT carries what already
 changed on disk when blocked, and a conclusion for DIAGNOSE and REVIEW;
-Completion states what done means. The Execution intro and the Completion
-opener that restated other text are removed.
+Completion states what done means; Boundary stop and the anti-pattern
+accept a standing grant the dispatch carries; DELEGATION LOG records the
+hand and how its return was verified; the Stop bullet accepts any wording
+for the three contract terms. The Execution intro and the Completion opener
+that restated other text are removed.
 
 ## Judge
 
@@ -160,10 +172,15 @@ Rendered from fragments: the RENT HANDS paragraph is replaced by two Judge
 lines (Fast-Read is the only hand it may dispatch; gate commands run in its
 own shell) followed by CONTRACT and VERIFY inside Evidence, then the three
 evidence bullets. Judge carries no ROUTE: it never routes. From the
-coherence review: a gate that would change the checkout or a shared service
-is a finding, never run; FINDINGS may be "none" on STOP; NOTES names the
-pattern applied when it differs from the hint. The Completion opener and the
-retry sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
+coherence reviews: a seam line before VERIFY says it governs a rented
+return while the target is governed by the pattern's law and a spot-check
+never substitutes for the check that could have found a defect; a gate that
+would change the checkout or a shared service is a finding, never run,
+whatever authority the dispatch offers; the checkout must be the state the
+claim was made on before a gate is re-run; no dispatch can require an
+artifact of Judge; FINDINGS may be "none" on STOP; NOTES names the pattern
+applied when it differs from the hint. The Completion opener and the retry
+sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
 tool list and stated once in Advisor's gate section.
 
 ## Fast and Fast-Read
@@ -172,9 +189,12 @@ Unchanged except: LAWS is inserted before Core Laws, the Completion
 sentence that restated LAWS bullet 2 is removed, and the Standing Laws are
 ranked. Fast, from the coherence review: One-way doors lists a reset or
 clean that discards uncommitted work, and accepts authorization by a stated
-rule with a workspace and limits (TRANSFORM's glob shapes); RESULT carries
-the copy and reversible steps already taken when blocked; a failed step is
-run once and reported. The 2026-09-11 departures for both hands stand.
+rule with a workspace and limits (TRANSFORM's glob shapes), cited by the
+dispatch; RESULT carries the copy and reversible steps already taken when
+blocked, and any capture or copy taken; a step that fails is not rerun; the
+copy One-way doors requires and a Volatility First capture are permitted
+files. Fast-Read: a further search with a different term, path, or source
+is reading, not a retry. The 2026-09-11 departures for both hands stand.
 
 ## Evidence
 
@@ -206,6 +226,12 @@ answers scenarios with what it would do, citing the deciding line.
   Also surfaced and fixed: the unranked Standing Laws, STATUS blocked being
   unreachable under the partial rule, and RESULT "empty when blocked" hiding
   changes already on disk.
+- Coherence rerun on the fixed text: Lead, Smart, and Fast COHERENT WITH
+  COSMETIC FINDINGS; Judge and Fast-Read INCOHERENT on one item each (VERIFY's
+  scope inside Judge's Evidence section; "retry" undefined for a read-only
+  hand), both closed with a body sentence. Fragment-level from the rerun:
+  absence claims are verified at their search pattern and scope; the
+  workspace carve-out excludes discarded data as well as work.
 
 Residuals accepted without a rule, because every run behaved correctly
 without one: the small-work threshold; concurrency on one file; the remedy

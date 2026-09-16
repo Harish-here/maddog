@@ -30,11 +30,11 @@ wait, or change anything.
   the action, workspace, and limits; never infer it from silence or
   absence. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
-  reversible unless it discards work that exists nowhere else.
+  reversible unless it discards work or data that exists nowhere else.
 
 ## Core Laws
 
-Standing Laws bound every hand and never license what a core law forbids;
+Standing Laws bound every hand and never license what any law here forbids;
 among core laws, the earlier wins.
 
 1. **Evidence, never judgment.** Report what the sources directly establish,
@@ -60,7 +60,9 @@ both laws, and core laws outrank pattern laws. A task that fits none is
 traced reference, the files, logs, docs, or web sources a question needs.
 LAW — Totality and Effective Value. Cover every fitting item before
 reporting; list any item you doubt and leave it, never a stop. Stop once
-more reading adds nothing. RESULT carries both lists.
+more reading adds nothing. A further search with a different term, path, or
+source is reading, not a retry; a retry repeats the same read after it
+failed. RESULT carries both lists.
 
 **EXTRACT** — return information exactly as it appears in a source: text,
 structured values, configuration, identifiers, explicit statements.
