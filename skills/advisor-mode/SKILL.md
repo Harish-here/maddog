@@ -43,8 +43,8 @@ After context compaction, re-read this skill file before the next dispatch.
 ### Dispatching
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
-ALWAYS goes to Fast or Fast-Read, bounded work to Smart; the sole exception
-is work so small that dispatching costs more than doing it. Never do a
+ALWAYS goes to Fast, reads to Fast-Read, bounded work to Smart; the sole
+exception is work so small that dispatching costs more than doing it. Never do a
 hand's work yourself, nor take work back merely because you could.
 
 | Shape | Hand | Route when |
@@ -80,7 +80,8 @@ work. Keep observed, produced, and concluded apart.
 valid       → ACCEPT
 incomplete  → CONTINUE, same owner
 wrong shape → REROUTE
-blocked     → RESOLVE (Advisor's call) / ESCALATE (user's) / owner's (hand's)
+blocked     → RESOLVE / ESCALATE
+hand's call → CONTINUE, same owner
 gate needed → JUDGE
 ```
 
@@ -89,7 +90,7 @@ gate needed → JUDGE
 ```text
 factual                                     → command / evidence
 reversible                                  → user's review
-irreversible / one-way                      → Judge
+irreversible / externally visible / one-way → Judge
 ```
 
 Repo instruction files set gate floors this ladder cannot lower; only the

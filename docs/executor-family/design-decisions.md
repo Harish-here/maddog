@@ -28,7 +28,7 @@ GLOBAL      → Advisor       outcome, scope, routing, acceptance
 ```
 
 Roles are responsibility boundaries, not model-strength tiers. Mechanical
-work ALWAYS goes to the fast tier and bounded work to Smart; the sole
+work ALWAYS goes to Fast, reads to Fast-Read, bounded work to Smart; the sole
 exception is work so small that dispatching costs more than doing it. The
 exception carries no size threshold by decision (see Non-Decisions).
 
@@ -89,7 +89,8 @@ labels went); "capabilities are not roles" (never cited by a probe).
 
 Added since 2026-09-11: the explicit loop; hand preference order (repository
 hand, installed family, built-in equivalent); gate floors from repo files and
-the user's waiver; blocked routing by whose call it is; compaction reload;
+the user's waiver; a hand's own call returns to it as CONTINUE; compaction
+reload;
 the acceptance boundary; instruction files defined; the reversibility test;
 standing grants; BOUNDED diagnosis qualified by a known evidence surface.
 
