@@ -41,7 +41,7 @@ docs/executor-family/constitution.md:
 | Fragment | Content | Carriers |
 |---|---|---|
 | LAWS | completion is a state; never retry blindly; durable state off by default; authority (hard-to-reverse, instruction files, reversibility test, exact-action or standing grant, no inference, no waiting) | all six |
-| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead, Smart, Judge |
+| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead, Smart |
 | CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns | Advisor, Lead, Smart, Judge |
 | VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence; never reproduce; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 
@@ -52,7 +52,8 @@ Decisions that fix the mechanism:
 - No tier-specific additions inside a fragment. What varies by role is
   stated in the role's own body in one line each: which hands it may rent,
   what its direct work is, what acceptance means for it.
-- The fast tier carries LAWS only; it dispatches nothing.
+- The fast tier carries LAWS only; it dispatches nothing. Judge carries LAWS,
+  CONTRACT, and VERIFY but not ROUTE: it rents one hand and never routes.
 - A fragment is edited in constitution.md and propagated; a copy is never
   edited in place. `scripts/fragment-check.py` byte-compares every
   (carrier, fragment) pair and is the conformance gate for this family.
@@ -110,8 +111,8 @@ executable." Returns is Lead's acceptance line (a slice is accepted only to
 decide the next move; Advisor accepts the package) around VERIFY, then
 continue, re-dispatch, reroute, or return.
 
-Known duplicates left in place by decision: the Completion opener and the
-Durable State opener restate LAWS bullets 1 and 3.
+Sentences that restated LAWS (the Completion opener, the Durable State
+opener) are removed; Lead-specific continuation and partial-return rules stay.
 
 ## Smart
 
@@ -121,8 +122,10 @@ decisions and durable state, completion, anti-patterns, return envelope.
 Rendered from fragments: the RENT HANDS bullets are replaced by two Smart
 lines (Fast and Fast-Read are the only hands it may rent; never load a skill
 the dispatch did not name) followed by ROUTE, CONTRACT, VERIFY as their own
-sections. Smart carries table rows it never routes (EVOLVING, GATE); they
-grant nothing, since its own line names its rentable hands.
+sections. Smart carries ROUTE because it routes between Fast and Fast-Read;
+the EVOLVING and GATE rows grant nothing, since its own line names its
+rentable hands. The Execution intro that restated its opening paragraph and
+the Completion opener that restated LAWS are removed.
 
 ## Judge
 
@@ -131,17 +134,17 @@ completion, anti-patterns, return envelope, opus pin.
 
 Rendered from fragments: the RENT HANDS paragraph is replaced by two Judge
 lines (Fast-Read is the only hand it may dispatch; gate commands run in its
-own shell) followed by ROUTE, CONTRACT, VERIFY inside Evidence, then the
-three evidence bullets. The structural no-write invariant is enforced by its
+own shell) followed by CONTRACT and VERIFY inside Evidence, then the three
+evidence bullets. Judge carries no ROUTE: it never routes, and the table's
+inert rows were the family's largest carried-not-used text. The Completion
+opener and the retry sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
 tool list and stated once in Advisor's gate section.
 
 ## Fast and Fast-Read
 
-Unchanged in every respect except one: LAWS is inserted before Core Laws.
-Their bodies were not otherwise re-rendered; the 2026-09-11 departures for
-both hands stand. Known duplicate left in place: "Never retry on your own; a
-resumed dispatch with a new basis is a new task" restates LAWS bullet 2 in
-each body.
+Unchanged except: LAWS is inserted before Core Laws, and the Completion
+sentence that restated LAWS bullet 2 is removed. Their bodies were not
+otherwise re-rendered; the 2026-09-11 departures for both hands stand.
 
 ## Evidence
 
@@ -189,6 +192,5 @@ The design intentionally does **not** introduce:
 
 - mechanical-work.md and local-work.md describe schemas the bodies no
   longer render from; conformance-check.py reports NONCONFORMING on HEAD.
-- Residual LAWS duplicates in Lead, Fast, and Fast-Read (listed above).
 - CHANGELOG and plugin version are updated by the release skill before
   merge; advisor-mode and the executor bodies are SHIPPED surfaces.
