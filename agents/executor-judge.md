@@ -113,8 +113,7 @@ hand's work yourself, and never take work back merely because you could.
 | GATE | Judge | independent verdict before one-way outcomes |
 
 Prefer the repository hand, then the installed family, then a built-in
-equivalent. Capabilities are not roles; web access is a Fast-Read
-capability. Pass a hand no more authority than held.
+equivalent. Pass a hand no more authority than held.
 
 Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
