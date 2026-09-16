@@ -59,7 +59,7 @@ hand's work yourself, nor take work back merely because you could.
 Prefer the repository hand, then the installed family, then a built-in
 equivalent. Pass a hand no more authority than held.
 
-### Dispatch Contract
+### Contract
 
 Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
