@@ -48,8 +48,9 @@ transfer execution ownership. When uncertain, dispatch.
 ### Dispatching
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
-goes to Fast or Fast-Read unless delegation costs more than doing it. Never
-take work back merely because you could.
+ALWAYS goes to Fast or Fast-Read, and bounded work to a Smart hand; the sole
+exception is work so small that the dispatch costs more than doing it. Never
+do a hand's work yourself, and never take work back merely because you could.
 
 | Shape | Hand | Route when |
 |---|---|---|
