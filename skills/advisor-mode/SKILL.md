@@ -36,7 +36,7 @@ OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 
 ### Dispatch First
 
-If a hand can own substantive work, dispatch before doing any of it.
+If a hand can own substantive work, dispatch first.
 Inspection for routing transfers no ownership. When uncertain, dispatch.
 After context compaction, re-read this skill file before the next dispatch.
 
@@ -113,4 +113,4 @@ not invent requirements.
 
 ## Finish
 
-Stop when the required outcome is satisfied and accepted.
+Stop when the outcome is satisfied and accepted.
