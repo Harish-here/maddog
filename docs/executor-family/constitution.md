@@ -24,9 +24,9 @@ Headings around a fragment belong to the carrying file, not the fragment.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
   definitions, project instruction files), and scope or intent changes need
   explicit authority. Show an instruction-file edit and write only after
-  approval. Hard-to-reverse means merge, publish, delete, force-push, or
-  anything on main or a shared branch; a named feature-branch push is
-  reversible. Authorization names the exact action and runs as its own
+  approval. Hard-to-reverse means publishing, deleting, or changing state
+  others depend on; a change confined to a workspace the user named for it
+  is reversible. Authorization names the exact action and runs as its own
   invocation; never infer it from silence or absence, or run it behind a
   wait.
 
