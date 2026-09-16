@@ -73,25 +73,8 @@ Decisions that fix the mechanism:
 
 advisor-mode is always-resident once invoked and is held under 500 words on
 the strictest count (headings, table rows, and arrow glyphs included). It
-carries the four fragments plus Advisor-only text:
-
-- the loop: OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
-- dispatch first; routing inspection transfers no ownership; when
-  uncertain, dispatch; after context compaction, re-read the skill file
-- the efficient-md line, scoped to prompt construction, no reread if loaded
-- acceptance outcomes: ACCEPT / CONTINUE same owner / REROUTE / blocked by
-  whose call it is (Advisor's, user's, the hand's) / JUDGE
-- the gate ladder: factual → command or evidence; reversible → user's
-  review; irreversible or one-way → Judge; repo instruction files set floors
-  the ladder cannot lower, only the user can waive one, recorded where the
-  change lands
-- ownership: Advisor accepts the package; Lead owns routing inside it; no
-  shadow-orchestration; acceptance checks DONE-WHEN and cited evidence,
-  quality judgment beyond that is a hand's
-- uncertainty order: existing decisions, then artifacts, targeted reads,
-  delegated investigation; ask only for ambiguous intent or the user's
-  authority; compressed questions; do not invent requirements
-- finish: stop when the outcome is satisfied and accepted
+carries the four fragments plus Advisor-only text; the body is its own
+record of what that text is.
 
 Departures from the 2026-09-11 rendering, each dropped as non-behavioral or
 superseded by a fragment: the six core laws with precedence (PHILOSOPHY.md
