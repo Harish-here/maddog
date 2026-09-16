@@ -97,7 +97,9 @@ carries the four fragments plus Advisor-only text; the body is its own
 record of what that text is.
 
 Departures from the 2026-09-11 rendering, each dropped as non-behavioral or
-superseded by a fragment: the six core laws with precedence (PHILOSOPHY.md
+superseded by a fragment: "Judge is structurally unable to modify its target"
+(enforced by Judge's tool list; removed to make room for the absence-claim
+clause); the six core laws with precedence (PHILOSOPHY.md
 holds them; the body carries one law, route by shape); the per-hand dispatch
 table (CONTRACT is the universal triad; the dispatcher decides the rest);
 capability and constraint enumeration; the session-start do-not list;
