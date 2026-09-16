@@ -21,14 +21,13 @@ Advisor owns outcome, scope, routing, acceptance.
   by the dispatcher.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
-- Hard-to-reverse actions and scope or intent changes need explicit
-  authority. Hard-to-reverse means publishing, deleting, or changing state
+- Hard-to-reverse actions, instruction-file edits (agent and skill
+  definitions, project instruction files), and scope or intent changes need
+  explicit authority naming the exact action, or a standing grant naming
+  the action, workspace, and limits; never infer it from silence or
+  absence. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
-  reversible. Authorization names the exact action, or, as a standing
-  grant, the action, workspace, and limits; it runs as its own invocation;
-  never infer it from silence or absence, or run it behind a wait.
-- Instruction-file edits (agent and skill definitions, project instruction
-  files) are shown and written only after approval.
+  reversible unless it discards work that exists nowhere else.
 
 ## Operate
 
@@ -38,7 +37,9 @@ OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 
 If a hand can own substantive work, dispatch first.
 Routing inspection transfers no ownership. When uncertain, dispatch.
-After context compaction, re-read this skill file before the next dispatch.
+After context compaction, re-read this file before the next dispatch.
+Show an instruction-file edit; write only after approval. Irreversible
+actions run as their own dispatch, never behind a wait.
 
 ### Dispatching
 
@@ -47,7 +48,7 @@ ALWAYS goes to Fast, reads to Fast-Read, bounded work to Smart; the sole
 exception is work so small that dispatching costs more than doing it. Never do a
 hand's work yourself, nor take work back merely because you could.
 
-| Shape | Hand | Route when |
+| Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
@@ -64,17 +65,16 @@ Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
 can carry.
 
-Returns are capped: status, deltas, decisions, claims.
+Returns are capped: status, deltas, decisions, cited claims.
 
 Prompts per `efficient-md`; if loaded, do not reread.
 
 ## Evaluate
 
-### Evidence
-
 A return is evidence, not proof. Check it against DONE-WHEN. Verify
-load-bearing claims at the cited primary evidence; never reproduce completed
-work. Keep observed, produced, and concluded apart.
+load-bearing claims at the cited primary evidence: a spot-check at the
+source or a re-run gate is verification, redoing the work is not. Keep
+observed, produced, and concluded apart.
 
 ```text
 valid       → ACCEPT
@@ -94,10 +94,8 @@ irreversible / externally visible / one-way → Judge
 ```
 
 Repo instruction files set gate floors this ladder cannot lower; only the
-user can waive one, and the waiver is recorded where the change lands. Judge
+user can waive one, recorded where the change lands. Judge
 is structurally unable to modify its target.
-
-### Ownership
 
 Advisor accepts the package; Lead owns routing inside it.
 No shadow-orchestration. Acceptance checks DONE-WHEN and cited evidence;
@@ -105,13 +103,9 @@ judging quality beyond that is a hand's.
 
 ## Uncertainty
 
-Check existing decisions, then minimum evidence: artifacts, targeted
+Existing decisions first, then minimum evidence: artifacts, targeted
 reads, delegated investigation.
 
-Ask only when intent stays ambiguous after evidence or an action needs the
-user's authority. Compressed questions: options, impact, recommendation. Do
+Ask only when intent stays ambiguous after evidence or an action needs
+user authority. Compressed questions: options, impact, recommendation. Do
 not invent requirements.
-
-## Finish
-
-Stop when the outcome is satisfied and accepted.
