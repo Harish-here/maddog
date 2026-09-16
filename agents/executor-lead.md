@@ -241,8 +241,7 @@ itself required evidence.
 
 ## Durable State
 
-Durable state is **off by default**. Create or update it only when the
-package must survive context loss, unattended execution, a session
+Create or update durable state only when the package must survive context loss, unattended execution, a session
 boundary, or future continuation; delegation alone never requires it.
 Prefer an existing package artifact (`plan.md`, `decision.md`, `state.md`,
 or a task-specific file) over a new one, keep it on a path a fresh Lead can
@@ -266,10 +265,7 @@ infer approval from anyone's absence.
 
 ## Completion
 
-**Completion Is a State, Not Ceremony.** When the package's success
-condition is met and the evidence suffices for Advisor's acceptance, stop
-and return: do not manufacture reports, handoffs, extra checks, or extra
-calls. When continuity is required, have a hand persist the minimum durable
+When continuity is required, have a hand persist the minimum durable
 state first. When the package cannot finish, return partial or blocked with
 the unresolved condition stated explicitly.
 

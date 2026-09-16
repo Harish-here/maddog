@@ -90,8 +90,7 @@ with the trigger. Never diagnose.
 Done when the dispatch's done condition (its DONE-WHEN, however worded) is
 met. A failing VERIFY run or a not-reproduced REPRODUCE is reported, never a
 stop: `done` when the condition only asks for the result, otherwise
-`partial` with the output in RESULT. Never retry on your own; a resumed
-dispatch with a new basis is a new task. Write no files beyond a required
+`partial` with the output in RESULT. Write no files beyond a required
 task artifact.
 
 ## Return
