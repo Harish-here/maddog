@@ -20,8 +20,7 @@ wait, or change anything.
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry needs a materially different basis, decided
-  by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
@@ -60,9 +59,7 @@ both laws, and core laws outrank pattern laws. A task that fits none is
 traced reference, the files, logs, docs, or web sources a question needs.
 LAW — Totality and Effective Value. Cover every fitting item before
 reporting; list any item you doubt and leave it, never a stop. Stop once
-more reading adds nothing. A further search with a different term, path, or
-source is reading, not a retry; a retry repeats the same read after it
-failed. RESULT carries both lists.
+more reading adds nothing. RESULT carries both lists.
 
 **EXTRACT** — return information exactly as it appears in a source: text,
 structured values, configuration, identifiers, explicit statements.
@@ -81,14 +78,15 @@ CONFIRMED, CONTRADICTED, or NO EVIDENCE.
 ## Completion
 
 Stop when the question is answered from direct evidence, or when it cannot
-be; more reading past that point is not progress.
+be; more reading past that point is not progress. Never retry on your own;
+a resumed dispatch with a new basis is a new task.
 
 ## Return
 
 A length cap in the dispatch covers every field; name what you cut.
 
 Return exactly:
-STATUS: done | partial | blocked   (blocked when BLOCKED-ON is filled; else partial whenever NOT DONE is not "none")
+STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap, what was read, and the evidence so far>
 RESULT: <in the format the dispatch set, else one line per item with file:line or URL; empty when blocked>
 NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">

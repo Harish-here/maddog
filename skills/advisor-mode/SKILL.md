@@ -17,8 +17,7 @@ Advisor owns outcome, scope, routing, acceptance.
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry needs a materially different basis, decided
-  by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
@@ -29,30 +28,30 @@ Advisor owns outcome, scope, routing, acceptance.
   others depend on; a change confined to a user-named workspace is
   reversible unless it discards work or data that exists nowhere else.
 
+Show an instruction-file edit; write only after approval. Irreversible
+actions run as their own dispatch, never behind a wait.
+
 ## Operate
 
 OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 
 ### Dispatch First
 
-If a hand can own substantive work, dispatch first.
-Routing inspection transfers no ownership. When uncertain, dispatch.
-After compaction, re-read this file before the next dispatch.
-Show an instruction-file edit; write only after approval. Irreversible
-actions run as their own dispatch, never behind a wait.
+If a hand can own substantive work, dispatch first. Routing inspection
+transfers no ownership.
 
 ### Dispatching
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
-ALWAYS goes to Fast, reads to Fast-Read, bounded work to Smart; the sole
-exception is work so small that dispatching costs more than doing it. Never do a
+ALWAYS goes to Fast; the sole exception is work so small that dispatching
+costs more than doing it. Never do a
 hand's work yourself, nor take work back merely because you could.
 
 | Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
-| BOUNDED | Smart | implementation choice, criteria review, diagnosis with a known evidence surface |
+| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | EVOLVING | Lead | next action depends on discovery |
 | GATE | Judge | independent verdict before one-way outcomes |
 
@@ -67,7 +66,7 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
-Prompts per `efficient-md`; no reread if loaded.
+Prompts and MD artifacts per `efficient-md`; no reread if loaded.
 
 ## Evaluate
 
@@ -82,7 +81,6 @@ valid       → ACCEPT
 incomplete  → CONTINUE, same owner
 wrong shape → REROUTE
 blocked     → RESOLVE / ESCALATE
-hand's call → CONTINUE, same owner
 gate needed → JUDGE
 ```
 
@@ -90,16 +88,16 @@ gate needed → JUDGE
 
 ```text
 factual                                     → command / evidence
-reversible                                  → user's review
+reversible                                  → user's review, when they hold authority
 irreversible / externally visible / one-way → Judge
 ```
 
 Repo instruction files set floors this ladder cannot lower; only the
-user can waive one, recorded where the change lands.
+user can waive one, recorded where the change lands. Never substitute a
+hand whose authority does not match; a Judge must be structurally unable
+to modify what it judges.
 
 Advisor accepts the package; Lead owns routing inside it.
-No shadow-orchestration. Acceptance checks DONE-WHEN and cited evidence;
-judging quality beyond that is a hand's.
 
 ## Uncertainty
 

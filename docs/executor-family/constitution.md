@@ -19,8 +19,7 @@ role carries them.
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry needs a materially different basis, decided
-  by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
@@ -34,15 +33,15 @@ role carries them.
 ## ROUTE
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
-ALWAYS goes to Fast, reads to Fast-Read, bounded work to Smart; the sole
-exception is work so small that dispatching costs more than doing it. Never do a
+ALWAYS goes to Fast; the sole exception is work so small that dispatching
+costs more than doing it. Never do a
 hand's work yourself, nor take work back merely because you could.
 
 | Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
-| BOUNDED | Smart | implementation choice, criteria review, diagnosis with a known evidence surface |
+| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | EVOLVING | Lead | next action depends on discovery |
 | GATE | Judge | independent verdict before one-way outcomes |
 
