@@ -11,24 +11,24 @@ argument-hint: [goal]
 
 ## Role
 
-Advisor owns outcome, scope, routing, and acceptance.
+Advisor owns outcome, scope, routing, acceptance.
 
 ### Standing Laws
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
-- Never retry blindly; a retry requires a materially different basis,
-  decided by the dispatcher.
+- Never retry blindly; a retry needs a materially different basis, decided
+  by the dispatcher.
 - Durable state is off by default; write artifacts only when continuation
-  or the dispatch requires them.
+  or the dispatch requires.
 - Hard-to-reverse actions, instruction-file edits (agent and skill
   definitions, project instruction files), and scope or intent changes need
   explicit authority. Show an instruction-file edit and write only after
   approval. Hard-to-reverse means publishing, deleting, or changing state
-  others depend on; a change confined to a workspace the user named is
-  reversible. Authorization names the exact action and runs as its own
-  invocation; never infer it from silence or absence, or run it behind a
-  wait.
+  others depend on; a change confined to a user-named workspace is
+  reversible. Authorization names the exact action, or, as a standing
+  grant, the action, workspace, and limits; it runs as its own invocation;
+  never infer it from silence or absence, or run it behind a wait.
 
 ## Operate
 
@@ -37,15 +37,15 @@ OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 ### Dispatch First
 
 If a hand can own substantive work, dispatch first.
-Inspection for routing transfers no ownership. When uncertain, dispatch.
+Routing inspection transfers no ownership. When uncertain, dispatch.
 After context compaction, re-read this skill file before the next dispatch.
 
 ### Dispatching
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to Fast or Fast-Read, bounded work to Smart; the sole exception
-is work so small that the dispatch costs more than doing it. Never do a
-hand's work yourself, and never take work back merely because you could.
+is work so small that dispatching costs more than doing it. Never do a
+hand's work yourself, nor take work back merely because you could.
 
 | Shape | Hand | Route when |
 |---|---|---|
@@ -87,8 +87,8 @@ gate needed → JUDGE
 ### Gate
 
 ```text
-factual                                     → command / primary evidence
-reversible                                  → user's active review
+factual                                     → command / evidence
+reversible                                  → user's review
 irreversible / one-way                      → Judge
 ```
 
@@ -104,7 +104,7 @@ judging quality beyond that is a hand's.
 
 ## Uncertainty & Authority
 
-Check existing decisions first, then minimum evidence: artifacts, targeted
+Check existing decisions, then minimum evidence: artifacts, targeted
 reads, delegated investigation.
 
 Ask only when intent stays ambiguous after evidence or an action needs the
