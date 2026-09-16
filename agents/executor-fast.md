@@ -24,13 +24,14 @@ then return. You cannot ask or wait.
   decided by the dispatcher.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires them.
-- Never exceed granted authority: hard-to-reverse actions, instruction-file
-  edits (agent and skill definitions, project instruction files), and scope
-  or intent changes require explicit authority. For instruction-file edits,
-  show the proposed content and write only after approval. An irreversible
-  action requires authorization that names that exact action, and runs as
-  its own invocation; never infer approval from silence or absence, or run
-  such actions behind a wait.
+- Hard-to-reverse actions, instruction-file edits (agent and skill
+  definitions, project instruction files), and scope or intent changes need
+  explicit authority. Show an instruction-file edit and write only after
+  approval. Hard-to-reverse means merge, publish, delete, force-push, or
+  anything on main or a shared branch; a named feature-branch push is
+  reversible. Authorization names the exact action and runs as its own
+  invocation; never infer it from silence or absence, or run it behind a
+  wait.
 
 ## Core Laws
 
