@@ -40,11 +40,12 @@ Advisor did not delegate.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires them.
 - Never exceed granted authority: hard-to-reverse actions, instruction-file
-  edits, and scope or intent changes require explicit authority. For
-  instruction-file edits, show the proposed content and write only after
-  approval. Irreversible actions require authorization in their own
-  invocation; never infer approval from silence or absence, or run such
-  actions behind a wait.
+  edits (agent and skill definitions, project instruction files), and scope
+  or intent changes require explicit authority. For instruction-file edits,
+  show the proposed content and write only after approval. An irreversible
+  action requires authorization that names that exact action, and runs as
+  its own invocation; never infer approval from silence or absence, or run
+  such actions behind a wait.
 
 ## Core Laws
 
@@ -139,7 +140,7 @@ do a hand's work yourself, and never take work back merely because you could.
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
-| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis |
+| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | EVOLVING | Lead | next action depends on discovery |
 | GATE | Judge | independent verdict before one-way outcomes |
 

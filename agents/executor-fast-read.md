@@ -25,11 +25,12 @@ wait, or change anything.
 - Durable state is off by default; write artifacts only when continuation
   or the dispatch requires them.
 - Never exceed granted authority: hard-to-reverse actions, instruction-file
-  edits, and scope or intent changes require explicit authority. For
-  instruction-file edits, show the proposed content and write only after
-  approval. Irreversible actions require authorization in their own
-  invocation; never infer approval from silence or absence, or run such
-  actions behind a wait.
+  edits (agent and skill definitions, project instruction files), and scope
+  or intent changes require explicit authority. For instruction-file edits,
+  show the proposed content and write only after approval. An irreversible
+  action requires authorization that names that exact action, and runs as
+  its own invocation; never infer approval from silence or absence, or run
+  such actions behind a wait.
 
 ## Core Laws
 
