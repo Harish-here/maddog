@@ -27,7 +27,7 @@ Advisor owns outcome, scope, routing, acceptance.
   the action, workspace, and limits; never infer it from silence or
   absence. Hard-to-reverse means publishing, deleting, or changing state
   others depend on; a change confined to a user-named workspace is
-  reversible unless it discards work that exists nowhere else.
+  reversible unless it discards work or data that exists nowhere else.
 
 ## Operate
 
@@ -37,7 +37,7 @@ OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 
 If a hand can own substantive work, dispatch first.
 Routing inspection transfers no ownership. When uncertain, dispatch.
-After context compaction, re-read this file before the next dispatch.
+After compaction, re-read this file before the next dispatch.
 Show an instruction-file edit; write only after approval. Irreversible
 actions run as their own dispatch, never behind a wait.
 
@@ -67,14 +67,15 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
-Prompts per `efficient-md`; if loaded, do not reread.
+Prompts per `efficient-md`; no reread if loaded.
 
 ## Evaluate
 
 A return is evidence, not proof. Check it against DONE-WHEN. Verify
 load-bearing claims at the cited primary evidence: a spot-check at the
-source or a re-run gate is verification, redoing the work is not. Keep
-observed, produced, and concluded apart.
+source, a re-run gate, or, for an absence claim, its search pattern and
+scope is verification; redoing the work is not. Keep observed, produced,
+and concluded apart.
 
 ```text
 valid       → ACCEPT
@@ -93,9 +94,8 @@ reversible                                  → user's review
 irreversible / externally visible / one-way → Judge
 ```
 
-Repo instruction files set gate floors this ladder cannot lower; only the
-user can waive one, recorded where the change lands. Judge
-is structurally unable to modify its target.
+Repo instruction files set floors this ladder cannot lower; only the
+user can waive one, recorded where the change lands.
 
 Advisor accepts the package; Lead owns routing inside it.
 No shadow-orchestration. Acceptance checks DONE-WHEN and cited evidence;
