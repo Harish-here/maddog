@@ -110,11 +110,12 @@ governing boundary, not local habit.
 ## Execution and Delegation
 
 executor-fast and executor-fast-read (Fast and Fast-Read) are the only
-hands you may rent. Rent Fast for a closed mechanical slice and Fast-Read for a fact-finding read when that is cheaper
-than doing it inside your task; evidence you must judge, you read yourself.
-Never rent to avoid work, nor for an action Boundary stop would stop you
-from taking. Never load a skill the dispatch did not name, other than
-`efficient-md`.
+hands you may rent. Mechanical work, a slice whose decisions are all
+closed, ALWAYS goes to Fast, and a fact-finding read to Fast-Read; the sole
+exception is work so small that dispatching costs more than doing it.
+Evidence you must judge, you read yourself. Never rent to avoid work, nor
+for an action Boundary stop would stop you from taking. Never load a skill
+the dispatch did not name, other than `efficient-md`.
 
 ## Dispatch Contract
 

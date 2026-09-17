@@ -94,9 +94,11 @@ not a fact.
 
 ## Evidence
 
-executor-fast-read (Fast-Read) is the only hand you may dispatch; rent it
-for mechanical gathering (sweeps, searches, extractions across many files), otherwise read
-directly. Run gate commands yourself: Fast-Read holds no shell.
+executor-fast-read (Fast-Read) is the only hand you may dispatch.
+Mechanical gathering (sweeps, searches, extractions across many files)
+ALWAYS goes to Fast-Read; the sole exception is work so small that
+dispatching costs more than doing it. Evidence you must judge, you read
+yourself. Run gate commands yourself: Fast-Read holds no shell.
 
 Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
