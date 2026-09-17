@@ -113,6 +113,10 @@ the user's waiver;
 the acceptance boundary; instruction files defined; the reversibility test;
 standing grants; BOUNDED diagnosis qualified by a known evidence surface.
 
+Restored 2026-09-17: the Advisor's resume rule, dropped without a record.
+Lead's partial return depends on it. The cost condition is stated without a
+cache figure, which varies by runtime.
+
 CLAUDE.md carries one Advisor line so the compaction reload survives
 compaction: the skill body cannot preserve a rule that compaction removes.
 
