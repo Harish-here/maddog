@@ -3,7 +3,7 @@
 STATUS: ADOPTED 2026-09-16. Supersedes the 2026-09-11 record and the locked
 schemas in mechanical-work.md and local-work.md. The production bodies under
 agents/ and skills/advisor-mode/ are rendered from the contracts this record
-fixes; the four shared fragments are rendered from
+fixes; the ten shared fragments are rendered from
 docs/executor-family/constitution.md and checked by scripts/fragment-check.py.
 
 ## Purpose
@@ -35,15 +35,21 @@ exception carries no size threshold by decision (see Non-Decisions).
 ## Shared constitution
 
 Text that every dispatcher or every executor needs is written once and
-carried byte-identically. Four fragments, canonical in
+carried byte-identically. Ten fragments, canonical in
 docs/executor-family/constitution.md:
 
 | Fragment | Content | Carriers |
 |---|---|---|
 | FAMILY LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data). No vantage words: nothing about who decides a retry, shows an edit, or waits | all six |
-| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; no more authority than held | Advisor, Lead |
+| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; no more authority than held; the shape table ending at the GATE row, each carrier adding its own EVOLVING row | Advisor, Lead |
 | CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
 | VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
+| PATTERNS | ALWAYS CLASSIFY before the first tool call; a pattern the dispatch names is a hint; hold each pattern's law; core laws outrank pattern laws; work that fits none is returned | all five executors |
+| LOOP | the flow line OUTCOME to DONE; evaluate each return, then re-enter at CLASSIFY; DONE is the OUTCOME met, never one accepted return | Advisor, Lead |
+| DISPATCH FIRST | if a hand can own substantive work, dispatch first; routing inspection transfers no ownership | Advisor, Lead |
+| VERDICTS | the five-row verdict block; the resume rule (task, boundary, context still hold; idle time erodes; a fresh hand starts from distilled state); Advisor accepts the package, Lead owns routing inside it | Advisor, Lead |
+| GATE LADDER | factual to command or evidence, reversible to review by whoever you answer to, one-way to Judge; repo files raise floors, never lower them or grant authority; only the user waives; a Judge cannot modify what it judges | Advisor, Lead |
+| UNCERTAINTY | existing decisions first, then minimum evidence; escalate only on ambiguity that survives evidence or authority you lack; compressed questions; invent no requirements | Advisor, Lead |
 
 Decisions that fix the mechanism:
 
@@ -55,7 +61,7 @@ Decisions that fix the mechanism:
 - ROUTE is carried only by roles that own no execution, Advisor and Lead.
   Smart does its own work and rents two hands under its own rule; Judge
   rents one hand and never routes; the fast tier dispatches nothing and
-  carries FAMILY LAWS only.
+  carries FAMILY LAWS and PATTERNS only.
 - FAMILY LAWS holds only what every role can act on. "Show an edit and write after
   approval" and "an irreversible action runs as its own dispatch" are the
   Advisor's vantage (it can show, wait, and dispatch); each executee already
@@ -139,25 +145,11 @@ compaction: the skill body cannot preserve a rule that compaction removes.
 
 ## Lead
 
-Unchanged: identity, core laws in precedence order, package laws in impact
-order, the four work patterns with their laws, batching prohibition, gates,
-continuation and retry, ambiguity and escalation, durable state, unattended
-work, completion, anti-patterns, return envelope.
-
-Rendered from fragments: Orchestration keeps Lead's lines above ROUTE:
-classify each slice never the whole package; a merely hard slice is not
-Lead's; direct work is reasoning plus the reads its judgment must hold
-first-hand (verification, carried investigation), and every change goes to
-a hand. Boundary stop counts a push even to a user-named branch and accepts
-a standing grant the dispatch carries. Gates: a re-gate carries the prior
-verdict in its dispatch, the one rule the per-hand table's loss had dropped. Dispatch Contract
-is CONTRACT plus "each slice independently
-executable." Returns is Lead's acceptance line (a slice is accepted only to
-decide the next move; Advisor accepts the package) around VERIFY, then
-continue, re-dispatch, reroute, or return.
-
-Sentences that restated FAMILY LAWS (the Completion opener, the Durable State
-opener) are removed; Lead-specific continuation and partial-return rules stay.
+Reworked 2026-09-17; the Lead pass section below is the record. Lead's own
+text is its opening, two core laws (boundary stop; no nesting or
+self-judging), one tier line and the PLAN paragraph under Work Patterns, its
+own EVOLVING table row, the context-exhaustion hand-over, and a five-field
+return envelope. Everything else in its body is a shared fragment.
 
 ## Smart
 
