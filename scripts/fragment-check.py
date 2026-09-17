@@ -4,11 +4,15 @@
 Usage: fragment-check.py [--source docs/executor-family/constitution.md]
 
 Reads the fragments (## LAWS, ## ROUTE, ## CONTRACT, ## VERIFY) and the
-carrier table from the source, then checks each carrier contains each
-assigned fragment verbatim (exact bytes, not whitespace-normalized).
-Exit 0 iff every check passes. Prints one line per (file, fragment).
+carrier table from the source, then checks each assigned carrier contains
+each fragment exactly once, verbatim (exact bytes, not whitespace-
+normalized), and that no carrier holds a fragment the table does not assign
+it. Exit 0 iff every check passes. Prints one line per (file, fragment).
 """
 import argparse, re, sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
 
 CARRIER_PATH = {
     "advisor-mode": "skills/advisor-mode/SKILL.md",
@@ -18,6 +22,8 @@ CARRIER_PATH = {
     "executor-fast": "agents/executor-fast.md",
     "executor-fast-read": "agents/executor-fast-read.md",
 }
+
+FRAGMENT_NAMES = ("LAWS", "ROUTE", "CONTRACT", "VERIFY")
 
 def fragments(doc):
     out = {}
@@ -35,20 +41,46 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default="docs/executor-family/constitution.md")
     a = ap.parse_args()
-    doc = open(a.source, encoding="utf-8").read()
+    doc = (ROOT / a.source).read_text(encoding="utf-8")
     frags, carry = fragments(doc), carriers(doc)
     ok = True
-    for name in ("LAWS", "ROUTE", "CONTRACT", "VERIFY"):
+
+    if not carry:
+        print(f"FAIL no carrier rows parsed from {a.source}")
+        sys.exit(1)
+
+    bodies = {}
+    def body_of(carrier):
+        if carrier not in bodies:
+            rel = CARRIER_PATH[carrier]
+            bodies[carrier] = (rel, (ROOT / rel).read_text(encoding="utf-8"))
+        return bodies[carrier]
+
+    for name in FRAGMENT_NAMES:
         if name not in frags:
             print(f"MISSING fragment {name} in {a.source}"); ok = False; continue
         for c in carry.get(name, []):
-            path = CARRIER_PATH.get(c)
-            if not path:
+            if c not in CARRIER_PATH:
                 print(f"UNKNOWN carrier {c}"); ok = False; continue
-            body = open(path, encoding="utf-8").read()
-            hit = frags[name] in body
-            print(f"{'OK  ' if hit else 'FAIL'} {path}: {name}")
+            path, body = body_of(c)
+            count = body.count(frags[name])
+            hit = count == 1
+            tag = 'OK  ' if hit else 'FAIL'
+            detail = '' if hit else f" ({count} occurrences, expected 1)"
+            print(f"{tag} {path}: {name}{detail}")
             ok &= hit
+
+    for c in CARRIER_PATH:
+        path, body = body_of(c)
+        for name in FRAGMENT_NAMES:
+            if name not in frags:
+                continue
+            if c in carry.get(name, []):
+                continue
+            if frags[name] in body:
+                print(f"FAIL {path}: contains unassigned fragment {name}")
+                ok = False
+
     sys.exit(0 if ok else 1)
 
 if __name__ == "__main__":
