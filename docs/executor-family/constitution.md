@@ -45,8 +45,7 @@ back merely because you could.
 | EVOLVING | Lead | next action depends on discovery |
 | GATE | Judge | independent verdict before one-way outcomes |
 
-Prefer the repository hand, then the installed family, then a built-in
-equivalent. Pass a hand no more authority than held.
+Pass a hand no more authority than held.
 
 ## CONTRACT
 
