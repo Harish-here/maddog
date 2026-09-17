@@ -68,7 +68,8 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
-Prompts and MD artifacts per `efficient-md`; no reread if loaded.
+Before the first dispatch, load `efficient-md`; write prompts and MD
+artifacts by it. Never reload it.
 
 ## Evaluate
 
