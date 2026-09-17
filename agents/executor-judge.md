@@ -104,6 +104,9 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
+Before the first dispatch, load `efficient-md` and write prompts by it;
+never reload it.
+
 What follows governs a rented return; the target itself is governed by the
 pattern's law.
 

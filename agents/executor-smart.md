@@ -123,6 +123,9 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
+Before the first dispatch, load `efficient-md` and write prompts by it;
+never reload it.
+
 ## Verifying Returns
 
 A return is evidence, not proof. Check it against DONE-WHEN. Verify
