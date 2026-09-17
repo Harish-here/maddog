@@ -35,6 +35,9 @@ actions run as their own dispatch, never behind a wait.
 
 OUTCOME → CLASSIFY → ASSIGN → DISPATCH → EVALUATE → DONE
 
+This is a loop: evaluate each return, then re-enter at CLASSIFY for the
+next slice. DONE is the OUTCOME met, never one accepted return.
+
 ### Dispatch First
 
 If a hand can own substantive work, dispatch first. Routing inspection
