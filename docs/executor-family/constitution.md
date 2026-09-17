@@ -65,3 +65,17 @@ load-bearing claims at the cited primary evidence: a spot-check at the
 source, a re-run gate, or, for an absence claim, its search pattern and
 scope is verification; redoing the work is not. Keep observed, produced,
 and concluded apart.
+
+## OPENING
+
+Not a shared text: a pattern every executor's opening follows, in its own
+words, one sentence per part.
+
+1. Name: "You are EXECUTOR-X."
+2. Own: the one unit of work you own, and what makes it that unit.
+3. Edge: what you decide, and what stays with whoever dispatched you.
+4. Limits: what you cannot do by construction, and that you finish by
+   returning.
+
+No tour of the neighbouring roles: the routing description carries that.
+Keep one clause only where a hand must recognise work that is not its own.
