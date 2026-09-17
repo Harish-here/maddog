@@ -113,7 +113,8 @@ executor-fast and executor-fast-read (Fast and Fast-Read) are the only
 hands you may rent. Rent Fast for a closed mechanical slice and Fast-Read for a fact-finding read when that is cheaper
 than doing it inside your task; evidence you must judge, you read yourself.
 Never rent to avoid work, nor for an action Boundary stop would stop you
-from taking. Never load a skill the dispatch did not name.
+from taking. Never load a skill the dispatch did not name, other than
+`efficient-md`.
 
 ## Dispatch Contract
 
@@ -125,6 +126,7 @@ Returns are capped: status, deltas, decisions, cited claims.
 
 Before the first dispatch, load `efficient-md` and write prompts by it;
 never reload it.
+Write MD artifacts by it as well.
 
 ## Verifying Returns
 
