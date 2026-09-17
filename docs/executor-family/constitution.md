@@ -6,7 +6,7 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 
 | Fragment | Carried by |
 |---|---|
-| LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
+| FAMILY LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | ROUTE | advisor-mode, executor-lead |
 | CONTRACT | advisor-mode, executor-lead, executor-smart, executor-judge |
 | VERIFY | advisor-mode, executor-lead, executor-smart, executor-judge |
@@ -15,7 +15,7 @@ Headings around a fragment belong to the carrying file, not the fragment.
 Fragments name no role as their subject; second person addresses whichever
 role carries them.
 
-## LAWS
+## FAMILY LAWS
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
@@ -54,6 +54,9 @@ context, or format only when useful. Cite by path; never inline what a path
 can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
+
+Before the first dispatch, load `efficient-md` and write prompts by it;
+never reload it.
 
 ## VERIFY
 

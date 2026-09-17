@@ -3,7 +3,7 @@
 
 Usage: fragment-check.py [--source docs/executor-family/constitution.md]
 
-Reads the fragments (## LAWS, ## ROUTE, ## CONTRACT, ## VERIFY) and the
+Reads the fragments (## FAMILY LAWS, ## ROUTE, ## CONTRACT, ## VERIFY) and the
 carrier table from the source, then checks each assigned carrier contains
 each fragment exactly once, verbatim (exact bytes, not whitespace-
 normalized), and that no carrier holds a fragment the table does not assign
@@ -23,17 +23,17 @@ CARRIER_PATH = {
     "executor-fast-read": "agents/executor-fast-read.md",
 }
 
-FRAGMENT_NAMES = ("LAWS", "ROUTE", "CONTRACT", "VERIFY")
+FRAGMENT_NAMES = ("FAMILY LAWS", "ROUTE", "CONTRACT", "VERIFY")
 
 def fragments(doc):
     out = {}
-    for m in re.finditer(r"^## (LAWS|ROUTE|CONTRACT|VERIFY)\n\n(.*?)(?=^## |\Z)", doc, re.S | re.M):
+    for m in re.finditer(r"^## (FAMILY LAWS|ROUTE|CONTRACT|VERIFY)\n\n(.*?)(?=^## |\Z)", doc, re.S | re.M):
         out[m.group(1)] = m.group(2).strip("\n")
     return out
 
 def carriers(doc):
     out = {}
-    for m in re.finditer(r"^\| (LAWS|ROUTE|CONTRACT|VERIFY) \| (.*?) \|$", doc, re.M):
+    for m in re.finditer(r"^\| (FAMILY LAWS|ROUTE|CONTRACT|VERIFY) \| (.*?) \|$", doc, re.M):
         out[m.group(1)] = [c.strip() for c in m.group(2).split(",")]
     return out
 

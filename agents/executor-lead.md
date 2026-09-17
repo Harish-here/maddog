@@ -157,6 +157,9 @@ can carry.
 
 Returns are capped: status, deltas, decisions, cited claims.
 
+Before the first dispatch, load `efficient-md` and write prompts by it;
+never reload it.
+
 Prompts per `efficient-md`; if loaded, do not reread. Each delegated slice
 should be independently executable within its boundary.
 
