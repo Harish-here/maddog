@@ -40,9 +40,9 @@ docs/executor-family/constitution.md:
 
 | Fragment | Content | Carriers |
 |---|---|---|
-| LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data). No vantage words: nothing about who decides a retry, shows an edit, or waits | all six |
+| FAMILY LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data). No vantage words: nothing about who decides a retry, shows an edit, or waits | all six |
 | ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; no more authority than held | Advisor, Lead |
-| CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims | Advisor, Lead, Smart, Judge |
+| CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
 | VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 
 Decisions that fix the mechanism:
@@ -55,8 +55,8 @@ Decisions that fix the mechanism:
 - ROUTE is carried only by roles that own no execution, Advisor and Lead.
   Smart does its own work and rents two hands under its own rule; Judge
   rents one hand and never routes; the fast tier dispatches nothing and
-  carries LAWS only.
-- LAWS holds only what every role can act on. "Show an edit and write after
+  carries FAMILY LAWS only.
+- FAMILY LAWS holds only what every role can act on. "Show an edit and write after
   approval" and "an irreversible action runs as its own dispatch" are the
   Advisor's vantage (it can show, wait, and dispatch); each executee already
   states the hand-side form in its own law ("the dispatch authorizes that
@@ -88,6 +88,20 @@ Decisions that fix the mechanism:
   the workspace, and its limits. A grant without limits is not a grant.
 - A change confined to a user-named workspace is reversible unless it
   discards work that exists nowhere else (a reset, a clean, a force-push).
+- Added 2026-09-17: CONTRACT tells every dispatcher to load efficient-md
+  before its first dispatch. Session logs showed the skill loaded in nearly
+  every Advisor session until the wording lost its verb, then in none; a
+  probe on the explicit wording loaded it in 6 of 6 runs. Tier words stay in
+  the role's own line: Advisor and Smart add "Write MD artifacts by it as
+  well." Smart's no-unnamed-skill rule excepts efficient-md, and Judge gains
+  the skill capability so the sentence is not dead text there.
+- Added 2026-09-17: Smart and Judge state the fast-tier default in their own
+  rent line, worded after ROUTE: mechanical work ALWAYS goes to the fast
+  tier, and "the sole exception is work so small that dispatching costs more
+  than doing it" is identical in all four dispatchers by convention, not by
+  the check. Smart's line defines mechanical (decisions all closed) because
+  it carries no shape table. "Never do a hand's work yourself" stays out of
+  Smart and Judge, per the coherence review.
 
 ## Advisor
 
@@ -103,7 +117,7 @@ holds them; the body carries one law, route by shape); the per-hand dispatch
 table (CONTRACT is the universal triad; the dispatcher decides the rest);
 capability and constraint enumeration; the session-start do-not list;
 batching permission; anti-patterns; the configured unattended procedure
-(reduced to "never infer approval from absence" in LAWS); interrupt handling;
+(reduced to "never infer approval from absence" in FAMILY LAWS); interrupt handling;
 the Approval / Escalation / Clarification labels (the triggers stay, the
 labels went); "capabilities are not roles" (never cited by a probe).
 
@@ -137,12 +151,12 @@ first-hand (verification, carried investigation), and every change goes to
 a hand. Boundary stop counts a push even to a user-named branch and accepts
 a standing grant the dispatch carries. Gates: a re-gate carries the prior
 verdict in its dispatch, the one rule the per-hand table's loss had dropped. Dispatch Contract
-is CONTRACT plus Lead's efficient-md line and "each slice independently
+is CONTRACT plus "each slice independently
 executable." Returns is Lead's acceptance line (a slice is accepted only to
 decide the next move; Advisor accepts the package) around VERIFY, then
 continue, re-dispatch, reroute, or return.
 
-Sentences that restated LAWS (the Completion opener, the Durable State
+Sentences that restated FAMILY LAWS (the Completion opener, the Durable State
 opener) are removed; Lead-specific continuation and partial-return rules stay.
 
 ## Smart
@@ -175,13 +189,13 @@ own shell) followed by CONTRACT and VERIFY inside Evidence, then the three
 evidence bullets. Judge carries no ROUTE: it never routes. From the
 coherence reviews, one seam line before VERIFY: it governs a rented return,
 the target is governed by the pattern's law. The Completion opener and the
-retry sentence that restated LAWS are removed. The structural no-write invariant is enforced by its
+retry sentence that restated FAMILY LAWS are removed. The structural no-write invariant is enforced by its
 tool list and stated once in Advisor's gate section.
 
 ## Fast and Fast-Read
 
-Unchanged except: LAWS is inserted before Core Laws and the Family Laws
-are ranked. Their own "never retry on your own" sentence stays, since LAWS
+Unchanged except: FAMILY LAWS is inserted before Core Laws and the Family Laws
+are ranked. Their own "never retry on your own" sentence stays, since FAMILY LAWS
 bullet 2 no longer says who decides a retry. Fast, from the coherence
 review: One-way doors lists a reset or clean that discards uncommitted
 work, and accepts authorization by a stated rule with a workspace and
@@ -213,7 +227,7 @@ answers scenarios with what it would do, citing the deciding line.
   The load-bearing findings were all the same shape: fragment sentences
   written from the Advisor's vantage (show, wait, own invocation, ALWAYS
   dispatch, never reproduce) landing in a role that does the work or runs
-  the gate. Fixed by narrowing LAWS and ROUTE to what every carrier can act
+  the gate. Fixed by narrowing FAMILY LAWS and ROUTE to what every carrier can act
   on and moving the rest to the Advisor body, plus one seam line per role.
   Also surfaced and fixed: the unranked Family Laws, STATUS blocked being
   unreachable under the partial rule, and RESULT "empty when blocked" hiding
@@ -233,7 +247,7 @@ answers scenarios with what it would do, citing the deciding line.
   standing grants through the dispatch, Smart's own rent rule, Judge's seam
   line) or fixed a defect with a behavioral failure behind it (Smart's
   blocked RESULT, Fast's reset-or-clean door and rule-form grant, Lead's
-  re-gate verdict). LAWS bullet 2 lost "decided by the dispatcher", the
+  re-gate verdict). FAMILY LAWS bullet 2 lost "decided by the dispatcher", the
   Advisor-vantage phrase behind two carrier seams.
 
 Residuals accepted without a rule, because every run behaved correctly
@@ -252,12 +266,12 @@ named:
 - The Advisor does not state that a push to a user-named branch is hard to
   reverse, as Lead does. Three probe runs held the push, escalated Lead's
   request, and refused to chain it behind a test run, each citing
-  "publishing" in LAWS.
+  "publishing" in FAMILY LAWS.
 - Interrupt handling (not probed): a background hand may run on after a user
   interrupt. Its return is checked against the corrected intent; the cost is
   wasted work or a same-file collision, never a one-way action.
 - Telling the user before they leave (not probed): work may continue
-  unattended. LAWS forbids inferring authority from absence, so the cost is
+  unattended. FAMILY LAWS forbids inferring authority from absence, so the cost is
   work parked on an approval.
 - Per-step classification of a frozen plan (not probed): a whole plan may go
   to one hand. The cost is a pricier hand; Lead's body classifies each slice.
