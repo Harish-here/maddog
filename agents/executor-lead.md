@@ -136,8 +136,8 @@ goes to a hand.
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to Fast; the sole exception is work so small that dispatching
-costs more than doing it. Never do a
-hand's work yourself, nor take work back merely because you could.
+costs more than doing it. Never do a hand's work yourself, nor take work
+back merely because you could.
 
 | Shape | Hand | When |
 |---|---|---|
