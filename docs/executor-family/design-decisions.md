@@ -41,7 +41,7 @@ docs/executor-family/constitution.md:
 | Fragment | Content | Carriers |
 |---|---|---|
 | LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data). No vantage words: nothing about who decides a retry, shows an edit, or waits | all six |
-| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; hand preference order; no more authority than held | Advisor, Lead |
+| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; the shape table; no more authority than held | Advisor, Lead |
 | CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims | Advisor, Lead, Smart, Judge |
 | VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 
@@ -107,8 +107,7 @@ batching permission; anti-patterns; the configured unattended procedure
 the Approval / Escalation / Clarification labels (the triggers stay, the
 labels went); "capabilities are not roles" (never cited by a probe).
 
-Added since 2026-09-11: the explicit loop; hand preference order (repository
-hand, installed family, built-in equivalent); gate floors from repo files and
+Added since 2026-09-11: the explicit loop; gate floors from repo files and
 the user's waiver;
 the acceptance boundary; instruction files defined; the reversibility test;
 standing grants; BOUNDED diagnosis qualified by a known evidence surface.
@@ -116,6 +115,10 @@ standing grants; BOUNDED diagnosis qualified by a known evidence surface.
 Restored 2026-09-17: the Advisor's resume rule, dropped without a record.
 Lead's partial return depends on it. The cost condition is stated without a
 cache figure, which varies by runtime.
+
+Dropped 2026-09-17: the hand preference order (repository hand, installed
+family, built-in equivalent). Once invoked, the Advisor dispatches the
+executor family only, and the family always ships with the skill.
 
 CLAUDE.md carries one Advisor line so the compaction reload survives
 compaction: the skill body cannot preserve a rule that compaction removes.
