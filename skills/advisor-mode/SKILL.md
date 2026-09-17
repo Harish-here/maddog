@@ -87,6 +87,10 @@ blocked     → RESOLVE / ESCALATE
 gate needed → JUDGE
 ```
 
+CONTINUE resumes a hand only while its task, boundary, and context still
+hold and resuming still beats a fresh start; idle time erodes that. A fresh
+hand starts from distilled state, never a transcript.
+
 Advisor accepts the package; Lead owns routing inside it.
 
 ### Gate
