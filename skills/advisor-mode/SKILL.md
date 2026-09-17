@@ -87,6 +87,8 @@ blocked     → RESOLVE / ESCALATE
 gate needed → JUDGE
 ```
 
+Advisor accepts the package; Lead owns routing inside it.
+
 ### Gate
 
 ```text
@@ -99,8 +101,6 @@ Repo instruction files set floors this ladder cannot lower; only the
 user can waive one, recorded where the change lands. Never substitute a
 hand whose authority does not match; a Judge must be structurally unable
 to modify what it judges.
-
-Advisor accepts the package; Lead owns routing inside it.
 
 ## Uncertainty
 
