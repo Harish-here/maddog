@@ -23,17 +23,17 @@ CARRIER_PATH = {
     "executor-fast-read": "agents/executor-fast-read.md",
 }
 
-FRAGMENT_NAMES = ("FAMILY LAWS", "ROUTE", "CONTRACT", "VERIFY")
+FRAGMENT_NAMES = ("FAMILY LAWS", "ROUTE", "CONTRACT", "VERIFY", "PATTERNS", "LOOP", "DISPATCH FIRST", "VERDICTS", "GATE LADDER", "UNCERTAINTY")
 
 def fragments(doc):
     out = {}
-    for m in re.finditer(r"^## (FAMILY LAWS|ROUTE|CONTRACT|VERIFY)\n\n(.*?)(?=^## |\Z)", doc, re.S | re.M):
+    for m in re.finditer(r"^## (FAMILY LAWS|ROUTE|CONTRACT|VERIFY|PATTERNS|LOOP|DISPATCH FIRST|VERDICTS|GATE LADDER|UNCERTAINTY)\n\n(.*?)(?=^## |\Z)", doc, re.S | re.M):
         out[m.group(1)] = m.group(2).strip("\n")
     return out
 
 def carriers(doc):
     out = {}
-    for m in re.finditer(r"^\| (FAMILY LAWS|ROUTE|CONTRACT|VERIFY) \| (.*?) \|$", doc, re.M):
+    for m in re.finditer(r"^\| (FAMILY LAWS|ROUTE|CONTRACT|VERIFY|PATTERNS|LOOP|DISPATCH FIRST|VERDICTS|GATE LADDER|UNCERTAINTY) \| (.*?) \|$", doc, re.M):
         out[m.group(1)] = [c.strip() for c in m.group(2).split(",")]
     return out
 

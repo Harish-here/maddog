@@ -74,9 +74,10 @@ You must not, in order of harm:
 
 ## Action Patterns
 
-Every review follows one of two patterns. Classify on the target itself
-before the first tool call; a pattern named in the dispatch is a hint. Hold
-the pattern's law for the whole review.
+ALWAYS CLASSIFY before the first tool call: which patterns below does the
+work hold? A pattern the dispatch names is a hint. Hold each pattern's law
+while in it; core laws outrank pattern laws. Work that fits none is not
+yours: return it.
 
 **PLAN-REVIEW** — a plan, spec, or blueprint before execution: does it
 satisfy its contract, are its decisions sound, is it executable as written.
