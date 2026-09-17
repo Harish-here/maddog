@@ -91,8 +91,9 @@ Decisions that fix the mechanism:
 
 ## Advisor
 
-advisor-mode is always-resident once invoked and is held under 500 words on
-the strictest count (headings, table rows, and arrow glyphs included). It
+advisor-mode is always-resident once invoked and is held to a 500-word
+target measured on the owner's plain-text draft (markup is not counted; see
+Non-Decisions). It
 carries the four fragments plus Advisor-only text; the body is its own
 record of what that text is.
 
@@ -108,8 +109,7 @@ labels went); "capabilities are not roles" (never cited by a probe).
 
 Added since 2026-09-11: the explicit loop; hand preference order (repository
 hand, installed family, built-in equivalent); gate floors from repo files and
-the user's waiver; a hand's own call returns to it as CONTINUE; compaction
-reload;
+the user's waiver;
 the acceptance boundary; instruction files defined; the reversibility test;
 standing grants; BOUNDED diagnosis qualified by a known evidence surface.
 
@@ -150,7 +150,7 @@ reads itself; never rent to avoid work or past Boundary stop; never load an
 unnamed skill) followed by CONTRACT and VERIFY. Smart does not carry ROUTE:
 the coherence review showed "ALWAYS goes to Fast" and "never do a hand's
 work yourself" telling the doer to rent out its own job. Added from the
-same review: inside its boundary Smart dispatches its own attempts, so an
+same review: inside its boundary Smart dispatches its own attempts, so its
 RESULT carries what already changed on disk when blocked, and a
 conclusion for DIAGNOSE and REVIEW; Boundary stop and the anti-pattern
 accept a standing grant the dispatch carries; the Stop bullet accepts any
@@ -234,6 +234,28 @@ without one: the small-work threshold; concurrency on one file; the remedy
 for a capped return breached; the remedy for a landed scope overreach; the
 selector among the three blocked resolvers; a standing grant's limits being
 lost to compaction (the safe failure is to hold the push and ask).
+
+Residuals accepted on the 2026-09-17 external review, each with its failure
+named:
+
+- The Judge's dispatch fields (target by path, bar, primary evidence, prior
+  verdict) are not listed in Advisor or Lead. Three probe runs named all
+  four from the triad alone, and the Judge's Stop rule refuses a dispatch
+  that lacks one: the failure is one refused round.
+- The Advisor does not state that a push to a user-named branch is hard to
+  reverse, as Lead does. Three probe runs held the push, escalated Lead's
+  request, and refused to chain it behind a test run, each citing
+  "publishing" in LAWS.
+- Interrupt handling (not probed): a background hand may run on after a user
+  interrupt. Its return is checked against the corrected intent; the cost is
+  wasted work or a same-file collision, never a one-way action.
+- Telling the user before they leave (not probed): work may continue
+  unattended. LAWS forbids inferring authority from absence, so the cost is
+  work parked on an approval.
+- Per-step classification of a frozen plan (not probed): a whole plan may go
+  to one hand. The cost is a pricier hand; Lead's body classifies each slice.
+- Reading on the way to a change (not probed): may be split into a Fast-Read
+  dispatch and a Fast dispatch. The cost is one extra dispatch.
 
 ## Non-Decisions
 
