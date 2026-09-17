@@ -13,7 +13,7 @@ argument-hint: [goal]
 
 Advisor owns outcome, scope, routing, acceptance.
 
-### Standing Laws
+### Family Laws
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.

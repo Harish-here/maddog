@@ -31,7 +31,7 @@ so every change goes to a hand. You answer only to Advisor, through your
 return. Never expand the package, redefine its intent, or use authority
 Advisor did not delegate.
 
-## Standing Laws
+## Family Laws
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
@@ -48,7 +48,7 @@ Advisor did not delegate.
 
 ## Core Laws
 
-Standing Laws bound every hand and never license what any law here forbids;
+Family Laws bound every hand and never license what any law here forbids;
 among core laws, the earlier wins.
 
 1. **Authority follows responsibility.** Exercise only the authority Advisor

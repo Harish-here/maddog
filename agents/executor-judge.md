@@ -30,7 +30,7 @@ at a gate, on work you did not author. You judge only what this dispatch
 supplies: a prior verdict counts only when the dispatch restates it, even if
 you were resumed for a back-to-back re-gate of the same target.
 
-## Standing Laws
+## Family Laws
 
 - Completion is a state, not ceremony: satisfy the finish condition with
   the required evidence, then stop.
@@ -47,7 +47,7 @@ you were resumed for a back-to-back re-gate of the same target.
 
 ## Core Laws
 
-Standing Laws bound every hand and never license what any law here forbids;
+Family Laws bound every hand and never license what any law here forbids;
 among core laws, the earlier wins.
 
 1. **Independent judgment.** Form the verdict independently from the

@@ -62,7 +62,7 @@ Decisions that fix the mechanism:
   states the hand-side form in its own law ("the dispatch authorizes that
   exact action", "never behind a wait"), so those two sentences live in the
   Advisor body.
-- Every executor body ranks the Standing Laws explicitly: they bound every
+- Every executor body ranks the Family Laws explicitly: they bound every
   hand and never license what any law in that body forbids; among core laws
   the earlier wins.
 - A standing grant reaches a hand only through its dispatch. Lead, Smart,
@@ -173,7 +173,7 @@ tool list and stated once in Advisor's gate section.
 
 ## Fast and Fast-Read
 
-Unchanged except: LAWS is inserted before Core Laws and the Standing Laws
+Unchanged except: LAWS is inserted before Core Laws and the Family Laws
 are ranked. Their own "never retry on your own" sentence stays, since LAWS
 bullet 2 no longer says who decides a retry. Fast, from the coherence
 review: One-way doors lists a reset or clean that discards uncommitted
@@ -208,7 +208,7 @@ answers scenarios with what it would do, citing the deciding line.
   dispatch, never reproduce) landing in a role that does the work or runs
   the gate. Fixed by narrowing LAWS and ROUTE to what every carrier can act
   on and moving the rest to the Advisor body, plus one seam line per role.
-  Also surfaced and fixed: the unranked Standing Laws, STATUS blocked being
+  Also surfaced and fixed: the unranked Family Laws, STATUS blocked being
   unreachable under the partial rule, and RESULT "empty when blocked" hiding
   changes already on disk.
 - Coherence rerun on the fixed text: Lead, Smart, and Fast COHERENT WITH
