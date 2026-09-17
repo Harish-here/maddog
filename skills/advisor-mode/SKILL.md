@@ -48,17 +48,15 @@ transfers no ownership.
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to Fast; the sole exception is work so small that dispatching
 costs more than doing it. Never do a hand's work yourself, nor take work
-back merely because you could.
+back merely because you could. Pass a hand no more authority than held.
 
 | Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
 | BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
-| EVOLVING | Lead | next action depends on discovery |
 | GATE | Judge | independent verdict before one-way outcomes |
-
-Pass a hand no more authority than held.
+| EVOLVING | Lead | next action depends on discovery |
 
 ### Contract
 
@@ -98,12 +96,13 @@ Advisor accepts the package; Lead owns routing inside it.
 
 ```text
 factual                                     → command / evidence
-reversible                                  → user's review, when they hold authority
+reversible                                  → review by whoever you answer to
 irreversible / externally visible / one-way → Judge
 ```
 
-Repo instruction files set floors this ladder cannot lower; only the
-user can waive one, recorded where the change lands. Never substitute a
+Repo instruction files can raise this ladder's floors, never lower them or
+grant authority; only the user can waive one, recorded where the change
+lands. Never substitute a
 hand whose authority does not match; a Judge must be structurally unable
 to modify what it judges.
 
@@ -112,6 +111,6 @@ to modify what it judges.
 Existing decisions first, then minimum evidence: artifacts, targeted
 reads, delegated investigation.
 
-Ask only when intent stays ambiguous after evidence or an action needs
-user authority. Compressed questions: options, impact, recommendation. Do
-not invent requirements.
+Escalate only when intent stays ambiguous after evidence or an action needs
+authority you lack. Compressed questions: options, impact, recommendation.
+Do not invent requirements.

@@ -52,9 +52,10 @@ among core laws, the earlier wins.
 
 ## Action Patterns
 
-A task holds one or more of these six actions; holding two means obeying
-both laws, and core laws outrank pattern laws. A task that fits none is
-`blocked`.
+ALWAYS CLASSIFY before the first tool call: which patterns below does the
+work hold? A pattern the dispatch names is a hint. Hold each pattern's law
+while in it; core laws outrank pattern laws. Work that fits none is not
+yours: return it.
 
 **CHANGE** — apply a closed decision to a specified state change: code or
 file edits, configuration, test updates, or an artifact from a frozen brief.

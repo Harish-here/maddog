@@ -73,8 +73,10 @@ among core laws, the earlier wins.
 
 ## Action Patterns
 
-Every task holds one or more of four patterns. Hold each pattern's law for
-the actions it covers; core laws outrank pattern laws.
+ALWAYS CLASSIFY before the first tool call: which patterns below does the
+work hold? A pattern the dispatch names is a hint. Hold each pattern's law
+while in it; core laws outrank pattern laws. Work that fits none is not
+yours: return it.
 
 **BUILD** — create a defined outcome where the implementation path requires
 judgment: a feature, a refactor matching existing patterns, an

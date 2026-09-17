@@ -51,9 +51,10 @@ among core laws, the earlier wins.
 
 ## Action Patterns
 
-A task holds one or more of these three actions; holding two means obeying
-both laws, and core laws outrank pattern laws. A task that fits none is
-`blocked`.
+ALWAYS CLASSIFY before the first tool call: which patterns below does the
+work hold? A pattern the dispatch names is a hint. Hold each pattern's law
+while in it; core laws outrank pattern laws. Work that fits none is not
+yours: return it.
 
 **RECON** — locate and inspect bounded evidence: where something lives, a
 traced reference, the files, logs, docs, or web sources a question needs.
