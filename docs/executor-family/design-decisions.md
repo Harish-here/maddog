@@ -172,17 +172,12 @@ opener that restated other text are removed.
 
 ## Judge
 
-Unchanged: identity, core laws, evaluation boundary, action patterns, stop,
-completion, anti-patterns, return envelope, opus pin.
-
-Rendered from fragments: the RENT HANDS paragraph is replaced by two Judge
-lines (Fast-Read is the only hand it may dispatch; gate commands run in its
-own shell) followed by CONTRACT and VERIFY inside Evidence, then the three
-evidence bullets. Judge carries no ROUTE: it never routes. From the
-coherence reviews, one seam line before VERIFY: it governs a rented return,
-the target is governed by the pattern's law. The Completion opener and the
-retry sentence that restated FAMILY LAWS are removed. The structural no-write invariant is enforced by its
-tool list and stated once in Advisor's gate section.
+Reworked 2026-09-19; the Judge pass section below is the record. Judge's
+own text is its opening, four core laws (Bar stop; independent judgment;
+evidence before verdict; acceptance over activity), its loop, Bar, the
+pattern table, the Gather tier lines, the Verify seam line and two
+bullets, the Verdict block with four STOP conditions, and a five-field
+return envelope. Everything else in its body is a shared fragment.
 
 ## Fast and Fast-Read
 
@@ -312,6 +307,49 @@ slice may outlive a partial or blocked return (wasted work by an orphaned
 hand); Haiku never sent a Judge before a production publish on either body
 (Lead runs on a high tier); one Sonnet run sent a Judge after a push had
 already happened (one wasted round).
+
+## Judge pass, 2026-09-19
+
+Judge was reworked section by section against the reworked Lead: 1,048
+body words to 840, of which 249 are the four shared fragments and 591 are
+the Judge's own. Judge now mirrors the Lead's headings (Role, Operate,
+Return) and gives Operate one `###` per stage of its own loop, `BAR →
+CLASSIFY → GATHER → VERIFY → VERDICT`, with Contract nested under Gather
+at `####`. The loop is Judge's own text, not a fragment: it re-enters at
+GATHER, never CLASSIFY, and ends at VERDICT. The same nesting of Contract
+under the dispatch heading was applied to advisor-mode and executor-lead.
+
+Core laws stay at four with one swap: "Judgment is expensive" left for
+Gather's tier line, and Bar stop entered first, the Judge's counterpart to
+the Lead's Boundary stop: the bar reaches the Judge only through its
+dispatch; a bar met anywhere else is information, never the bar. Identity,
+Evaluation Boundary, Stop, Completion, and Anti-Patterns are gone as
+carried by Role, Core Laws, Verdict, the loop, and Return; the one unique
+clause each held (the resumed-Judge rule, redefine-the-bar, the STOP
+conditions, no unasked advice) moved to Bar, Core Laws, Verdict, and
+FINDINGS. Return lost DELEGATION LOG, folded into EVIDENCE. The
+description was rewritten to the five-slot rule: GATE in caps, PASS, FAIL,
+STOP named, re-gate as an instance, the consequence test in the trigger,
+STOP on missing inputs as an invariant; 891 characters.
+
+Probe, 13 pairs (a direct question and a pressure scenario per section),
+Sonnet and Haiku, two runs each, draft against the prior body: draft 102
+of 104 actions, prior body 103 of 104. The prior body's miss was a Haiku
+run adopting a README's criteria as the bar, the hole Bar stop closes; the
+draft held it 8 of 8. The draft's two misses were one Haiku run: a push
+skimmed past inside a "gate command" question (the explicit-push twin held
+8 of 8), and "reject" for a missing bar where STOP was due. Blind probe,
+ten scenarios authored by a hand that saw only the description and FAMILY
+LAWS, Sonnet and Haiku: 20 of 20, including the missing-bar case going to
+STOP on both models. No text was changed for a probe result.
+
+Residuals accepted, each with its failure named: a Haiku Judge may run a
+push hidden in a gate command (the Judge is pinned to Opus); a Haiku Judge
+may answer a missing bar with a refusal instead of STOP (one wasted
+round). Follow-ups recorded: the Core Laws precedence line is
+byte-identical in five executors and is a candidate fragment; slot-4
+redirects could become optional in the description checklist,
+family-wide.
 
 ## Non-Decisions
 
