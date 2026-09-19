@@ -58,7 +58,7 @@ back merely because you could. Pass a hand no more authority than held.
 | GATE | Judge | independent verdict before one-way outcomes |
 | EVOLVING | Lead | next action depends on discovery |
 
-### Contract
+#### Contract
 
 Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path

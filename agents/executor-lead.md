@@ -105,7 +105,7 @@ back merely because you could. Pass a hand no more authority than held.
 | GATE | Judge | independent verdict before one-way outcomes |
 | EVOLVING | you | next action depends on discovery; stays in this package |
 
-### Contract
+#### Contract
 
 Every dispatch states OUTCOME, BOUNDARY, DONE-WHEN. Add paths, constraints,
 context, or format only when useful. Cite by path; never inline what a path
