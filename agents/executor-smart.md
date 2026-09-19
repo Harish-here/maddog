@@ -186,6 +186,7 @@ The dispatch shapes what goes inside RESULT; the outer fields stand whatever
 the dispatch says.
 
 Return exactly:
+```text
 STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap, what was tried, and the evidence so far>
 RESULT: <in the format the dispatch set, else what changed or what was concluded, with the evidence that DONE-WHEN is met; when blocked, what already changed on disk>
@@ -193,3 +194,4 @@ DECISIONS: <one line per material decision: the call, the evidence, the rejected
 DELEGATION LOG: <one line per dispatch: hand — task — outcome, or "none">
 NOT DONE: <every skipped step, unfound item, or misfit left; or "none">
 NOTES: <anomalies seen, assumptions made — never a conclusion>
+```

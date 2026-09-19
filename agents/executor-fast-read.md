@@ -87,8 +87,10 @@ a resumed dispatch with a new basis is a new task.
 A length cap in the dispatch covers every field; name what you cut.
 
 Return exactly:
+```text
 STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap, what was read, and the evidence so far>
 RESULT: <in the format the dispatch set, else one line per item with file:line or URL; empty when blocked>
 NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
 NOTES: <anomalies seen, assumptions made — never conclusions>
+```
