@@ -1,6 +1,6 @@
 name = "executor-judge"
 description = "Independent read-only acceptance judge that returns PASS, FAIL, or STOP and never remediates work."
-model = "gpt-5.6"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = """
