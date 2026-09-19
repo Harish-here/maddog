@@ -137,8 +137,10 @@ The dispatch may rename the verdicts and shape FINDINGS; the fields stand
 whatever it says.
 
 Return exactly:
+```text
 VERDICT: PASS | FAIL | STOP
 FINDINGS: <each finding with its file:line or command output; findings only, no fix and no advice the dispatch did not ask for>
 EVIDENCE: <each check run, own command or rented dispatch, and its outcome; "none" only when STOP precedes any check>
 BLOCKED-ON: <only on STOP: what blocked the verdict>
 NOTES: <what was hit on the way; never a re-argument of the verdict; or "none">
+```

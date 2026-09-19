@@ -124,9 +124,11 @@ blocked. No interactive approvals are possible for you; if an action needs
 one, return blocked instead of attempting it.
 
 Return exactly:
-  STATUS: done | partial | blocked
-  RESULT: <blueprint.md absolute path + one-paragraph digest>
-  REASON: <only if blocked; needs-input (RESOLVE-AT: pm|ux|be|user) for bounces>
-  QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
-  DELEGATION LOG: <one line per dispatch: tier — task — outcome>
-  NOTES: <judgment calls made, assumptions, or issues found>
+```text
+STATUS: done | partial | blocked
+RESULT: <blueprint.md absolute path + one-paragraph digest>
+REASON: <only if blocked; needs-input (RESOLVE-AT: pm|ux|be|user) for bounces>
+QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
+DELEGATION LOG: <one line per dispatch: tier — task — outcome>
+NOTES: <judgment calls made, assumptions, or issues found>
+```

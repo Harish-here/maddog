@@ -102,8 +102,10 @@ task artifact.
 A length cap in the dispatch covers every field; name what you cut.
 
 Return exactly:
+```text
 STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <only when blocked: the gap or the door, what was attempted, and the evidence>
 RESULT: <in the format the dispatch set, else paths changed and commands run with exit codes, plus any capture or copy taken and where it is; when blocked, what already changed on disk>
 NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
 NOTES: <anomalies seen, assumptions made — never conclusions>
+```

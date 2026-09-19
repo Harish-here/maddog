@@ -171,8 +171,10 @@ return partial.
 The dispatch shapes RESULT; the outer fields stand whatever it says.
 
 Return exactly:
+```text
 STATUS: done | partial | blocked   (partial whenever NOT DONE is not "none")
 BLOCKED-ON: <the blocking condition, or the question for Advisor — only when partial or blocked>
 RESULT: <the outcome and the evidence Advisor needs, in the requested format>
 DECISIONS: <material calls and assumptions made inside the package, one line each, or "none">
 NOT DONE: <what remains, was rerouted, or was escalated, or "none">
+```
