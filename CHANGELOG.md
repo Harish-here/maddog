@@ -8,7 +8,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - `skills/section-by-section/SKILL.md` — rewritten to the four-stage flow the user specified (Start → Section loop → Assembly → Hand-off). A closure law now opens the file: the skill proposes and only the user closes, so no verdict reaches the ledger that the user did not give. All eight verdicts stay and each gains a trigger, run as one ordered first-fit test inside Diagnose; REMOVE's trigger is narrowed to "the intent needs nothing this section says" so that it no longer swallows every MERGE case. Assembly changes no closed section on its own — each Assembly-time change is a proposal the user closes, with its own ledger row
-- `skills/section-by-section/SKILL.md` frontmatter description rewritten to 487 characters, with its "Use when" trigger sentence and both redirects restored and the procedure text removed
+- `skills/section-by-section/SKILL.md` frontmatter description rewritten to 483 characters, with its "Use when" trigger sentence and both redirects restored and the procedure text removed
 - `docs/section-by-section/spec.md` — replaced. Supersedes the spec approved 2026-09-15; records the flow, the ordered test and its precedence, the closure law, the artifacts, the prohibitions, and the blank-context reading method used to validate it. Gate rulings SBS-GATE-1..3 ruled on the prior design and are kept as filed history
 - README §Skills names the user as the one who closes each section
 - `.claude-plugin/plugin.json` version 3.1.0 → 3.2.0

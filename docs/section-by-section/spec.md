@@ -213,7 +213,7 @@ prose, not the rule count.
 
 Frontmatter: `disable-model-invocation: true` — a long interactive ritual, and
 auto-triggering it on "review this skill" would hijack a quick review — and
-`argument-hint: [path to SKILL.md or agent file]`. The description is 487
+`argument-hint: [path to SKILL.md or agent file]`. The description is 483
 characters, under the 500-character target in
 `.claude/skills/review-agent/references/description-standard.md` §3, and carries
 a claim, a "Use when" trigger sentence, two redirects (against shaping a file by
@@ -240,7 +240,7 @@ runtime tool identifiers (CLAUDE.md invariants; PHILOSOPHY.md point 5), and cite
 | HOLD kept, with one named resolution point | an undecided section otherwise has no representation and no exit |
 | Ledger is a real markdown table, opening with the intent anchor and observation ids | it rendered as a wall of pipes, and two START closures left no durable trace |
 | Interpret step added before Settle | "discuss until the decision is settled" treats a reaction as a verdict |
-| Description rewritten to 487 chars: trigger sentence restored, procedure removed, both redirects restored | description-standard §3 and §5 |
+| Description rewritten to 483 chars: trigger sentence restored, procedure removed, both redirects restored | description-standard §3 and §5 |
 | "Description last" and "Arrange" demoted from stages to Assembly steps | the user's mandated flow has four stages, and both fit inside Assembly without loss |
 | Prohibitions cut from six to three | the other four restated rules their owning sections already carried |
 
