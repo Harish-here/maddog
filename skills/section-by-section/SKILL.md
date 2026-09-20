@@ -239,10 +239,6 @@ The agent's, except where a step says otherwise.
 7. **Compose.** Write the draft whole, in the closed order: what an agent acts
    on first at the top, prohibitions and finish conditions at the bottom,
    optional material marked.
-8. **Hold the size.** Body under 500 lines. Fork the heaviest tables and examples
-   one level down into a `references/` file beside the draft — one level only,
-   because a file reached through another file gets read in part. A reference
-   file over 100 lines opens with its contents. The user closes any fork.
 
 ## Hand-off
 

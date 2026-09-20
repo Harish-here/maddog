@@ -16,7 +16,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - coherence and correctness axes. Correctness is judged only on evidence — an observation, or a failure the run itself hit — which is the first check to consume the observations the skill collects at Start
 - progressive disclosure law beside the closure law: keep the file minimal, each thing where it is used, detail one level down
 - the step the loop never named — write the replacement text, test it against the axes, show it, and file it only on the user's approval
-- Assembly steps for resolving recorded gaps and for terminology drift; the 500-line body ceiling, references one level deep, and a contents list for any reference file over 100 lines
+- Assembly steps for resolving recorded gaps and for terminology drift
+
+### Removed
+- Hand-off's verdict counts and before/after line counts — both read the ledger back, and every gap and unreviewed section is already a row in it
+- two of three prohibitions. "Never judge a section before Start closes" survives in meaning inside Start; the prohibition against dispatching or naming an independent review survives nowhere, since Hand-off no longer mentions one
+- the body ceiling's coupling to the `efficient-md` skill. No ceiling replaces it: the description says shaping a file by how long it stays loaded is a separate pass, and an Assembly step that capped the body contradicted that boundary
 
 ### Fixed
 - a coherence conflict now closes both sections, one on its verdict and one on KEEP, so the loop can record it and advance; previously the rung named no verdict at all
