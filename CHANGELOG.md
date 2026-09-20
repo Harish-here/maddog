@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.0] - 2026-09-20
+
+### Changed
+- `skills/section-by-section/SKILL.md` — reviewed against itself, section by section, with the user closing all 40 verdicts. The separate verdict table is folded into the diagnosis ladder, which is now grouped by axis with a bullet per trigger; the numbered tests are gone, since each line's verdict already named it uniquely. Start collapses from five numbered steps to one setup exchange and one reply. The loop's steps become sub-headings and gain a flow diagram naming both user gates. Settle absorbs Interpret and answers five reply types, including a question and a catch-all reaction. Draft is renamed Write, because "draft" named the artifact, the step and the verb at once
+- Assembly reorganised into three actor-marked groups; the two steps that resolve conflicts state their own resolution rather than restating the loop's
+- `.claude-plugin/plugin.json` version 3.2.0 → 3.3.0
+
+### Added
+- `REPLACE` verdict — a wrong instruction previously had no verdict; every existing one preserved meaning or deleted it
+- coherence and correctness axes. Correctness is judged only on evidence — an observation, or a failure the run itself hit — which is the first check to consume the observations the skill collects at Start
+- progressive disclosure law beside the closure law: keep the file minimal, each thing where it is used, detail one level down
+- the step the loop never named — write the replacement text, test it against the axes, show it, and file it only on the user's approval
+- Assembly steps for resolving recorded gaps and for terminology drift; the 500-line body ceiling, references one level deep, and a contents list for any reference file over 100 lines
+
+### Fixed
+- a coherence conflict now closes both sections, one on its verdict and one on KEEP, so the loop can record it and advance; previously the rung named no verdict at all
+- a recorded GAP may carry drafted text once the user approves it, and takes a second row when it closes
+
 ## [3.2.0] - 2026-09-19
 
 ### Changed
