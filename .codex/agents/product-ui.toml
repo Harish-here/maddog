@@ -1,0 +1,10 @@
+name = "product-ui"
+description = "UI implementation planner for one designed feature: map mockup regions to real components and author a build blueprint."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Read and follow `agents/product-ui.md` after its YAML frontmatter.
+Write only the contract's `docs/product/**` artifacts; never edit application code. Delegate reconnaissance to `executor-fast-read` where directed.
+The parent session's approval policy governs any action requiring approval.
+"""
