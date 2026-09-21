@@ -319,22 +319,45 @@ reintroducing the defect it existed to fix.
   which records closed decisions and not conversation, so §10's residual on
   artifact-only verification stands unchanged.
 - The Also line's template said "other axes that fired" where the rule in
-  Diagnose is "axes below" the one that gave the verdict. Two runs filed an axis
-  above the verdict's, asserting a check had fired that had not.
+  Diagnose is "Lines below it may describe the section too". Two runs filed an
+  axis above the verdict's, asserting a check had fired that had not. The
+  template now reads "axes below the verdict's that also fired".
+
+  Known limitation, left open: a second trigger inside one axis has no legal
+  place. One run produced that case, COMPRESS as the verdict with REWORD also
+  applying, both under clarity. A wording of "lines below the verdict's",
+  matching Diagnose's own sentence, would admit it, and it was tried: across
+  eight runs it produced no Also line at all, where "axes below" had produced
+  two correct ones. It was reverted on that evidence. The mismatch between
+  Diagnose's line-granular sentence and the template's axis-granular one
+  predates this release.
 
 Validation: scenario runs on a cheap model, cut at the point where the agent
 must post a diagnosis.
 
-- The `Elsewhere:` line appeared in every run, eleven of eleven, and named the
-  overlapping section each time.
+- The `Elsewhere:` line appeared in every run of the shipped shape, nine of
+  nine, and named the overlapping section each time. Two further runs carry the
+  line in its earlier position and are reported separately below.
 - A fully duplicated section drew REMOVE in four of four.
 - Partial overlap drew MERGE in four of five. The fifth reported the overlap on
   the `Elsewhere:` line and then took a clarity verdict, the fallthrough this
   line exists to expose. Two control runs against the same file with the line in
-  a different position split the same way, so the split belongs to the fixture
-  and the model, not to the change.
-- The Also line's new wording is validated negatively only. Across the nine runs
-  carrying it, no run filed an axis above the verdict's, which is the misfiling
-  it targets; no run filed an Also line at all, so no run exercised it in the
-  case where it should appear.
+  its earlier position split the same way, so the position is not what decides
+  this fixture. Whether carrying the line at all affects the verdict is untested
+  at a useful number of runs: the 3.3.1 shape, which has no line, drew MERGE in
+  two of two.
+- The Also line's new wording is confirmed in both directions, thinly. Across
+  twelve runs carrying it, no run filed an axis above the verdict's, which is
+  the misfiling it targets. Two runs on a fixture built for the positive case —
+  a section answering two questions, also written in padded prose — filed
+  `Also: clarity` under a responsibility verdict, which is the line working as
+  intended. A third run on that fixture filed a second clarity line, the
+  limitation recorded above.
+- The positive case resists demonstration on a cheap model. A fourth fixture
+  put the verdict on correctness, driven by a supplied observation, with padded
+  prose below it: three runs returned REPLACE citing the observation and left
+  the Also line empty, though clarity plainly applied. Across every fixture the
+  Also line carries content in a minority of runs. It is advisory and carries no
+  verdict, so an omitted one loses information without producing a wrong
+  decision.
 
