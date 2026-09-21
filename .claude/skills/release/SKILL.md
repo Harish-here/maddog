@@ -22,7 +22,7 @@ that branch's committed tree, never against uncommitted edits.
 2. Commit any README, manifest or docs text this change made stale.
 3. Decide whether the change reaches anyone who installs the plugin. A change
    confined to `.claude/` or to documentation does not, and carries no
-   version.
+   version: skip steps 4 to 6 and go to section 2.
 4. Compute the bump against `origin/main` HEAD: a removal or rename is major,
    an addition is minor, a fix is patch. Show the user the computed bump; the
    user rules the actual one.
