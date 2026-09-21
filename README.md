@@ -166,9 +166,9 @@ the workflow via its `scriptPath`.
 - **product-engineering** — orchestrates the full PM → UX → BE → UI →
   execution → QA pipeline for one feature; not for small tweaks or single
   bug fixes.
-- **section-by-section** — reviews one existing skill or agent file with the
-  user, section by section, closing each with a verdict; produces a draft
-  and a verdict ledger and never edits the target.
+- **section-by-section** — walks one existing skill or agent file with the
+  user, section by section; the user closes each section with one verdict,
+  and the run produces a draft and a verdict ledger, never editing the target.
 
 `author-agent`, `release`, and `review-agent` live under `.claude/skills/`
 and are repo-internal maintainer tooling — they never ship in the plugin.
@@ -197,17 +197,14 @@ loop.
 
 ## Releasing
 
-Any change to a SHIPPED surface (`agents/`, `skills/`, `workflows/`,
-`.claude-plugin/`) or a GATE-INFRA surface (`.github/`, `hooks/`,
-`scripts/`) headed for `main` goes through the `release` skill
-(`.claude/skills/release/SKILL.md`) — DECLARE, READY, BEHAVIOR, RULE, and
-SHIP before merge, SEAL after. Changes confined to INTERNAL (`.claude/` —
-except `.claude/skills/release/`, which is GATE-INFRA) or DOCS
-(this file, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
-`LICENSE`, `.gitignore`, `PHILOSOPHY.md`, `DESIGN.md`, `assets/`,
-`skills.sh.json`) take READY alone. The release
-skill never merges — it stops at push + open PR; merging is the
-maintainer's own hand, on a PR whose verdict names its current head commit.
+Every change headed for `main` goes through the `release` skill
+(`.claude/skills/release/SKILL.md`): prepare the branch, run the checks, get
+it cleared, open the pull request, publish after the merge. A table in the
+skill says which changes need an independent reviewer — anything users
+receive does, and so does anything that runs the checks themselves. The
+skill never merges; it stops at the open pull request. Merging is the
+maintainer's own hand, and where a reviewer was required, only while the
+verdict names the pull request's current head commit.
 
 ## License
 

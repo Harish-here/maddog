@@ -2,153 +2,267 @@
 name: section-by-section
 description: >
   Reviews ONE existing skill or agent file section by section with the
-  user, who closes each with one of eight verdicts against the file's
-  stated intent, producing a draft and a verdict ledger. Use when an
-  instruction file has grown, drifted, or misbehaved and the user wants
-  to decide what stays. Not for shaping a file by how long it stays
-  loaded — that is a separate formatting pass. Not for authoring a new
-  file — write it directly. Never edits the target; the draft and ledger
-  hand off to a review it does not run.
+  user, who closes every section with one verdict, producing a draft of
+  the reworked file and a verdict ledger. Use when an instruction file
+  has grown, drifted, repeated itself, or misbehaved and the user wants
+  to decide section by section what stays. Not for shaping a file by how
+  long it stays loaded — that is a separate formatting pass. Not for
+  authoring a new file — write that directly. Never edits the target.
 disable-model-invocation: true
 argument-hint: [path to SKILL.md or agent file]
 ---
 
-One existing instruction file, one section at a time. The skill proposes;
-the user closes every section, whatever the round count.
+This skill reviews one instruction file that has grown, drifted, or misbehaved.
+It walks the file section by section with the user, and every section leaves the
+review with exactly one verdict.
 
-## Contract
+**Closure law.** The skill proposes; the user closes. A section is closed when the
+user gives its verdict and approves any replacement text that verdict carries. No
+verdict the user did not give reaches the ledger. Every "closed" below means this.
 
-IN — one target file per run, by path: a `SKILL.md` or an agent definition
-file. Plus the user's observations of how it behaved, optional, asked for
-once. A `references/` file is a target only when the user names it as one.
-OUT — a draft of the reworked file and a verdict ledger, at paths named
-before the walk starts.
-NEVER — never write to the target path. Every change lands in the draft.
+**Progressive disclosure law.** Keep the file minimal: each thing sits where it
+is used, and detail only some runs need sits one level down.
 
-Eight verdicts, one per section. The right-hand column is the sentence the
-user would naturally say; it is the test for choosing between them.
+**Tested-text law.** Text this skill proposes for the file is run over the axes
+first, every axis but correctness, which needs evidence new text cannot have.
+Show the result above the text, `clean` where an axis found nothing. An axis
+absent from the block did not run.
 
-| Verdict | Meaning | The user says |
+```text
+Tested:  redundancy — <what it caught and what changed, or `clean`>
+         responsibility — <...>
+         coherence — <...>
+         clarity — <...>
+```
+
+## Inputs and outputs
+
+IN — one target file per run, by path: a `SKILL.md` or an agent definition file.
+A `references/` file is a target only when the user names it. Start collects the
+review scope and the user's observations.
+OUT — a draft of the reworked file and a verdict ledger.
+
+## Start
+
+Read the target whole, then post one setup message and wait for one reply. Judge
+nothing until that reply lands.
+
+The setup message carries four things:
+
+- **Intent anchor.** One line from the frontmatter description and the user's
+  observations: what this file exists to make an agent do. Once the user confirms
+  or corrects it, it is fixed, and every test below is against it.
+- **Section map.** A numbered list covering the file end to end, one line of
+  summary each. Ids are `S1..Sn`, a SPLIT yields `S3a` and `S3b`, the frontmatter
+  description is `DESC`. Split by heading. Where there are no headings, split by
+  numbered step; failing those, by paragraph. Split any heading that carries its
+  own named or numbered steps, or that runs past about thirty lines, by those
+  steps. The user confirms the map, merges or splits entries, and names the
+  review scope, whole file or named sections.
+- **Paths.** The draft and the ledger. Default: the session's scratch directory;
+  where the runtime has none, ask for one.
+- **One question.** How the file behaved — a transcript excerpt, a failure, a
+  complaint; there may be none. Ids are `O1..On`, and each proposal cites the ids
+  bearing on it.
+
+Ask whenever intent, scope or a section boundary is unclear, whenever the
+description and the body disagree about what the file does, and whenever an
+observation contradicts the intent anchor. Asking is always open; these three make
+it obligatory.
+
+## Markers
+
+Three markers, which are not verdicts:
+
+| Marker | Means | Then |
 |---|---|---|
-| KEEP | unchanged | "This earns its place as is." |
-| REMOVE | deleted | "Intent survives without this." |
-| COMPRESS | same instruction, fewer words | "Say it once." |
-| REWORD | same instruction, clearer words | "Too vague to act on." |
-| RESHAPE | same content, a form that matches it — prose to bullets, cases to a table, a buried rule to one sentence | "That's a list." |
-| MOVE | relocated, unchanged; destination is a position in this file or another file | "Right rule, wrong place." / "Keep it, but out of the body." |
-| MERGE | folded into a named partner section | "Keep one, fold the other in." |
-| SPLIT | two sections, each re-entering the loop for its own verdict | "These are two different things." |
+| UNREVIEWED | outside this run's review scope | a ledger row; carried into the draft unchanged and marked there |
+| GAP | the intent needs an instruction no section carries | a ledger row with no section id; drafted only when the user approves text for it |
+| HOLD | the user cannot decide yet | the loop goes on, and the section is still open at Assembly |
 
-Two markers that are not verdicts:
+## Section loop
 
-| Marker | Meaning | Rule |
-|---|---|---|
-| HOLD | the user cannot decide yet | resolved with the user at Arrange, before the draft is assembled |
-| GAP | intent needs an instruction no section carries | a ledger row with no section; listed in the hand-off; never drafted |
+For each in-scope section, in file order:
 
-## Open
+```text
+DIAGNOSE → DISCUSS → SETTLE → WRITE → APPROVE → RECORD → next section
+you        you       user     you     user      you
+           ↑           │      ↑         │
+           └───────────┘      └─────────┘
+           not a closure      text sent back
+```
 
-1. Read the whole target. Nothing is judged before step 5 closes.
-2. Ask once for observations — a transcript excerpt, a failure, a complaint;
-   there may be none. Give each an id `O1..On`. Every proposal cites the ids
-   supporting it where any exist; uncited ones are reported as unaddressed.
-3. State the intent anchor: one line drawn from the frontmatter description
-   and the observations. The user confirms or corrects it.
-4. Show the section map — split by headings; failing those, by numbered steps;
-   failing those, by paragraphs. A numbered list, one line of summary each. Ids
-   are `S1..Sn`; a SPLIT yields `S3a`, `S3b`. The user confirms, merges, splits.
-5. Name the draft and ledger paths. Default: the session's scratch directory;
-   where the runtime has none, ask the user for one. The user may name a
-   durable path when the pass should outlive the session.
+### Diagnose
 
-## Walk
+First read this section against the rest of the section map, and report what
+any other section already answers on the diagnosis's `Elsewhere:` line. Then go
+down the axes in order and stop at the first line that describes the section.
+That line's verdict is the section's verdict. Lines below it may describe the
+section too; they give no verdict, and the diagnosis names them on its Also
+line.
 
-For each section in file order, run these tests in order. The verdict
-follows from the first test that fails.
+#### Redundancy
+Meaning this file carries nowhere else; different wording is not different
+meaning.
 
-1. REMOVAL — would an agent reading the file without this section still act
-   on the intent? Yes → REMOVE.
-2. DUPLICATE — does another section already carry this instruction? Yes →
-   MERGE (fold into the partner) or MOVE (relocate, where this section is
-   the better home). Two sections doing two jobs each → SPLIT first.
-3. FORMAT — is the content a list, a set of parallel cases, or a single rule in
-   a form that does not match? Yes → RESHAPE, outranking COMPRESS and REWORD.
-4. WEIGHT — needed but longer than its instruction → COMPRESS. Needed but
-   unclear or ambiguous → REWORD. Two sections that contradict each other →
-   REWORD the one that departs from the intent, naming the other.
-5. Otherwise KEEP.
+- The intent needs nothing this section says, or another section already says
+  all of it → REMOVE.
 
-Then post the proposal in this fixed shape:
+#### Responsibility
+One question → one owning section.
 
-    S4 — Return format (lines 61–74)
-    Does: tells the agent how to shape its return message.
-    Fails: duplicate test — S9 carries the same rule with the envelope fields.
-    Verdict: MERGE into S9. Evidence: O1.
-    Draft: (none for MERGE; S9's closure carries the merged text)
+- It answers two questions → SPLIT. The halves re-enter the loop immediately, in
+  order, before the next section.
+- Another section already answers its question → MERGE into that owner. Never
+  hide an ownership conflict by rewording one of the two.
+- Its question is its own but it sits in the wrong place — wrong position, wrong
+  file, or detail belonging one level down → MOVE, unchanged.
 
-COMPRESS, REWORD and RESHAPE carry the replacement text; MOVE the destination;
-MERGE the partner id, whose closure drafts the merged text (or this one if the
-partner is closed); SPLIT the two halves' boundaries and summaries. Evidence
-reads `—` where no observation bears on the section.
+#### Coherence
+No other section issues an order that cannot be obeyed alongside it.
 
-Then close the section:
+- Another section's order cannot be obeyed alongside this one → name both and
+  propose which one changes and with which verdict. The user closes both: the
+  one that changes takes that verdict, the one that stands takes KEEP.
+  Unclosed, both carry to Assembly.
 
-1. Discuss. The user closes with the final verdict and approves the replacement
-   text on the spot where a verdict carries one. Only the user's closure counts.
-2. Write the ledger row. The next section's proposal is not posted until the
-   previous closure's row is written.
+#### Correctness
+Following it produces the right result. Judged only on evidence: an observation,
+or a failure this run hit. Never on preference.
 
-Inside the walk: HOLD is allowed and the walk continues; a SPLIT's two
-halves re-enter the loop immediately, in order; a closed section reopens
-only on new evidence — a later section, a new observation, or Arrange.
+- Evidence shows it produces the wrong result → REPLACE: a different instruction
+  takes its place.
 
-## Description last
+#### Clarity
+Direct, self-consistent, actable without interpretation.
 
-After the last body section closes, test the frontmatter description against
-what the reworked body now does, with the same vocabulary. Its verdict and
-any replacement text are the user's to close, exactly as a section's are, and
-its closure writes a ledger row under the reserved id `DESC`.
+- Its content is a list, parallel cases, or a single rule, in a form that does
+  not match → RESHAPE.
+- It says its one thing in more words than it needs → COMPRESS.
+- It is vague, ambiguous, or contradicts itself → REWORD: same instruction,
+  clearer words.
 
-## Arrange
+No line above is true → KEEP.
 
-1. Show the outline: one line per surviving section, in the proposed new order.
-2. Order a file an agent acts on top to bottom: instructions acted on first at
-   the top, prohibitions and finish conditions at the bottom, optional material
-   marked, the whole inside a body ceiling — the one the efficient-md skill
-   states for skill bodies where that skill is installed, otherwise a few
-   hundred lines, with heavier detail forked one level down into `references/`.
-3. Resolve every HOLD: the user closes each held verdict, as in the walk.
-4. Record every reorder as a MOVE row, and every gap as a GAP row.
-5. The user closes the arrangement, once every closure above has its ledger row.
+### Discuss
 
-## Assemble and hand off
+Post the diagnosis, not replacement prose:
 
-1. Write the draft: the full reworked text. Where a MOVE targets another file,
-   write that file too — beside the draft, never at any existing path, under a
-   name derived from its destination so it cannot collide with the draft.
-2. Write the final ledger — a markdown table, one row per section, written
-   after every closure so the pass survives context loss and resumes mid-file;
-   every closure above has its row before this section starts, HOLDs included.
-   `detail` carries the MOVE destination, MERGE partner, or SPLIT children.
+```text
+Section:   <id — title (line range in the target)>
+Does:      <what the section makes an agent do, one line>
+Elsewhere: <what other sections already answer that bears on this one, or `nothing`>
+Fails:     <axis — the reason, or `nothing` for a KEEP>
+Also:      <axes below the verdict's that also fired, or drop the line>
+Verdict:   <the verdict, with the MERGE partner, MOVE destination or SPLIT
+            boundaries where it carries one>
+Evidence:  <observation ids bearing on it, or —>
+```
 
-       | id | title | verdict | reason | evidence | detail |
-       |---|---|---|---|---|---|
-       | S4 | Return format | MERGE | duplicate of S9 | O1 | partner S9 |
-       | — | Escalation | GAP | O2 names a failure no section covers | O2 | — |
+A coherence pair is one post: both ids on the Section line, a verdict for each
+on the Verdict line.
 
-3. Report: unaddressed observations, counts per verdict, and the line count
-   before and after.
-4. Hand off: the draft, the ledger and the target are the evidence set for
-   an independent review. Name them; do not run it.
+### Settle
+
+**A reaction is not a verdict.** The user's reply is one of five things.
+
+- **A closure** — the verdict is given, and the section closes under the closure
+  law.
+- **HOLD** — the user cannot decide yet.
+- **A question** — answer it, then restate the proposal against the answer and
+  ask again.
+- **A correction** — it may overturn the diagnosis rather than the wording.
+  Restate the proposal against it and ask again.
+- **Anything else** — agreement with no verdict named, a comment, a reaction.
+  Restate the proposal and ask again.
+
+### Write
+
+At each verdict that carries text, write the replacement and show it with its
+`Tested:` block. It reaches the draft once, when the user approves it. KEEP,
+REMOVE and HOLD carry no text.
+
+Where a shorter line has to be decoded, keep the longer one.
+
+A MERGE's text is written at the partner's closure, or here when the partner is
+already closed. A MOVE to another file is written into a second file beside the
+draft, named for the destination file it feeds and never the draft's own path.
+
+### Record
+
+The ledger opens with the intent anchor, the observation ids or `none`, and the
+review scope. Then one row per closure, and one per GAP:
+
+```text
+| id | title | verdict | reason | evidence | detail |
+```
+
+- `id` — the section id, or `—` for a GAP.
+- `reason` — what the section closed on, the user's reason where it differs
+  from the proposal's.
+- `evidence` — observation ids, `this run` for a failure found during the
+  review, or `—`.
+- `detail` — whatever the verdict carries, as the diagnosis named it, or `—`.
+
+Write each row at its closure, and a GAP's row when the gap is found. A gap
+that later takes approved text closes and takes a second row. No
+proposal is posted, and no part of the final file is composed, until the
+previous closure's row exists. A section that closes
+again takes a new row; a written row is never amended. The ledger records closed
+decisions, not conversation.
+
+## Assembly
+
+Assembly changes no closed section on its own: a finding re-enters as a proposal
+and the user closes it as in the loop.
+
+Where the scope was named sections, more sections join the review here: any that
+share a question, a reference, an ordering, or an overlapping instruction with a
+reviewed one. Those the user closes here stop being UNREVIEWED.
+
+The loop judged each section alone. Assembly asks whether the sections make one
+file: every question owned once, nothing left unanswered, and the reader meeting
+things in the order they need them.
+
+### Close what is open
+The user closes both.
+
+1. **HOLD.** Every held section takes a verdict.
+2. **GAP.** Every recorded gap takes drafted text the user approves, or stays a
+   gap in the ledger.
+
+### Resolve across sections
+Run each over the whole file. Where one fires, name both sections and propose a
+verdict for each. The user closes both.
+
+3. **The cross-section axes** — responsibility, redundancy, coherence. On
+   coherence, the intent anchor says which section departs.
+4. **Terminology.** One thing named two ways.
+
+### Rebuild
+The agent's, except where a step says otherwise.
+
+5. **Apply MOVE, MERGE and SPLIT.** Seat each moved section where its closure
+   said, fold each merged section into its partner, keep split halves adjacent.
+   Each reorder takes a MOVE row.
+6. **Verify.** Against the intent anchor fixed at Start:
+   - Show the outline, one line per surviving section in the proposed order.
+   - Test the description against what the body now does: third person, what the
+     file does and when to use it.
+
+   Show each with its `Tested:` block. The user closes the description under
+   `DESC`, then the outline, as shown or with the changes named.
+7. **Compose.** Write the draft whole, in the closed order: what an agent acts
+   on first at the top, prohibitions and finish conditions at the bottom,
+   optional material marked. Composing writes the order and the joins: show the
+   draft with its `Tested:` block. Closed text is copied as approved, never
+   re-tested.
+
+## Hand-off
+
+Deliver the draft, the ledger, and any second file a cross-file move produced.
+Name the observations no verdict cited. Then stop.
 
 ## Prohibitions
 
-- Never write to the target path.
-- Never close a section without the user, the description included.
-- Never draft text for a GAP.
-- Never dispatch the independent review, and never name a specific one:
-  this file ships outside the repo it was written in, so it may cite only
-  what ships alongside it.
-- One target file per run.
-- Never judge a section before Open closes: the intent anchor, the section
-  map, and the draft and ledger paths are all confirmed.
+Never write to the target path. Every change lands in the draft.

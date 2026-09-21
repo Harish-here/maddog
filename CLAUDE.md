@@ -7,9 +7,10 @@ test suite and nothing compiles: `CONTRIBUTING.md` §Validation.
 ## Publishing
 
 Merging to main publishes: the marketplace installs from main HEAD. Run the
-`release` skill before merging a SHIPPED or GATE-INFRA change — taxonomy in
-`.claude/skills/release/SKILL.md` §0. Load-bearing instruction text goes
-through `.claude/skills/author-agent`, which gates via `review-agent`.
+`release` skill before merging anything to main — the table in its section 3
+says which changes need an independent reviewer. Load-bearing instruction
+text goes through `.claude/skills/author-agent`, which gates via
+`review-agent`.
 
 ## Invariants
 

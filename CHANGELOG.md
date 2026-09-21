@@ -4,6 +4,65 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.2] - 2026-09-21
+
+### Fixed
+- `skills/section-by-section/SKILL.md` — the diagnosis block gains an `Elsewhere:` line, under `Does:`, for what other sections already answer that bears on the section under review. 3.3.1 told Diagnose to read the section against the section map and report nothing about it, which is the defect shape 3.3.1 set out to fix: an instruction producing nothing observable leaves no mark when it is skipped. Diagnose now names that line where it orders the comparison, rather than naming the rule abstractly
+- the Also line's template said "other axes that fired" where the rule in Diagnose is "axes below" the one that gave the verdict. Two runs filed an axis above the verdict's, asserting a check had fired that had not
+
+### Changed
+- `docs/section-by-section/spec.md` — a section recording the 3.3.2 change and its validation
+- `.claude-plugin/plugin.json` version 3.3.1 → 3.3.2
+
+## [3.3.1] - 2026-09-21
+
+### Fixed
+- `skills/section-by-section/SKILL.md` — the instruction to test replacement text against the axes was skipped in production. It was an emphatic sentence inside the Write step that produced nothing observable, so its absence left no mark. A tested-text law now owns the rule once, above the loop and Assembly, and requires a `Tested:` block above any text the skill proposes for the file. Write, Assembly step 6 and Assembly step 7 each name that block in the same words, because naming the law alone fired at one step and not at another
+- Diagnose reads the section against the section map before going down the axes. REMOVE on duplication, MERGE and SPLIT all depend on what the other sections say, and nothing asked for that comparison; runs that skipped it returned a clarity verdict on a section another section already owned
+- redundancy's trigger covers "another section already says all of it", so a fully duplicated section stops there instead of also matching MERGE. The same boundary was tried as an added condition on MERGE and reverted: it made MERGE fire less often and cost the partial-overlap case
+
+### Changed
+- the `Tested:` block's template lists the axes one per line. A one-line template produced one-line blocks naming a single axis, whatever the surrounding prose asked for
+- `docs/section-by-section/spec.md` — redundancy's trigger updated, and a section recording the 3.3.1 changes and how they were validated
+- `.claude-plugin/plugin.json` version 3.3.0 → 3.3.1
+
+## [3.3.0] - 2026-09-20
+
+### Changed
+- `skills/section-by-section/SKILL.md` — reviewed against itself, section by section, with the user closing all 40 verdicts. The separate verdict table is folded into the diagnosis ladder, which is now grouped by axis with a bullet per trigger; the numbered tests are gone, since each line's verdict already named it uniquely. Start collapses from five numbered steps to one setup exchange and one reply. The loop's steps become sub-headings and gain a flow diagram naming both user gates. Settle absorbs Interpret and answers five reply types, including a question and a catch-all reaction. Draft is renamed Write, because "draft" named the artifact, the step and the verb at once
+- Assembly reorganised into three actor-marked groups; the two steps that resolve conflicts state their own resolution rather than restating the loop's
+- `.claude-plugin/plugin.json` version 3.2.0 → 3.3.0
+
+### Added
+- `REPLACE` verdict — a wrong instruction previously had no verdict; every existing one preserved meaning or deleted it
+- coherence and correctness axes. Correctness is judged only on evidence — an observation, or a failure the run itself hit — which is the first check to consume the observations the skill collects at Start
+- progressive disclosure law beside the closure law: keep the file minimal, each thing where it is used, detail one level down
+- the step the loop never named — write the replacement text, test it against the axes, show it, and file it only on the user's approval
+- Assembly steps for resolving recorded gaps and for terminology drift
+
+### Removed
+- Hand-off's verdict counts and before/after line counts — both read the ledger back, and every gap and unreviewed section is already a row in it
+- two of three prohibitions. "Never judge a section before Start closes" survives in meaning inside Start; the prohibition against dispatching or naming an independent review survives nowhere, since Hand-off no longer mentions one
+- the body ceiling's coupling to the `efficient-md` skill. No ceiling replaces it: the description says shaping a file by how long it stays loaded is a separate pass, and an Assembly step that capped the body contradicted that boundary
+
+### Fixed
+- a coherence conflict now closes both sections, one on its verdict and one on KEEP, so the loop can record it and advance; previously the rung named no verdict at all
+- a recorded GAP may carry drafted text once the user approves it, and takes a second row when it closes
+
+## [3.2.0] - 2026-09-19
+
+### Changed
+- `skills/section-by-section/SKILL.md` — rewritten to the four-stage flow the user specified (Start → Section loop → Assembly → Hand-off). A closure law now opens the file: the skill proposes and only the user closes, so no verdict reaches the ledger that the user did not give. All eight verdicts stay and each gains a trigger, run as one ordered first-fit test inside Diagnose; REMOVE's trigger is narrowed to "the intent needs nothing this section says" so that it no longer swallows every MERGE case. Assembly changes no closed section on its own — each Assembly-time change is a proposal the user closes, with its own ledger row
+- `skills/section-by-section/SKILL.md` frontmatter description rewritten to 483 characters, with its "Use when" trigger sentence and both redirects restored and the procedure text removed
+- `docs/section-by-section/spec.md` — replaced. Supersedes the spec approved 2026-09-15; records the flow, the ordered test and its precedence, the closure law, the artifacts, the prohibitions, and the blank-context reading method used to validate it. Gate rulings SBS-GATE-1..3 ruled on the prior design and are kept as filed history
+- README §Skills names the user as the one who closes each section
+- `.claude-plugin/plugin.json` version 3.1.0 → 3.2.0
+
+### Added
+- `UNREVIEWED` marker — in a selected-sections run the untouched sections now carry a ledger row and a marker line in the draft, instead of passing through indistinguishable from sections closed KEEP
+- the ledger opens with the intent anchor and the observation ids, so the two start-of-run closures leave a durable trace
+- an Interpret step before the section closes, and a rule that the ledger's `reason` records the user's reason where it differs from the proposal's
+
 ## [3.1.0] - 2026-09-15
 
 ### Added

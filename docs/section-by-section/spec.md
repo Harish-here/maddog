@@ -1,280 +1,363 @@
 # section-by-section — design spec
 
-Date: 2026-09-15. Status: approved; authored through the author-agent
-CREATE (skill) loop (verdicts SBS-GATE-1..3). Binding design artifact.
+Date: 2026-09-19. Status: current design for `skills/section-by-section/`.
+**Supersedes the spec approved 2026-09-15**, which described the 3.1.0 design.
+The filed rulings `rulings/SBS-GATE-1.md`, `rulings/SBS-GATE-2.md`,
+`rulings/SBS-GATE-3.md` and `rulings/SBS-GATE-3-erratum.md` ruled on that earlier
+design and are kept as history; they do not bind this one, and the constraints
+they established are carried forward explicitly below where they still hold.
+
+This design was authored outside the `author-agent` loop, at the user's
+instruction, and validated by blank-context reading (section 10) instead.
 
 ## 1. Purpose
 
-A shipped skill (`skills/section-by-section/SKILL.md`) that reviews ONE
-existing skill or agent file with the user, one section at a time. Each
-section is tested against the file's stated intent and closed by the user
-with one verdict from a fixed vocabulary. The skill produces a draft of the
-reworked file and a verdict ledger. It never edits the target. The draft is
-the input to an independent review that the skill does not run.
+A shipped, slash-only skill that walks ONE existing instruction file — a
+`SKILL.md` or an agent definition — with the user, one section at a time. Each
+section is tested against the file's stated intent and closed by the user with
+one verdict from a fixed vocabulary. A run produces a draft of the reworked file
+and a verdict ledger, and never edits the target. Draft, ledger and target are
+the evidence set for an independent review the skill does not run.
 
-Protects PHILOSOPHY.md points 1 (judgment spent on decisions: the user
-decides, the skill proposes), 2 (the ledger is the record of accepted
-findings, reused by the later authoring pass), 4 (the user sees a compressed
-proposal per section, never raw uncertainty), and 6 (every section must earn
-its place).
+Protects PHILOSOPHY.md point 3 above all — the skill has no authority to decide
+what an instruction file says, so the file grants it none — and points 1, 2 and
+6: the user sees a compressed proposal per section, the ledger is the durable
+record of what was decided, and every section must earn its place.
 
-## 2. Scope
+## 2. The closure law
+
+The rule the file exists to carry, and the reason it sits in the premium slot:
+
+> The skill proposes; the user closes. A section is closed when the user gives
+> its verdict and approves any replacement text that verdict carries. No verdict
+> the user did not give reaches the ledger.
+
+Design consequences, not wording:
+
+- **One closure word.** "Closed" is defined once and is the only closure term in
+  the file. "Settled", "authorized" and "approved" are not used as synonyms —
+  each invites the question "by whom?" and none of them answers it.
+- **Assembly holds no closing authority.** Assembly changes no closed section on
+  its own; every Assembly-time change is posted as a proposal and closed by the
+  user, with its own ledger row. The counterweight is structural, not a qualifier
+  such as "do not rewrite closed sections merely to assemble".
+- **Every user contact leaves a durable mark.** The intent anchor and the
+  observation ids open the ledger; every closure writes a row; the section map
+  and the outline are shown and closed. An obligation with no artifact was either
+  dropped or given one.
+
+## 3. Scope
 
 In scope:
 
-- one target file per run: a `SKILL.md` or an `agents/*.md` file, by path
-- the target's frontmatter description, reviewed last
-- observations of how the target performed, supplied by the user at the start
+- one target file per run, by path: a `SKILL.md` or an agent definition file
+- a review scope: the whole file, or a named set of sections
+- the target's frontmatter description, closed last, at Assembly
+- the user's observations of how the target behaved — asked once, optional
 
 Out of scope:
 
-- authoring a new file (a GAP is recorded, never drafted)
+- authoring a new file: an intent no section carries is a GAP, recorded and
+  never drafted
 - a `references/` file, unless the user names it as the target of its own run
+  (SBS-GATE-1 F1)
 - applying the draft to the target, or dispatching the independent review
-- running unattended: the user closes every section
+- running without the user: the user closes every section
 
-## 3. Verdict vocabulary (locked)
+## 4. Flow
 
-Eight verdicts. One per section. The right-hand column is the sentence the
-user would naturally say; it is the test for choosing between them.
+The body is readable as this flow and carries no stage outside it.
 
-| Verdict | Meaning | The user says |
-|---|---|---|
-| KEEP | unchanged | "This earns its place as is." |
-| REMOVE | deleted | "Intent survives without this." |
-| COMPRESS | same instruction, fewer words | "Say it once." |
-| REWORD | same instruction, clearer words | "Too vague to act on." |
-| RESHAPE | same content, a form that matches it (prose to bullets, cases to a table, a buried rule to one sentence) | "That's a list." |
-| MOVE | relocated, unchanged; destination is a position in the file or another file | "Right rule, wrong place." / "Keep it, but out of the body." |
-| MERGE | folded into a named partner section | "Keep one, fold the other in." |
-| SPLIT | becomes two sections, each re-entering the loop for its own verdict | "These are two different things." |
-
-Two markers that are not verdicts:
-
-| Marker | Meaning | Rule |
-|---|---|---|
-| HOLD | user cannot decide yet | resolved with the user at Arrange, before the draft is assembled |
-| GAP | intent needs an instruction no section carries | a ledger row with no section; listed in the hand-off; never drafted |
-
-## 4. Inputs
-
-- **Target.** One file path. Read whole before anything is judged.
-- **Observations (optional).** Notes on how the target performed: a transcript
-  excerpt, a failure, a complaint. Asked for once at the start; each gets an
-  id `O1..On`. Every proposal cites the observation ids that support it. An
-  observation no verdict cites is reported at the end as unaddressed.
-- **Intent anchor.** One line derived from the frontmatter description and
-  the observations. The user confirms or corrects it before section one. A
-  wrong anchor spoils the pass, so nothing is judged before it is confirmed.
-- **Section map.** Proposed by the skill: split by headings; where none, by
-  numbered steps; where none, by paragraphs. Shown as a numbered list with a
-  one-line summary per section, so the user sees the whole file before
-  closing anything. The user may merge or split entries before the walk
-  starts. Section ids are `S1..Sn`; a SPLIT yields `S3a`, `S3b`.
-- **Paths.** Draft and ledger paths are named at the start. Default: the
-  session scratch directory. The user may name a durable path when the pass
-  should outlive the session.
-
-## 5. Per-section tests
-
-Run in this order. The verdict follows from the first test that fails.
-
-1. **Removal test.** Would an agent reading the file without this section
-   still act on the intent? Yes → REMOVE.
-2. **Duplicate test.** Does another section already carry this instruction?
-   Yes → MERGE (fold into the partner) or MOVE (relocate, when the section is
-   the better home). Two sections doing two jobs each → SPLIT first.
-3. **Format test.** Is the content a list, a set of parallel cases, or a
-   single rule, in a form that does not match? Yes → RESHAPE. RESHAPE
-   outranks COMPRESS and REWORD: a new shape usually fixes length and
-   clarity on the way.
-4. **Weight test.** Needed but longer than its instruction → COMPRESS.
-   Needed but unclear or ambiguous → REWORD. Two sections that contradict
-   each other → REWORD the one that departs from the intent, naming the
-   other.
-5. Otherwise KEEP.
-
-## 6. Flow
-
-### 6.1 Open
-
-1. Read the whole target.
-2. Ask once for observations. Assign `O` ids.
-3. State the intent anchor. User confirms or corrects.
-4. Show the section map with one-line summaries. User confirms, merges, or
-   splits entries.
-5. Name the draft and ledger paths.
-
-Nothing is judged before step 5 closes.
-
-### 6.2 Walk
-
-For each section in file order:
-
-1. Run the tests of section 5.
-2. Post a proposal in the fixed shape:
-
-   ```
-   S4 — Return format (lines 61–74)
-   Does: tells the agent how to shape its return message.
-   Fails: duplicate test — S9 carries the same rule with the envelope fields.
-   Verdict: MERGE into S9. Evidence: O1.
-   Draft: (none for MERGE; S9's closure carries the merged text)
-   ```
-
-   For COMPRESS, REWORD, and RESHAPE the proposal carries the replacement
-   text. For MOVE it carries the destination. For MERGE it carries the
-   partner id; the merged text is drafted at the partner's closure, or at
-   this closure if the partner is already closed. For SPLIT it carries the
-   two new sections' boundaries and summaries.
-3. Discuss. The user closes with the final verdict, and approves the
-   replacement text on the spot where the verdict carries one. Only the
-   user's closure counts.
-4. Write the ledger row at every closure.
-
-Rules inside the walk:
-
-- HOLD is allowed; the walk continues.
-- A SPLIT's two halves re-enter the loop immediately, in order.
-- A closed section reopens only on new evidence (a later section, a new
-  observation, the Arrange step).
-- The advisor never closes a section on the user's behalf, whatever the
-  round count.
-
-### 6.3 Description last
-
-After the last body section closes, test the frontmatter description
-against what the reworked body actually does, with the same vocabulary. It
-is the anchor during the walk, so it is not judged against itself mid-pass.
-The user closes its verdict as for a section; its ledger row carries the
-reserved id `DESC`, which cannot collide with `S1..Sn` or a split's `S3a`.
-
-### 6.4 Arrange
-
-1. Show the outline: one line per surviving section in the proposed new
-   order.
-2. Apply the ordering rules for a file an agent acts on top to bottom: the
-   instructions acted on first sit at the top; prohibitions and finish
-   conditions sit at the bottom; optional material is marked; the whole
-   stays under the warm ceiling the efficient-md skill states for skill
-   bodies.
-3. Resolve every HOLD.
-4. Record every reorder as a MOVE row and every gap as a GAP row.
-5. The user closes the arrangement.
-
-### 6.5 Assemble and hand off
-
-1. Write the draft file. When a MOVE targets another file, write that file
-   too, beside the draft, never at any existing path.
-2. Write the final ledger.
-3. Report: unaddressed observations; counts per verdict; line count before
-   and after.
-4. Deliver the hand-off line: the draft, the ledger, and the target are the
-   evidence set for an independent review. The skill does not name or
-   dispatch that review. In this repo it is the author-agent loop.
-
-## 7. Outputs
-
-- **Draft file(s).** Full reworked text. Never written to the target path.
-- **Ledger.** Markdown table, one row per section, written after every
-  closure so the pass survives context loss and can resume mid-file:
-
-  ```
-  | id | title | verdict | reason | evidence | detail |
-  | S4 | Return format | MERGE | duplicate of S9 | O1 | partner S9 |
-  | — | Escalation | GAP | O2 names a failure no section covers | O2 | — |
-  ```
-
-  `detail` carries the MOVE destination, MERGE partner, or SPLIT children.
-  A GAP row has no section id; the description's row uses `DESC`.
-  The ledger is the accepted-findings record for the later authoring pass.
-- **Closing report.** Unaddressed observations, verdict counts, line counts,
-  hand-off line.
-
-## 8. Prohibitions
-
-- Never write to the target path.
-- Never close a section without the user.
-- Never draft text for a GAP.
-- Never dispatch the independent review, and never name a specific one:
-  the file ships outside this repo, so it may cite only what ships with it.
-- One target file per run.
-- Never judge a section before the intent anchor and section map are
-  confirmed.
-
-## 9. The skill file
-
-Path: `skills/section-by-section/SKILL.md`. Residency class: WARM (loaded
-per invocation). Ceiling: ~150 lines. No `references/` at first; if the
-exemplar and ledger format push the body past the warm ceiling, the ledger
-format forks to `references/ledger.md`.
-
-Frontmatter:
-
-```yaml
-name: section-by-section
-description: >
-  Reviews ONE existing skill or agent file section by section with the
-  user, testing each section against the file's stated intent and closing
-  it with one of eight verdicts (KEEP, REMOVE, COMPRESS, REWORD, RESHAPE,
-  MOVE, MERGE, SPLIT). Produces a draft file and a verdict ledger for an
-  independent review; never edits the target. Use when an existing
-  instruction file has grown, drifted, or misbehaved and the user wants to
-  decide section by section what stays. Do NOT use to author a new file,
-  to review a file without the user present, or to apply the result.
-disable-model-invocation: true
-argument-hint: [path to SKILL.md or agent file]
+```text
+START           read target whole → observations → intent anchor →
+                section map → draft and ledger paths
+  │
+  ▼
+SECTION LOOP    for each in-scope section, in file order:
+                check (redundancy · clarity · responsibility) →
+                diagnose → discuss → interpret → settle →
+                draft once → close ledger
+  │
+  ▼
+ASSEMBLY        resolve holds → ownership → cross-section redundancy →
+                contradictions → apply MOVE/MERGE/SPLIT →
+                verify intent and flow → compose the final artifact
+  │
+  ▼
+HAND-OFF
 ```
 
-`disable-model-invocation: true` because this is a long interactive ritual;
-auto-triggering it on "review this skill" would hijack a quick review. The
-final description text is authored against
-`.claude/skills/review-agent/references/description-standard.md` in the
-author-agent loop; the text above is the brainstorm draft.
+Two blocks sit outside the flow because they are framing, not stages: the
+closure law and the Contract above START, the Prohibitions below HAND-OFF.
 
-Body order (premium slots at top and bottom per the WARM class):
+Two stages of the 3.1.0 design survive as steps rather than stages:
 
-1. Contract: in, out, never. Then the verdict table from section 3.
-2. Open (6.1).
-3. Walk (6.2), with the one canonical proposal exemplar.
-4. Description last (6.3).
-5. Arrange (6.4).
-6. Assemble and hand off (6.5), with the ledger row format.
-7. Prohibitions (section 8).
+- **Description last** is Assembly's *verify intent and flow* step. The
+  description can only be tested against a reworked body that exists, and that
+  body first exists at Assembly.
+- **Arrange** is Assembly's outline, shown and closed by the user before the
+  artifact is composed.
 
-The body names capabilities (read, write a draft), never runtime tool
-identifiers (CLAUDE.md invariants; PHILOSOPHY.md point 5).
+## 5. Verdicts, markers, and the ordered test
+
+Eight verdicts, one per section.
+
+| Verdict | Means |
+|---|---|
+| KEEP | unchanged |
+| REMOVE | deleted |
+| COMPRESS | same instruction, fewer words |
+| REWORD | same instruction, clearer words |
+| RESHAPE | same content, a form that fits it |
+| MOVE | relocated unchanged |
+| MERGE | folded into a named partner, which keeps the question |
+| SPLIT | two sections, each closing on its own verdict |
+
+Three markers, which are not verdicts:
+
+| Marker | Means | Then |
+|---|---|---|
+| HOLD | the user cannot decide yet | the loop goes on; still open at Assembly |
+| GAP | the intent needs an instruction no section carries | a ledger row with no section id; never drafted |
+| UNREVIEWED | outside this run's review scope | a ledger row; carried into the draft unchanged and marked there |
+
+Every verdict has a trigger, and the triggers are one ordered test inside
+Diagnose. More than one line may be true of a section; the earliest true line
+gives the verdict, and it is the only one. Each line names the check that
+produced it, so a proposal's `Fails` line records the check as well as the test
+number — which is what makes the three checks observable rather than internal.
+
+1. Redundancy — the intent needs nothing this section says, or another
+   section already says all of it → REMOVE.
+2. Responsibility — it answers two questions → SPLIT.
+3. Responsibility — the intent needs what it says, but another section already
+   answers its question → MERGE into that owner.
+4. Responsibility — the question is its own but it sits in the wrong place →
+   MOVE.
+5. Clarity — content in a form that does not match it → RESHAPE.
+6. Clarity — it says its one thing in more words than it needs → COMPRESS.
+7. Clarity — vague, ambiguous, or self-contradicting → REWORD.
+8. Otherwise → KEEP.
+
+Precedence, and why each rank is where it is:
+
+- **REMOVE first**, but its trigger is "the intent needs nothing this section
+  says", NOT "the intent survives without this section". The looser form is true
+  of every duplicated section, which makes MERGE unreachable — the defect a
+  blank-context reader hit on round 2 of this design.
+- **SPLIT before MERGE and MOVE**: a two-job section must become two sections
+  before either half can be placed.
+- **MERGE before MOVE**: a question that already has an owner is folded, not
+  relocated.
+- **RESHAPE before COMPRESS and REWORD**: a fitting shape usually fixes length
+  and clarity on the way.
+- **COMPRESS before REWORD**: both are true of many sections, and the order makes
+  the verdict deterministic rather than a matter of taste.
+
+## 6. Artifacts
+
+- **Draft.** The full reworked file, at a path named at START, defaulting to the
+  session's scratch directory; where the runtime has none, the user is asked for
+  a path (SBS-GATE-1 F15). Never the target path.
+- **MOVE-destination draft.** Where a MOVE targets another file, that file is
+  drafted beside the draft, named for the destination file it feeds and never the
+  draft's own path, so it collides with neither the draft nor an existing file
+  (SBS-GATE-1 F5).
+- **Ledger.** A markdown table with a header separator, opening with the intent
+  anchor and the observation ids, then one row per closure, each row written at
+  its closure. No proposal is posted and no artifact composed until the previous
+  closure's row exists — the structure that makes the ledger unskippable and lets
+  a pass resume mid-file.
+
+  | id | title | verdict | reason | evidence | detail |
+  |---|---|---|---|---|---|
+  | S4 | Return format | MERGE | S9 already answers how the return is shaped | O1 | partner S9 |
+  | — | Escalation | GAP | O2 names a failure no section covers | O2 | — |
+
+  Ids are `S1..Sn`; a SPLIT yields `S3a` and `S3b`; the frontmatter description is
+  `DESC`; a GAP row carries no section id (SBS-GATE-3 F21 and its erratum).
+  `reason` is what the section closed on — the user's reason where it differs
+  from the proposal's. `detail` carries the MOVE destination, the MERGE partner,
+  the SPLIT halves, or `—`.
+- **Closing report.** Observations no verdict cited, verdict counts, line count
+  before and after, every GAP, every section still UNREVIEWED, and the hand-off
+  line naming draft, ledger and target as the evidence set.
+
+## 7. Prohibitions
+
+- Never write to the target path.
+- Never judge a section before START closes.
+- Never dispatch the independent review, and never name a specific one: the file
+  ships outside this repo, so it may cite only what ships alongside it.
+
+Everything the 3.1.0 body also listed as a prohibition — never close a section
+without the user, never draft a GAP, one target file per run — is stated once, in
+the section that owns the question, and is not repeated at the bottom. A
+prohibition block that restates rules already carried elsewhere is exactly the
+redundancy this skill exists to find.
+
+Deliberately NOT a prohibition: any bar on writing to existing file paths.
+SBS-GATE-2 F16 ruled that such a bar contradicts the ledger, whose path is an
+existing file on any resumed pass.
+
+## 8. The skill file
+
+Path: `skills/section-by-section/SKILL.md`. Residency: WARM, loaded per
+invocation. No `references/` file.
+
+Size at 3.2.0: 174 lines / 1562 words, against 154 / 1370 at 3.1.0. The body is
+larger, not smaller, because it now supplies what the 3.1.0 body left implicit:
+eight verdict triggers instead of five tests, the closure law, the interpret
+step, the selected-sections mode with its UNREVIEWED marker, Assembly's authority
+rule, and the ledger header. The compression the user asked for landed in the
+prose, not the rule count.
+
+Frontmatter: `disable-model-invocation: true` — a long interactive ritual, and
+auto-triggering it on "review this skill" would hijack a quick review — and
+`argument-hint: [path to SKILL.md or agent file]`. The description is 483
+characters, under the 500-character target in
+`.claude/skills/review-agent/references/description-standard.md` §3, and carries
+a claim, a "Use when" trigger sentence, two redirects (against shaping a file by
+how long it stays loaded, and against authoring a new file) and the never-edits
+invariant. It carries no procedure: an agent that acts on a description without
+loading the body must not be able to run the ritual from it.
+
+Body order: closure law, Contract, Verdicts, Start, Section loop, Assembly,
+Hand-off, Prohibitions. The body names capabilities (read, write a draft), never
+runtime tool identifiers (CLAUDE.md invariants; PHILOSOPHY.md point 5), and cites
+`efficient-md` only in the form guarded by "where that skill is installed"
+(SBS-GATE-1 F4, and efficient-md's own SHIP RULE).
+
+## 9. What changed from the 3.1.0 design
+
+| Change | Why |
+|---|---|
+| Closure law hoisted to the premium slot; "closed" defined once | closure words with no actor — settled, authorized, approved — leave the skill free to close a section itself |
+| Every verdict gets a trigger; the test is ordered and first-fit | four of the eight verdicts had no trigger at all, so they were unreachable |
+| REMOVE's trigger narrowed to "the intent needs nothing this section says" | the looser form swallowed every MERGE case |
+| Assembly may change no closed section on its own | resolving ownership and contradictions between closed sections is a decision, and it had no user in it |
+| "Assembly must not invent policy" replaced by "Assembly writes no instruction the user has not closed" | the old prohibition cancelled Assembly's own obligations |
+| UNREVIEWED marker added | a selected-sections run emitted a draft in which unreviewed sections were indistinguishable from sections closed KEEP |
+| HOLD kept, with one named resolution point | an undecided section otherwise has no representation and no exit |
+| Ledger is a real markdown table, opening with the intent anchor and observation ids | it rendered as a wall of pipes, and two START closures left no durable trace |
+| Interpret step added before Settle | "discuss until the decision is settled" treats a reaction as a verdict |
+| Description rewritten to 483 chars: trigger sentence restored, procedure removed, both redirects restored | description-standard §3 and §5 |
+| "Description last" and "Arrange" demoted from stages to Assembly steps | the user's mandated flow has four stages, and both fit inside Assembly without loss |
+| Prohibitions cut from six to three | the other four restated rules their owning sections already carried |
 
 ## 10. Validation
 
-There is no test suite (CONTRIBUTING.md §Validation). The skill is validated
-by exercising it:
+There is no test suite (CONTRIBUTING.md §Validation). This design was validated
+by **blank-context reading**: the whole body was pasted to fresh agents on two
+model tiers, with no repository access, no prior version and no spec, and each
+was asked — for a set of concrete situations — which section answers it, what to
+do, and who performs each action. Their wrong answers and their disagreements
+with each other were the defect list. Each fix addressed the class of
+underspecification, never the individual probe, and no test case is named in the
+body.
 
-- Run it on one shipped file of each kind: one `skills/*/SKILL.md` and one
-  `agents/*.md`, with at least one observation supplied. Confirm the draft
-  and ledger land at the named paths and the target is byte-identical
-  afterwards.
-- Confirm every scenario in the brainstorm table maps to its verdict when
-  encountered: preamble → REMOVE; duplicated rule → MERGE; buried rule →
-  MOVE; heavy example → MOVE to a references file; paragraph-list → RESHAPE;
-  two-job section → SPLIT; uncovered observation → GAP; undecided → HOLD then
-  resolved at Arrange; vague wording → REWORD; rule said thrice → COMPRESS.
-- Since invocation is slash-only, no fresh-session routing probe is needed
-  for auto-triggering; probe only that the name resolves.
+Four rounds ran. Round 1 found an underivable MOVE-destination filename, two
+obligations with no visible trace, and a reader disagreement over COMPRESS vs
+REWORD. Round 2 found the REMOVE-swallows-MERGE defect recorded in section 5.
+Rounds 3 and 4 produced no wrong answer about who acts and no two sections
+claiming one question, which is the stop condition.
 
-## 11. Shipping
+Two residual findings are accepted, not fixed:
 
-SHIPPED surface: `skills/` changes, so the `release` skill applies before
-merge. The shipped set changes, so `.claude-plugin/plugin.json` bumps to
-3.1.0 and `CHANGELOG.md` and `README.md` §Skills gain an entry.
+- The verdict table's meanings and Diagnose's triggers both bear on the
+  COMPRESS/REWORD distinction. The table is the reference card; the test is the
+  decision. Folding the table into the test would remove the overlap and about
+  ten lines, at the cost of the at-a-glance vocabulary.
+- Neither the closure law nor the ordered test can be verified from the artifacts
+  alone: nothing in a ledger proves the verdict came from the user rather than
+  from the skill. The `Fails` line, naming the check and test that produced each
+  proposal, is the closest available trace.
 
-## 12. Decisions taken in the brainstorm
+For any later change, the same method is the validation, together with a live
+run: exercise the skill on one `skills/*/SKILL.md` and one `agents/*.md` with at
+least one observation supplied, and confirm the draft and ledger land at the
+named paths and the target is byte-identical afterwards.
 
-| Decision | Choice | Alternative rejected |
-|---|---|---|
-| Location | shipped `skills/` | internal `.claude/skills/` feeding author-agent directly |
-| Draft timing | at section closure | one rewrite pass after the walk |
-| Judge in the pass | none; hand-off names the evidence set | judge-first scoring; mandatory judge before writing |
-| Output | draft + ledger, target untouched | in-place edit on approval |
-| Vocabulary | eight verdicts + HOLD/GAP | six verdicts with MERGE and SPLIT folded into MOVE and REWORD |
-| Invocation | slash-only | auto-trigger on description |
+## 11. What changed in 3.3.1
+
+Three changes, all from a live run of the skill against its own file, with the
+user closing every verdict.
+
+- **Tested-text law**, a third law beside the closure and progressive-disclosure
+  laws. Text the skill proposes for the file is run over the axes before it is
+  shown, and the result is shown above it as a `Tested:` block. The 3.3.0 design
+  carried the same requirement as an emphatic sentence inside the Write step,
+  and it was skipped in production: the test produced nothing observable, so
+  nothing marked its absence. Each producing step — Write, Assembly step 6,
+  Assembly step 7 — names the block in the same words, because naming the law
+  alone fired at one step and not another.
+- **Diagnose reads the section against the section map** before going down the
+  axes. REMOVE on duplication, MERGE and SPLIT all depend on what other sections
+  say, and nothing asked for that comparison. Runs that skipped it fell through
+  to a clarity verdict on a section another section already owned.
+- **Redundancy's trigger** covers "another section already says all of it", so a
+  fully duplicated section stops there instead of also matching MERGE. An added
+  condition on MERGE was tried for the same purpose and reverted: it made MERGE
+  fire less often and cost the partial-overlap case.
+
+Validation was a live run plus scenario runs on a cheap model, cut at each step
+that produces text. After the change the block appears unprompted at all three
+producing steps, a fully duplicated section draws REMOVE in three of three runs,
+partial overlap draws MERGE in two of two, and a diagnosis post never carries a
+block.
+
+## 12. What changed in 3.3.2
+
+Two changes, from the release review of 3.3.1, which found that release
+reintroducing the defect it existed to fix.
+
+- **The diagnosis block gains an `Elsewhere:` line**, under `Does:`, for what
+  other sections already answer that bears on this one. 3.3.1 told Diagnose to read
+  the section against the section map and report nothing about it, so a skipped
+  comparison left no mark. Diagnose now names that line where it orders the
+  comparison. The line lives in the diagnosis post and never reaches the ledger,
+  which records closed decisions and not conversation, so §10's residual on
+  artifact-only verification stands unchanged.
+- The Also line's template said "other axes that fired" where the rule in
+  Diagnose is "Lines below it may describe the section too". Two runs filed an
+  axis above the verdict's, asserting a check had fired that had not. The
+  template now reads "axes below the verdict's that also fired".
+
+  Known limitation, left open: a second trigger inside one axis has no legal
+  place. One run produced that case, COMPRESS as the verdict with REWORD also
+  applying, both under clarity. A wording of "lines below the verdict's",
+  matching Diagnose's own sentence, would admit it, and it was tried: across
+  eight runs it produced no Also line at all, where "axes below" had produced
+  two correct ones. It was reverted on that evidence. The mismatch between
+  Diagnose's line-granular sentence and the template's axis-granular one
+  predates this release.
+
+Validation: scenario runs on a cheap model, cut at the point where the agent
+must post a diagnosis.
+
+- The `Elsewhere:` line appeared in every run of the shipped shape, nine of
+  nine, and named the overlapping section each time. Two further runs carry the
+  line in its earlier position and are reported separately below.
+- A fully duplicated section drew REMOVE in four of four.
+- Partial overlap drew MERGE in four of five. The fifth reported the overlap on
+  the `Elsewhere:` line and then took a clarity verdict, the fallthrough this
+  line exists to expose. Two control runs against the same file with the line in
+  its earlier position split the same way, so the position is not what decides
+  this fixture. Whether carrying the line at all affects the verdict is untested
+  at a useful number of runs: the 3.3.1 shape, which has no line, drew MERGE in
+  two of two.
+- The Also line's new wording is confirmed in both directions, thinly. Across
+  twelve runs carrying it, no run filed an axis above the verdict's, which is
+  the misfiling it targets. Two runs on a fixture built for the positive case —
+  a section answering two questions, also written in padded prose — filed
+  `Also: clarity` under a responsibility verdict, which is the line working as
+  intended. A third run on that fixture filed a second clarity line, the
+  limitation recorded above.
+- The positive case resists demonstration on a cheap model. A fourth fixture
+  put the verdict on correctness, driven by a supplied observation, with padded
+  prose below it: three runs returned REPLACE citing the observation and left
+  the Also line empty, though clarity plainly applied. Across every fixture the
+  Also line carries content in a minority of runs. It is advisory and carries no
+  verdict, so an omitted one loses information without producing a wrong
+  decision.
+
