@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.1] - 2026-09-21
+
+### Fixed
+- `skills/section-by-section/SKILL.md` — the instruction to test replacement text against the axes was skipped in production. It was an emphatic sentence inside the Write step that produced nothing observable, so its absence left no mark. A tested-text law now owns the rule once, above the loop and Assembly, and requires a `Tested:` block above any text the skill proposes for the file. Write, Assembly step 6 and Assembly step 7 each name that block in the same words, because naming the law alone fired at one step and not at another
+- Diagnose reads the section against the section map before going down the axes. REMOVE on duplication, MERGE and SPLIT all depend on what the other sections say, and nothing asked for that comparison; runs that skipped it returned a clarity verdict on a section another section already owned
+- redundancy's trigger covers "another section already says all of it", so a fully duplicated section stops there instead of also matching MERGE. The same boundary was tried as an added condition on MERGE and reverted: it made MERGE fire less often and cost the partial-overlap case
+
+### Changed
+- the `Tested:` block's template lists the axes one per line. A one-line template produced one-line blocks naming a single axis, whatever the surrounding prose asked for
+- `docs/section-by-section/spec.md` — redundancy's trigger updated, and a section recording the 3.3.1 changes and how they were validated
+- `.claude-plugin/plugin.json` version 3.3.0 → 3.3.1
+
 ## [3.3.0] - 2026-09-20
 
 ### Changed

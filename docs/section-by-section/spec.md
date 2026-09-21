@@ -127,7 +127,8 @@ gives the verdict, and it is the only one. Each line names the check that
 produced it, so a proposal's `Fails` line records the check as well as the test
 number — which is what makes the three checks observable rather than internal.
 
-1. Redundancy — the intent needs nothing this section says → REMOVE.
+1. Redundancy — the intent needs nothing this section says, or another
+   section already says all of it → REMOVE.
 2. Responsibility — it answers two questions → SPLIT.
 3. Responsibility — the intent needs what it says, but another section already
    answers its question → MERGE into that owner.
@@ -276,3 +277,31 @@ For any later change, the same method is the validation, together with a live
 run: exercise the skill on one `skills/*/SKILL.md` and one `agents/*.md` with at
 least one observation supplied, and confirm the draft and ledger land at the
 named paths and the target is byte-identical afterwards.
+
+## 11. What changed in 3.3.1
+
+Three changes, all from a live run of the skill against its own file, with the
+user closing every verdict.
+
+- **Tested-text law**, a third law beside the closure and progressive-disclosure
+  laws. Text the skill proposes for the file is run over the axes before it is
+  shown, and the result is shown above it as a `Tested:` block. The 3.3.0 design
+  carried the same requirement as an emphatic sentence inside the Write step,
+  and it was skipped in production: the test produced nothing observable, so
+  nothing marked its absence. Each producing step — Write, Assembly step 6,
+  Assembly step 7 — names the block in the same words, because naming the law
+  alone fired at one step and not another.
+- **Diagnose reads the section against the section map** before going down the
+  axes. REMOVE on duplication, MERGE and SPLIT all depend on what other sections
+  say, and nothing asked for that comparison. Runs that skipped it fell through
+  to a clarity verdict on a section another section already owned.
+- **Redundancy's trigger** covers "another section already says all of it", so a
+  fully duplicated section stops there instead of also matching MERGE. An added
+  condition on MERGE was tried for the same purpose and reverted: it made MERGE
+  fire less often and cost the partial-overlap case.
+
+Validation was a live run plus scenario runs on a cheap model, cut at each step
+that produces text. After the change the block appears unprompted at all three
+producing steps, a fully duplicated section draws REMOVE in three of three runs,
+partial overlap draws MERGE in two of two, and a diagnosis post never carries a
+block.
