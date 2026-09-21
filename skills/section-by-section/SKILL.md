@@ -23,6 +23,18 @@ verdict the user did not give reaches the ledger. Every "closed" below means thi
 **Progressive disclosure law.** Keep the file minimal: each thing sits where it
 is used, and detail only some runs need sits one level down.
 
+**Tested-text law.** Text this skill proposes for the file is run over the axes
+first, every axis but correctness, which needs evidence new text cannot have.
+Show the result above the text, `clean` where an axis found nothing. An axis
+absent from the block did not run.
+
+```text
+Tested:  redundancy — <what it caught and what changed, or `clean`>
+         responsibility — <...>
+         coherence — <...>
+         clarity — <...>
+```
+
 ## Inputs and outputs
 
 IN — one target file per run, by path: a `SKILL.md` or an agent definition file.
@@ -82,16 +94,18 @@ you        you       user     you     user      you
 
 ### Diagnose
 
-Go down the axes in order and stop at the first line that describes the section.
-That line's verdict is the section's verdict. Lines below it may describe the
-section too; they give no verdict, and the diagnosis names them on its Also
-line.
+First read this section against the rest of the section map, and note what any
+other section already answers. Then go down the axes in order and stop at the
+first line that describes the section. That line's verdict is the section's
+verdict. Lines below it may describe the section too; they give no verdict, and
+the diagnosis names them on its Also line.
 
 #### Redundancy
 Meaning this file carries nowhere else; different wording is not different
 meaning.
 
-- The intent needs nothing this section says → REMOVE.
+- The intent needs nothing this section says, or another section already says
+  all of it → REMOVE.
 
 #### Responsibility
 One question → one owning section.
@@ -162,13 +176,11 @@ on the Verdict line.
 
 ### Write
 
-At each verdict that carries text, write the replacement and show it to the user.
-It reaches the draft once, when the user approves it. KEEP, REMOVE and HOLD carry
-no text.
+At each verdict that carries text, write the replacement and show it with its
+`Tested:` block. It reaches the draft once, when the user approves it. KEEP,
+REMOVE and HOLD carry no text.
 
-**ALWAYS test replacement text against the axes before showing it.** All but
-correctness, which needs evidence new text cannot have. Where a shorter line has
-to be decoded, keep the longer one.
+Where a shorter line has to be decoded, keep the longer one.
 
 A MERGE's text is written at the partner's closure, or here when the partner is
 already closed. A MOVE to another file is written into a second file beside the
@@ -231,14 +243,18 @@ The agent's, except where a step says otherwise.
 5. **Apply MOVE, MERGE and SPLIT.** Seat each moved section where its closure
    said, fold each merged section into its partner, keep split halves adjacent.
    Each reorder takes a MOVE row.
-6. **Verify.** Against the intent anchor fixed at Start, show the outline, one
-   line per surviving section in the proposed order, and test the description
-   against what the body now does: third person, what the file does and when to
-   use it. The user closes the description under `DESC`, then the outline, as
-   shown or with the changes named.
+6. **Verify.** Against the intent anchor fixed at Start:
+   - Show the outline, one line per surviving section in the proposed order.
+   - Test the description against what the body now does: third person, what the
+     file does and when to use it.
+
+   Show each with its `Tested:` block. The user closes the description under
+   `DESC`, then the outline, as shown or with the changes named.
 7. **Compose.** Write the draft whole, in the closed order: what an agent acts
    on first at the top, prohibitions and finish conditions at the bottom,
-   optional material marked.
+   optional material marked. Composing writes the order and the joins: show the
+   draft with its `Tested:` block. Closed text is copied as approved, never
+   re-tested.
 
 ## Hand-off
 
