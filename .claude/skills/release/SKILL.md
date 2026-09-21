@@ -21,8 +21,8 @@ that branch's committed tree, never against uncommitted edits.
 1. Run `git fetch origin` and rebase the branch onto `origin/main`.
 2. Commit any README, manifest or docs text this change made stale.
 3. Decide whether the change reaches anyone who installs the plugin. A change
-   confined to `.claude/` or to documentation does not. Such a change carries
-   no version: go to section 2, and skip section 5 when you reach it.
+   confined to `.claude/` or to documentation does not, and carries no
+   version.
 4. Compute the bump against `origin/main` HEAD: a removal or rename is major,
    an addition is minor, a fix is patch. Show the user the computed bump; the
    user rules the actual one.
@@ -42,17 +42,18 @@ Run checks 1 to 4 against the branch's committed tree and record each result.
 2. **Shell.** Run `bash -n` on every `.sh` file in `scripts/`. Parse
    `hooks/hooks.json` and confirm every command path in it exists. Run
    `scripts/executor-guard.sh` twice, piping it a PreToolUse JSON payload on
-   stdin with `agent_type` set to `executor-fast`, `tool_input.command` set
-   to the command under test, and `cwd` set to the repo root. It exits 0
-   either way, so read its output, not its status: an allowed command prints
-   nothing, a denied one prints a `hookSpecificOutput` block carrying a deny
-   decision. One run must print nothing; the other must print that block.
+   stdin with `agent_type` set to `executor-fast`, `cwd` set to the repo root,
+   and `tool_input.command` set to the command under test. Send `ls` on the
+   first run and `git reset --hard` on the second. It exits 0 either way, so
+   read its output, not its status: `ls` must print nothing, and
+   `git reset --hard` must print a `hookSpecificOutput` block carrying a deny
+   decision.
 3. **Manifests.** List `agents/`, `skills/` and `workflows/` from disk and
    diff them against `.claude-plugin/plugin.json` and
    `.claude-plugin/marketplace.json`. Grep the repo for by-name references to
    anything added, renamed or removed in this release.
-4. **Changelog.** The new entry is present and follows the style of the
-   entries above it.
+4. **Changelog.** Skip this when the change carries no version. Otherwise
+   the new entry is present and follows the style of the entries above it.
 5. If `origin/main` moved while you were working, rebase onto it and run
    these checks and the review again against the new head commit.
 
@@ -68,9 +69,10 @@ Run checks 1 to 4 against the branch's committed tree and record each result.
 This skill sits in `.claude/skills/release/` and counts as running the checks,
 so a change to it needs a reviewer.
 
-When the table says a reviewer is required, dispatch one independent reviewer
-holding the diff, the check results from section 2, and the table above. The reviewer must have no ability to edit the
-repository, and whoever authored the release never clears it.
+When the table says a reviewer is required, dispatch one independent
+reviewer holding the diff, the check results from section 2, and the table
+above. The reviewer must have no ability to edit the repository, and whoever
+authored the release never clears it.
 
 Ask for one verdict: CLEAR or BLOCKED, with findings, naming the exact head
 commit it covers. When the release changes a frontmatter description, the
@@ -94,6 +96,8 @@ commit.
 ## 5. Publish
 
 Runs after the user merges, never before: a tag belongs on a merge commit.
+Skip this section when the change carries no version — there is nothing to
+tag, and nothing new for anyone to install.
 
 1. Pin the merge commit. Read it with
    `gh pr view <number> --json mergeCommit`. Check out main, pull, and
