@@ -94,11 +94,12 @@ you        you       user     you     user      you
 
 ### Diagnose
 
-First read this section against the rest of the section map, and note what any
-other section already answers. Then go down the axes in order and stop at the
-first line that describes the section. That line's verdict is the section's
-verdict. Lines below it may describe the section too; they give no verdict, and
-the diagnosis names them on its Also line.
+First read this section against the rest of the section map, and report what
+any other section already answers on the diagnosis's `Elsewhere:` line. Then go
+down the axes in order and stop at the first line that describes the section.
+That line's verdict is the section's verdict. Lines below it may describe the
+section too; they give no verdict, and the diagnosis names them on its Also
+line.
 
 #### Redundancy
 Meaning this file carries nowhere else; different wording is not different
@@ -148,13 +149,14 @@ No line above is true → KEEP.
 Post the diagnosis, not replacement prose:
 
 ```text
-Section:  <id — title (line range in the target)>
-Does:     <what the section makes an agent do, one line>
-Fails:    <axis — the reason, or `nothing` for a KEEP>
-Also:     <other axes that fired, or drop the line>
-Verdict:  <the verdict, with the MERGE partner, MOVE destination or SPLIT
-           boundaries where it carries one>
-Evidence: <observation ids bearing on it, or —>
+Section:   <id — title (line range in the target)>
+Elsewhere: <what other sections already answer that bears on this one, or `nothing`>
+Does:      <what the section makes an agent do, one line>
+Fails:     <axis — the reason, or `nothing` for a KEEP>
+Also:      <axes below the verdict's that also fired, or drop the line>
+Verdict:   <the verdict, with the MERGE partner, MOVE destination or SPLIT
+            boundaries where it carries one>
+Evidence:  <observation ids bearing on it, or —>
 ```
 
 A coherence pair is one post: both ids on the Section line, a verdict for each
