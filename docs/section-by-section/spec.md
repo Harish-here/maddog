@@ -305,3 +305,24 @@ that produces text. After the change the block appears unprompted at all three
 producing steps, a fully duplicated section draws REMOVE in three of three runs,
 partial overlap draws MERGE in two of two, and a diagnosis post never carries a
 block.
+
+## 12. What changed in 3.3.2
+
+One change, from the release review of 3.3.1, which found that release
+reintroducing the defect it existed to fix.
+
+- **The diagnosis block gains an `Elsewhere:` line**, second, for what other
+  sections already answer that bears on this one. 3.3.1 told Diagnose to read
+  the section against the section map and report nothing about it, so a skipped
+  comparison left no mark. Diagnose now names that line where it orders the
+  comparison. This also gives the comparison the trace §10 says the ordered test
+  lacks: where §10 names the `Fails` line as the closest available evidence that
+  a check ran, the `Elsewhere:` line is direct evidence for this one.
+- The Also line's template said "other axes that fired" where the rule in
+  Diagnose is "axes below" the one that gave the verdict. Two runs filed an axis
+  above the verdict's, asserting a check had fired that had not.
+
+Validation: two scenario runs per fixture on a cheap model. The line appeared in
+four of four, a fully duplicated section still drew REMOVE in two of two, and
+partial overlap still drew MERGE in two of two.
+

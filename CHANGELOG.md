@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.2] - 2026-09-21
+
+### Fixed
+- `skills/section-by-section/SKILL.md` — the diagnosis block gains an `Elsewhere:` line, second, for what other sections already answer that bears on the section under review. 3.3.1 told Diagnose to read the section against the section map and report nothing about it, which is the defect shape 3.3.1 set out to fix: an instruction producing nothing observable leaves no mark when it is skipped. Diagnose now names that line where it orders the comparison, rather than naming the rule abstractly
+- the Also line's template said "other axes that fired" where the rule in Diagnose is "axes below" the one that gave the verdict. Two runs filed an axis above the verdict's, asserting a check had fired that had not
+
+### Changed
+- `docs/section-by-section/spec.md` — a section recording the 3.3.2 change and its validation
+- `.claude-plugin/plugin.json` version 3.3.1 → 3.3.2
+
 ## [3.3.1] - 2026-09-21
 
 ### Fixed
