@@ -19,27 +19,34 @@ Start from a branch whose changes are finished. Every step below runs against
 that branch's committed tree, never against uncommitted edits.
 
 1. Run `git fetch origin` and rebase the branch onto `origin/main`.
-2. Compute the bump against `origin/main` HEAD: a removal or rename is major,
+2. Commit any README, manifest or docs text this change made stale.
+3. Decide whether the change reaches anyone who installs the plugin. A change
+   confined to `.claude/` or to documentation does not. Such a change carries
+   no version: go to section 2, and skip section 5 when you reach it.
+4. Compute the bump against `origin/main` HEAD: a removal or rename is major,
    an addition is minor, a fix is patch. Show the user the computed bump; the
    user rules the actual one.
-3. Confirm the ruled version is unused: it appears in no CHANGELOG heading on
+5. Confirm the ruled version is unused: it appears in no CHANGELOG heading on
    `origin/main`, and no existing git tag matches it.
-4. Commit to the branch: the version in `.claude-plugin/plugin.json`, the new
-   CHANGELOG entry, and any README, manifest or docs text this change made
-   stale.
+6. Commit the version in `.claude-plugin/plugin.json` and the new CHANGELOG
+   entry.
 
 ## 2. Run the checks
 
-Run all four against the branch's committed tree and record each result.
+Run checks 1 to 4 against the branch's committed tree and record each result.
 
 1. **CI, locally.** Extract the Python script between `<< 'VALIDATE'` and
    `VALIDATE` in `.github/workflows/validate.yml`, and run it verbatim with
    `python3` and `pyyaml` installed. If those markers are gone, stop and
    report it. Never substitute a remembered copy of the checks.
-2. **Shell.** Run `bash -n` on every file in `scripts/`. Parse
+2. **Shell.** Run `bash -n` on every `.sh` file in `scripts/`. Parse
    `hooks/hooks.json` and confirm every command path in it exists. Run
-   `scripts/executor-guard.sh` twice: a harmless payload must pass, a known
-   dangerous one must be refused.
+   `scripts/executor-guard.sh` twice, piping it a PreToolUse JSON payload on
+   stdin with `agent_type` set to `executor-fast`, `tool_input.command` set
+   to the command under test, and `cwd` set to the repo root. It exits 0
+   either way, so read its output, not its status: an allowed command prints
+   nothing, a denied one prints a `hookSpecificOutput` block carrying a deny
+   decision. One run must print nothing; the other must print that block.
 3. **Manifests.** List `agents/`, `skills/` and `workflows/` from disk and
    diff them against `.claude-plugin/plugin.json` and
    `.claude-plugin/marketplace.json`. Grep the repo for by-name references to
@@ -61,8 +68,8 @@ Run all four against the branch's committed tree and record each result.
 This skill sits in `.claude/skills/release/` and counts as running the checks,
 so a change to it needs a reviewer.
 
-Dispatch one independent reviewer holding the diff, the check results from
-section 2, and the table above. The reviewer must have no ability to edit the
+When the table says a reviewer is required, dispatch one independent reviewer
+holding the diff, the check results from section 2, and the table above. The reviewer must have no ability to edit the
 repository, and whoever authored the release never clears it.
 
 Ask for one verdict: CLEAR or BLOCKED, with findings, naming the exact head
