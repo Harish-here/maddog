@@ -65,8 +65,7 @@ condition. Slices that do not depend on each other can run at once.
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to Fast; the sole exception is work so small that dispatching
 costs more than doing it. That work you do yourself. Never take work back
-merely because you could.
-Pass a hand no more authority than held.
+merely because you could. Pass a hand no more authority than held.
 
 | Shape | Hand | When |
 |---|---|---|
