@@ -308,21 +308,33 @@ block.
 
 ## 12. What changed in 3.3.2
 
-One change, from the release review of 3.3.1, which found that release
+Two changes, from the release review of 3.3.1, which found that release
 reintroducing the defect it existed to fix.
 
-- **The diagnosis block gains an `Elsewhere:` line**, second, for what other
-  sections already answer that bears on this one. 3.3.1 told Diagnose to read
+- **The diagnosis block gains an `Elsewhere:` line**, under `Does:`, for what
+  other sections already answer that bears on this one. 3.3.1 told Diagnose to read
   the section against the section map and report nothing about it, so a skipped
   comparison left no mark. Diagnose now names that line where it orders the
-  comparison. This also gives the comparison the trace §10 says the ordered test
-  lacks: where §10 names the `Fails` line as the closest available evidence that
-  a check ran, the `Elsewhere:` line is direct evidence for this one.
+  comparison. The line lives in the diagnosis post and never reaches the ledger,
+  which records closed decisions and not conversation, so §10's residual on
+  artifact-only verification stands unchanged.
 - The Also line's template said "other axes that fired" where the rule in
   Diagnose is "axes below" the one that gave the verdict. Two runs filed an axis
   above the verdict's, asserting a check had fired that had not.
 
-Validation: two scenario runs per fixture on a cheap model. The line appeared in
-four of four, a fully duplicated section still drew REMOVE in two of two, and
-partial overlap still drew MERGE in two of two.
+Validation: scenario runs on a cheap model, cut at the point where the agent
+must post a diagnosis.
+
+- The `Elsewhere:` line appeared in every run, eleven of eleven, and named the
+  overlapping section each time.
+- A fully duplicated section drew REMOVE in four of four.
+- Partial overlap drew MERGE in four of five. The fifth reported the overlap on
+  the `Elsewhere:` line and then took a clarity verdict, the fallthrough this
+  line exists to expose. Two control runs against the same file with the line in
+  a different position split the same way, so the split belongs to the fixture
+  and the model, not to the change.
+- The Also line's new wording is validated negatively only. Across the nine runs
+  carrying it, no run filed an axis above the verdict's, which is the misfiling
+  it targets; no run filed an Also line at all, so no run exercised it in the
+  case where it should appear.
 

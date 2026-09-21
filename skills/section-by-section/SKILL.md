@@ -150,8 +150,8 @@ Post the diagnosis, not replacement prose:
 
 ```text
 Section:   <id — title (line range in the target)>
-Elsewhere: <what other sections already answer that bears on this one, or `nothing`>
 Does:      <what the section makes an agent do, one line>
+Elsewhere: <what other sections already answer that bears on this one, or `nothing`>
 Fails:     <axis — the reason, or `nothing` for a KEEP>
 Also:      <axes below the verdict's that also fired, or drop the line>
 Verdict:   <the verdict, with the MERGE partner, MOVE destination or SPLIT
