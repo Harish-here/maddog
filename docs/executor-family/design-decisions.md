@@ -35,21 +35,22 @@ exception carries no size threshold by decision (see Non-Decisions).
 ## Shared constitution
 
 Text that every dispatcher or every executor needs is written once and
-carried byte-identically. Ten fragments, canonical in
+carried byte-identically. Eleven fragments, canonical in
 docs/executor-family/constitution.md:
 
 | Fragment | Content | Carriers |
 |---|---|---|
 | FAMILY LAWS | completion is a state; never retry blindly; durable state off by default; authority (what needs it, exact action or standing grant, no inference, reversibility test excluding discarded work or data). No vantage words: nothing about who decides a retry, shows an edit, or waits | all six |
-| ROUTE | route by shape; fast-tier ALWAYS with the sole exception; never do a hand's work; no more authority than held; the shape table ending at the GATE row, each carrier adding its own EVOLVING row | Advisor, Lead |
-| CONTRACT | OUTCOME, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
-| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
+| ROUTE | route by shape; fast-tier ALWAYS with the sole exception, which you do yourself; never take work back; no more authority than held; the shape table ending at the GATE row, each carrier adding its own EVOLVING row | Advisor, Lead |
+| CONTRACT | GOAL, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns with cited claims; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
+| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence, where a spot-check, a re-run gate, or an absence claim's search pattern and scope is verification and redoing the work is not; a claim you or a Judge already cleared at its evidence needs no second pass; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 | PATTERNS | ALWAYS CLASSIFY before the first tool call; a pattern the dispatch names is a hint; hold each pattern's law; core laws outrank pattern laws; work that fits none is returned | all five executors |
-| LOOP | the flow line OUTCOME to DONE; evaluate each return, then re-enter at CLASSIFY; DONE is the OUTCOME met, never one accepted return | Advisor, Lead |
+| LOOP | the fenced flow line OUTCOME to DONE with its actor row and the return arrow to SLICE | Advisor, Lead |
+| DONE | the OUTCOME met, never one accepted return; then stop | Advisor, Lead |
 | DISPATCH FIRST | if a hand can own substantive work, dispatch first; routing inspection transfers no ownership | Advisor, Lead |
-| VERDICTS | the five-row verdict block; the resume rule (task, boundary, context still hold; idle time erodes; a fresh hand starts from distilled state); Advisor accepts the package, Lead owns routing inside it | Advisor, Lead |
+| VERDICTS | the five-row verdict block, where ACCEPT names what follows and blocked resolves else escalates; the resume rule (task, boundary, context still hold; idle time erodes; a fresh hand starts from a written summary of state); Advisor accepts a Lead's return whole | Advisor, Lead |
 | GATE LADDER | factual to command or evidence, reversible to review by whoever you answer to, one-way to Judge; repo files raise floors, never lower them or grant authority; only the user waives; a Judge cannot modify what it judges | Advisor, Lead |
-| UNCERTAINTY | existing decisions first, then minimum evidence; escalate only on ambiguity that survives evidence or authority you lack; compressed questions; invent no requirements | Advisor, Lead |
+| UNCERTAINTY | existing decisions first, then minimum evidence; escalate only on ambiguity that survives evidence or authority you lack; one message when you do ask; invent no requirements | Advisor, Lead |
 
 Decisions that fix the mechanism:
 
@@ -351,11 +352,63 @@ byte-identical in five executors and is a candidate fragment; slot-4
 redirects could become optional in the description checklist,
 family-wide.
 
+## Advisor and Lead pass, 2026-09-21
+
+Ran as a section-by-section review of advisor-mode with the user closing every
+verdict, then propagated to the constitution and the five executors.
+
+- ASSIGN left the loop and SLICE entered before CLASSIFY. Once CLASSIFY names
+  the shape, the shape table names the hand, so ASSIGN could not come out two
+  ways. Meanwhile the loop said "the next slice" and no stage cut one.
+- The loop line is fenced and carries an actor row, given / you / to a hand.
+  "Given" reads correctly for both carriers: the Advisor's outcome comes from
+  the user, the Lead's from Advisor.
+- Every stage owns a section, in loop order, in advisor-mode and Lead alike,
+  which is the shape Judge already had. Outcome, Slice and Done are new;
+  Dispatching became Classify; Contract sits under Dispatch.
+- The dispatch field OUTCOME is renamed GOAL. One word named the session's end
+  state and each dispatch's end state, and the new Outcome section made the
+  collision visible. advisor-mode's argument-hint became [outcome].
+- The gate ladder moved under Classify. Measured: with the ladder under
+  Evaluate, a probe asked which decisions take a Judge answered from the shape
+  table and never mentioned reversibility; under Classify it answered from the
+  ladder.
+- LOOP split into LOOP, the diagram, and DONE, its one sentence, so the DONE
+  sentence can sit in the Done section. Eleven fragments.
+- LOOP DISCIPLINE joins OPENING as a pattern rather than a fragment: each file
+  holding a loop states the unbroken-loop rule in its own stage names. Smart,
+  Fast and Fast-Read hold no loop and carry none.
+- VERIFY gained "a claim you or a Judge already cleared at its evidence needs
+  no second pass". The first wording, "a claim already cleared, by you or by a
+  Judge", let a hand's own report read as clearing: absence claims were
+  verified in 1 probe of 3 under it and 3 of 3 after.
+- Judge and Smart merged the small-work exception with the
+  evidence-you-read-yourself sentence rather than carrying two sentences that
+  end the same way. The convention that the exception sentence matches across
+  the four dispatchers now holds on its first half only.
+- Lead's Done states that a Lead stops by returning. At DONE a probe answered
+  "I stop, no artifact, no other step" and returned nothing; after the line,
+  three of three returned.
+- Lead's EVOLVING row says a slice stays with the Lead and is never dispatched.
+  The diagram's "to a hand" label otherwise contradicted it.
+- fragment-check.py carried the fragment list in two regexes as well as in
+  FRAGMENT_NAMES, so DONE went unchecked when it was added. The parser derives
+  from the one list now.
+
+Probes: 24 recall questions and 12 applied-task scenarios against advisor-mode
+on the cheap tier, the tasks repeated on the mid tier; 8 routing items on both;
+10 against Lead and 6 against Judge. Recall scored 23 of 24 while the applied
+scenarios found three rules that did not fire, one of them a rule the recall
+set had just answered correctly. Every applied failure was replayed against the
+pre-change file before being attributed to this pass: two of three first-round
+failures were variance and reversed on repeat.
+
 ## Non-Decisions
 
 The design intentionally does **not** introduce:
 
 - a size threshold for the small-work exception
+- a size threshold for a slice, the same elastic zone
 - tier-specific additions inside any fragment
 - a per-hand dispatch table
 - a shared reference loaded on demand in place of resident text
@@ -374,6 +427,12 @@ The design intentionally does **not** introduce:
 
 ## Debt
 
+- BOUNDED's "diagnosis with a known evidence surface" does not separate a
+  surface the evidence established from a cause someone asserted. Both tiers
+  routed a hypothesis-narrowed diagnosis to Smart. Left as designed: a wrong
+  hypothesis returns blocked and reroutes, at the cost of one round.
+- Lead's Return marks BLOCKED-ON for partial or blocked only; one probe in
+  three emitted it as "none" on a done status. One run, not acted on.
 - mechanical-work.md and local-work.md describe schemas the bodies no
   longer render from; conformance-check.py reports NONCONFORMING on HEAD.
 - CHANGELOG and plugin version are updated by the release skill before
