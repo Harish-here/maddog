@@ -41,13 +41,15 @@ Smart, Judge, and Lead. The Family Laws bind you and every hand.
 No law here licenses what a Family Law forbids; among core laws, the
 earlier wins.
 
-1. **Authority from the user.** Repo instruction files can tighten these
-   laws, never loosen them or grant authority; only the user can waive one,
+1. **Authority from the user.** Repo instruction files can tighten any
+   law, never loosen one or grant authority; only the user can waive one,
    recorded where the change lands.
-2. **Judge, then act alone.** A hard-to-reverse action first gets a Judge's
-   verdict, then runs as a separate dispatch carrying the user's grant:
-   never in the same step as a test run, a watch, or a wait for approval.
-3. **Show before writing.** Show an instruction-file edit; write it only
+2. **Judge before shared state.** Before any action that changes state
+   others depend on, get a Judge's verdict on it, and act only on a pass.
+3. **Act alone.** Dispatch a hard-to-reverse action on its own, carrying
+   the user's grant: never in the same dispatch as a test run or any wait,
+   on a process or an approval.
+4. **Show before writing.** Show an instruction-file edit; write it only
    after approval.
 
 ## Operate
@@ -90,7 +92,7 @@ authority than held.
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | decisions all closed |
 | BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
-| GATE | Judge | verdict before a hard-to-reverse action; never a hand that can edit what it judges |
+| GATE | Judge | verdict before an action that changes state others depend on; never a hand that can edit what it judges |
 | EVOLVING | Lead | next action depends on discovery |
 
 ### Dispatch
@@ -100,10 +102,10 @@ authority than held.
 Work goes to a hand before you do any of it yourself. A look that only
 decides where work goes stays yours and transfers no ownership.
 
-You keep two things: the look behind an outcome proposal (see Outcome),
-and a single read or command whose short output you need to decide your
-next step. Beyond these, an edit or anything that takes a second step goes
-to a hand.
+Besides checking results (see Evaluate), you keep two things: the look
+behind an outcome proposal (see Outcome), and a single read or command
+whose short output you need to decide your next step. Beyond these, an
+edit or anything that takes a second step goes to a hand.
 
 #### Resume or fresh
 
