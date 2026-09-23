@@ -86,9 +86,9 @@ re-gate or dispute fresh and say so in NOTES.
 ### Classify
 
 ALWAYS CLASSIFY before the first tool call: which patterns below does the
-work hold? A pattern the dispatch names is a hint. Hold each pattern's law
-while in it; core laws outrank pattern laws. Work that fits none is not
-yours: return it.
+work hold? One or several may apply. A pattern the dispatch names is a hint.
+Hold each pattern's law while in it; core laws outrank pattern laws. Work
+that fits none is not yours: return it.
 
 | Pattern | Target | Law |
 |---|---|---|
