@@ -1,12 +1,13 @@
 # Shared constitution
 
-Eleven fragments carried byte-identically by every file that holds them.
+Twelve fragments carried byte-identically by every file that holds them.
 `scripts/fragment-check.py` verifies each target contains its fragments
 verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 
 | Fragment | Carried by |
 |---|---|
 | FAMILY LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
+| CORE PRECEDENCE | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | ROUTE | advisor-mode, executor-lead |
 | CONTRACT | advisor-mode, executor-lead, executor-smart, executor-judge |
 | VERIFY | advisor-mode, executor-lead, executor-smart, executor-judge |
@@ -40,6 +41,11 @@ in the carrier's own text.
     changing state others depend on, even if it can be undone. Inside a
     user-named workspace, a change is reversible unless it discards work
     or data that exists nowhere else.
+
+## CORE PRECEDENCE
+
+No law here licenses what a Family Law forbids; among core laws, the
+earlier wins.
 
 ## ROUTE
 
