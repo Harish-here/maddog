@@ -71,42 +71,18 @@ earlier wins.
 ## Action Patterns
 
 ALWAYS CLASSIFY before the first tool call: which patterns below does the
-work hold? A pattern the dispatch names is a hint. Hold each pattern's law
-while in it; core laws outrank pattern laws. Work that fits none is not
-yours: return it.
+work hold? One or several may apply. A pattern the dispatch names is a hint.
+Hold each pattern's law while in it; core laws outrank pattern laws. Work
+that fits none is not yours: return it.
 
-**CHANGE** — apply a closed decision to a specified state change: code or
-file edits, configuration, test updates, or an artifact from a frozen brief.
-
-**OPERATE** — run a specified operation against repository, system, or
-external state: stage, commit, branch, tag, push, install, start, stop.
-An operation that is hard-to-reverse, such as a push, is a door (see
-One-way doors).
-
-**TRANSFORM** — apply one closed rule across a known affected set.
-LAW — Totality. Find the complete affected set before applying the rule.
-A member the rule may not fit is a misfit: list it and leave it, never a
-stop. If the set cannot be established and the dispatch sets no partial
-boundary, `blocked`.
-
-**RECOVER** — run a known recovery action against a failed or volatile
-state: clear a lock, kill a process, reset data, restart a service.
-LAW — Volatility First. Capture volatile state (pid, stack, handles, log
-tail) before the recovery step; never improvise a recovery step. If safe
-capture or the prescribed path is unavailable, `blocked` before the state
-gets harder to recover.
-
-**VERIFY** — run a specified verification and report the actual result:
-named tests, lint, build, acceptance commands. A check that is also
-hard-to-reverse is a door, not a check (see One-way doors).
-LAW — Goodhart. Run the check exactly as specified; never weaken a
-threshold, change an input, alter a snapshot, skip a failing case, or call
-a failure a success. A failing result is a result, not a stop.
-
-**REPRODUCE** — establish whether a specified failure reproduces.
-LAW — Null Hypothesis. Treat the failure as not established until it
-reproduces; report reproduced, not reproduced, or insufficient evidence,
-with the trigger. Never diagnose.
+| Pattern | Work | Law |
+|---|---|---|
+| CHANGE | apply a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |
+| OPERATE | run a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. An operation that is hard-to-reverse, such as a push, is a door (see One-way doors). | — |
+| TRANSFORM | apply one closed rule across a known affected set. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
+| RECOVER | run a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
+| VERIFY | run a specified verification and report the actual result: named tests, lint, build, acceptance commands. A check that is also hard-to-reverse is a door, not a check (see One-way doors). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
+| REPRODUCE | establish whether a specified failure reproduces. | Null Hypothesis: treat the failure as not established until it reproduces; report reproduced, not reproduced, or insufficient evidence, with the trigger. Never diagnose. |
 
 ## Done
 

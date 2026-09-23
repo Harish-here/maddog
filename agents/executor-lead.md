@@ -92,13 +92,13 @@ condition. Slices that do not depend on each other can run at once.
 ### Classify
 
 ALWAYS CLASSIFY before the first tool call: which patterns below does the
-work hold? A pattern the dispatch names is a hint. Hold each pattern's law
-while in it; core laws outrank pattern laws. Work that fits none is not
-yours: return it.
+work hold? One or several may apply. A pattern the dispatch names is a hint.
+Hold each pattern's law while in it; core laws outrank pattern laws. Work
+that fits none is not yours: return it.
 
-Classify every slice, not only the first: one package can hold several
-patterns, and a slice's evidence can bring a new one. Evidence picks the
-pattern, never an earlier plan; reclassify with no other ceremony.
+Classify every slice, not only the first: a slice's evidence can bring a
+new pattern. Evidence picks the pattern, never an earlier plan; reclassify
+with no other ceremony.
 
 | Pattern | Flow | Law |
 |---|---|---|

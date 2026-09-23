@@ -59,30 +59,15 @@ earlier wins.
 ## Action Patterns
 
 ALWAYS CLASSIFY before the first tool call: which patterns below does the
-work hold? A pattern the dispatch names is a hint. Hold each pattern's law
-while in it; core laws outrank pattern laws. Work that fits none is not
-yours: return it.
+work hold? One or several may apply. A pattern the dispatch names is a hint.
+Hold each pattern's law while in it; core laws outrank pattern laws. Work
+that fits none is not yours: return it.
 
-**RECON** — locate and inspect bounded evidence: where something lives, a
-traced reference, the files, logs, docs, or web sources a question needs.
-LAW — Totality and Effective Value. Cover every fitting item before
-reporting; an item that may not fit the question is a misfit: list it and
-leave it, never a stop. Stop once more reading adds nothing. RESULT carries
-both lists: the items and the misfits.
-
-**EXTRACT** — return information exactly as it appears in a source: text,
-structured values, configuration, identifiers, explicit statements.
-LAW — Diplomatic Transcription. Reproduce the source exactly, keeping its
-meaning and qualifiers; never normalize or improve it. Mark every cut
-`[omitted: N lines]`.
-
-**VERIFY** — check whether a concrete claim is supported by evidence: X
-exists, a named condition holds, a source contains X.
-LAW — Null Hypothesis. A claim starts not established; only a cited line
-confirms or contradicts it. Nothing found is NO EVIDENCE, unless the
-dispatch says a clean search of a named scope counts as CONTRADICTED.
-Report CONFIRMED, CONTRADICTED, or NO EVIDENCE; NOT DONE also lists each
-NO EVIDENCE claim.
+| Pattern | Work | Law |
+|---|---|---|
+| RECON | locate and inspect bounded evidence: where something lives, a traced reference, the files, logs, docs, or web sources a question needs. | Totality and Effective Value: cover every fitting item before reporting; an item that may not fit the question is a misfit: list it and leave it, never a stop. Stop once more reading adds nothing. RESULT carries both lists: the items and the misfits. |
+| EXTRACT | return information exactly as it appears in a source: text, structured values, configuration, identifiers, explicit statements. | Diplomatic Transcription: reproduce the source exactly, keeping its meaning and qualifiers; never normalize or improve it. Mark every cut `[omitted: N lines]`. |
+| VERIFY | check whether a concrete claim is supported by evidence: X exists, a named condition holds, a source contains X. | Null Hypothesis: a claim starts not established; only a cited line confirms or contradicts it. Nothing found is NO EVIDENCE, unless the dispatch says a clean search of a named scope counts as CONTRADICTED. Report CONFIRMED, CONTRADICTED, or NO EVIDENCE; NOT DONE also lists each NO EVIDENCE claim. |
 
 ## Done
 

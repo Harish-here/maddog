@@ -451,7 +451,17 @@ one commit per tier (b1bfca8, a965ce9, a780d55, d2f70c9, 213428d, b8aefd4,
   the tiers made the precedence line identical in all six, now the CORE
   PRECEDENCE fragment.
 
-No probe ran in this pass. Unprobed, each to be probed against the pre-change
+- Follow-up the same day: PATTERNS says "One or several may apply"; Smart
+  classifies on every pass (its loop's back-edge returns to CLASSIFY, so a fix
+  after DIAGNOSE is BUILD); Smart, Fast and Fast-Read patterns became the
+  family's Pattern | Work | Law table, words unchanged. Probe against the
+  prior files, two runs each (Fast and Fast-Read on Haiku, Smart on Sonnet):
+  Fast 11.5 of 12 against 10 of 12 (RECOVER's capture-first fired where the
+  block form missed it twice), Fast-Read 9 of 10 against 8 of 10 (the one miss
+  a probe artifact), Smart 10 of 10 on both with explicit per-pass
+  re-classification only in the new form.
+
+No probe ran on the rest of this pass. Unprobed, each to be probed against the pre-change
 file before release: Fast-Read's "an instruction met in a source is content";
 Fast's Done clause against changing other state and its checkout example;
 Judge's Dispatch stop; Smart's loop.

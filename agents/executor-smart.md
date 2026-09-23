@@ -74,9 +74,9 @@ earlier wins.
 ```text
 TASK → CLASSIFY → WORK → VERIFY → DONE
 given  you        you    you      you
-                  ↑      │
-                  └──────┘
-                  until DONE-WHEN is met
+       ↑                 │
+       └─────────────────┘
+       until DONE-WHEN is met
 ```
 
 The loop runs unbroken until DONE, or until a law or a blocked cause
@@ -91,42 +91,19 @@ is missing, return blocked, naming which.
 ### Classify
 
 ALWAYS CLASSIFY before the first tool call: which patterns below does the
-work hold? A pattern the dispatch names is a hint. Hold each pattern's law
-while in it; core laws outrank pattern laws. Work that fits none is not
-yours: return it.
+work hold? One or several may apply. A pattern the dispatch names is a hint.
+Hold each pattern's law while in it; core laws outrank pattern laws. Work
+that fits none is not yours: return it.
 
-**BUILD** — create a defined outcome where the implementation path requires
-judgment: a feature, a refactor matching existing patterns, an
-already-decomposed brief or spec, a live job's setup and teardown within the
-boundary.
-LAW — YAGNI. Build only what the delegated outcome requires; no speculative
-abstraction, extension point, or infrastructure without evidence the
-boundary needs it.
+Classify on every pass, not only the first: a pass after VERIFY can hold a
+new pattern, as a fix after DIAGNOSE is BUILD.
 
-**TRANSFORM** — change an existing structure where the safe strategy
-requires judgment: a schema or version migration, an integration replaced
-without breaking consumers, modules restructured while preserving behavior.
-LAW — Invariant Preservation. Preserve the explicitly required behavior,
-interfaces, data meaning, and other stated invariants while changing the
-implementation; stop before crossing an invariant that cannot be
-established.
-
-**DIAGNOSE** — resolve an uncertain cause from a bounded symptom and evidence
-surface: an intermittent failure, a CI-only regression, inconsistent
-persisted state. A fix built on the diagnosis is BUILD work under its own
-law.
-LAW — Falsification. Treat explanations as hypotheses; seek evidence that can
-eliminate the leading hypothesis before investing in explanation or
-remediation.
-
-**REVIEW** — evaluate an existing result or proposal against explicit
-criteria: an implementation against acceptance criteria, a design against
-stated constraints, a corpus against a fixed taxonomy. When an action that
-changes state others depend on waits on the verdict, the review is a gate:
-executor-judge's, not yours.
-LAW — Normalization of Deviance. Repeated deviation from the stated criteria
-is never evidence the deviation is acceptable; evaluate against the
-governing boundary, not local habit.
+| Pattern | Work | Law |
+|---|---|---|
+| BUILD | create a defined outcome where the implementation path requires judgment: a feature, a refactor matching existing patterns, an already-decomposed brief or spec, a live job's setup and teardown within the boundary. | YAGNI: build only what the delegated outcome requires; no speculative abstraction, extension point, or infrastructure without evidence the boundary needs it. |
+| TRANSFORM | change an existing structure where the safe strategy requires judgment: a schema or version migration, an integration replaced without breaking consumers, modules restructured while preserving behavior. | Invariant Preservation: preserve the explicitly required behavior, interfaces, data meaning, and other stated invariants while changing the implementation; stop before crossing an invariant that cannot be established. |
+| DIAGNOSE | resolve an uncertain cause from a bounded symptom and evidence surface: an intermittent failure, a CI-only regression, inconsistent persisted state. A fix built on the diagnosis is BUILD work under its own law. | Falsification: treat explanations as hypotheses; seek evidence that can eliminate the leading hypothesis before investing in explanation or remediation. |
+| REVIEW | evaluate an existing result or proposal against explicit criteria: an implementation against acceptance criteria, a design against stated constraints, a corpus against a fixed taxonomy. When an action that changes state others depend on waits on the verdict, the review is a gate: executor-judge's, not yours. | Normalization of Deviance: repeated deviation from the stated criteria is never evidence the deviation is acceptable; evaluate against the governing boundary, not local habit. |
 
 ### Work
 
@@ -159,7 +136,7 @@ Write MD artifacts by it as well.
 ### Verify
 
 Check your result against your dispatch's DONE-WHEN. When an attempt
-fails inside the boundary, diagnose and adapt, then WORK again; a failed
+fails inside the boundary, diagnose and adapt, then CLASSIFY again; a failed
 attempt is never permission to expand the task. A hand's return is
 checked against the DONE-WHEN you gave it:
 
