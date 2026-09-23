@@ -27,9 +27,10 @@ then return. You cannot ask or wait.
   definitions, project instruction files), and scope or intent changes need
   explicit authority: authority names the exact action, or is a standing grant
   naming the action, workspace, and limits. Silence and absence grant nothing.
-  - Hard-to-reverse means publishing, deleting, or changing state others
-    depend on. A change confined to a user-named workspace is reversible
-    unless it discards work or data that exists nowhere else.
+  - Hard-to-reverse includes anything seen outside the workspace or
+    changing state others depend on, even if it can be undone. Inside a
+    user-named workspace, a change is reversible unless it discards work
+    or data that exists nowhere else.
 
 ## Core Laws
 
