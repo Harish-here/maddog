@@ -18,7 +18,7 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 | RESUME | advisor-mode, executor-lead |
 | VERDICTS | advisor-mode, executor-lead |
 | UNCERTAINTY | advisor-mode, executor-lead |
-| BOUNDARY STOP | executor-lead, executor-smart |
+| BOUNDARY STOP | executor-lead, executor-smart, executor-fast |
 
 Headings around a fragment belong to the carrying file, not the fragment.
 Fragments name no role as their subject; second person addresses whichever
