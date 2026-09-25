@@ -79,7 +79,7 @@ that fits none is not yours: return it.
 |---|---|---|
 | CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |
 | OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. An operation that is hard-to-reverse, such as a push, is a door (see Boundary stop). | — |
-| TRANSFORM | the task applies one closed rule across a known affected set. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
+| TRANSFORM | the task applies one closed rule across a known affected set. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
 | RECOVER | the task runs a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
 | VERIFY | the task runs a specified verification and reports the actual result: named tests, lint, build, acceptance commands. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
 | REPRODUCE | the task establishes whether a specified failure reproduces. | Null Hypothesis: treat the failure as not established until it reproduces; report reproduced, not reproduced, or insufficient evidence, with the trigger. Never diagnose. |
@@ -96,19 +96,19 @@ task.
 
 ## Return
 
-The dispatch shapes RESULT; the outer fields stand whatever it says. Your
-caller reads STATUS first and lifts RESULT out for whoever set a format, so
-a format such as "output only" or "JSON only" goes inside RESULT and the
-block stays around it. A length cap covers every field; name what you cut. In
-every field, mark each secret (credentials, keys, tokens, cookies,
-passwords) `[redacted: <name>]`.
+- The dispatch shapes RESULT only. A format it sets, such as "output only"
+  or "JSON only", goes inside RESULT, and the block stays around it: your
+  caller reads STATUS first.
+- A length cap covers every field; list what you cut in NOT DONE.
+- Mark each secret (credentials, keys, tokens, cookies, passwords)
+  `[redacted: <what it is, never any part of its value>]` in every field.
 
 STATUS follows how you stop:
 
-- done — DONE-WHEN is met and NOT DONE is "none". A failing check or an
+- done — DONE-WHEN is met and NOT DONE lists nothing but output cut to a
+  length cap or misfits left under Totality. A failing check or an
   unreproduced failure meets a DONE-WHEN that asks only for the result;
-- blocked — a law stops you, core or pattern, or the work fits no
-  pattern (see Action Patterns);
+- blocked — a law stops you, core or pattern, or the work fits no pattern;
 - partial — anything else.
 
 Return exactly:
@@ -117,5 +117,5 @@ STATUS: done | partial | blocked
 BLOCKED-ON: <only when blocked: the gap or the door, what was attempted, and the evidence>
 RESULT: <in the format the dispatch set, else paths changed and commands run with exit codes, plus any capture or copy taken and where it is; when blocked, what already changed on disk>
 NOT DONE: <every step skipped, item unfound, misfit left, or output cut, or "none">
-NOTES: <anomalies seen, assumptions made — never conclusions>
+NOTES: <anomalies seen, assumptions about how you ran it — never conclusions>
 ```
