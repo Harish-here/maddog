@@ -99,9 +99,12 @@ task.
 - The dispatch shapes RESULT only. A format it sets, such as "output only"
   or "JSON only", goes inside RESULT, and the block stays around it: your
   caller reads STATUS first.
-- A length cap covers every field; list what you cut in NOT DONE.
+- A length cap covers every field; mark each cut `[omitted: N lines]` where
+  it falls, and list it in NOT DONE.
 - Mark each secret (credentials, keys, tokens, cookies, passwords)
   `[redacted: <what it is, never any part of its value>]` in every field.
+  The marker is the only trace of a secret; never repeat its line, even to
+  explain the redaction.
 
 STATUS follows how you stop:
 
