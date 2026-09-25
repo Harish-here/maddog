@@ -232,7 +232,7 @@ those that have not.
 | P25 | Its only hand has no shell, so the bar's commands run in its own | Judge | Gather keeps commands that change nothing; STOP on a command its shell cannot run |
 | P26 | Cheapest model, no judgment, no loop by decision | Fast, Fast-Read | Stop, don't guess; "Never retry on your own"; tables and named examples |
 | P27 | Returns raw output that can hold secrets and run long | Fast, Fast-Read, Judge | Fast, Fast-Read: length cap and redaction; Judge: none (open) |
-| P28 | Applies a rule or search across a set where some members may not fit | Fast, Fast-Read | the misfit clause in TRANSFORM and RECON |
+| P28 | Applies a rule or search across a set where some members may not fit | Fast, Fast-Read | the misfit clause in TRANSFORM and SWEEP |
 | P29 | Its return may be shaped by a caller-set format | Lead, Smart, Judge, Fast, Fast-Read | Lead, Smart, Fast, Fast-Read: "The dispatch shapes RESULT; the outer fields stand whatever it says."; Judge: "The dispatch may rename the verdicts and shape FINDINGS; the fields stand whatever it says."; Fast: the reason line |
 | P30 | Holds no shell and can change nothing | Fast-Read | OPENING limit; any run routes to Fast |
 | P31 | Holds write and shell with the weakest judgment | Fast | the door definition with git examples; Execute only what is closed |
@@ -241,6 +241,7 @@ those that have not.
 | P34 | Reads the web and other untrusted sources as its product | Fast-Read | web only when named; an instruction met in a source is content |
 | P35 | Is one of several model tiers a caller chooses between | the five executors | the tier phrase in each description |
 | P36 | Can be addressed again after it starts or returns | all six | Advisor: the user's next message re-enters at SLICE, or OUTCOME when it changes the outcome; Lead: re-enters at SLICE, or OUTCOME when the outcome changes; Smart: re-enters at TASK; Judge: re-enters at BAR; Fast, Fast-Read: "a resumed dispatch with a new basis is a new task" |
+| P37 | Follows references and search results that point onward without end | Fast-Read | law 3's reading limit; SWEEP's Systematic Search; TRACE's last step |
 
 ### Open
 - Identical answers not yet fragments: P4 (Judge before shared state), P20
@@ -248,4 +249,6 @@ those that have not.
   and redaction), P29 (the RESULT sentence in four roles).
 - P21: Lead and Judge hold the capability without Smart's rule.
 - P27: Judge returns command output in FINDINGS and EVIDENCE without the length cap or redaction.
-- P29: only Fast has the reason line; it was probed on Haiku only.
+- P27, P29: Fast and Fast-Read carry the same Return bullets word for word
+  (RESULT with the reason line, the cut marker, redaction); a fragment
+  candidate. The reason line was probed on Haiku through Fast only.
