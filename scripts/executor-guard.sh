@@ -20,9 +20,16 @@
 #     instruction. executor-smart is deliberately NOT covered by this layer:
 #     it holds Write/Edit and editing files is its job. This layer also
 #     blanket-denies inline interpreters/scripting tools (python*, node*,
-#     deno, bun, perl, ed, xargs) for lead/judge outright, regardless of
-#     what they'd do — neither agent's read-only toolset needs one, so a
-#     denial by binary name costs them nothing real.
+#     deno, bun, perl, ed, xargs) for lead outright, regardless of what it'd
+#     do — lead's read-only toolset needs none of them, so a denial by binary
+#     name costs it nothing real. executor-judge gets a narrower carve-out
+#     (maintainer decision 2026-09-26, option A): it may run an interpreter
+#     on an EXISTING SCRIPT FILE or module — it must be able to re-run gates
+#     (agents/executor-judge.md:104, Core Law 3) — but inline/stdin code
+#     (-c/-e/--eval/-p/--print/-n/-i/-E, a bare interpreter or lone '-', code
+#     piped or heredoc'd/here-string'd into one, and `deno eval`) is denied
+#     for judge the same as for lead. `ed` and `xargs` stay denied outright
+#     for judge too — neither runs a script file the way an interpreter does.
 #
 #     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
 #     any path is examined" — the recursive-delete check below (which calls
@@ -296,11 +303,12 @@ command -v jq >/dev/null 2>&1 || exit 0
 #     on top of the shared irreversible-command checks for lead and judge only. ---
 agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 deny_writes=0
+is_judge=0
 case "$agent_type" in
   executor-fast|*:executor-fast) : ;;
   executor-smart|*:executor-smart) : ;;
   executor-lead|*:executor-lead) deny_writes=1 ;;
-  executor-judge|*:executor-judge) deny_writes=1 ;;
+  executor-judge|*:executor-judge) deny_writes=1; is_judge=1 ;;
   *) exit 0 ;;
 esac
 
@@ -520,7 +528,69 @@ while IFS= read -r segment; do
       cp|mv|install|touch|mkdir|truncate|tee|patch)
         deny "$cmd0 creates, overwrites, or moves a file — this executor may not write files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
         ;;
-      python|python2|python3|node|nodejs|deno|bun|perl|ed|xargs)
+      python|python2|python3|node|nodejs|deno|bun|perl)
+        # Maintainer decision 2026-09-26 (option A): executor-judge must be
+        # able to re-run gates (its body, agents/executor-judge.md:104, and
+        # Core Law 3, require it), so JUDGE ONLY is narrowed here to "may run
+        # an existing script FILE or module" — never inline/stdin code. Lead
+        # takes the else branch below, unchanged from today's blanket denial.
+        if [ "$is_judge" -eq 1 ]; then
+          inline=0
+          has_arg=0
+          for tok in "${tokens[@]:1}"; do
+            case "$cmd0" in
+              python|python2|python3)
+                case "$tok" in
+                  -c|-c*) inline=1 ;; # -c / glued -c'code' runs inline code
+                  -) inline=1 ;;      # bare '-' reads the script from stdin
+                esac
+                ;;
+              node|nodejs)
+                case "$tok" in
+                  -e|--eval|--eval=*|-p|--print|--print=*) inline=1 ;;
+                esac
+                ;;
+              bun)
+                case "$tok" in
+                  -e|--eval|--eval=*) inline=1 ;;
+                esac
+                ;;
+              perl)
+                # -M*/-I* (module/include-path, e.g. -Mstrict) take an
+                # attached value that can innocently contain e/n/p/i (e.g.
+                # "strict") — excluded before the broad scan below so they
+                # never false-positive as an inline-code flag.
+                case "$tok" in
+                  -M*|-I*) : ;;
+                  -*[eEnpi]*) inline=1 ;; # -e/-E/-n/-p/-i, alone or combined (-pi, -ne, ...)
+                esac
+                ;;
+            esac
+            case "$tok" in
+              -*) : ;;
+              *) has_arg=1 ;;
+            esac
+          done
+          # deno's inline form is a subcommand, not a flag
+          [ "$cmd0" = "deno" ] && [ "${tokens[1]:-}" = "eval" ] && inline=1
+          # heredoc/here-string feeds code the same as -c/-e/stdin — checked
+          # on the masked tokens so a literal '<<' inside a quoted argument
+          # (never a real redirect) can't trip this.
+          for mtok in "${tokens_masked[@]:1}"; do
+            case "$mtok" in
+              *'<<'*) inline=1 ;;
+            esac
+          done
+          if [ "$inline" -eq 1 ] || [ "$has_arg" -eq 0 ]; then
+            deny "$cmd0 with inline or stdin code (no existing script file/module argument) is not permitted via Bash for this executor — re-run an existing script file or module instead, e.g. \`$cmd0 path/to/script\`, \`python3 -m pytest\`."
+          fi
+          # else: allow, e.g. `python3 scripts/x.py`, `python3 -m pytest`,
+          # `node scripts/x.js`, `bun run x.ts`, `deno run x.ts`.
+        else
+          deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
+        fi
+        ;;
+      ed|xargs)
         deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
         ;;
       sed)
