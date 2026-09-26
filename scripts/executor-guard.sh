@@ -27,9 +27,15 @@
 #     on an EXISTING SCRIPT FILE or module — it must be able to re-run gates
 #     (agents/executor-judge.md:104, Core Law 3) — but inline/stdin code
 #     (-c/-e/--eval/-p/--print/-n/-i/-E, a bare interpreter or lone '-', code
-#     piped or heredoc'd/here-string'd into one, and `deno eval`) is denied
-#     for judge the same as for lead. `ed` and `xargs` stay denied outright
-#     for judge too — neither runs a script file the way an interpreter does.
+#     piped or heredoc'd/here-string'd into one, `deno eval`, a script
+#     argument that is really a stdin/fd path — /dev/stdin, /dev/fd/*,
+#     /proc/self/fd/*, /dev/tty — or a process-substitution `<(...)`
+#     argument) is denied for judge the same as for lead. python's `-m` is
+#     allowed only for the test-runner modules pytest/unittest/doctest — any
+#     other module (pip, json.tool, http.server, ...) denies, since running
+#     it is arbitrary code/side effects by another name, not "re-running a
+#     gate". `ed` and `xargs` stay denied outright for judge too — neither
+#     runs a script file the way an interpreter does.
 #
 #     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
 #     any path is examined" — the recursive-delete check below (which calls
@@ -537,12 +543,33 @@ while IFS= read -r segment; do
         if [ "$is_judge" -eq 1 ]; then
           inline=0
           has_arg=0
+          want_module=0
+          idx=0
           for tok in "${tokens[@]:1}"; do
+            idx=$((idx + 1)) # tok is tokens[idx] (tokens[0] is cmd0 itself)
+            mtok="${tokens_masked[$idx]}"
             case "$cmd0" in
               python|python2|python3)
+                # -m is allowed only for a test-runner module (this decision:
+                # only these three re-run a gate; every other module — pip,
+                # json.tool, http.server, ... — does something else, arbitrary
+                # code/side effects/writes, by another name).
+                if [ "$want_module" -eq 1 ]; then
+                  want_module=0
+                  case "$tok" in
+                    pytest|unittest|doctest) : ;;
+                    *) inline=1 ;;
+                  esac
+                fi
                 case "$tok" in
                   -c|-c*) inline=1 ;; # -c / glued -c'code' runs inline code
-                  -) inline=1 ;;      # bare '-' reads the script from stdin
+                  -m) want_module=1 ;; # module name is the NEXT token
+                  -m?*) # glued form, e.g. -mpytest
+                    case "${tok#-m}" in
+                      pytest|unittest|doctest) : ;;
+                      *) inline=1 ;;
+                    esac
+                    ;;
                 esac
                 ;;
               node|nodejs)
@@ -565,6 +592,22 @@ while IFS= read -r segment; do
                   -*[eEnpi]*) inline=1 ;; # -e/-E/-n/-p/-i, alone or combined (-pi, -ne, ...)
                 esac
                 ;;
+            esac
+            # a "script" argument that is really a stdin/fd path hands the
+            # interpreter piped/redirected code the same as -c/-e — denied
+            # for every interpreter here, not just python. Checked on the
+            # RAW token (not masked): the interpreter receives this exact
+            # path string whether or not the shell quoted it, so a quoted
+            # "/dev/stdin" is exactly as much a stdin read as an unquoted one.
+            case "$tok" in
+              -|/dev/stdin|/dev/fd/*|/proc/self/fd/*|/dev/tty) inline=1 ;;
+            esac
+            # process substitution used as the script argument (<(...)) feeds
+            # a live pipe, the same class of "not a real file" as the stdin/fd
+            # paths above — checked on the MASKED token so a literal quoted
+            # "<(" inside an argument can never trip this.
+            case "$mtok" in
+              '<('*) inline=1 ;;
             esac
             case "$tok" in
               -*) : ;;
