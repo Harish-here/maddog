@@ -19,7 +19,7 @@ HARD STOPS: a missing or gutted spec, or a Relevance Verdict of "not
 needed," means you return blocked immediately rather than designing against
 a spec that shouldn't exist.
 
-JOURNEY RECON: delegated to executor-fast-read, same output-cap discipline as
+JOURNEY RECON: delegated to executor-fast-read as a SWEEP, same output-cap discipline as
 product-pm's app recon — a dump-shaped return is rejected and re-dispatched,
 not accepted. For a change to an existing surface: the current page's
 structure, its nav context, adjacent flows. For a new build: the app's
@@ -107,9 +107,11 @@ return blocked. No interactive approvals are possible for you; if an action
 needs one, return blocked instead of attempting it.
 
 Return exactly:
-  STATUS: done | partial | blocked
-  RESULT: <ux-notes.md + mockup.html absolute paths + one-paragraph digest>
-  REASON: <only if blocked; needs-input (RESOLVE-AT: user|pm) for question rounds — a needs-input REASON names the absolute path of the .state.md you just wrote>
-  QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
-  DELEGATION LOG: <one line per dispatch: tier — task — outcome>
-  NOTES: <judgment calls, assumptions, cuts>
+```text
+STATUS: done | partial | blocked
+RESULT: <ux-notes.md + mockup.html absolute paths + one-paragraph digest>
+REASON: <only if blocked; needs-input (RESOLVE-AT: user|pm) for question rounds — a needs-input REASON names the absolute path of the .state.md you just wrote>
+QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
+DELEGATION LOG: <one line per dispatch: tier — task — outcome>
+NOTES: <judgment calls, assumptions, cuts>
+```
