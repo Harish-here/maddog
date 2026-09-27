@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 from harness.core.cases import TIERS, expected_tier
-from harness.core.runner import CaseResult, passes
+from harness.core.runner import CaseResult, passes, tier_failed
 
 
 def _valid(records, version, tier):
@@ -27,9 +27,12 @@ def _flag(result: CaseResult, expected: str, ladder: bool) -> str:
     if result.void_limited:
         return "VOID LIMIT"
     if not ladder:
-        # Non-ladder run: only a repeated branch failure is worth flagging.
-        if result.lowest_tier is None:
-            return f"FAIL AT {result.only_tier}"
+        # Non-ladder run: flag if fewer than half the valid branch runs passed.
+        if result.only_tier is not None:
+            branch_passes = passes(result.records, "branch", result.only_tier)
+            valid = _valid(result.records, "branch", result.only_tier)
+            if tier_failed(branch_passes, valid):
+                return f"FAIL AT {result.only_tier}"
         return ""
     if result.lowest_tier is None:
         return f"NO PASSING TIER (tried up to {result.max_tier})"

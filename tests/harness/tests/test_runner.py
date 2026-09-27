@@ -292,3 +292,39 @@ def test_cache_hit_skips_main_under_jobs():
     assert all(r.cached for r in result.records if r.version == "main")
     # only the 3 branch attempts ever reached the adapter; main came from the cache
     assert adapter.total_calls == 3
+
+
+# --- tier_failed function -------------------------------------------------------
+
+def test_tier_failed_returns_true_when_fewer_than_half_pass():
+    assert runner.tier_failed(0, 3) is True   # 0/3
+    assert runner.tier_failed(1, 3) is True   # 1/3
+    assert runner.tier_failed(1, 10) is True  # 1/10
+    assert runner.tier_failed(4, 10) is True  # 4/10
+
+
+def test_tier_failed_returns_false_when_half_or_more_pass():
+    assert runner.tier_failed(2, 3) is False   # 2/3
+    assert runner.tier_failed(3, 3) is False   # 3/3
+    assert runner.tier_failed(5, 10) is False  # 5/10 (exactly half)
+    assert runner.tier_failed(7, 10) is False  # 7/10
+
+
+# --- Ladder climb scales with run count -------------------------------------------------------
+
+def test_ladder_climbs_on_1_of_3_failures():
+    # 1 pass: 1 * 2 = 2 < 3, so failed, should climb
+    good, bad = [Event("handoff", "Fast")], [Event("handoff", "Smart")]
+    adapter = FakeAdapter({"low": [good, bad, bad], "mid": [Event("handoff", "Fast")]})
+    result = run(adapter)
+    assert runner.passes(result.records, "branch", "low") == 1
+    assert result.lowest_tier == "mid"
+
+
+def test_ladder_does_not_climb_on_2_of_3_passes():
+    # 2 passes: 2 * 2 = 4 not < 3, so not failed, should not climb
+    good, bad = [Event("handoff", "Fast")], [Event("handoff", "Smart")]
+    adapter = FakeAdapter({"low": [good, good, bad], "mid": [Event("handoff", "Smart")]})
+    result = run(adapter)
+    assert runner.passes(result.records, "branch", "low") == 2
+    assert result.lowest_tier == "low"

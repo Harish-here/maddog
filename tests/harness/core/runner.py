@@ -10,7 +10,11 @@ from harness.core.score import Verdict, score
 
 MIN_RUNS = 3
 MAX_VOIDS = 3  # per version per tier; past this the case is reported, not retried
-REPEATED = 2   # this many failures at a tier means "fails repeatedly"
+
+
+def tier_failed(passes: int, valid: int) -> bool:
+    """A tier counts as failed when fewer than half of its valid runs passed."""
+    return passes * 2 < valid
 
 
 @dataclass
@@ -224,7 +228,9 @@ def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS
         except VoidLimit:
             result.void_limited = True
             return result
-        if failures(result.records, "branch", tier) < REPEATED:
+        branch_passes = passes(result.records, "branch", tier)
+        valid = sum(1 for r in result.records if r.version == "branch" and r.tier == tier and r.verdict.result != "VOID")
+        if not tier_failed(branch_passes, valid):
             result.lowest_tier = tier
             return result
     return result

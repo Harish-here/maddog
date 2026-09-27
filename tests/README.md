@@ -25,7 +25,7 @@ else the `pressure` mapping in `harness/runtimes/ladders.yaml`.
 
 `--tier` overrides the tier for every selected case and still never climbs.
 `--ladder` opts into the old behaviour: start at `low`, and climb to the
-next tier whenever a case fails at least 2 of 3 times, up to `max_tier` in
+next tier whenever fewer than half of a case's branch runs pass, up to `max_tier` in
 `ladders.yaml` (currently `mid`). `--ladder` and `--tier` cannot be used
 together.
 
@@ -91,7 +91,7 @@ cost line at the end. A `Main` cell reading `main (cached)` means those
 runs came from a prior `main` run, not a fresh model call.
 
 Without `--ladder`, the table has no **Lowest passing tier** or **Expected
-tier** column, and a case whose branch failed at least 2 of 3 times is
+tier** column, and a case whose branch failed fewer than half of its runs is
 flagged `FAIL AT <tier>`.
 
 With `--ladder`, the table adds those two columns:

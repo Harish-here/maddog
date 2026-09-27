@@ -102,3 +102,39 @@ def test_cached_main_row_is_marked():
     recs = [rec("branch", "low", "PASS", i) for i in (1, 2, 3)] + [rec("main", "low", "PASS", i, cached=True) for i in (1, 2, 3)]
     text = render([case_result(recs, "low")], LADDERS, "rt", ladder=True)
     assert "3/3 (cached)" in text
+
+
+def test_non_ladder_7_of_10_passes_not_flagged():
+    # 7 passes: 7 * 2 = 14, not < 10, so not failed
+    recs = [rec("branch", "low", "PASS", i) for i in range(1, 8)] + [rec("branch", "low", "FAIL", i) for i in range(8, 11)]
+    text = render([case_result(recs, "low", only_tier="low")], LADDERS, "rt", ladder=False)
+    assert "FAIL AT" not in text
+
+
+def test_non_ladder_4_of_10_flagged():
+    # 4 passes: 4 * 2 = 8 < 10, so failed
+    recs = [rec("branch", "low", "PASS", i) for i in range(1, 5)] + [rec("branch", "low", "FAIL", i) for i in range(5, 11)]
+    text = render([case_result(recs, None, only_tier="low")], LADDERS, "rt", ladder=False)
+    assert "FAIL AT low" in text
+
+
+def test_non_ladder_5_of_10_exactly_half_not_flagged():
+    # 5 passes: 5 * 2 = 10, not < 10, so not failed (exactly half counts as pass)
+    recs = [rec("branch", "low", "PASS", i) for i in range(1, 6)] + [rec("branch", "low", "FAIL", i) for i in range(6, 11)]
+    text = render([case_result(recs, "low", only_tier="low")], LADDERS, "rt", ladder=False)
+    assert "FAIL AT" not in text
+
+
+def test_non_ladder_1_of_3_flagged():
+    # 1 pass: 1 * 2 = 2 < 3, so failed
+    recs = [rec("branch", "mid", "PASS", 1), rec("branch", "mid", "FAIL", 2), rec("branch", "mid", "FAIL", 3)]
+    text = render([case_result(recs, None, only_tier="mid")], LADDERS, "rt", ladder=False)
+    assert "FAIL AT mid" in text
+
+
+def test_non_ladder_2_of_3_not_flagged():
+    # 2 passes: 2 * 2 = 4 not < 3, so not failed
+    recs = [rec("branch", "mid", "PASS", i) for i in (1, 2)], [rec("branch", "mid", "FAIL", 3)]
+    recs = [r for sublist in recs for r in (sublist if isinstance(sublist, list) else [sublist])]
+    text = render([case_result(recs, "mid", only_tier="mid")], LADDERS, "rt", ladder=False)
+    assert "FAIL AT" not in text
