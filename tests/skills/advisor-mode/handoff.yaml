@@ -1,6 +1,8 @@
 # Checks which helper advisor-mode hands the first piece of work to.
 skill: advisor-mode
 fixture: todo-app
+expected_tier: mid
+why: "Haiku failed as the Advisor, 4 of 18 runs (review observation O9, tests/results/2026-09-27T141053)"
 cases:
   - id: list-flags
     prompt: "For each command the CLI offers, list its flags and the test that covers it."

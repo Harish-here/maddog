@@ -19,7 +19,18 @@ class Event:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class RunOutcome:
+    """What one adapter run produces: the event log plus plain cost fields.
+    Runtime-specific parsing (SDK types, usage dict shapes) stays in the
+    adapter; core only ever sees these plain fields. cost_usd and usage are
+    None when the runtime could not report them — never 0."""
+    events: list[Event]
+    cost_usd: float | None = None
+    usage: dict | None = None  # keys: input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens
+
+
 class Adapter(Protocol):
-    def run(self, case, plugin_path: Path, workdir: Path, tier: str) -> list[Event]:
-        """Run one case once and return its ordered event log."""
+    def run(self, case, plugin_path: Path, workdir: Path, tier: str) -> RunOutcome:
+        """Run one case once and return its outcome (event log, cost, usage)."""
         ...

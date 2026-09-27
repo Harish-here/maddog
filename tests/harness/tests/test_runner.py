@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from harness.core.events import Event
+from harness.core.events import Event, RunOutcome
 from harness.core.cases import Case
 from harness.core import runner
 
@@ -10,16 +10,20 @@ PLUGINS = {"branch": Path("/b"), "main": Path("/m")}
 
 class FakeAdapter:
     """Returns scripted events per tier; records every call."""
-    def __init__(self, by_tier):
+    def __init__(self, by_tier, cost_usd=None, usage=None):
         self.by_tier = by_tier
         self.calls = []
+        self.cost_usd = cost_usd
+        self.usage = usage
 
     def run(self, case, plugin_path, workdir, tier):
         self.calls.append((plugin_path, tier))
         script = self.by_tier[tier]
         if script and isinstance(script[0], list):  # a sequence of runs; the last one repeats
-            return script.pop(0) if len(script) > 1 else script[0]
-        return script  # the same events on every run
+            events = script.pop(0) if len(script) > 1 else script[0]
+        else:
+            events = script  # the same events on every run
+        return RunOutcome(events, self.cost_usd, self.usage)
 
 
 def fake_make(name):
@@ -131,3 +135,65 @@ def test_only_tier_appears_in_result():
     adapter = FakeAdapter({"high": [Event("handoff", "Fast")]})
     result = run(adapter, only_tier="high")
     assert result.only_tier == "high"
+
+
+def test_cost_and_usage_land_on_the_record():
+    usage = {"input_tokens": 10, "output_tokens": 5, "cache_read_tokens": None, "cache_creation_tokens": None}
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]}, cost_usd=0.01, usage=usage)
+    result = run(adapter, only_tier="low")
+    assert all(r.cost_usd == 0.01 and r.usage == usage for r in result.records)
+
+
+def test_missing_cost_is_recorded_as_none_not_zero():
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})  # cost_usd defaults to None
+    result = run(adapter, only_tier="low")
+    assert all(r.cost_usd is None for r in result.records)
+
+
+class FakeCache:
+    """Minimal stand-in for MainCache: records calls, serves scripted hits."""
+    def __init__(self, hit=None):
+        self.hit = hit  # list[list[Event]] or None
+        self.get_calls = []
+        self.put_calls = []
+
+    def get(self, case, tier, min_valid):
+        self.get_calls.append((case.id, tier, min_valid))
+        return self.hit
+
+    def put(self, case, tier, event_lists):
+        self.put_calls.append((case.id, tier, event_lists))
+
+
+def test_cache_hit_skips_running_main():
+    cache = FakeCache(hit=[[Event("handoff", "Fast")]] * 3)
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
+    result = run(adapter, only_tier="low", main_cache=cache)
+    assert cache.get_calls == [("c1", "low", 3)]
+    assert cache.put_calls == []
+    # only branch ran through the adapter; main came entirely from the cache
+    assert {p for p, t in adapter.calls} == {Path("/b")}
+    assert runner.passes(result.records, "main", "low") == 3
+    assert all(r.cached for r in result.records if r.version == "main")
+    assert all(not r.cached for r in result.records if r.version == "branch")
+
+
+def test_cache_miss_runs_main_and_populates_it():
+    cache = FakeCache(hit=None)
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
+    result = run(adapter, only_tier="low", main_cache=cache)
+    assert {p for p, t in adapter.calls} == {Path("/b"), Path("/m")}
+    assert len(cache.put_calls) == 1
+    case_id, tier, event_lists = cache.put_calls[0]
+    assert (case_id, tier) == ("c1", "low")
+    assert len(event_lists) == 3
+    assert all(r.cached is False for r in result.records)
+
+
+def test_branch_never_goes_through_the_cache():
+    cache = FakeCache(hit=[[Event("handoff", "Fast")]] * 3)
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
+    run(adapter, only_tier="low", main_cache=cache)
+    assert all(cid == "c1" for cid, *_ in cache.get_calls)
+    # the cache was never consulted for "branch", only "main" ever hits get()/put()
+    assert {p for p, t in adapter.calls} == {Path("/b")}

@@ -1,6 +1,6 @@
 from harness.core.cases import Case, load_ladders
 from harness.runtimes import get_adapter
-from harness.runtimes.claude_code import to_event, is_refusal, invocation, STOP_REASON, ClaudeCodeAdapter
+from harness.runtimes.claude_code import to_event, is_refusal, invocation, usage_from, STOP_REASON, ClaudeCodeAdapter
 
 
 def test_handoff_maps_agent_id_to_role():
@@ -60,3 +60,21 @@ def test_work_starting_tools_stop_the_session():
     for name in ("Workflow", "RemoteTrigger", "CronCreate", "ScheduleWakeup"):
         assert name in STOP_TOOLS
         assert to_event(name, {}).kind == "command"
+
+
+def test_usage_from_maps_sdk_field_names():
+    raw = {"input_tokens": 100, "output_tokens": 40, "cache_read_input_tokens": 5, "cache_creation_input_tokens": 2}
+    assert usage_from(raw) == {
+        "input_tokens": 100, "output_tokens": 40, "cache_read_tokens": 5, "cache_creation_tokens": 2,
+    }
+
+
+def test_usage_from_none_or_empty_is_none():
+    assert usage_from(None) is None
+    assert usage_from({}) is None
+
+
+def test_usage_from_missing_keys_are_null_not_zero():
+    assert usage_from({"input_tokens": 3}) == {
+        "input_tokens": 3, "output_tokens": None, "cache_read_tokens": None, "cache_creation_tokens": None,
+    }

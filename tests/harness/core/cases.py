@@ -30,6 +30,14 @@ def load_cases(path: Path) -> list[Case]:
     fixture = data.get("fixture")
     if not fixture:
         raise ValueError(f"{path}: missing 'fixture'")
+    file_tier = data.get("expected_tier")
+    file_why = data.get("why")
+    if file_tier is not None and file_tier not in TIERS:
+        raise ValueError(f"{path}: unknown tier {file_tier!r}")
+    if file_tier is not None and not file_why:
+        raise ValueError(f"{path}: expected_tier needs a 'why'")
+    if file_why and not file_tier:
+        raise ValueError(f"{path}: 'why' needs an 'expected_tier'")
     cases = []
     seen = set()
     for raw in data.get("cases", []):
@@ -49,6 +57,9 @@ def load_cases(path: Path) -> list[Case]:
             raise ValueError(f"{path}: case {raw['id']}: unknown tier {tier!r}")
         if tier is not None and not why:
             raise ValueError(f"{path}: case {raw['id']}: expected_tier needs a 'why'")
+        if tier is None:
+            # No case-level override: inherit the file-level pair, if any.
+            tier, why = file_tier, file_why
         cases.append(Case(raw["id"], raw["prompt"], raw["expect"], raw["pressure"], skill, fixture, tier, why))
     if not cases:
         raise ValueError(f"{path}: no cases")

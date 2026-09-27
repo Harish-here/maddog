@@ -10,36 +10,69 @@ def _valid(records, version, tier):
     return sum(1 for r in records if r.version == version and r.tier == tier and r.verdict.result != "VOID")
 
 
-def _flag(result: CaseResult, expected: str) -> str:
+def _cached(records, version, tier):
+    return any(r.cached for r in records if r.version == version and r.tier == tier)
+
+
+def _cost(records, version, tier):
+    known = [r.cost_usd for r in records if r.version == version and r.tier == tier and r.cost_usd is not None]
+    return sum(known) if known else None
+
+
+def _fmt_cost(value) -> str:
+    return f"${value:.4f}" if value is not None else "n/a"
+
+
+def _flag(result: CaseResult, expected: str, ladder: bool) -> str:
     if result.void_limited:
         return "VOID LIMIT"
+    if not ladder:
+        # Non-ladder run: only a repeated branch failure is worth flagging.
+        if result.lowest_tier is None:
+            return f"FAIL AT {result.only_tier}"
+        return ""
     if result.lowest_tier is None:
-        if result.only_tier is not None:
-            return f"NO PASS AT {result.only_tier} (only tier tried)"
         return f"NO PASSING TIER (tried up to {result.max_tier})"
     if TIERS.index(result.lowest_tier) > TIERS.index(expected):
         return "ABOVE EXPECTED"
     return ""
 
 
-def render(results: list[CaseResult], ladders: dict, runtime: str) -> str:
-    lines = [
-        f"# Test report — {runtime}",
-        "",
-        "| Case | Expected role | Tier | Branch | Main | Lowest passing tier | Expected tier | Flag |",
-        "|---|---|---|---|---|---|---|---|",
-    ]
+def render(results: list[CaseResult], ladders: dict, runtime: str, ladder: bool = False) -> str:
+    lines = [f"# Test report — {runtime}", ""]
+    if ladder:
+        lines.append("| Case | Expected role | Tier | Branch | Main | Cost | Lowest passing tier | Expected tier | Flag |")
+        lines.append("|---|---|---|---|---|---|---|---|---|")
+    else:
+        lines.append("| Case | Expected role | Tier | Branch | Main | Cost | Flag |")
+        lines.append("|---|---|---|---|---|---|---|")
+
+    total_cost = 0.0
+    any_cost = False
     for result in results:
         expected = expected_tier(result.case, ladders)
-        flag = _flag(result, expected)
+        flag = _flag(result, expected, ladder)
         tiers_run = [t for t in TIERS if any(r.tier == t for r in result.records)]
         for tier in tiers_run:
             branch = f"{passes(result.records, 'branch', tier)}/{_valid(result.records, 'branch', tier)}"
             main = f"{passes(result.records, 'main', tier)}/{_valid(result.records, 'main', tier)}"
-            lowest = result.lowest_tier or "—"
-            lines.append(f"| {result.case.id} | {result.case.expect} | {tier} | {branch} | {main} | {lowest} | {expected} | {flag} |")
+            if _cached(result.records, "main", tier):
+                main += " (cached)"
+            branch_cost = _cost(result.records, "branch", tier)
+            main_cost = _cost(result.records, "main", tier)
+            for value in (branch_cost, main_cost):
+                if value is not None:
+                    total_cost += value
+                    any_cost = True
+            cost = f"{_fmt_cost(branch_cost)} / {_fmt_cost(main_cost)}"
+            if ladder:
+                lowest = result.lowest_tier or "—"
+                lines.append(f"| {result.case.id} | {result.case.expect} | {tier} | {branch} | {main} | {cost} | {lowest} | {expected} | {flag} |")
+            else:
+                lines.append(f"| {result.case.id} | {result.case.expect} | {tier} | {branch} | {main} | {cost} | {flag} |")
 
-    lines += ["", "## Failed and void runs", ""]
+    lines += ["", f"**Total cost:** {_fmt_cost(total_cost if any_cost else None)}", ""]
+    lines += ["## Failed and void runs", ""]
     for result in results:
         for r in result.records:
             if r.verdict.result == "PASS":

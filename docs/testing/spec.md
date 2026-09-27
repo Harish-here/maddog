@@ -35,10 +35,11 @@ with a second model grading the transcript.
 Why: routing is one decision made at one moment. A test that instead asked
 the model to state its decision ("which helper would you pick?") passed 23
 of 24 recall questions on text where 12 applied scenarios still found 3
-rules that did not fire (measured 2026-09-21) — stated intent does not predict applied behavior. A
-full end-to-end run, letting the helper actually finish the task, adds cost
-and failure modes that have nothing to do with routing. Keep an end-to-end
-run as an occasional final check, but it is outside this spec.
+rules that did not fire (measured 2026-09-21) — stated intent does not
+predict applied behavior. A full end-to-end run, letting the helper
+actually finish the task, adds cost and failure modes that have nothing to
+do with routing. Keep an end-to-end run as an occasional final check, but
+it is outside this spec.
 
 ## Isolation
 
@@ -68,6 +69,19 @@ Each case runs 3 times. The runner rejects a request for fewer than 3
 runs. The report shows passes out of runs (for example, 2/3). "Fails
 repeatedly" means at least 2 of the 3 runs fail.
 
+### Stopping early
+
+A session ends as soon as its score can no longer become PASS: after a
+write, after any handoff, or once a second read/command event arrives
+before a handoff (at that point `score()` already returns FAIL, whatever
+happens next). `settled(events)`, next to `score()` in `harness/core/`,
+is the pure function that decides this; the adapter calls it once a tool
+call's result has been observed, so a refusal on the very call that
+settles the run is still recorded as VOID rather than missed. One
+consequence: a refusal on any *later* call, after the run has already
+settled, is never observed or recorded, because the session has already
+ended.
+
 ## Baseline
 
 Every result is reported next to the same cases run against `main` (a
@@ -96,17 +110,38 @@ expected_tier:
 max_tier: mid
 ```
 
-Every case declares a **pressure** kind when it is written, before any run. `none`: the task is written to be easy to route correctly. `user`: the user in the prompt pushes the model to act directly — urgency, "tiny fix", "just confirm it". `decision`: the prompt's wording points to the wrong hand — "audit", "tricky", "mechanical", "code review", "drop-in". Both `user` and `decision` expect the `mid` tier. Each pressure case tests one kind, so a failure names the kind that broke it. All five happy-path cases are `pressure: none`.
+Every case declares a **pressure** kind when it is written, before any
+run. `none`: the task is written to be easy to route correctly. `user`:
+the user in the prompt pushes the model to act directly — urgency, "tiny
+fix", "just confirm it". `decision`: the prompt's wording points to the
+wrong hand — "audit", "tricky", "mechanical", "code review", "drop-in".
+Both `user` and `decision` expect the `mid` tier. Each pressure case
+tests one kind, so a failure names the kind that broke it. All five
+happy-path cases are `pressure: none`.
 
-## Escalation loop
+A case's expected tier, used only for the report's `--ladder` columns,
+comes from the first of: its own `expected_tier` (with a required
+`why`), else the same pair set once at the top of its `handoff.yaml` (so
+every case in the file inherits it unless it sets its own), else the
+`pressure` mapping above.
 
-The test script runs a case at the `low` tier first. If it fails
-repeatedly, the script climbs to `mid`, then `high`, to find the lowest
-tier that passes. The report shows this lowest passing tier next to the
-case's expected tier (from the `expected_tier` mapping above). For now the climb stops at `mid` (`max_tier` in `ladders.yaml`); `high` is kept in the ladder for later.
+## Escalation loop (opt-in)
 
-If the lowest passing tier is above the expected tier, the user decides
-between two options:
+By default the runner does not climb: each case runs once, at its own
+expected tier, and the report shows only whether it passed there. This
+keeps a routine run cheap — one model per case, not up to three.
+
+`--ladder` opts into the climb: the script runs a case at the `low` tier
+first, and if it fails repeatedly, climbs to `mid`, then `high`, to find
+the lowest tier that passes. The report then shows this lowest passing
+tier next to the case's expected tier (from the `expected_tier` mapping
+above). For now the climb stops at `mid` (`max_tier` in `ladders.yaml`);
+`high` is kept in the ladder for later. `--ladder` and `--tier` (which
+pins every case to one named tier, also with no climbing) cannot be used
+together.
+
+If a `--ladder` run's lowest passing tier is above the expected tier, the
+user decides between two options:
 
 - Edit the skill **once**, then rerun **all** cases — not just the failing
   one, because an edit can break a case that used to pass, and the `main`
@@ -116,6 +151,34 @@ between two options:
 The one-edit limit exists so the skill does not grow without bound to
 satisfy the weakest model: every real session pays the cost of reading
 that skill text.
+
+## Cost
+
+Every run records the session's cost in USD and its token usage (input,
+output, cache read, cache creation), taken from the runtime's own final
+result message. The adapter is the only place that parses runtime-shaped
+usage fields; core only ever sees these four plain numbers plus a cost
+figure, alongside the event log. When the runtime cannot report cost or
+usage, the run records `null` for it, never `0` — a real $0 run and an
+unreported one must never look the same. The report shows a cost column
+per row (branch and main summed separately) and a total for the whole
+run; `runs.jsonl` carries the same fields per run.
+
+## Reusing `main`'s runs
+
+`main` never changes between runs of the same branch, so its results are
+cached on disk under `tests/results/.main-cache/` (already covered by
+`tests/results/` in `.gitignore`), keyed on `main`'s commit SHA, the
+runtime, the model the tier maps to, the case's prompt and fixture, and a
+hash of the adapter's source file — so a branch edit to the adapter, or a
+new commit on `main`, invalidates the cache on its own. The cache stores
+raw events per run, never a verdict: `score()` runs again on load, so a
+scoring change never needs the cache invalidated. A cache hit with at
+least the required number of valid runs skips calling the model for
+`main` on that case and tier; the report marks those rows `main
+(cached)`. `--fresh-main` ignores and overwrites the cache. Branch runs
+are never cached — they are the thing under test, and must always run
+fresh.
 
 ## Harness-neutral architecture
 
@@ -155,6 +218,7 @@ tests/
 │   │   ├── events.py
 │   │   ├── fixture.py       copy to a temp dir outside the repo, git init, apply branch patch
 │   │   ├── baseline.py      this branch vs main
+│   │   ├── maincache.py     reuse main's run events across invocations
 │   │   ├── score.py
 │   │   └── report.py
 │   └── runtimes/            the only place runtime identifiers appear
@@ -166,6 +230,7 @@ tests/
 ├── agents/                  second build
 ├── scripts/                 later: plain shell checks, no model
 └── results/                 git-ignored: <timestamp>/runs.jsonl + report.md
+    └── .main-cache/         git-ignored: cached main-version run events
 ```
 
 Test files are named for what they check — `handoff.yaml` checks the first

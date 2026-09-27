@@ -24,6 +24,16 @@ def plugin_versions(ref: str = "main") -> dict[str, Path]:
     return {"branch": REPO_ROOT, "main": worktree}
 
 
+def main_sha(ref: str = "main") -> str:
+    result = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", ref],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"could not resolve {ref!r} to a commit: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
 def remove_baseline(versions: dict[str, Path]) -> None:
     worktree = versions.get("main")
     if worktree is None or worktree == REPO_ROOT:

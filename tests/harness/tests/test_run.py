@@ -3,20 +3,34 @@ import subprocess
 import pytest
 import run
 from harness.core.cases import TESTS_DIR, Case
+from harness.core.events import Event, RunOutcome
+
+
+def worktrees():
+    return subprocess.run(["git", "-C", str(TESTS_DIR.parent), "worktree", "list"],
+                          capture_output=True, text=True).stdout
 
 
 def test_main_worktree_is_removed_when_a_case_crashes(monkeypatch):
     monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: object())
+    monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
+    real_load_ladders = run.load_ladders
+    fake_ladder = {"low": "x", "mid": "y", "high": "z"}
+    monkeypatch.setattr(run, "load_ladders", lambda: {**real_load_ladders(), "rt": fake_ladder})
 
     def crash(*args, **kwargs):
         raise RuntimeError("adapter died")
 
     monkeypatch.setattr(run, "run_case", crash)
+    before = worktrees()
     with pytest.raises(RuntimeError, match="adapter died"):
         run.main(["skills/advisor-mode", "--runtime", "rt", "--case", "list-flags"])
-    listing = subprocess.run(["git", "-C", str(TESTS_DIR.parent), "worktree", "list"],
-                             capture_output=True, text=True).stdout
-    assert "maddog-baseline-" not in listing
+    after = worktrees()
+    # Compares the full listing, not just "no maddog-baseline- worktree",
+    # because a real model run in another worktree may be in progress; only
+    # this test's own worktree (created and removed by run.main) must not
+    # have leaked.
+    assert after == before
 
 
 def test_select_cases_filters_by_id_preserving_order():
@@ -56,3 +70,87 @@ def test_select_cases_raises_on_unknown_id():
     ]
     with pytest.raises(ValueError, match="unknown case ids: c2, c3"):
         run.select_cases(cases, ["c2", "c3"], None)
+
+
+def test_ladder_and_tier_together_is_a_parser_error():
+    with pytest.raises(SystemExit):
+        run.main(["skills/advisor-mode", "--runtime", "claude-code", "--ladder", "--tier", "low"])
+
+
+class RecordingAdapter:
+    """Stands in for a runtime adapter: always hands off correctly, records
+    every (tier) it was asked to run at."""
+    def __init__(self):
+        self.tiers = []
+
+    def run(self, case, plugin_path, workdir, tier):
+        self.tiers.append(tier)
+        return RunOutcome([Event("handoff", case.expect)])
+
+
+def _patch_run(monkeypatch, adapter, tmp_path):
+    # Real plugin dirs, real fixture creation (both cheap, already exercised
+    # in test_baseline.py / test_fixture.py); only the model call (adapter)
+    # is fake, and the main-run cache is redirected to a scratch dir so
+    # these runs never touch the repo's real tests/results/.main-cache/.
+    monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: adapter)
+    monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
+    monkeypatch.setattr(run, "plugin_versions", lambda ref: {"branch": TESTS_DIR.parent, "main": TESTS_DIR.parent})
+    monkeypatch.setattr(run, "remove_baseline", lambda versions: None)
+    monkeypatch.setattr(run, "main_sha", lambda ref: "fakesha")
+    real_main_cache = run.MainCache
+    captured = {}
+
+    def scratch_cache(cache_dir, **kw):
+        captured.update(kw)
+        return real_main_cache(cache_dir=tmp_path / "main-cache", **kw)
+
+    monkeypatch.setattr(run, "MainCache", scratch_cache)
+    return captured
+
+
+def test_default_run_uses_the_cases_own_expected_tier_with_no_climb(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    _patch_run(monkeypatch, adapter, tmp_path)
+    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--runs", "3"])
+    # list-flags has no case-level tier; the file-level override (mid) applies.
+    assert set(adapter.tiers) == {"mid"}
+
+
+def test_ladder_flag_climbs_from_low(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    _patch_run(monkeypatch, adapter, tmp_path)
+    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--ladder", "--runs", "3"])
+    # Passes immediately at low (RecordingAdapter always hands off correctly).
+    assert set(adapter.tiers) == {"low"}
+
+
+def test_tier_flag_overrides_expected_tier_for_every_case(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    _patch_run(monkeypatch, adapter, tmp_path)
+    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--tier", "high", "--runs", "3"])
+    assert set(adapter.tiers) == {"high"}
+
+
+def test_fresh_main_flag_is_threaded_to_the_cache(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    captured = _patch_run(monkeypatch, adapter, tmp_path)
+    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags",
+             "--tier", "low", "--runs", "3", "--fresh-main"])
+    assert captured["fresh"] is True
+
+
+def test_second_run_reuses_the_cached_main_records(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    _patch_run(monkeypatch, adapter, tmp_path)
+    argv = ["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--tier", "low", "--runs", "3"]
+    run.main(argv)
+    first_main_runs = adapter.tiers.count("low")
+    assert first_main_runs == 6  # 3 branch + 3 main, nothing cached yet
+
+    adapter2 = RecordingAdapter()
+    _patch_run(monkeypatch, adapter2, tmp_path)
+    run.main(argv)
+    # Main's 3 runs come from the cache MainCache wrote on the first pass;
+    # only the 3 branch runs go through the adapter this time.
+    assert adapter2.tiers.count("low") == 3
