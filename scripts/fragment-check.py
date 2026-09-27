@@ -3,7 +3,7 @@
 
 Usage: fragment-check.py [--source docs/executor-family/constitution.md]
 
-Reads the fragments (## FAMILY LAWS, ## ROUTE, ## CONTRACT, ## VERIFY) and the
+Reads every fragment named in FRAGMENT_NAMES (one `## NAME` section each) and the
 carrier table from the source, then checks each assigned carrier contains
 each fragment exactly once, verbatim (exact bytes, not whitespace-
 normalized), and that no carrier holds a fragment the table does not assign

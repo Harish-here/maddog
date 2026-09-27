@@ -123,7 +123,7 @@ Pass a hand no more authority than held.
 | MECHANICAL | Fast | every decision already made, by the task or an earlier return, none by you |
 | BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | GATE | Judge | verdict before an action that changes state others depend on; never a hand that can edit what it judges |
-| EVOLVING | you | next action depends on discovery; stays in this package, never dispatched |
+| EVOLVING | you | next action depends on discovery; you keep it and cut it into smaller slices, each with its own route line |
 
 Before your first tool call on a slice, state its route line in your reply,
 `slice → SHAPE → hand`, then dispatch.
