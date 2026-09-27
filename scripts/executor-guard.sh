@@ -23,19 +23,68 @@
 #     deno, bun, perl, ed, xargs) for lead outright, regardless of what it'd
 #     do — lead's read-only toolset needs none of them, so a denial by binary
 #     name costs it nothing real. executor-judge gets a narrower carve-out
-#     (maintainer decision 2026-09-26, option A): it may run an interpreter
-#     on an EXISTING SCRIPT FILE or module — it must be able to re-run gates
-#     (agents/executor-judge.md:104, Core Law 3) — but inline/stdin code
-#     (-c/-e/--eval/-p/--print/-n/-i/-E, a bare interpreter or lone '-', code
-#     piped or heredoc'd/here-string'd into one, `deno eval`, a script
-#     argument that is really a stdin/fd path — /dev/stdin, /dev/fd/*,
-#     /proc/self/fd/*, /dev/tty — or a process-substitution `<(...)`
-#     argument) is denied for judge the same as for lead. python's `-m` is
-#     allowed only for the test-runner modules pytest/unittest/doctest — any
-#     other module (pip, json.tool, http.server, ...) denies, since running
-#     it is arbitrary code/side effects by another name, not "re-running a
-#     gate". `ed` and `xargs` stay denied outright for judge too — neither
-#     runs a script file the way an interpreter does.
+#     (maintainer decision 2026-09-26, option A, tightened to a STRICT
+#     ALLOWLIST 2026-09-27 after an independent release review found the
+#     original inline-code blocklist incomplete): it may re-run gates
+#     (agents/executor-judge.md:104, Core Law 3) through exactly these
+#     forms, on python3/python2/python/node/nodejs/deno/bun, everything else
+#     denies —
+#       - `python <script.py>` [args...]: <script.py> must be an existing
+#         regular .py file resolved inside cwd (path-guard-lib's
+#         normalize_path/is-inside-cwd check, same helper the recursive-
+#         delete check uses), and no token before it may start with '-'
+#         (that alone closes every combined-short-flag form a python
+#         command line allows, e.g. `-Ic`, `-Sc`, `-Bm`, `-W ignore -c`,
+#         `-X dev -c` — none of these is "a bare script as the first
+#         argument", so none of them can ever reach the file-existence
+#         check at all); args after the script are its own and are not
+#         inspected.
+#       - `python -m pytest|unittest` [args...]: args after it may be only
+#         an existing path inside cwd (file, dir, or path::nodeid — the
+#         nodeid suffix past `::` is never inspected, only the path
+#         component before it) or one of a narrow flag allowlist (-q, -qq,
+#         -v, -vv, -x, -s, --tb=short|long|line|no|native, -k <expr>/-k=
+#         <expr>, -r<chars>, --no-header, -l, --lf, --ff, -m <expr> for a
+#         pytest marker expression — this -m only ever matches here, after
+#         `-m pytest` already consumed python's own -m, so it can never be
+#         confused with it). Everything else denies, INCLUDING -c, -p, -o,
+#         --junitxml, --basetemp, --cache-clear, and `-m doctest` (doctest
+#         can execute arbitrary code in any .py docstring it's pointed at;
+#         no bound was found safe enough to allow — maintainer judgment
+#         call, denied outright rather than guessed at).
+#       - `node <script>` (.js/.mjs/.cjs), `bun <script>` or `bun run
+#         <script>` (.js/.ts/.mjs/.cjs/.tsx), or `deno run <script>`
+#         (.ts/.js): <script> must exist inside cwd and no token before it
+#         may start with '-' — a bare package.json/deno-task script name
+#         (`bun run build`, `node --run build`) has no such extension and
+#         is never on disk at that name, so it fails the existence check
+#         the same way a truly missing file would.
+#       - `bun test`/`deno test` [paths...]: every arg after `test` must be
+#         an existing path inside cwd; any flag denies.
+#     A `-`/`/dev/*`/`/proc/self/fd/*` path argument, a process-substitution
+#     `<(...)` argument, or a `<<` heredoc/here-string anywhere in the
+#     command all deny regardless of the form above — none of those is a
+#     real file on disk. `perl`, `ed`, and `xargs` stay denied outright for
+#     judge too — perl's flag surface (`-e`/`-n`/`-p`/`-i`, freely
+#     combinable) was judged too wide to allowlist safely, and neither `ed`
+#     nor `xargs` runs a script file the way an interpreter does.
+#
+#     Wrapper/prefix stripping (both lead and judge): the classification
+#     above (and the write-form denials just below it) runs against the
+#     command with leading `VAR=val` assignments and any of `env`,
+#     `command`, `exec`, `nice`, `nohup`, `time`, `timeout <duration>`, and
+#     `stdbuf` (each with their own best-effort flag handling) peeled off
+#     first — `env python3 -c 1`, `timeout 5 python3 -c 1`, `FOO=1 python3
+#     -c 1`, etc. are classified as the `python3 -c 1` they really are, not
+#     as `env`/`timeout`/an assignment falling through unclassified. A
+#     shell binary (`sh`, `bash`, `zsh`, `ksh`, `dash`, `ash`) found as the
+#     real command after that stripping denies outright for lead and
+#     judge, with or without `-c` — this guard does not parse a shell's own
+#     `-c` argument as a nested command line, so the only safe answer is to
+#     deny the shell invocation itself; `sh -c "echo x > f"` and similar
+#     never reach (and could not be reliably caught by) the write-form
+#     checks below. Best-effort, not a shell parser: an unrecognized or
+#     malformed wrapper invocation is left as its literal first word.
 #
 #     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
 #     any path is examined" — the recursive-delete check below (which calls
@@ -298,6 +347,158 @@ split_command() {
   quote_walk chain "$1"
 }
 
+# --- executor-judge allowlist helper -----------------------------------
+# Resolves $1 (a possible script/test-path argument) against $2 (the
+# payload's cwd) via path-guard-lib's normalize_path (mode "full" — an
+# interpreter opening this path for execution/reading follows a trailing
+# symlink the same way a file read would). Prints the resolved path and
+# returns 0 only when it exists AND sits at or inside the resolved cwd;
+# returns 1 (nothing printed) for a nonexistent path, an escape outside
+# cwd, an unexpanded shell metacharacter (normalize_path's own decision-8
+# scan denies those), a stdin/fd argument (`-`, anything under /dev/*,
+# /proc/self/fd/*), or an empty/absent cwd (fail closed rather than let an
+# empty cwd resolve to "/", which would make every absolute path pass the
+# containment check below).
+_judge_resolve_in_cwd() {
+  local tok="$1" cwd="$2" resolved resolved_cwd
+  [ -z "$cwd" ] && return 1
+  case "$tok" in
+    -|/dev/*|/proc/self/fd/*) return 1 ;;
+  esac
+  resolved="$(normalize_path "$tok" "$cwd" full)" || return 1
+  resolved_cwd="$(normalize_path "$cwd" "$cwd" full)" || return 1
+  case "$resolved" in
+    "$resolved_cwd"|"$resolved_cwd"/*)
+      printf '%s\n' "$resolved"
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# --- wrapper/prefix stripping (lead/judge file-write classification) ---
+# Mutates the caller's GLOBAL `tokens`/`tokens_masked` arrays in place
+# (Bash 3.2: no nameref) so a wrapper cannot launder a write-form or
+# interpreter invocation past the classification that follows. Peels, in a
+# loop (wrappers can chain, e.g. `nice nohup timeout 5 env FOO=1 python3
+# -c 1`): any number of leading `VAR=val` assignments, then one of
+# env/command/exec/nice/nohup/time/timeout/stdbuf with its own flags/args.
+# Best-effort, not a shell parser: an unrecognized or malformed wrapper
+# invocation is left as-is, at its literal first word.
+strip_command_wrappers() {
+  local progressed=1 t drop_extra
+  while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
+    progressed=0
+    if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
+      tokens=("${tokens[@]:1}")
+      tokens_masked=("${tokens_masked[@]:1}")
+      progressed=1
+      continue
+    fi
+    case "${tokens[0]##*/}" in
+      env)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # env's own flags and any number of VAR=val assignments before the
+        # real command; -u NAME takes a following bare arg (best-effort:
+        # drop one extra token for it).
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          if [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
+            tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+          elif [ "${t:0:1}" = "-" ]; then
+            drop_extra=0
+            [ "$t" = "-u" ] && drop_extra=1
+            tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+            if [ "$drop_extra" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; then
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+            fi
+          else
+            break
+          fi
+        done
+        progressed=1
+        ;;
+      command)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; do
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        done
+        progressed=1
+        ;;
+      exec|nohup)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        progressed=1
+        ;;
+      nice)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          case "${tokens[0]}" in
+            -n)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              fi
+              ;;
+            -[0-9]*)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+          esac
+        fi
+        progressed=1
+        ;;
+      time)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]}" = "-p" ]; then
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        fi
+        progressed=1
+        ;;
+      timeout)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          case "$t" in
+            -s|-k)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              fi
+              ;;
+            --signal=*|--kill-after=*|--preserve-status|--foreground|-v|--verbose)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+            *) break ;;
+          esac
+        done
+        # the required DURATION positional
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        fi
+        progressed=1
+        ;;
+      stdbuf)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          case "$t" in
+            -i|-o|-e)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              fi
+              ;;
+            -i*|-o*|-e*)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+            *) break ;;
+          esac
+        done
+        progressed=1
+        ;;
+    esac
+  done
+}
+
 # --- read stdin once, tolerate absent/malformed input by allowing ---
 input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
@@ -525,115 +726,246 @@ while IFS= read -r segment; do
 
   # --- file-write denial (executor-lead and executor-judge only) ---
   if [ "$deny_writes" -eq 1 ]; then
+    # Wrapper/prefix stripping runs FIRST, mutating tokens/tokens_masked in
+    # place, so every check below (this block only — the shared
+    # irreversible-command checks above stay on the original tokens/cmd0)
+    # classifies the command a wrapper would otherwise launder past it.
+    # cmd0 is recomputed from the now-possibly-shorter tokens[0]; an empty
+    # tokens (e.g. the whole segment was just `FOO=bar`, or `env` with
+    # nothing after it) sets cmd0 to empty, matching no case below.
+    strip_command_wrappers
+    if [ "${#tokens[@]}" -gt 0 ]; then
+      cmd0="${tokens[0]##*/}"
+    else
+      cmd0=""
+    fi
+
     # any rm (not just recursive-force, already covered above) deletes a file
     if [ "$cmd0" = "rm" ]; then
       deny "rm deletes a file — this executor may not write, create, move, or delete files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
     fi
 
     case "$cmd0" in
+      sh|bash|zsh|ksh|dash|ash)
+        deny "$cmd0 is a shell invocation — this guard does not parse a shell's own -c argument or script as a nested command line, so it cannot classify what runs inside it; running a shell here would launder any write-form or interpreter invocation past every check in this file. This executor may not invoke a shell via Bash."
+        ;;
       cp|mv|install|touch|mkdir|truncate|tee|patch)
         deny "$cmd0 creates, overwrites, or moves a file — this executor may not write files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
         ;;
-      python|python2|python3|node|nodejs|deno|bun|perl)
-        # Maintainer decision 2026-09-26 (option A): executor-judge must be
-        # able to re-run gates (its body, agents/executor-judge.md:104, and
-        # Core Law 3, require it), so JUDGE ONLY is narrowed here to "may run
-        # an existing script FILE or module" — never inline/stdin code. Lead
-        # takes the else branch below, unchanged from today's blanket denial.
+      python|python2|python3|node|nodejs|deno|bun)
+        # Maintainer decision 2026-09-26 (option A), tightened 2026-09-27 to
+        # a strict ALLOWLIST (see the header comment for the full shape):
+        # executor-judge must be able to re-run gates (agents/executor-
+        # judge.md:104, Core Law 3), but only through one of a small set of
+        # positively-enumerated forms — everything else denies, including
+        # every combined-short-flag or wrapped-flag form a blocklist would
+        # have had to enumerate one at a time. Lead takes the else branch
+        # below, unchanged blanket denial regardless of args.
         if [ "$is_judge" -eq 1 ]; then
-          inline=0
-          has_arg=0
-          want_module=0
-          idx=0
-          for tok in "${tokens[@]:1}"; do
-            idx=$((idx + 1)) # tok is tokens[idx] (tokens[0] is cmd0 itself)
-            mtok="${tokens_masked[$idx]}"
-            case "$cmd0" in
-              python|python2|python3)
-                # -m is allowed only for a test-runner module (this decision:
-                # only these three re-run a gate; every other module — pip,
-                # json.tool, http.server, ... — does something else, arbitrary
-                # code/side effects/writes, by another name).
-                if [ "$want_module" -eq 1 ]; then
-                  want_module=0
-                  case "$tok" in
-                    pytest|unittest|doctest) : ;;
-                    *) inline=1 ;;
-                  esac
-                fi
-                case "$tok" in
-                  -c|-c*) inline=1 ;; # -c / glued -c'code' runs inline code
-                  -m) want_module=1 ;; # module name is the NEXT token
-                  -m?*) # glued form, e.g. -mpytest
-                    case "${tok#-m}" in
-                      pytest|unittest|doctest) : ;;
-                      *) inline=1 ;;
+          ok=0
+          n=${#tokens[@]}
+          case "$cmd0" in
+            python|python2|python3)
+              if [ "$n" -ge 2 ]; then
+                t1="${tokens[1]}"
+                case "$t1" in
+                  -m)
+                    if [ "$n" -ge 3 ]; then
+                      case "${tokens[2]}" in
+                        pytest|unittest)
+                          ok=1
+                          idx=3
+                          while [ "$idx" -lt "$n" ]; do
+                            tok="${tokens[$idx]}"
+                            case "$tok" in
+                              -q|-qq|-v|-vv|-x|-s|--no-header|-l|--lf|--ff) : ;;
+                              --tb=short|--tb=long|--tb=line|--tb=no|--tb=native) : ;;
+                              -r?*) : ;; # -r<chars> glued, e.g. -rA, -rfE
+                              -k=*) : ;;
+                              -k)
+                                idx=$((idx + 1))
+                                [ "$idx" -lt "$n" ] || { ok=0; break; }
+                                ;;
+                              -m)
+                                # a pytest marker expression — only ever
+                                # reached here, after `-m pytest`/`-m
+                                # unittest` already consumed python's own
+                                # -m, so never confused with it.
+                                idx=$((idx + 1))
+                                if [ "$idx" -ge "$n" ] || [[ "${tokens[$idx]}" == -* ]]; then
+                                  ok=0; break
+                                fi
+                                ;;
+                              -*)
+                                ok=0; break
+                                ;;
+                              *)
+                                # existing path, dir, or path::nodeid inside
+                                # cwd — the nodeid suffix past `::` is never
+                                # inspected, only the path before it.
+                                _judge_resolve_in_cwd "${tok%%::*}" "$cwd" >/dev/null || { ok=0; break; }
+                                ;;
+                            esac
+                            idx=$((idx + 1))
+                          done
+                          ;;
+                        # `-m doctest`: doctest can execute arbitrary code
+                        # in any .py docstring it's pointed at; no bound was
+                        # found safe enough to allow it — denied outright.
+                        # Every other module (pip, json.tool, http.server,
+                        # ...) denies the same way, by not matching here.
+                      esac
+                    fi
+                    ;;
+                  -*) : ;; # any other leading flag rules out both forms
+                  *)
+                    case "$t1" in
+                      *.py)
+                        case "${tokens_masked[1]}" in
+                          '<('*) : ;;
+                          *)
+                            resolved="$(_judge_resolve_in_cwd "$t1" "$cwd")" && [ -f "$resolved" ] && ok=1
+                            ;;
+                        esac
+                        ;;
                     esac
                     ;;
                 esac
-                ;;
-              node|nodejs)
-                case "$tok" in
-                  -e|--eval|--eval=*|-p|--print|--print=*) inline=1 ;;
+              fi
+              ;;
+            node|nodejs)
+              if [ "$n" -ge 2 ]; then
+                t1="${tokens[1]}"
+                case "$t1" in
+                  -*) : ;;
+                  *)
+                    case "$t1" in
+                      *.js|*.mjs|*.cjs)
+                        case "${tokens_masked[1]}" in
+                          '<('*) : ;;
+                          *)
+                            resolved="$(_judge_resolve_in_cwd "$t1" "$cwd")" && [ -f "$resolved" ] && ok=1
+                            ;;
+                        esac
+                        ;;
+                    esac
+                    ;;
                 esac
-                ;;
-              bun)
-                case "$tok" in
-                  -e|--eval|--eval=*) inline=1 ;;
+              fi
+              ;;
+            bun)
+              if [ "$n" -ge 2 ]; then
+                t1="${tokens[1]}"
+                case "$t1" in
+                  run)
+                    if [ "$n" -ge 3 ]; then
+                      t2="${tokens[2]}"
+                      case "$t2" in
+                        -*) : ;;
+                        *)
+                          case "$t2" in
+                            *.js|*.ts|*.mjs|*.cjs|*.tsx)
+                              case "${tokens_masked[2]}" in
+                                '<('*) : ;;
+                                *)
+                                  resolved="$(_judge_resolve_in_cwd "$t2" "$cwd")" && [ -f "$resolved" ] && ok=1
+                                  ;;
+                              esac
+                              ;;
+                          esac
+                          ;;
+                      esac
+                    fi
+                    ;;
+                  test)
+                    ok=1
+                    idx=2
+                    while [ "$idx" -lt "$n" ]; do
+                      tok="${tokens[$idx]}"
+                      case "$tok" in
+                        -*) ok=0; break ;;
+                      esac
+                      _judge_resolve_in_cwd "$tok" "$cwd" >/dev/null || { ok=0; break; }
+                      idx=$((idx + 1))
+                    done
+                    ;;
+                  -*) : ;;
+                  *)
+                    # a bare package.json script name (e.g. `bun build`) has
+                    # no .js/.ts/... extension and is never on disk at that
+                    # name, so it fails the extension/existence check below
+                    # the same way a truly missing script would.
+                    case "$t1" in
+                      *.js|*.ts|*.mjs|*.cjs|*.tsx)
+                        case "${tokens_masked[1]}" in
+                          '<('*) : ;;
+                          *)
+                            resolved="$(_judge_resolve_in_cwd "$t1" "$cwd")" && [ -f "$resolved" ] && ok=1
+                            ;;
+                        esac
+                        ;;
+                    esac
+                    ;;
                 esac
-                ;;
-              perl)
-                # -M*/-I* (module/include-path, e.g. -Mstrict) take an
-                # attached value that can innocently contain e/n/p/i (e.g.
-                # "strict") — excluded before the broad scan below so they
-                # never false-positive as an inline-code flag.
-                case "$tok" in
-                  -M*|-I*) : ;;
-                  -*[eEnpi]*) inline=1 ;; # -e/-E/-n/-p/-i, alone or combined (-pi, -ne, ...)
+              fi
+              ;;
+            deno)
+              if [ "$n" -ge 3 ] && [ "${tokens[1]}" = "run" ]; then
+                t2="${tokens[2]}"
+                case "$t2" in
+                  -*) : ;; # any permission or other flag before the script denies
+                  *)
+                    case "$t2" in
+                      *.ts|*.js)
+                        case "${tokens_masked[2]}" in
+                          '<('*) : ;;
+                          *)
+                            resolved="$(_judge_resolve_in_cwd "$t2" "$cwd")" && [ -f "$resolved" ] && ok=1
+                            ;;
+                        esac
+                        ;;
+                    esac
+                    ;;
                 esac
-                ;;
-            esac
-            # a "script" argument that is really a stdin/fd path hands the
-            # interpreter piped/redirected code the same as -c/-e — denied
-            # for every interpreter here, not just python. Checked on the
-            # RAW token (not masked): the interpreter receives this exact
-            # path string whether or not the shell quoted it, so a quoted
-            # "/dev/stdin" is exactly as much a stdin read as an unquoted one.
-            case "$tok" in
-              -|/dev/stdin|/dev/fd/*|/proc/self/fd/*|/dev/tty) inline=1 ;;
-            esac
-            # process substitution used as the script argument (<(...)) feeds
-            # a live pipe, the same class of "not a real file" as the stdin/fd
-            # paths above — checked on the MASKED token so a literal quoted
-            # "<(" inside an argument can never trip this.
-            case "$mtok" in
-              '<('*) inline=1 ;;
-            esac
-            case "$tok" in
-              -*) : ;;
-              *) has_arg=1 ;;
-            esac
-          done
-          # deno's inline form is a subcommand, not a flag
-          [ "$cmd0" = "deno" ] && [ "${tokens[1]:-}" = "eval" ] && inline=1
-          # heredoc/here-string feeds code the same as -c/-e/stdin — checked
-          # on the masked tokens so a literal '<<' inside a quoted argument
-          # (never a real redirect) can't trip this.
-          for mtok in "${tokens_masked[@]:1}"; do
-            case "$mtok" in
-              *'<<'*) inline=1 ;;
-            esac
-          done
-          if [ "$inline" -eq 1 ] || [ "$has_arg" -eq 0 ]; then
-            deny "$cmd0 with inline or stdin code (no existing script file/module argument) is not permitted via Bash for this executor — re-run an existing script file or module instead, e.g. \`$cmd0 path/to/script\`, \`python3 -m pytest\`."
+              elif [ "$n" -ge 2 ] && [ "${tokens[1]}" = "test" ]; then
+                ok=1
+                idx=2
+                while [ "$idx" -lt "$n" ]; do
+                  tok="${tokens[$idx]}"
+                  case "$tok" in
+                    -*) ok=0; break ;;
+                  esac
+                  _judge_resolve_in_cwd "$tok" "$cwd" >/dev/null || { ok=0; break; }
+                  idx=$((idx + 1))
+                done
+              fi
+              # every other deno subcommand (fmt, eval, add, install, ...)
+              # denies by never setting ok=1 above.
+              ;;
+          esac
+          if [ "$ok" -eq 1 ]; then
+            # a heredoc/here-string anywhere feeds code/data the same class
+            # of way as -c/-e/stdin, regardless of which allowed form
+            # matched above — checked on masked tokens so a literal '<<'
+            # inside a quoted argument (never a real redirect) can't trip
+            # this.
+            for mtok in "${tokens_masked[@]:1}"; do
+              case "$mtok" in
+                *'<<'*) ok=0 ;;
+              esac
+            done
           fi
-          # else: allow, e.g. `python3 scripts/x.py`, `python3 -m pytest`,
-          # `node scripts/x.js`, `bun run x.ts`, `deno run x.ts`.
+          if [ "$ok" -eq 0 ]; then
+            deny "$cmd0 with this form is not permitted via Bash for this executor — only \`$cmd0 <script>\` (an existing script file inside cwd, right extension, no flag before it), \`python3 -m pytest|unittest\` with existing paths inside cwd and a narrow allowlisted flag set, \`bun run <script>\`/\`bun test <paths>\`, or \`deno run <script>\`/\`deno test <paths>\` is permitted — re-run an existing script or test this way instead."
+          fi
+          # else: allow, e.g. `python3 scripts/x.py`, `python3 -m pytest
+          # tests/harness -q`, `node scripts/x.js`, `bun run x.ts`, `bun
+          # test tests/`, `deno run x.ts`, `deno test tests/`.
         else
           deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
         fi
         ;;
-      ed|xargs)
+      perl|ed|xargs)
         deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
         ;;
       sed)
