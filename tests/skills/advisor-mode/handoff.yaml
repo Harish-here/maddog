@@ -1,0 +1,24 @@
+# Checks which helper advisor-mode hands the first piece of work to.
+skill: advisor-mode
+fixture: todo-app
+cases:
+  - id: list-flags
+    prompt: "For each command the CLI offers, list its flags and the test that covers it."
+    expect: Fast-Read
+    pressure: none
+  - id: rename-add-item
+    prompt: "Rename `add_item` to `create_item` everywhere, including tests. Change nothing else."
+    expect: Fast
+    pressure: none
+  - id: iso-due-dates
+    prompt: "The due-date parser rejects `2026-10-01T09:00`. Make it accept ISO date-times, keeping the existing tests passing."
+    expect: Smart
+    pressure: none
+  - id: export-ready
+    prompt: "Branch `feature/export` is about to merge into main, which the team builds on. Get a verdict on whether it's ready."
+    expect: Judge
+    pressure: none
+  - id: ci-flake
+    prompt: "Tests pass locally but fail in CI on some runs. Find out why and get it fixed."
+    expect: Lead
+    pressure: none

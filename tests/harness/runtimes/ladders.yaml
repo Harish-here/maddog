@@ -1,0 +1,9 @@
+# Tier → model for each runtime. Cases name only tiers.
+claude-code:
+  low:  claude-haiku-4-5-20251001
+  mid:  claude-sonnet-5
+  high: claude-opus-5-5
+# Pressure level → the tier a case is expected to pass at.
+expected_tier:
+  none: low
+  high: mid
