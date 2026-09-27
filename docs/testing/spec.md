@@ -61,7 +61,7 @@ reruns.
 
 | Result | Meaning |
 |---|---|
-| PASS | The first helper called is the expected role, **and** before that call there are no edits or file writes, and at most one non-skill tool call. Loading a skill and one short read are allowed — this follows the skill's own "Dispatch First" rule. |
+| PASS | The first helper called is the expected role, **and** before that call there are no edits or file writes, and at most one non-skill tool call. Loading a skill and one short read are allowed — this follows the skill's own route-line rule (the ROUTE LINE fragment). |
 | FAIL | The wrong helper is called, or the advisor did the work itself (an edit or a write) before handing off. |
 | VOID | A command was refused. |
 
@@ -306,10 +306,10 @@ The harness enforces isolation, VOID runs, the `main` baseline, and the
 3-run minimum as defaults no case can switch off. There is no
 `tests/CLAUDE.md`.
 
-### Proposed doc edits
+### Doc edits (applied in 96d5c2d)
 
-These are recorded here verbatim as **PROPOSED**. They need the user's
-approval and are not applied by this spec:
+These were proposed here and applied, with the user's approval, in commit
+96d5c2d:
 
 - The adapter-set line in the root `CLAUDE.md` becomes: "- Adapter set —
   the only paths where runtime mechanics may live: agent and skill

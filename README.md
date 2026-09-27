@@ -153,8 +153,9 @@ the workflow via its `scriptPath`.
 ### Skills (`skills/`)
 
 - **advisor-mode** — runs a session as the Advisor: classifies work by
-  judgment shape, delegates it or does small work directly, and accepts
-  what comes back.
+  judgment shape, routes every slice to an executor hand, and checks what
+  comes back. Run it on a mid-tier model or above; a low-tier model does
+  not hold the role.
 - **efficient-md** — shapes a markdown artifact's length and structure by how
   long it stays loaded and who reads it, agent or person (AGENTS.md or README,
   a memory index, a frontmatter description, a SKILL.md body, a brief, a state
