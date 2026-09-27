@@ -167,8 +167,9 @@ the workflow via its `scriptPath`.
   execution → QA pipeline for one feature; not for small tweaks or single
   bug fixes.
 - **section-by-section** — walks one existing skill or agent file with the
-  user, section by section; the user closes each section with one verdict,
-  and the run produces a draft and a verdict ledger, never editing the target.
+  user, section by section; the user closes each section with one or more
+  verdicts, then the whole reassembled file is checked against its purpose;
+  the run produces a draft and a verdict ledger, never editing the target.
 
 `author-agent`, `release`, and `review-agent` live under `.claude/skills/`
 and are repo-internal maintainer tooling — they never ship in the plugin.
