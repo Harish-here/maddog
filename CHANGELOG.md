@@ -7,31 +7,33 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [4.0.0] - 2026-09-27
 
 ### Breaking
-- `skills/advisor-mode/SKILL.md` — the Advisor no longer does small work itself: every slice goes to a hand, and the "slice you keep" allowance is removed. Before the first tool call on a slice it states a route line, `slice → SHAPE → hand`, in its reply; it may take one look only when the task as written cannot decide the shape (086f9b8, f593c7f)
-- advisor-mode now needs a mid-tier model or above. In two full model-driven runs on Sonnet, a draft just before this text scored 32/45 and 31/45 against main's 9/45 and 8/45; on Haiku a draft scored 4/18 against main's 8/18, so Haiku is not a supported Advisor (README states the minimum) (4bbafb5, 0f75e1e)
+- `skills/advisor-mode/SKILL.md` — the Advisor no longer does small work itself: every slice goes to a hand, and the "slice you keep" allowance is removed. Before the first tool call on a slice it states a route line, `slice → SHAPE → hand`, in its reply; it may take one look only when the task as written cannot decide the shape (bfa5cce, a4da7b5)
+- advisor-mode now needs a mid-tier model or above. In two full model-driven runs on Sonnet, a draft just before this text scored 32/45 and 31/45 against main's 9/45 and 8/45; on Haiku a draft scored 4/18 against main's 8/18, so Haiku is not a supported Advisor (README states the minimum) (98e8d1f, ea09bff)
 
 ### Changed
-- advisor-mode and `agents/executor-lead.md` carry the new ROUTE and ROUTE LINE fragments: MECHANICAL means every decision is already made, by the task or an earlier return, none by the router; a choice the task leaves open goes to the hand; the old "unsure → Fast-Read" fallback is gone. Lead's own Dispatch First section and its kept single read are removed, and Lead keeps an evolving slice by cutting it into smaller slices, each with its own route line (086f9b8, 623bcb6)
-- advisor-mode Outcome proposes from the task's own words and never reads to learn the scope; an unknown scope routes as a shape (086f9b8)
-- `agents/executor-fast-read.md`, `executor-fast.md`, `executor-smart.md`, `executor-judge.md`, `executor-lead.md` — rewritten through section-by-section reviews: the family opening and precedence line, pattern tables (Pattern · Applies when · Law) with one or several patterns per task, Fast-Read's RECON split into SWEEP and TRACE, Smart classifying on every pass, a shared Boundary stop for Lead, Smart and Fast, and Return blocks that mark cuts in place and keep secrets out of every field (213428d, b8aefd4, ad490ff, 2367deb, bb2ba8d, cc3fc8e, c9900c1, 9954c63, fd38c4b)
-- `executor-judge` gains the Skill tool, so it can load `efficient-md` before dispatching (c4f28f4)
-- product agents name SWEEP where they dispatch executor-fast-read (e819639)
+- advisor-mode and `agents/executor-lead.md` carry the new ROUTE and ROUTE LINE fragments: MECHANICAL means every decision is already made, by the task or an earlier return, none by the router; a choice the task leaves open goes to the hand; the old "unsure → Fast-Read" fallback is gone. Lead's own Dispatch First section and its kept single read are removed, and Lead keeps an evolving slice by cutting it into smaller slices, each with its own route line (bfa5cce, 06cc5d9)
+- advisor-mode Outcome proposes from the task's own words and never reads to learn the scope; an unknown scope routes as a shape (bfa5cce)
+- `agents/executor-fast-read.md`, `executor-fast.md`, `executor-smart.md`, `executor-judge.md`, `executor-lead.md` — rewritten through section-by-section reviews: the family opening and precedence line, pattern tables (Pattern · Applies when · Law) with one or several patterns per task, Fast-Read's RECON split into SWEEP and TRACE, Smart classifying on every pass, a shared Boundary stop for Lead, Smart and Fast, and Return blocks that mark cuts in place and keep secrets out of every field (c43f52e, 3c802fc, 2b94b23, f935e26, 03e2326, 6ee842e, 6e0d303, 6a63531, df14d11)
+- `executor-judge` gains the Skill tool, so it can load `efficient-md` before dispatching (dd01992)
+- product agents name SWEEP where they dispatch executor-fast-read (9a83be9)
 
 ### Fixed
-- `scripts/executor-guard.sh` — Judge may re-run gates through a strict allowlist: an existing `.py`, `.js` or `.ts` script inside the workspace with no interpreter flag before it, `python -m pytest|unittest` with read-only options, and `bun test` / `deno test` on existing paths. Everything else is denied for Judge, including combined flags such as `-Ic`, `node -pe`, package-manager subcommands, pytest options that write, and `doctest`. For Lead and Judge, shells (`sh -c` and kin) are denied and wrapper prefixes (`env`, `nice`, `timeout`, `VAR=val` …) are stripped before an interpreter is classified; a regression suite covers every case (`tests/guard/`) (c20d27f, 443e08b, 8fa96c5)
+- `scripts/executor-guard.sh` — for executor-lead and executor-judge, shells (`sh -c` and kin) are denied, and wrapper prefixes (`env`, `command`, `exec`, `nice`, `nohup`, `time`, `timeout`, `stdbuf`, `VAR=val`) are stripped before a command is classified; a wrapper flag the guard does not fully parse is denied. executor-judge is denied every interpreter, as before. A regression suite covers the cases (`tests/guard/`) (bd17a96)
 
 ### Added
-- `scripts/fragment-check.py` — verifies every shared fragment in `docs/executor-family/constitution.md` is carried byte-identically by each file that holds it (30e2e5f)
-- `docs/executor-family/constitution.md` — new: the shared fragments and which files carry them, ROLE PROPERTIES, and a SYSTEM MODEL section (30e2e5f, 65c20a3, 086f9b8, 4cfd8db)
-- `tests/` — a model-driven test harness (repo-internal, not shipped): scores which hand the Advisor calls first from recorded tool calls, compares the branch with `main`, and supports pressure kinds (none, user, decision), `--tier`, `--ladder`, `--case`, `--pressure`, `--runs`, `--jobs`, `--skill-file`, per-run cost, and cached `main` results (d09b4c1 … d1c8843)
+- `scripts/fragment-check.py` — verifies every shared fragment in `docs/executor-family/constitution.md` is carried byte-identically by each file that holds it (7a9f99a)
+- `docs/executor-family/constitution.md` — new: the shared fragments and which files carry them, ROLE PROPERTIES, and a SYSTEM MODEL section (7a9f99a, 0ee90f2, bfa5cce, aea8acf)
+- `tests/` — a model-driven test harness (repo-internal, not shipped): scores which hand the Advisor calls first from recorded tool calls, compares the branch with `main`, and supports pressure kinds (none, user, decision), `--tier`, `--ladder`, `--case`, `--pressure`, `--runs`, `--jobs`, `--skill-file`, per-run cost, and cached `main` results (55e1f12 … 3c62eb0)
 
 ### Known issues
 - The one-look rule does not hold reliably: on Sonnet, some runs take a second look before routing (list-flags, sqlite-dropin-decoy). Main fails the same cases.
 - Executor agents are not yet tested directly; the tests score only the Advisor's first handoff.
+- executor-judge cannot re-run a test gate itself: it is denied every interpreter, as on 3.x, though its instructions ask it to re-run gates. A dedicated gate-runner script is planned.
+- The guard does not catch every shell write form for Lead and Judge: `awk 'BEGIN{system(...)}'`, `sed -n '...w file'`, `find -exec` and git aliases pass, as on 3.x. The guard is not a security control.
 - The guard's irreversible-command checks (`git push --force`, `rm -r`, `git clean` …) still read only a command's first word, for every executor, so a wrapper such as `env git push --force` passes. This predates 4.0.0; the wrapper stripping above applies to the interpreter checks only.
 
 ### Docs
-- `PHILOSOPHY.md` holds beliefs only; the executor-family diagram moved to the constitution (4cfd8db)
+- `PHILOSOPHY.md` holds beliefs only; the executor-family diagram moved to the constitution (aea8acf)
 - `.claude-plugin/plugin.json` version 3.4.0 → 4.0.0
 
 ## [3.4.0] - 2026-09-27
