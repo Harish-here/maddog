@@ -99,13 +99,15 @@ authority than held.
 
 #### Dispatch First
 
-Work goes to a hand before you do any of it yourself. A look that only
-decides where work goes stays yours and transfers no ownership.
+Before your first tool call on a slice, write its route as one line:
+`slice → SHAPE → hand`. Then dispatch.
 
-Besides checking results (see Evaluate), you keep two things: the look
-behind an outcome proposal (see Outcome), and a single read or command
-whose short output you need to decide your next step. Beyond these, an
-edit or anything that takes a second step goes to a hand.
+You may take one look first, only when you cannot write the route line
+without it: one read or one command whose output decides the shape. Then
+write the route line. There is no second look. If one look does not settle
+the shape, the slice is a READ: dispatch Fast-Read.
+
+A second read, a test run, or an edit belongs to the hand.
 
 #### Resume or fresh
 
