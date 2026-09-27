@@ -222,7 +222,7 @@ those that have not.
 | P6 | Is an orchestrator that is itself dispatched with one package | Lead | No nesting or self-judging |
 | P7 | Work whose next step depends on discovery | Lead | PLAN, CAMPAIGN, DIAGNOSE, DELIVER; the after-PLAN rule |
 | P8 | Can exhaust context mid-package with state worth keeping | Lead | early return with a state file |
-| P9 | Holds no write capability (guard-enforced) | Lead, Judge | the kept single read or read-only command; Lead: every change goes to a hand; Judge: fixes nothing |
+| P9 | Holds no write capability (guard-enforced) | Lead, Judge | Lead: ROUTE LINE's one look, every change to a hand; Judge: the kept single read or read-only command, fixes nothing |
 | P10 | Sends work to hands | Advisor, Lead, Smart, Judge | CONTRACT, VERIFY |
 | P11 | Receives authority only through a dispatch | Lead, Smart, Judge, Fast, Fast-Read | Lead, Smart, Fast: BOUNDARY STOP; Judge: Dispatch stop; Fast-Read: none, since it can change nothing (P30) |
 | P12 | Runs or dispatches hard-to-reverse actions | Advisor, Lead, Smart, Fast | Act alone, worded per holder |
