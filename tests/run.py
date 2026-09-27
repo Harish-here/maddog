@@ -13,12 +13,13 @@ Without --tier or --ladder, each case runs once, at its own expected tier
 (no climbing). --ladder opts into the old climb from low up to max_tier.
 """
 import argparse
+import shutil
 import signal
 import sys
 from datetime import datetime
 from pathlib import Path
 
-from harness.core.baseline import main_sha, plugin_versions, remove_baseline
+from harness.core.baseline import main_sha, plugin_versions, remove_baseline, branch_with_skill
 from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, expected_tier, load_cases, load_ladders
 from harness.core.fixture import SlotPool, make_workdir, remove_workdir
 from harness.core.maincache import CACHE_DIRNAME, MainCache, hash_file
@@ -26,6 +27,11 @@ from harness.core.report import render, write_results
 from harness.core.runner import MIN_RUNS, run_case
 from harness.core.sweep import sweep
 from harness.runtimes import adapter_source_path, get_adapter
+
+
+# Overridable by tests: the root for result output and cache.
+# Tests monkeypatch this to a temp folder to avoid cluttering tests/results/.
+RESULTS_DIR = TESTS_DIR / "results"
 
 
 class Stopped(Exception):
@@ -65,12 +71,15 @@ def main(argv=None) -> int:
                         help="run up to this many branch/main attempts at once per case/tier (default 1: sequential)")
     parser.add_argument("--fresh-main", action="store_true",
                         help="ignore and overwrite any cached main run for the selected cases")
+    parser.add_argument("--skill-file", type=Path, help="test this draft skill file instead of the branch's; agents and everything else come from this tree")
     args = parser.parse_args(argv)
 
     if args.ladder and args.tier:
         parser.error("--ladder and --tier are mutually exclusive")
     if args.jobs < 1:
         parser.error("--jobs must be at least 1")
+    if args.skill_file and not args.skill_file.exists():
+        parser.error(f"skill file does not exist: {args.skill_file}")
 
     for folder in sweep(TESTS_DIR.parent):
         print(f"swept leftover {folder}")
@@ -86,11 +95,27 @@ def main(argv=None) -> int:
     if not cases:
         parser.error(f"no cases match the filters in {case_file}")
 
+    # If --skill-file is provided, validate that all cases use the same skill.
+    if args.skill_file:
+        skills = {c.skill for c in cases}
+        if len(skills) > 1:
+            parser.error(f"--skill-file requires all cases to use the same skill, but got: {', '.join(sorted(skills))}")
+        skill_id = cases[0].skill
+
     ladders = load_ladders()
     adapter = get_adapter(args.runtime, ladders)
     plugins = plugin_versions("main")
+
+    # If --skill-file is given, replace the branch entry with a temp folder
+    # containing the skill file. skillfile_root tracks it for cleanup.
+    skillfile_root = None
+    if args.skill_file:
+        skillfile_plugin = branch_with_skill(args.skill_file, skill_id)
+        skillfile_root = skillfile_plugin.parent
+        plugins["branch"] = skillfile_plugin
+
     main_cache = MainCache(
-        cache_dir=TESTS_DIR / "results" / CACHE_DIRNAME,
+        cache_dir=RESULTS_DIR / CACHE_DIRNAME,
         sha=main_sha("main"),
         runtime=args.runtime,
         model_ladder=ladders[args.runtime],
@@ -117,15 +142,23 @@ def main(argv=None) -> int:
         finally:
             remove_baseline(plugins)
             slot_pool.close()
+            if skillfile_root is not None:
+                shutil.rmtree(skillfile_root, ignore_errors=True)
     except Stopped as e:
         print(f"{e}; cleaned up and exiting", file=sys.stderr)
+        if skillfile_root is not None:
+            shutil.rmtree(skillfile_root, ignore_errors=True)
         return 1
     finally:
         signal.signal(signal.SIGTERM, previous_term)
         signal.signal(signal.SIGINT, previous_int)
 
     report = render(results, ladders, args.runtime, ladder=args.ladder)
-    out_dir = TESTS_DIR / "results" / datetime.now().strftime("%Y-%m-%dT%H%M%S")
+    if args.skill_file:
+        lines = report.split("\n")
+        lines.insert(2, f"Branch skill text: {args.skill_file}")
+        report = "\n".join(lines)
+    out_dir = RESULTS_DIR / datetime.now().strftime("%Y-%m-%dT%H%M%S")
     write_results(out_dir, results, report)
     print(report)
     print(f"results: {out_dir}")

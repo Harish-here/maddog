@@ -16,6 +16,7 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --ladder
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --fresh-main
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --jobs 3
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier mid --jobs 6 --skill-file .claude/reviews/advisor-mode.draft.md
 
 By default each case runs 3 times on this working tree and 3 times on
 `main`, once, at its own expected tier — no climbing. A case's expected
@@ -56,6 +57,13 @@ so holding both constant lets the runtime's own prompt cache actually
 hit across runs, instead of missing on the first differing byte every
 time. Slot folders are removed when the run finishes, including on a
 stop signal (below).
+
+### `--skill-file`: testing a draft skill
+
+`--skill-file <path>` tests a draft of the skill without editing it;
+agents and everything else come from this working tree. The branch runs
+use the given file instead of the real skill, while main still runs from
+the latest commit. All selected cases must have the same `skill`.
 
 ### Stopping a run
 

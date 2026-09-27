@@ -88,6 +88,12 @@ Every result is reported next to the same cases run against `main` (a
 plugin copy taken from a git worktree of `main`). This separates the
 effect of an edit under test from ordinary run-to-run variance.
 
+## Testing a draft skill
+
+`--skill-file <path>` tests a skill draft without editing it: the branch
+runs use the given file instead of the real skill, while main still runs
+from the latest commit. All selected cases must have the same `skill`.
+
 ## Model ladder
 
 Models are grouped into three **tiers** — low, mid, high — from weakest to

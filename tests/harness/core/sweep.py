@@ -14,7 +14,7 @@ from pathlib import Path
 
 MARKER_NAME = ".maddog-owner-pid"
 RUN_SLOT_PREFIX = "maddog-run-"
-PREFIXES = (RUN_SLOT_PREFIX, "maddog-test-", "maddog-baseline-")
+PREFIXES = (RUN_SLOT_PREFIX, "maddog-test-", "maddog-baseline-", "maddog-skillfile-")
 STALE_AGE_SECONDS = 24 * 60 * 60
 
 

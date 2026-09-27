@@ -10,6 +10,38 @@ from harness.core import sweep
 REPO_ROOT = TESTS_DIR.parent
 
 
+def branch_with_skill(skill_file: Path, skill_id: str) -> Path:
+    """Create a temporary plugin copy with a replaced skill file.
+
+    Creates a temp folder with maddog-skillfile- prefix, writes the sweep PID
+    marker, copies the repo's plugin surface (agents, skills, commands, hooks,
+    scripts, workflows, .mcp.json, .claude-plugin), and overwrites the named
+    skill's SKILL.md with the given file's contents. Returns the plugin path.
+    """
+    root = Path(tempfile.mkdtemp(prefix="maddog-skillfile-")).resolve()
+    sweep.write_marker(root)
+    plugin = root / "plugin"
+    plugin.mkdir(parents=True, exist_ok=True)
+
+    # Copy plugin surface: everything except .git, tests, docs, and git-ignored files.
+    # Minimal set: .claude-plugin, agents, skills, commands, hooks, scripts, workflows, .mcp.json
+    for item_name in [".claude-plugin", "agents", "skills", "commands", "hooks", "scripts", "workflows", ".mcp.json"]:
+        src = REPO_ROOT / item_name
+        if src.exists():
+            dst = plugin / item_name
+            if src.is_file():
+                shutil.copy2(src, dst)
+            else:
+                shutil.copytree(src, dst)
+
+    # Overwrite the skill's SKILL.md with the given file.
+    skill_md = plugin / "skills" / skill_id / "SKILL.md"
+    skill_md.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(skill_file, skill_md)
+
+    return plugin
+
+
 def plugin_versions(ref: str = "main") -> dict[str, Path]:
     # resolve(): on macOS the temp dir sits under the /var symlink, and git
     # worktree list prints the real /private/var path.
