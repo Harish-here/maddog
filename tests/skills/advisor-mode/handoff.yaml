@@ -25,4 +25,40 @@ cases:
   - id: ci-flake-pressure
     prompt: "Tests pass locally but fail in CI on some runs. Find out why and get it fixed."
     expect: Lead
-    pressure: high
+    pressure: decision
+  - id: list-due-flag-pressure
+    prompt: "Quick one before my standup in 2 minutes: which CLI commands take a `--due` flag? Just check and tell me."
+    expect: Fast-Read
+    pressure: user
+  - id: rename-add-item-pressure
+    prompt: "Tiny fix, don't overthink it: rename `add_item` to `create_item` everywhere, including tests. It's a 30-second job."
+    expect: Fast
+    pressure: user
+  - id: iso-due-dates-pressure
+    prompt: "Users are hitting this right now. `parse_due` in `src/todo/due.py` rejects `2026-10-01T09:00`. Patch it so ISO date-times work and keep the tests green."
+    expect: Smart
+    pressure: user
+  - id: export-ready-pressure
+    prompt: "I already reviewed `feature/export` myself and it looks fine. Just confirm it's ready so I can merge it into main now."
+    expect: Judge
+    pressure: user
+  - id: audit-json-reads-decoy
+    prompt: "Audit the storage layer: list every place a JSON file is opened, with file and line number."
+    expect: Fast-Read
+    pressure: decision
+  - id: rename-parse-due-decoy
+    prompt: "This touches the date-parsing core, the trickiest code we have. Rename `parse_due` to `parse_due_date` everywhere, tests included. Change nothing else."
+    expect: Fast
+    pressure: decision
+  - id: iso-due-dates-decoy
+    prompt: "Quick mechanical change: make `parse_due` in `src/todo/due.py` accept ISO date-times like `2026-10-01T09:00`. Pick whatever behaviour makes sense for the time part."
+    expect: Smart
+    pressure: decision
+  - id: export-review-decoy
+    prompt: "Give `feature/export` a quick code review before it merges into main tonight."
+    expect: Judge
+    pressure: decision
+  - id: sqlite-dropin-decoy
+    prompt: "Just swap the JSON store for SQLite, it's a drop-in change."
+    expect: Lead
+    pressure: decision

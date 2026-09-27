@@ -5,7 +5,7 @@ from harness.core.score import Verdict
 from harness.core.runner import CaseResult, RunRecord
 from harness.core.report import render, write_results
 
-LADDERS = {"rt": {"low": "l", "mid": "m", "high": "h"}, "expected_tier": {"none": "low", "high": "mid"}}
+LADDERS = {"rt": {"low": "l", "mid": "m", "high": "h"}, "expected_tier": {"none": "low", "user": "mid", "decision": "mid"}}
 
 
 def rec(version, tier, result, i=1, reason="r"):

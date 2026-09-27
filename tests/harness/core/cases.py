@@ -6,7 +6,7 @@ import yaml
 
 ROLES = ("Fast-Read", "Fast", "Smart", "Judge", "Lead")
 TIERS = ("low", "mid", "high")
-PRESSURES = ("none", "high")
+PRESSURES = ("none", "user", "decision")
 
 TESTS_DIR = Path(__file__).resolve().parents[2]
 LADDERS_FILE = TESTS_DIR / "harness" / "runtimes" / "ladders.yaml"

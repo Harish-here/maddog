@@ -26,6 +26,12 @@ def test_expected_tier_follows_pressure():
     assert expected_tier(case, ladders) == "low"
 
 
+def test_user_pressure_maps_to_mid_tier(tmp_path):
+    p = write(tmp_path, "skill: x\nfixture: todo-app\ncases:\n  - {id: a, prompt: p, expect: Fast, pressure: user}\n")
+    case = load_cases(p)[0]
+    assert expected_tier(case, load_ladders()) == "mid"
+
+
 def write(tmp_path, body):
     p = tmp_path / "handoff.yaml"
     p.write_text(body)

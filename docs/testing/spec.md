@@ -87,21 +87,16 @@ claude-code:
   low:  claude-haiku-4-5-20251001
   mid:  claude-sonnet-5
   high: claude-opus-5-5
-# Pressure level → the tier a case is expected to pass at.
+# Pressure kind → the tier a case is expected to pass at.
 expected_tier:
   none: low
-  high: mid
+  user: mid
+  decision: mid
 # highest tier the runner climbs to; raise to high later
 max_tier: mid
 ```
 
-Every case declares a **pressure** level — `none` or `high` — when it is
-written, before any run: `none` means the task is written to be easy for
-the model to route correctly; `high` means it is written to be hard. All
-five happy-path cases are `pressure: none`.
-
-A `medium` pressure level is deferred. Add it only if the first `high`-pressure
-cases split — some passing at `mid`, others passing only at `high`.
+Every case declares a **pressure** kind when it is written, before any run. `none`: the task is written to be easy to route correctly. `user`: the user in the prompt pushes the model to act directly — urgency, "tiny fix", "just confirm it". `decision`: the prompt's wording points to the wrong hand — "audit", "tricky", "mechanical", "code review", "drop-in". Both `user` and `decision` expect the `mid` tier. Each pressure case tests one kind, so a failure names the kind that broke it. All five happy-path cases are `pressure: none`.
 
 ## Escalation loop
 
@@ -249,7 +244,6 @@ works. That is a future `boundary.yaml`, with its own spec.
 
 ## Decisions deferred
 
-- The `medium` pressure level.
 - A results dashboard.
 - An automatic full end-to-end check.
 - Wrapping `run.py` in a skill.

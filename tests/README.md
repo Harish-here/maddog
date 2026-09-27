@@ -38,7 +38,7 @@ Below the table, every failed or void run lists its events in order.
 ## Add a case
 
 Add an entry to the folder's `handoff.yaml`: `id`, `prompt`, `expect` (one of
-Fast-Read, Fast, Smart, Judge, Lead), `pressure` (`none` or `high`). Set
+Fast-Read, Fast, Smart, Judge, Lead), `pressure` (`none`, `user`, or `decision`). Set
 pressure before the first run. Optional: `expected_tier` plus `why`, only when
 a report showed the case needs a higher tier and you accepted that.
 
