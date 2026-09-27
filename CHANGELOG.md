@@ -18,7 +18,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - product agents name SWEEP where they dispatch executor-fast-read (e819639)
 
 ### Fixed
-- `scripts/executor-guard.sh` — Judge may run existing script files and test-runner modules (`pytest`, `unittest`, `doctest`) to re-run gates; inline and stdin code, and every other `python -m` module, stay denied (c20d27f, 443e08b)
+- `scripts/executor-guard.sh` — Judge may re-run gates through a strict allowlist: an existing `.py`, `.js` or `.ts` script inside the workspace with no interpreter flag before it, `python -m pytest|unittest` with read-only options, and `bun test` / `deno test` on existing paths. Everything else is denied for Judge, including combined flags such as `-Ic`, `node -pe`, package-manager subcommands, pytest options that write, and `doctest`. For Lead and Judge, shells (`sh -c` and kin) are denied and wrapper prefixes (`env`, `nice`, `timeout`, `VAR=val` …) are stripped before an interpreter is classified; a regression suite covers every case (`tests/guard/`) (c20d27f, 443e08b, 8fa96c5)
 
 ### Added
 - `scripts/fragment-check.py` — verifies every shared fragment in `docs/executor-family/constitution.md` is carried byte-identically by each file that holds it (30e2e5f)
@@ -28,6 +28,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ### Known issues
 - The one-look rule does not hold reliably: on Sonnet, some runs take a second look before routing (list-flags, sqlite-dropin-decoy). Main fails the same cases.
 - Executor agents are not yet tested directly; the tests score only the Advisor's first handoff.
+- The guard's irreversible-command checks (`git push --force`, `rm -r`, `git clean` …) still read only a command's first word, for every executor, so a wrapper such as `env git push --force` passes. This predates 4.0.0; the wrapper stripping above applies to the interpreter checks only.
 
 ### Docs
 - `PHILOSOPHY.md` holds beliefs only; the executor-family diagram moved to the constitution (4cfd8db)
