@@ -54,7 +54,7 @@ In scope:
 
 - one target file per run, by path: a `SKILL.md` or an agent definition file
 - a review scope: the whole file, or a named set of sections
-- the target's frontmatter description (`DESC`), named first, in the section
+- the target's frontmatter description (`DESC`), listed in the section
   map at Start, and closed at Assembly's Verify step, before the outline
 - the user's observations of how the target behaved — asked once, optional
 - outside files the user names as something the target relies on — asked
@@ -210,13 +210,14 @@ prose, not the rule count.
 
 Frontmatter: `disable-model-invocation: true` — a long interactive ritual, and
 auto-triggering it on "review this skill" would hijack a quick review — and
-`argument-hint: [path to SKILL.md or agent file]`. The description is 448
+`argument-hint: [path to SKILL.md or agent file]`. The description is 472
 characters, under the 500-character target in
 `.claude/skills/review-agent/references/description-standard.md` §3, and carries
 a claim naming the whole-file check alongside the section-by-section pass, a
 "Use when" trigger sentence, two redirects (against shaping a file by how long
 it stays loaded, with the efficient-md pointer guarded "where installed" per
-SBS-GATE-1 F4, and against authoring a new file) and the never-edits invariant.
+SBS-GATE-1 F4, and against authoring a new file, sent to "write that directly") and the
+never-edits invariant, in that order.
 It carries no procedure: an agent that acts on a description without loading
 the body must not be able to run the ritual from it.
 
@@ -369,10 +370,12 @@ itself with the user closing every verdict and a judge gate on the result.
 The run's draft and ledger were session-scratch and were not kept; the
 rulings R1–R7 survive in `docs/section-by-section/state.md`. Validation was
 the user closing every section, an independent judge gate on the draft
-(PASS WITH FIXES, six fixes closed), and the release reviewer. The
+(PASS WITH FIXES, all fixes closed), and the release reviewer. The
 description (`DESC`) was reopened at release review to bring it under the
 500-character target and to restore the efficient-md redirect guarded
-"where installed" (SBS-GATE-1 F4).
+"where installed" (SBS-GATE-1 F4), and again to restore the new-file
+redirect's disposition and the claim, trigger, redirects, invariant order
+(description-standard D-DESC-3).
 
 - **A section may carry several verdicts** (ruling R1, plan D2). The
   3.2.0–3.3.2 ordered, first-match test gave one verdict where several
@@ -428,7 +431,7 @@ deferred to after this release, at the user's instruction.
 
 Validation for 3.4.0 is the live run itself: the user closed every section,
 not a scenario run on a cheap model, and an independent judge gate reviewed
-the finished draft against the target before it landed (PASS WITH FIXES, six
+the finished draft against the target before it landed (PASS WITH FIXES, all
 fixes closed). This departs from §10's blank-context-reading method and from
 3.3.x's cheap-model scenario runs; the replay test above is this release's
 counterpart to that measurement, run after release rather than before.
