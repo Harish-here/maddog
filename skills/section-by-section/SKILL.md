@@ -3,11 +3,11 @@ name: section-by-section
 description: >
   Reviews ONE skill or agent file with the user, section by section; the
   user closes each section with one or more verdicts. Then checks the
-  reassembled file against its purpose and proposes arrangement fixes.
-  Produces a draft and a verdict ledger; never edits the target. Use when
-  an instruction file has grown, drifted, or misbehaved. Not for shaping a
-  file by how long it stays loaded (efficient-md, where installed), or for
-  authoring a new file.
+  reassembled file against its purpose, proposes arrangement fixes, and
+  produces a draft and a verdict ledger. Use when an instruction file has
+  grown, drifted, or misbehaved. Not for shaping a file by how long it
+  stays loaded (efficient-md, where installed), nor for authoring a new
+  file (write that directly). Never edits the target.
 disable-model-invocation: true
 argument-hint: [path to SKILL.md or agent file]
 ---
