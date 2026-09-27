@@ -29,7 +29,7 @@ def test_main_worktree_is_removed_when_a_case_crashes(monkeypatch, tmp_path):
     def crash(*args, **kwargs):
         raise RuntimeError("adapter died")
 
-    monkeypatch.setattr(run, "run_case", crash)
+    monkeypatch.setattr(run, "run_cases", crash)
     before = worktrees()
     with pytest.raises(RuntimeError, match="adapter died"):
         run.main(["skills/advisor-mode", "--runtime", "rt", "--case", "list-flags"])
@@ -214,6 +214,29 @@ def test_sigterm_during_a_run_removes_the_baseline_worktree_and_slot_folders(mon
     assert list(tmp_path.glob("maddog-run-*")) == []
 
 
+def test_sigterm_during_a_run_removes_slot_folders_under_jobs_too(monkeypatch, tmp_path):
+    # Same as above, but with two cases and --jobs 2 so the SIGTERM lands
+    # while run_cases is scheduling cases through a ThreadPoolExecutor,
+    # not the plain sequential (--jobs 1) loop.
+    adapter = SelfKillingAdapter()
+    monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: adapter)
+    monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
+    real_load_ladders = run.load_ladders
+    fake_ladder = {"low": "x", "mid": "y", "high": "z"}
+    monkeypatch.setattr(run, "load_ladders", lambda: {**real_load_ladders(), "rt": fake_ladder})
+    monkeypatch.setattr(run, "sweep", lambda repo_root: [])
+    monkeypatch.setattr(run, "SlotPool", lambda jobs: RealSlotPool(jobs, base=tmp_path))
+    real_main_cache = run.MainCache
+    monkeypatch.setattr(run, "MainCache", lambda cache_dir, **kw: real_main_cache(cache_dir=tmp_path / "cache", **kw))
+
+    before = worktrees()
+    rc = run.main(["skills/advisor-mode", "--runtime", "rt", "--case", "list-flags", "--case", "rename-add-item",
+                   "--runs", "3", "--jobs", "2"])
+    assert rc == 1
+    assert worktrees() == before
+    assert list(tmp_path.glob("maddog-run-*")) == []
+
+
 def test_skill_file_missing_is_a_parser_error():
     with pytest.raises(SystemExit):
         run.main(["skills/advisor-mode", "--runtime", "claude-code", "--skill-file", "/nonexistent/file.md"])
@@ -303,7 +326,7 @@ def test_skill_file_folder_removed_after_crash(monkeypatch, tmp_path):
     monkeypatch.setattr(run, "load_ladders", lambda: {**real_load_ladders(), "rt": fake_ladder})
     monkeypatch.setattr(run, "sweep", lambda repo_root: [])
     monkeypatch.setattr(run, "SlotPool", lambda jobs: RealSlotPool(jobs, base=tmp_path))
-    monkeypatch.setattr(run, "run_case", crash)
+    monkeypatch.setattr(run, "run_cases", crash)
 
     skill_file = tmp_path / "draft-skill.md"
     skill_file.write_text("# Draft Skill")

@@ -202,58 +202,12 @@ def test_branch_never_goes_through_the_cache():
     assert {p for p, t in adapter.calls} == {Path("/b")}
 
 
-# --- --jobs (concurrent branch/main attempts) -------------------------------
-
-def test_jobs_of_one_is_rejected_below_one():
-    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
-    with pytest.raises(ValueError, match="jobs must be at least 1"):
-        run(adapter, only_tier="low", jobs=0)
-
-
-class OverlapAdapter:
-    """Every call sleeps briefly and records the highest number of calls
-    seen running at once, so a test can prove --jobs actually overlaps
-    work instead of merely accepting the flag."""
-    def __init__(self, delay=0.05):
-        self.delay = delay
-        self.lock = threading.Lock()
-        self.current = 0
-        self.max_seen = 0
-        self.total_calls = 0
-
-    def run(self, case, plugin_path, workdir, tier):
-        with self.lock:
-            self.current += 1
-            self.max_seen = max(self.max_seen, self.current)
-            self.total_calls += 1
-        time.sleep(self.delay)
-        with self.lock:
-            self.current -= 1
-        return RunOutcome([Event("handoff", case.expect)])
-
-
-def test_jobs_three_runs_branch_and_main_concurrently():
-    adapter = OverlapAdapter()
-    run(adapter, only_tier="low", jobs=3)
-    # 3 branch + 3 main attempts, capped at 3 concurrent workers: with a
-    # sequential (--jobs 1) run max_seen would never exceed 1.
-    assert adapter.max_seen >= 3
-
-
-def test_jobs_writes_records_branch_before_main_by_attempt_regardless_of_finish_order():
-    adapter = OverlapAdapter(delay=0.02)
-    result = run(adapter, only_tier="low", jobs=3)
-    low = [r for r in result.records if r.tier == "low"]
-    assert [(r.version, r.attempt) for r in low] == [
-        ("branch", 1), ("branch", 2), ("branch", 3),
-        ("main", 1), ("main", 2), ("main", 3),
-    ]
-
+# --- --jobs (concurrent cases, each pinned to one slot) ---------------------
 
 class PerPluginAdapter:
     """Scripts a fixed sequence of outcomes per plugin_path (i.e. per
-    version), unlike FakeAdapter's per-tier script, which --jobs > 1 could
-    otherwise let branch and main race over."""
+    version). Not safe for two cases to share concurrently (its script lists
+    aren't locked), so the tests below that use it keep to a single case."""
     def __init__(self, scripts):
         self.scripts = {path: list(events) for path, events in scripts.items()}
         self.calls = []
@@ -264,34 +218,121 @@ class PerPluginAdapter:
         return RunOutcome(events)
 
 
-def test_void_is_replaced_under_jobs_and_still_reaches_three_valid():
+def make_cases(n):
+    return [Case(f"c{i}", f"do it {i}", "Fast", "none", "advisor-mode", f"fixture{i}") for i in range(n)]
+
+
+def slotted_make(name, slot):
+    return Path(f"/tmp/fake/slot{slot}") / name
+
+
+class CaseTimedAdapter:
+    """Every call sleeps `delays[case.id]` and records, per case id: every
+    workdir it was called with, and the peak number of *other* calls for the
+    same case seen running at once. It also records the peak number of
+    distinct case ids with a call in flight at once. That's enough to prove,
+    for a `run_cases` call: how many cases actually overlapped, that no case
+    ever overlapped with itself, and that every run of one case reused the
+    same slot path."""
+    def __init__(self, delays):
+        self.delays = delays
+        self.lock = threading.Lock()
+        self.current_by_case: dict[str, int] = {}
+        self.max_per_case = 0
+        self.max_cases_at_once = 0
+        self.workdirs: dict[str, set] = {}
+        self.total_calls = 0
+
+    def run(self, case, plugin_path, workdir, tier):
+        with self.lock:
+            self.current_by_case[case.id] = self.current_by_case.get(case.id, 0) + 1
+            self.max_per_case = max(self.max_per_case, self.current_by_case[case.id])
+            self.max_cases_at_once = max(self.max_cases_at_once, len(self.current_by_case))
+            self.workdirs.setdefault(case.id, set()).add(workdir)
+            self.total_calls += 1
+        time.sleep(self.delays.get(case.id, 0.01))
+        with self.lock:
+            self.current_by_case[case.id] -= 1
+            if self.current_by_case[case.id] == 0:
+                del self.current_by_case[case.id]
+        return RunOutcome([Event("handoff", case.expect)])
+
+
+def test_run_cases_jobs_below_one_is_rejected():
+    with pytest.raises(ValueError, match="jobs must be at least 1"):
+        runner.run_cases([CASE], FakeAdapter({"low": [Event("handoff", "Fast")]}), PLUGINS, jobs=0,
+                         make=fake_make, remove=fake_remove, only_tiers=["low"])
+
+
+def test_run_cases_overlaps_up_to_jobs_cases_never_within_one_case():
+    cases = make_cases(5)
+    adapter = CaseTimedAdapter({c.id: 0.05 for c in cases})
+    runner.run_cases(cases, adapter, PLUGINS, jobs=3, make=slotted_make, remove=fake_remove,
+                     only_tiers=["low"] * 5)
+    # 5 cases, 3 slots: at least 2 and at most 3 cases run at once.
+    assert 2 <= adapter.max_cases_at_once <= 3
+    # A case's own 6 attempts (3 branch + 3 main) always run one after another.
+    assert adapter.max_per_case == 1
+
+
+def test_run_cases_keeps_one_case_in_the_same_slot_for_every_run():
+    cases = make_cases(5)
+    adapter = CaseTimedAdapter({c.id: 0.02 for c in cases})
+    runner.run_cases(cases, adapter, PLUGINS, jobs=3, make=slotted_make, remove=fake_remove,
+                     only_tiers=["low"] * 5)
+    assert all(len(paths) == 1 for paths in adapter.workdirs.values())
+
+
+def test_run_cases_returns_results_in_handoff_order_regardless_of_finish_order():
+    cases = make_cases(4)
+    # c0 is slowest, c3 is fastest, so finish order is the reverse of handoff order.
+    delays = {c.id: 0.08 - i * 0.02 for i, c in enumerate(cases)}
+    adapter = CaseTimedAdapter(delays)
+    results = runner.run_cases(cases, adapter, PLUGINS, jobs=4, make=slotted_make, remove=fake_remove,
+                               only_tiers=["low"] * 4)
+    assert [r.case.id for r in results] == [c.id for c in cases]
+
+
+def test_run_cases_void_replacement_still_works_under_jobs_greater_than_one():
     void, good = [Event("refused", "x")], [Event("handoff", "Fast")]
     adapter = PerPluginAdapter({
         Path("/b"): [void, good, good, good],  # attempt 1 void, replaced by attempt 4
         Path("/m"): [good, good, good],
     })
-    result = run(adapter, only_tier="low", jobs=2)
+    results = runner.run_cases([CASE], adapter, PLUGINS, jobs=2, make=fake_make, remove=fake_remove,
+                               only_tiers=["low"])
+    result = results[0]
     branch = sorted((r for r in result.records if r.version == "branch"), key=lambda r: r.attempt)
     assert [r.verdict.result for r in branch] == ["VOID", "PASS", "PASS", "PASS"]
     assert runner.passes(result.records, "branch", "low") == 3
     assert runner.passes(result.records, "main", "low") == 3
 
 
-def test_endless_voids_stop_the_case_under_jobs_too():
+def test_run_cases_endless_voids_stop_that_case_under_jobs_too():
     adapter = FakeAdapter({"low": [Event("refused", "x")]})
-    result = run(adapter, jobs=2)
-    assert result.void_limited is True
-    assert result.lowest_tier is None
+    results = runner.run_cases([CASE], adapter, PLUGINS, jobs=2, make=fake_make, remove=fake_remove,
+                               only_tiers=["low"])
+    assert results[0].void_limited is True
+    assert results[0].lowest_tier is None
 
 
-def test_cache_hit_skips_main_under_jobs():
+def test_run_cases_ladder_climb_still_works_under_jobs_greater_than_one():
+    adapter = FakeAdapter({"low": [Event("handoff", "Smart")], "mid": [Event("handoff", "Fast")]})
+    results = runner.run_cases([CASE], adapter, PLUGINS, jobs=2, make=fake_make, remove=fake_remove)
+    assert results[0].lowest_tier == "mid"
+
+
+def test_run_cases_cache_hit_skips_main_under_jobs():
     cache = FakeCache(hit=[[Event("handoff", "Fast")]] * 3)
-    adapter = OverlapAdapter()
-    result = run(adapter, only_tier="low", jobs=3, main_cache=cache)
-    assert runner.passes(result.records, "main", "low") == 3
-    assert all(r.cached for r in result.records if r.version == "main")
-    # only the 3 branch attempts ever reached the adapter; main came from the cache
-    assert adapter.total_calls == 3
+    cases = make_cases(3)
+    adapter = CaseTimedAdapter({c.id: 0.02 for c in cases})
+    results = runner.run_cases(cases, adapter, PLUGINS, jobs=3, make=slotted_make, remove=fake_remove,
+                               only_tiers=["low"] * 3, main_cache=cache)
+    for result in results:
+        assert runner.passes(result.records, "main", "low") == 3
+        assert all(r.cached for r in result.records if r.version == "main")
+    # only each case's 3 branch attempts ever reached the adapter (3 cases x 3); main came from the cache
+    assert adapter.total_calls == 9
 
 
 # --- tier_failed function -------------------------------------------------------

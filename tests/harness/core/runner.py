@@ -1,6 +1,6 @@
 """Run one case: repeats, VOID reruns, and the ladder climb. Names no runtime."""
 import queue
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -64,10 +64,11 @@ def failures(records, version: str, tier: str) -> int:
     return _count(records, version, tier, "FAIL")
 
 
-def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, records, main_cache=None):
-    """One version, run sequentially, one attempt at a time -- the `--jobs 1`
-    path (also used as the building block `_run_tier_concurrent` schedules
-    concurrently for `--jobs > 1`)."""
+def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, records, slot=0, main_cache=None):
+    """One version, run sequentially, one attempt at a time, all in `slot`
+    (the case's own job slot for its whole life -- see `run_cases`), so a
+    run's workdir path and commit hashes match the version's own previous
+    attempt and the runtime's prompt cache can hit."""
     if version == "main" and main_cache is not None:
         cached = main_cache.get(case, tier, runs)
         if cached is not None:
@@ -81,7 +82,7 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
     valid_events: list[list[Event]] = []
     while valid < runs:
         attempt += 1
-        workdir = make(case.fixture, 0)  # only one slot exists when running sequentially
+        workdir = make(case.fixture, slot)
         try:
             outcome = adapter.run(case, plugin_path, workdir, tier)
         finally:
@@ -101,113 +102,19 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
         main_cache.put(case, tier, valid_events)
 
 
-def _one_attempt(case, adapter, version, plugin_path, tier, attempt, make, remove, slots) -> RunRecord:
-    """Runs one attempt in whichever job slot is free, blocking until one is.
-    Called from a worker thread; every read/write it does is either on its
-    own local variables or on the thread-safe slot queue -- book-keeping
-    (voids, attempt numbers, records) all happens back on the dispatching
-    thread in `_run_tier_concurrent`."""
-    slot = slots.get()
-    try:
-        workdir = make(case.fixture, slot)
-        try:
-            outcome = adapter.run(case, plugin_path, workdir, tier)
-        finally:
-            remove(workdir)
-    finally:
-        slots.put(slot)
-    verdict = score(outcome.events, case.expect)
-    return RunRecord(case.id, version, tier, attempt, outcome.events, verdict, outcome.cost_usd, outcome.usage)
-
-
-def _run_tier_concurrent(case, adapter, plugins, tier, runs, make, remove, records, main_cache, jobs):
-    """The `--jobs > 1` path: branch's and main's attempts for this tier run
-    concurrently, up to `jobs` at a time (a plain `ThreadPoolExecutor` caps
-    that regardless of how many attempts are submitted up front). A VOID
-    schedules one replacement attempt, same as the sequential path; once any
-    version's voids pass MAX_VOIDS, no further attempts are launched for
-    either version, but ones already in flight are left to finish rather
-    than cut off mid-session. Records are appended branch-before-main, each
-    sorted by attempt number, regardless of finish order."""
-    order = list(plugins.keys())  # ("branch", "main"), as built by plugin_versions()
-    streams = {}
-    for version in order:
-        plugin_path = plugins[version]
-        if version == "main" and main_cache is not None:
-            cached = main_cache.get(case, tier, runs)
-            if cached is not None:
-                cached_records = [RunRecord(case.id, version, tier, i, events, score(events, case.expect), cached=True)
-                                   for i, events in enumerate(cached, start=1)]
-                streams[version] = {"active": False, "records": cached_records}
-                continue
-        streams[version] = {"active": True, "plugin_path": plugin_path, "next_attempt": 0,
-                            "voids": 0, "records": {}}
-
-    active_versions = [v for v in order if streams[v]["active"]]
-    void_error = None
-    if active_versions:
-        slots: queue.Queue = queue.Queue()
-        for slot in range(jobs):
-            slots.put(slot)
-
-        with ThreadPoolExecutor(max_workers=jobs) as executor:
-            pending = {}
-
-            def launch(version):
-                s = streams[version]
-                s["next_attempt"] += 1
-                attempt = s["next_attempt"]
-                fut = executor.submit(_one_attempt, case, adapter, version, s["plugin_path"],
-                                      tier, attempt, make, remove, slots)
-                pending[fut] = version
-
-            for version in active_versions:
-                for _ in range(runs):
-                    launch(version)
-
-            while pending:
-                done, _ = wait(list(pending), return_when=FIRST_COMPLETED)
-                for fut in done:
-                    version = pending.pop(fut)
-                    record = fut.result()
-                    s = streams[version]
-                    s["records"][record.attempt] = record
-                    if record.verdict.result == "VOID":
-                        s["voids"] += 1
-                        if s["voids"] > MAX_VOIDS:
-                            void_error = void_error or VoidLimit(
-                                f"{case.id}: {s['voids']} refused runs on {version} at {tier}")
-                        elif void_error is None:
-                            launch(version)
-
-    main_events = None
-    for version in order:
-        s = streams[version]
-        ordered = [s["records"][n] for n in sorted(s["records"])] if s["active"] else s["records"]
-        records.extend(ordered)
-        if version == "main" and main_cache is not None and s["active"]:
-            valid = [r.events for r in ordered if r.verdict.result != "VOID"]
-            if len(valid) >= runs:
-                main_events = valid
-
-    if main_events is not None:
-        main_cache.put(case, tier, main_events)
-
-    if void_error is not None:
-        raise void_error
-
-
 def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS,
              make=None, remove=None, max_tier: str = "high",
-             only_tier: str | None = None, main_cache=None, jobs: int = 1) -> CaseResult:
+             only_tier: str | None = None, main_cache=None, slot: int = 0) -> CaseResult:
+    """Runs one case start to finish -- every tier it needs, branch then
+    main, VOID reruns and the ladder climb -- entirely in `slot` (see
+    `run_cases` for how a case's slot is chosen and held for its whole
+    life)."""
     if runs < MIN_RUNS:
         raise ValueError(f"runs must be at least {MIN_RUNS}, got {runs}")
     if max_tier not in TIERS:
         raise ValueError(f"max_tier must be one of {TIERS}, got {max_tier!r}")
     if only_tier is not None and only_tier not in TIERS:
         raise ValueError(f"only_tier must be one of {TIERS}, got {only_tier!r}")
-    if jobs < 1:
-        raise ValueError(f"jobs must be at least 1, got {jobs}")
 
     result = CaseResult(case, max_tier=max_tier, only_tier=only_tier)
 
@@ -220,11 +127,9 @@ def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS
 
     for tier in tiers_to_run:
         try:
-            if jobs > 1:
-                _run_tier_concurrent(case, adapter, plugins, tier, runs, make, remove, result.records, main_cache, jobs)
-            else:
-                for version, plugin_path in plugins.items():
-                    _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, result.records, main_cache)
+            for version, plugin_path in plugins.items():
+                _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove,
+                            result.records, slot=slot, main_cache=main_cache)
         except VoidLimit:
             result.void_limited = True
             return result
@@ -234,3 +139,64 @@ def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS
             result.lowest_tier = tier
             return result
     return result
+
+
+def run_cases(cases: list[Case], adapter, plugins: dict[str, Path], jobs: int,
+              make=None, remove=None, runs: int = MIN_RUNS, max_tier: str = "high",
+              only_tiers: list[str | None] | None = None, main_cache=None,
+              on_start=None, on_end=None) -> list[CaseResult]:
+    """Runs `cases` up to `jobs` at a time. Each case claims one job slot the
+    moment it starts and keeps it for its whole life -- every tier, branch
+    then main, in `run_case`'s normal sequential order -- so that case's own
+    later runs reuse the workdir path and commit hashes its earlier runs
+    left behind, and the runtime's prompt cache can hit. The slot is
+    released the moment the case finishes, so whichever case is queued
+    behind it can start. `only_tiers[i]` (default `None` for every case) is
+    `cases[i]`'s `only_tier`. `on_start(case)` and `on_end(case, result)`,
+    when given, fire once per case, on whichever thread ran it. Results come
+    back in `cases` order, regardless of which case finishes first."""
+    if jobs < 1:
+        raise ValueError(f"jobs must be at least 1, got {jobs}")
+    if only_tiers is None:
+        only_tiers = [None] * len(cases)
+
+    results: list[CaseResult | None] = [None] * len(cases)
+
+    def run_one(case, only_tier, slot):
+        if on_start is not None:
+            on_start(case)
+        result = run_case(case, adapter, plugins, runs=runs, make=make, remove=remove,
+                          max_tier=max_tier, only_tier=only_tier, main_cache=main_cache, slot=slot)
+        if on_end is not None:
+            on_end(case, result)
+        return result
+
+    if jobs == 1:
+        # No thread pool at all: cases run one after another on this thread,
+        # exactly as before `--jobs` existed at the case level.
+        for i, case in enumerate(cases):
+            results[i] = run_one(case, only_tiers[i], 0)
+        return results
+
+    slots: queue.Queue = queue.Queue()
+    for s in range(jobs):
+        slots.put(s)
+
+    def worker(case, only_tier):
+        slot = slots.get()
+        try:
+            return run_one(case, only_tier, slot)
+        finally:
+            slots.put(slot)
+
+    with ThreadPoolExecutor(max_workers=jobs) as executor:
+        futures = {executor.submit(worker, case, only_tiers[i]): i for i, case in enumerate(cases)}
+        try:
+            for fut in as_completed(futures):
+                results[futures[fut]] = fut.result()
+        finally:
+            # Drop any case not yet started (its slot never claimed) rather
+            # than let the `with` block's own shutdown wait for every
+            # submitted case to run to completion.
+            executor.shutdown(wait=True, cancel_futures=True)
+    return results

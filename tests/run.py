@@ -16,6 +16,7 @@ import argparse
 import shutil
 import signal
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -24,7 +25,7 @@ from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, expected_tier, load_
 from harness.core.fixture import SlotPool, make_workdir, remove_workdir
 from harness.core.maincache import CACHE_DIRNAME, MainCache, hash_file
 from harness.core.report import render, write_results
-from harness.core.runner import MIN_RUNS, run_case
+from harness.core.runner import MIN_RUNS, run_cases
 from harness.core.sweep import sweep
 from harness.runtimes import adapter_source_path, get_adapter
 
@@ -41,8 +42,27 @@ class Stopped(Exception):
     mid-cleanup."""
 
 
-def _raise_stopped(signum, frame):
-    raise Stopped(f"stopped by signal {signum}")
+def _stop_once():
+    """Builds a signal handler that raises `Stopped` on the first stop
+    signal it sees and silently ignores every one after that. Without this,
+    a second SIGTERM/SIGINT landing while cleanup is already unwinding --
+    e.g. mid `git worktree remove` or `shutil.rmtree` -- raises `Stopped`
+    again right there and can abandon that cleanup call partway through,
+    leaving a slot, baseline, or skillfile folder behind. That is no longer
+    rare once `--jobs > 1` cases keep running (and, if self-signalling,
+    keep re-signalling) in worker threads for as long as it takes
+    `run_cases`' `ThreadPoolExecutor` to join them, which is longer than the
+    near-instant unwind `--jobs 1` gets."""
+    stopped = False
+
+    def handler(signum, frame):
+        nonlocal stopped
+        if stopped:
+            return
+        stopped = True
+        raise Stopped(f"stopped by signal {signum}")
+
+    return handler
 
 
 def select_cases(cases, case_ids, pressure):
@@ -68,7 +88,7 @@ def main(argv=None) -> int:
     parser.add_argument("--pressure", choices=PRESSURES, help="run only cases with this pressure")
     parser.add_argument("--runs", type=int, default=MIN_RUNS)
     parser.add_argument("--jobs", type=int, default=1,
-                        help="run up to this many branch/main attempts at once per case/tier (default 1: sequential)")
+                        help="run up to this many cases at once, each in its own slot (default 1: sequential)")
     parser.add_argument("--fresh-main", action="store_true",
                         help="ignore and overwrite any cached main run for the selected cases")
     parser.add_argument("--skill-file", type=Path, help="test this draft skill file instead of the branch's; agents and everything else come from this tree")
@@ -127,18 +147,28 @@ def main(argv=None) -> int:
     def make(fixture_name, slot):
         return make_workdir(fixture_name, slot_pool.path(slot))
 
-    previous_term = signal.signal(signal.SIGTERM, _raise_stopped)
-    previous_int = signal.signal(signal.SIGINT, _raise_stopped)
+    only_tiers = [None if args.ladder else (args.tier or expected_tier(case, ladders)) for case in cases]
+
+    print_lock = threading.Lock()
+
+    def on_start(case):
+        with print_lock:
+            print(f"running {case.id} (expect {case.expect})", flush=True)
+
+    def on_end(case, result):
+        with print_lock:
+            print(f"finished {case.id}", flush=True)
+
+    stop_handler = _stop_once()
+    previous_term = signal.signal(signal.SIGTERM, stop_handler)
+    previous_int = signal.signal(signal.SIGINT, stop_handler)
     results = []
     try:
         try:
-            for case in cases:
-                only_tier = None if args.ladder else (args.tier or expected_tier(case, ladders))
-                print(f"running {case.id} (expect {case.expect})", flush=True)
-                results.append(run_case(case, adapter, plugins, runs=args.runs,
-                                       max_tier=ladders.get("max_tier", "high"),
-                                       only_tier=only_tier, main_cache=main_cache,
-                                       jobs=args.jobs, make=make, remove=remove_workdir))
+            results = run_cases(cases, adapter, plugins, jobs=args.jobs, make=make, remove=remove_workdir,
+                                runs=args.runs, max_tier=ladders.get("max_tier", "high"),
+                                only_tiers=only_tiers, main_cache=main_cache,
+                                on_start=on_start, on_end=on_end)
         finally:
             remove_baseline(plugins)
             slot_pool.close()

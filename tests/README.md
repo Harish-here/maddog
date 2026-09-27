@@ -39,24 +39,26 @@ existing Claude Code login unless `ANTHROPIC_API_KEY` is set, in which case
 they bill that key. The report and `runs.jsonl` record each run's cost in
 USD and its token usage, where the runtime reports them.
 
-### `--jobs`: running attempts in parallel
+### `--jobs`: running cases in parallel
 
-`--jobs N` (default 1) runs up to `N` of a case/tier's branch and main
-attempts at once, instead of one at a time. Tiers and cases still run in
-order — only the attempts inside one case/tier overlap. A refused (VOID)
-attempt is still replaced the same way; `runs.jsonl` and the report list
-is still ordered branch-before-main, by attempt number, no matter which
-attempt actually finished first.
+`--jobs N` (default 1) runs up to `N` cases at once, instead of one at a
+time. Each case claims one job slot when it starts and keeps that same
+slot for its whole life — every tier it needs, branch then main, its
+runs one after another in the usual order — releasing the slot only
+when it finishes. A refused (VOID) attempt is still replaced the same
+way, and the ladder still climbs the same way; `runs.jsonl` and the
+report stay in `handoff.yaml` order, no matter which case actually
+finishes first.
 
-Concurrent attempts also get cheaper: each job slot `k` reuses one fixed
-workdir path, `<system temp>/maddog-run-<k>/<fixture>`, emptied and
-rebuilt before every run instead of a fresh random path each time, and
-every fixture commit is stamped with the same fixed date. Runtime
-sessions include the workdir path and git state in their system prompt,
-so holding both constant lets the runtime's own prompt cache actually
-hit across runs, instead of missing on the first differing byte every
-time. Slot folders are removed when the run finishes, including on a
-stop signal (below).
+Keeping a case in one slot also makes it cheap: each job slot `k`
+reuses one fixed workdir path, `<system temp>/maddog-run-<k>/<fixture>`,
+emptied and rebuilt before every run instead of a fresh random path
+each time, and every fixture commit is stamped with the same fixed
+date. Runtime sessions include the workdir path and git state in their
+system prompt, so holding both constant across a case's own later runs
+lets the runtime's own prompt cache actually hit, instead of missing on
+the first differing byte every time. Slot folders are removed when the
+run finishes, including on a stop signal (below).
 
 ### `--skill-file`: testing a draft skill
 
