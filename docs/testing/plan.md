@@ -17,7 +17,7 @@
 - Cases name roles from exactly this set: `Fast-Read`, `Fast`, `Smart`, `Judge`, `Lead`.
 - Event kinds are exactly: `handoff`, `write`, `read`, `command`, `skill_load`, `refused`.
 - Tiers are exactly, in order: `low`, `mid`, `high`. Pressure levels are exactly: `none`, `high`.
-- Ladder for `claude-code`: `low: claude-haiku-4-5-20251001`, `mid: claude-sonnet-5`, `high: claude-opus-5-5`. `expected_tier: {none: low, high: mid}`.
+- Ladder for `claude-code`: `low: claude-haiku-4-5-20251001`, `mid: claude-sonnet-5`, `high: claude-opus-5-5`. `expected_tier: {none: low, high: mid}`. The runner climbs no higher than `max_tier` (currently `mid`).
 - Runs per case: at least 3. The runner rejects fewer. "Fails repeatedly" means at least 2 failing runs at a tier.
 - Fixture copies are made in a temporary folder outside this repo. No test session ever sees a repo `CLAUDE.md`.
 - Harness Python is written plainly (explicit loops, no clever idioms): the maintainer reads TypeScript first.
@@ -67,6 +67,8 @@ Additions beyond the spec, each small and inside its structure:
 - **Shell writes count as writes:** a shell command that changes files or git state (`sed -i`, a `>` redirect, `mv`, `git commit`, …) becomes a `write` event, per the spec's "the advisor did the work itself".
 - **Per-case expected tier:** the spec's escalation option "raise the case's expected tier, and record why" needs a place to live. A case may carry `expected_tier` plus `why`; without them, the tier comes from pressure.
 - **README location:** `README.md` has no layout section, so Task 11 adds `tests/` to its §Contributing section instead.
+- **Work-starting tools stop the session:** `Workflow`, `RemoteTrigger`, `CronCreate` and `ScheduleWakeup` start work outside the session, so the adapter denies them and ends the session, as it does at a handoff or a write. They are recorded as `command` events. (Maintainer change, 2026-09-27.)
+- **Ladder capped at `mid`:** `ladders.yaml` carries `max_tier: mid`; the runner climbs no higher, and the report's flag says which tier it tried up to. `high` stays in the ladder for later. (Maintainer change, 2026-09-27.)
 
 ---
 
@@ -450,6 +452,8 @@ claude-code:
 expected_tier:
   none: low
   high: mid
+# highest tier the runner climbs to; raise to high later
+max_tier: mid
 ```
 
 `tests/skills/advisor-mode/handoff.yaml`:
@@ -500,7 +504,7 @@ def test_advisor_cases_load_with_one_per_role():
 
 def test_every_runtime_ladder_has_every_tier():
     ladders = load_ladders()
-    runtimes = [key for key in ladders if key != "expected_tier"]
+    runtimes = [key for key in ladders if key not in ("expected_tier", "max_tier")]
     assert runtimes
     for runtime in runtimes:
         assert set(ladders[runtime]) == set(TIERS)
@@ -1147,9 +1151,9 @@ git commit -m "feat(testing): compare this branch against a main worktree"
 - Produces:
   - `MIN_RUNS = 3`, `MAX_VOIDS = 3`
   - `RunRecord(case_id: str, version: str, tier: str, attempt: int, events: list[Event], verdict: Verdict)` dataclass with `to_dict() -> dict`
-  - `CaseResult(case: Case, records: list[RunRecord], lowest_tier: str | None, void_limited: bool)` dataclass
+  - `CaseResult(case: Case, records: list[RunRecord], lowest_tier: str | None, void_limited: bool, max_tier: str = "high")` dataclass
   - `passes(records, version: str, tier: str) -> int`, `failures(records, version: str, tier: str) -> int`
-  - `run_case(case, adapter, plugins: dict[str, Path], runs: int = 3, make=make_workdir, remove=remove_workdir) -> CaseResult`
+  - `run_case(case, adapter, plugins: dict[str, Path], runs: int = 3, make=make_workdir, remove=remove_workdir, max_tier: str = "high") -> CaseResult`
 
 Climb rule: always start at `low` (the spec: "runs a case at the `low` tier first"). At each tier, run both versions. Stop climbing at the first tier where the `branch` version has fewer than 2 failures. That tier is `lowest_tier`. If `high` still fails repeatedly, `lowest_tier` is `None`.
 
@@ -1255,6 +1259,12 @@ def test_workdir_is_removed_even_when_the_adapter_crashes():
         run(Boom())
     assert removed == [Path("/tmp/fake/todo-app")]
 
+
+def test_max_tier_stops_the_climb():
+    adapter = FakeAdapter({t: [Event("handoff", "Smart")] for t in ("low", "mid", "high")})
+    result = run(adapter, max_tier="mid")
+    assert result.lowest_tier is None
+    assert {t for _, t in adapter.calls} == {"low", "mid"}
 ```
 
 - [ ] **Step 2: Run to see them fail**
@@ -1303,6 +1313,7 @@ class CaseResult:
     records: list[RunRecord] = field(default_factory=list)
     lowest_tier: str | None = None
     void_limited: bool = False
+    max_tier: str = "high"
 
 
 class VoidLimit(Exception):
@@ -1343,12 +1354,14 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
 
 
 def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS,
-             make=make_workdir, remove=remove_workdir) -> CaseResult:
+             make=make_workdir, remove=remove_workdir, max_tier: str = "high") -> CaseResult:
     if runs < MIN_RUNS:
         raise ValueError(f"runs must be at least {MIN_RUNS}, got {runs}")
+    if max_tier not in TIERS:
+        raise ValueError(f"max_tier must be one of {TIERS}, got {max_tier!r}")
 
-    result = CaseResult(case)
-    for tier in TIERS:
+    result = CaseResult(case, max_tier=max_tier)
+    for tier in TIERS[: TIERS.index(max_tier) + 1]:
         try:
             for version, plugin_path in plugins.items():
                 _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, result.records)
@@ -1364,7 +1377,7 @@ def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS
 - [ ] **Step 4: Run to see them pass**
 
 Run: `tests/.venv/bin/python -m pytest tests/harness/tests/test_runner.py -q`
-Expected: `8 passed`.
+Expected: `9 passed`.
 
 - [ ] **Step 5: Commit**
 
@@ -1460,7 +1473,7 @@ def _flag(result: CaseResult, expected: str) -> str:
     if result.void_limited:
         return "VOID LIMIT"
     if result.lowest_tier is None:
-        return "NO PASSING TIER"
+        return f"NO PASSING TIER (tried up to {result.max_tier})"
     if TIERS.index(result.lowest_tier) > TIERS.index(expected):
         return "ABOVE EXPECTED"
     return ""
@@ -1626,7 +1639,8 @@ HANDOFF_TOOLS = {"Agent", "Task"}
 WRITE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 READ_TOOLS = {"Read", "Grep", "Glob", "LS", "WebFetch", "WebSearch"}
 SKILL_TOOLS = {"Skill"}
-STOP_TOOLS = HANDOFF_TOOLS | WRITE_TOOLS  # the session ends at the first of these
+WORK_START_TOOLS = {"Workflow", "RemoteTrigger", "CronCreate", "ScheduleWakeup"}  # start work outside the session
+STOP_TOOLS = HANDOFF_TOOLS | WRITE_TOOLS | WORK_START_TOOLS  # the session ends at the first of these
 
 STOP_REASON = "maddog-test: session stopped here by the test harness"
 MAX_TURNS = 20           # bounds a session that never hands off
@@ -1714,15 +1728,17 @@ class ClaudeCodeAdapter:
             async with ClaudeSDKClient(options=options) as client:
                 await client.query(invocation(case))
                 async for message in client.receive_response():
+                    stop_now = False
                     if isinstance(message, AssistantMessage):
                         for block in message.content:
                             if isinstance(block, ToolUseBlock):
                                 events.append(to_event(block.name, dict(block.input)))
+                                stop_now = stop_now or block.name in STOP_TOOLS
                     elif isinstance(message, UserMessage) and isinstance(message.content, list):
                         for block in message.content:
                             if isinstance(block, ToolResultBlock) and is_refusal(bool(block.is_error), _text(block.content)):
                                 events.append(Event("refused", _text(block.content)[:120]))
-                    if events and events[-1].kind in ("handoff", "write"):
+                    if stop_now or (events and events[-1].kind in ("handoff", "write")):
                         await client.interrupt()
                         break
         return events
@@ -1743,7 +1759,7 @@ def get_adapter(runtime: str, ladders: dict):
 - [ ] **Step 4: Run to see them pass**
 
 Run: `tests/.venv/bin/python -m pytest tests/harness/runtimes/test_claude_code.py -q`
-Expected: `8 passed`.
+Expected: `9 passed`.
 
 - [ ] **Step 5: Check the neutral layer names no runtime**
 
@@ -1812,7 +1828,7 @@ def main(argv=None) -> int:
     try:
         for case in cases:
             print(f"running {case.id} (expect {case.expect})", flush=True)
-            results.append(run_case(case, adapter, plugins, runs=args.runs))
+            results.append(run_case(case, adapter, plugins, runs=args.runs, max_tier=ladders.get("max_tier", "high")))
     finally:
         remove_baseline(plugins)
 
@@ -1882,7 +1898,7 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake
 
 Each case runs 3 times on this working tree and 3 times on `main`, starting at
-the `low` tier. A case that fails at least 2 of 3 climbs to `mid`, then `high`.
+the `low` tier. A case that fails at least 2 of 3 climbs to the next tier, up to `max_tier` in `harness/runtimes/ladders.yaml` (currently `mid`).
 Every run calls a real model and costs tokens. Runs use your existing Claude
 Code login unless `ANTHROPIC_API_KEY` is set, in which case they bill that key.
 
@@ -1899,7 +1915,7 @@ Harness unit tests (no model):
   you decide: edit the skill once and rerun all cases, or give the case an
   `expected_tier` with a `why` in its `handoff.yaml`. Never change a case's
   `pressure` after its first run.
-- `NO PASSING TIER`: fails even on `high`; a real routing defect.
+- `NO PASSING TIER (tried up to mid)`: the case never passed at any tier up to `mid`; `high` was not tried. With `max_tier: high`, this flag means a real routing defect.
 - `VOID LIMIT`: commands kept being refused; the environment is broken, not the skill.
 
 Below the table, every failed or void run lists its events in order.
@@ -1922,7 +1938,7 @@ a report showed the case needs a higher tier and you accepted that.
 - [ ] **Step 5: Run the full unit suite and the neutrality check**
 
 Run: `tests/.venv/bin/python -m pytest tests/harness -q`
-Expected: `49 passed` (events 3 + score 9 + cases 9 + fixture 4 + baseline 2 + runner 8 + report 5 + run 1 + adapter 8), 0 failed.
+Expected: `51 passed` (events 3 + score 9 + cases 9 + fixture 4 + baseline 2 + runner 9 + report 5 + run 1 + adapter 9), 0 failed.
 
 Run: `grep -rnE --exclude-dir=__pycache__ 'maddog:|claude|Agent\b|Edit\b|Bash|haiku|sonnet|opus' tests/run.py tests/harness/core/ tests/harness/tests/ tests/harness/conftest.py tests/skills/`
 Expected: no output.

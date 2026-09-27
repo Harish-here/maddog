@@ -82,13 +82,17 @@ Each runtime maps tiers to real models in its own config. For Claude Code,
 that config is `tests/harness/runtimes/ladders.yaml`:
 
 ```yaml
+# Tier → model for each runtime. Cases name only tiers.
 claude-code:
   low:  claude-haiku-4-5-20251001
   mid:  claude-sonnet-5
   high: claude-opus-5-5
+# Pressure level → the tier a case is expected to pass at.
 expected_tier:
   none: low
   high: mid
+# highest tier the runner climbs to; raise to high later
+max_tier: mid
 ```
 
 Every case declares a **pressure** level — `none` or `high` — when it is
@@ -104,7 +108,7 @@ cases split — some passing at `mid`, others passing only at `high`.
 The test script runs a case at the `low` tier first. If it fails
 repeatedly, the script climbs to `mid`, then `high`, to find the lowest
 tier that passes. The report shows this lowest passing tier next to the
-case's expected tier (from the `expected_tier` mapping above).
+case's expected tier (from the `expected_tier` mapping above). For now the climb stops at `mid` (`max_tier` in `ladders.yaml`); `high` is kept in the ladder for later.
 
 If the lowest passing tier is above the expected tier, the user decides
 between two options:
