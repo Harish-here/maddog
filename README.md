@@ -192,9 +192,9 @@ second, orthogonal axis — a discipline pipeline, not a judgment tier.
 ## Contributing
 
 `main` is protected — changes land by pull request. See `CONTRIBUTING.md`
-for commit style, the no-test-suite validation model, and when to route new
-or overhauled agent/skill text through the `author-agent` gated-authoring
-loop.
+for commit style, the validation model and the model-driven tests in `tests/`,
+and when to route new or overhauled agent/skill text through the `author-agent`
+gated-authoring loop.
 
 ## Releasing
 
