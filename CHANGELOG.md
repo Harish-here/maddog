@@ -4,6 +4,35 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.0.0] - 2026-09-27
+
+### Breaking
+- `skills/advisor-mode/SKILL.md` — the Advisor no longer does small work itself: every slice goes to a hand, and the "slice you keep" allowance is removed. Before the first tool call on a slice it states a route line, `slice → SHAPE → hand`, in its reply; it may take one look only when the task as written cannot decide the shape (086f9b8, f593c7f)
+- advisor-mode now needs a mid-tier model or above. Model-driven tests put the new text at 34/45 against main's 13/45 on Sonnet, but at 4/18 against main's 8/18 on Haiku; Haiku is not a supported Advisor (README states the minimum) (4bbafb5, 0f75e1e)
+
+### Changed
+- advisor-mode and `agents/executor-lead.md` carry the new ROUTE and ROUTE LINE fragments: MECHANICAL means every decision is already made, by the task or an earlier return, none by the router; a choice the task leaves open goes to the hand; the old "unsure → Fast-Read" fallback is gone. Lead's own Dispatch First section and its kept single read are removed (086f9b8, 623bcb6)
+- advisor-mode Outcome proposes from the task's own words and never reads to learn the scope; an unknown scope routes as a shape (086f9b8)
+- `agents/executor-fast-read.md`, `executor-fast.md`, `executor-smart.md`, `executor-judge.md`, `executor-lead.md` — rewritten through section-by-section reviews: the family opening and precedence line, pattern tables (Pattern · Applies when · Law) with one or several patterns per task, Fast-Read's RECON split into SWEEP and TRACE, Smart classifying on every pass, a shared Boundary stop for Lead, Smart and Fast, and Return blocks that mark cuts in place and keep secrets out of every field (213428d, b8aefd4, ad490ff, 2367deb, bb2ba8d, cc3fc8e, c9900c1, 9954c63, fd38c4b)
+- `executor-lead` gains the Skill tool (bb2ba8d)
+- product agents name SWEEP where they dispatch executor-fast-read (e819639)
+
+### Fixed
+- `scripts/executor-guard.sh` — Judge may run existing script files and test-runner modules (`pytest`, `unittest`, `doctest`) to re-run gates; inline and stdin code, and every other `python -m` module, stay denied (c20d27f, 443e08b)
+
+### Added
+- `scripts/fragment-check.py` — verifies every shared fragment in `docs/executor-family/constitution.md` is carried byte-identically by each file that holds it (74289f0)
+- `docs/executor-family/constitution.md` — ROLE PROPERTIES and a SYSTEM MODEL section; DISPATCH FIRST renamed ROUTE LINE (65c20a3, 086f9b8, 4cfd8db)
+- `tests/` — a model-driven test harness (repo-internal, not shipped): scores which hand the Advisor calls first from recorded tool calls, compares the branch with `main`, and supports pressure kinds (none, user, decision), `--tier`, `--ladder`, `--case`, `--pressure`, `--runs`, `--jobs`, `--skill-file`, per-run cost, and cached `main` results (d09b4c1 … d1c8843)
+
+### Known issues
+- The one-look rule does not hold reliably: on Sonnet, some runs take a second look before routing (list-flags, sqlite-dropin-decoy). Main fails the same cases.
+- Executor agents are not yet tested directly; the tests score only the Advisor's first handoff.
+
+### Docs
+- `PHILOSOPHY.md` holds beliefs only; the executor-family diagram moved to the constitution (4cfd8db)
+- `.claude-plugin/plugin.json` version 3.4.0 → 4.0.0
+
 ## [3.4.0] - 2026-09-27
 
 ### Changed
