@@ -1602,6 +1602,13 @@ def test_registry_builds_the_adapter_with_its_ladder():
     adapter = get_adapter("claude-code", load_ladders())
     assert isinstance(adapter, ClaudeCodeAdapter)
     assert adapter.ladder["low"] == "claude-haiku-4-5-20251001"
+
+
+def test_work_starting_tools_stop_the_session():
+    from harness.runtimes.claude_code import STOP_TOOLS
+    for name in ("Workflow", "RemoteTrigger", "CronCreate", "ScheduleWakeup"):
+        assert name in STOP_TOOLS
+        assert to_event(name, {}).kind == "command"
 ```
 
 - [ ] **Step 2: Run to see them fail**
