@@ -23,9 +23,10 @@ Updated 2026-09-27. Branch `claude/section-by-section-3-4`, worktree
 
 ## Next
 
-Slice 4 (replay test; keep the existing "Open for slice 4" section as is),
-then slice 5 (update `docs/section-by-section/spec.md` to match, then the
-release skill). The user merges.
+Slice 5 is done: the spec update and release preparation (cf36aad, 1a99f71
+and this commit). What remains is the release review re-gate, the user's
+merge, then publish. Slice 4 (replay test) stays open, deferred to after
+release.
 
 ## Open for slice 4
 

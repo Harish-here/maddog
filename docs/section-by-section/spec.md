@@ -54,7 +54,8 @@ In scope:
 
 - one target file per run, by path: a `SKILL.md` or an agent definition file
 - a review scope: the whole file, or a named set of sections
-- the target's frontmatter description, closed last, at Assembly
+- the target's frontmatter description (`DESC`), named first, in the section
+  map at Start, and closed at Assembly's Verify step, before the outline
 - the user's observations of how the target behaved — asked once, optional
 - outside files the user names as something the target relies on — asked
   once, optional; read only by redundancy, pointers and names (D5)
@@ -209,19 +210,21 @@ prose, not the rule count.
 
 Frontmatter: `disable-model-invocation: true` — a long interactive ritual, and
 auto-triggering it on "review this skill" would hijack a quick review — and
-`argument-hint: [path to SKILL.md or agent file]`. The description is 483
+`argument-hint: [path to SKILL.md or agent file]`. The description is 448
 characters, under the 500-character target in
 `.claude/skills/review-agent/references/description-standard.md` §3, and carries
-a claim, a "Use when" trigger sentence, two redirects (against shaping a file by
-how long it stays loaded, and against authoring a new file) and the never-edits
-invariant. It carries no procedure: an agent that acts on a description without
-loading the body must not be able to run the ritual from it.
+a claim naming the whole-file check alongside the section-by-section pass, a
+"Use when" trigger sentence, two redirects (against shaping a file by how long
+it stays loaded, with the efficient-md pointer guarded "where installed" per
+SBS-GATE-1 F4, and against authoring a new file) and the never-edits invariant.
+It carries no procedure: an agent that acts on a description without loading
+the body must not be able to run the ritual from it.
 
-Body order: closure law, Contract, Verdicts, Start, Section loop, Assembly,
-Hand-off, Prohibitions. The body names capabilities (read, write a draft), never
-runtime tool identifiers (CLAUDE.md invariants; PHILOSOPHY.md point 5), and cites
-`efficient-md` only in the form guarded by "where that skill is installed"
-(SBS-GATE-1 F4, and efficient-md's own SHIP RULE).
+Body order: closure law, Check-table law, Start, Markers, Section loop,
+Assembly, Hand-off, Prohibitions. The body names capabilities (read, write a
+draft), never runtime tool identifiers (CLAUDE.md invariants; PHILOSOPHY.md
+point 5), and cites `efficient-md` only in the form guarded by "where that
+skill is installed" (SBS-GATE-1 F4, and efficient-md's own SHIP RULE).
 
 ## 9. What changed from the 3.1.0 design
 
@@ -265,8 +268,9 @@ Two residual findings are accepted, not fixed:
   ten lines, at the cost of the at-a-glance vocabulary.
 - Neither the closure law nor the ordered test can be verified from the artifacts
   alone: nothing in a ledger proves the verdict came from the user rather than
-  from the skill. The `Fails` line, naming the check and test that produced each
-  proposal, is the closest available trace.
+  from the skill. The diagnosis post's check table, naming what each check
+  looked at and its result, is the closest available trace; the diagnosis post
+  no longer carries a separate `Fails` line.
 
 For any later change, the same method is the validation, together with a live
 run: exercise the skill on one `skills/*/SKILL.md` and one `agents/*.md` with at
@@ -361,9 +365,14 @@ must post a diagnosis.
 Sourced from a sweep of 76 user catches across 8 real runs, grouped into 11
 file-agnostic patterns (`docs/section-by-section/plan-2026-09-27.md`,
 decisions D1–D6), then a section-by-section review of this file against
-itself with the user closing every verdict and a judge gate on the result
-(PASS WITH FIXES, all fixes closed; the run's ledger and rulings R1–R7 are
-recorded in `docs/section-by-section/state.md`).
+itself with the user closing every verdict and a judge gate on the result.
+The run's draft and ledger were session-scratch and were not kept; the
+rulings R1–R7 survive in `docs/section-by-section/state.md`. Validation was
+the user closing every section, an independent judge gate on the draft
+(PASS WITH FIXES, six fixes closed), and the release reviewer. The
+description (`DESC`) was reopened at release review to bring it under the
+500-character target and to restore the efficient-md redirect guarded
+"where installed" (SBS-GATE-1 F4).
 
 - **A section may carry several verdicts** (ruling R1, plan D2). The
   3.2.0–3.3.2 ordered, first-match test gave one verdict where several
@@ -417,11 +426,10 @@ scored against the new draft and, as control, the pre-change file) was
 deferred to after this release, at the user's instruction.
 `docs/section-by-section/state.md` carries it as the open item.
 
-Validation for 3.4.0 is the live run itself: every closure above is a row in
-that run's ledger, not a scenario run on a cheap model, and a judge walked
-the finished draft against the target before it landed (the ledger's rows
-marked "judge" and "judge walk-through"). This departs from §10's
-blank-context-reading method and from 3.3.x's cheap-model scenario runs; the
-replay test above is this release's counterpart to that measurement, run
-after release rather than before.
+Validation for 3.4.0 is the live run itself: the user closed every section,
+not a scenario run on a cheap model, and an independent judge gate reviewed
+the finished draft against the target before it landed (PASS WITH FIXES, six
+fixes closed). This departs from §10's blank-context-reading method and from
+3.3.x's cheap-model scenario runs; the replay test above is this release's
+counterpart to that measurement, run after release rather than before.
 
