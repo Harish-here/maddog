@@ -14,7 +14,7 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 | PATTERNS | executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | LOOP | advisor-mode, executor-lead |
 | DONE | advisor-mode, executor-lead |
-| DISPATCH FIRST | advisor-mode, executor-lead |
+| ROUTE LINE | advisor-mode, executor-lead |
 | RESUME | advisor-mode, executor-lead |
 | VERDICTS | advisor-mode, executor-lead |
 | UNCERTAINTY | advisor-mode, executor-lead |
@@ -52,14 +52,12 @@ earlier wins.
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to the Fast tiers: Fast-Read to read, Fast to change or run.
-Once a hand owns a slice, never do its next step yourself; to change
-course, wait for its return, or stop it and REROUTE. Pass a hand no more
-authority than held.
+Pass a hand no more authority than held.
 
 | Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
-| MECHANICAL | Fast | decisions all closed |
+| MECHANICAL | Fast | every decision already made, by the task or an earlier return, none by you |
 | BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | GATE | Judge | verdict before an action that changes state others depend on; never a hand that can edit what it judges |
 
@@ -105,10 +103,21 @@ given     you     you        to a hand  you        you
 Your finish condition is the OUTCOME. A slice's DONE-WHEN only returns you
 to SLICE. When the OUTCOME is met, stop.
 
-## DISPATCH FIRST
+## ROUTE LINE
 
-Work goes to a hand before you do any of it yourself. A look that only
-decides where work goes stays yours and transfers no ownership.
+Before your first tool call on a slice, state its route line in your reply,
+`slice → SHAPE → hand`, then dispatch.
+
+Only when the task as written cannot decide the shape, state
+`look → <question>` first, then take one read or one command that answers
+only that question. State the route line from the answer; if the answer
+leaves the shape open, use the likeliest one.
+
+Apart from the look, the slice's work goes to the hand on the route line:
+finding where the work sits, any choice the task leaves open, more reads,
+test runs, and edits. Once a hand owns the slice, never do its next step
+yourself; to change course, wait for its return, or stop it and REROUTE.
+Checking the return is yours: see Evaluate.
 
 ## RESUME
 
@@ -208,7 +217,7 @@ those that have not.
 | P1 | Answers to the user; holds outcome and scope | Advisor | Authority from the user |
 | P2 | Resident for a whole session; must survive compaction | Advisor | the reload line in the repo's CLAUDE.md, outside the skill |
 | P3 | Runs in the user's own session, where the user can see an edit before it lands | Advisor | Show before writing |
-| P4 | Cuts an outcome into slices | Advisor, Lead | LOOP, DONE, ROUTE, DISPATCH FIRST, RESUME, VERDICTS, UNCERTAINTY; each Outcome section; Judge before shared state |
+| P4 | Cuts an outcome into slices | Advisor, Lead | LOOP, DONE, ROUTE, ROUTE LINE, RESUME, VERDICTS, UNCERTAINTY; each Outcome section; Judge before shared state |
 | P5 | Delegates a package whole to a Lead | Advisor | "You accept a Lead's return whole" |
 | P6 | Is an orchestrator that is itself dispatched with one package | Lead | No nesting or self-judging |
 | P7 | Work whose next step depends on discovery | Lead | PLAN, CAMPAIGN, DIAGNOSE, DELIVER; the after-PLAN rule |

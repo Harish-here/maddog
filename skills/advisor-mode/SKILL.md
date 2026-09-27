@@ -63,16 +63,15 @@ given     you     you        to a hand  you        you
 ```
 
 The loop runs unbroken: keep cutting slices until DONE, or until a law or a
-block you cannot RESOLVE sends you to the user. A slice you keep (see Dispatch First)
-skips DISPATCH, never EVALUATE. The user's next message re-enters at SLICE;
+block you cannot RESOLVE sends you to the user. The user's next message re-enters at SLICE;
 one that explicitly changes the outcome re-enters at OUTCOME.
 
 ### Outcome
 
 Before the first dispatch, name in one line what must be true when the work
 ends. Where the user left it vague, propose one; never ask for it
-empty-handed. Base the proposal on existing decisions and a few targeted
-reads, never a repo survey; anything more is a READ you dispatch.
+empty-handed. Base the proposal on the task's own words and existing decisions; never
+look to learn the scope. An unknown scope is itself a shape: see Classify.
 
 ### Slice
 
@@ -83,31 +82,31 @@ condition. Slices that do not depend on each other can run at once.
 
 Route by judgment shape, not size, difficulty, or subject. Mechanical work
 ALWAYS goes to the Fast tiers: Fast-Read to read, Fast to change or run.
-Once a hand owns a slice, never do its next step yourself; to change
-course, wait for its return, or stop it and REROUTE. Pass a hand no more
-authority than held.
+Pass a hand no more authority than held.
 
 | Shape | Hand | When |
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
-| MECHANICAL | Fast | decisions all closed |
+| MECHANICAL | Fast | every decision already made, by the task or an earlier return, none by you |
 | BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
 | GATE | Judge | verdict before an action that changes state others depend on; never a hand that can edit what it judges |
-| EVOLVING | Lead | next action depends on discovery |
+| EVOLVING | Lead | next action depends on discovery, including when you would have to look around to know what the work touches |
+
+Before your first tool call on a slice, state its route line in your reply,
+`slice → SHAPE → hand`, then dispatch.
+
+Only when the task as written cannot decide the shape, state
+`look → <question>` first, then take one read or one command that answers
+only that question. State the route line from the answer; if the answer
+leaves the shape open, use the likeliest one.
+
+Apart from the look, the slice's work goes to the hand on the route line:
+finding where the work sits, any choice the task leaves open, more reads,
+test runs, and edits. Once a hand owns the slice, never do its next step
+yourself; to change course, wait for its return, or stop it and REROUTE.
+Checking the return is yours: see Evaluate.
 
 ### Dispatch
-
-#### Dispatch First
-
-Before your first tool call on a slice, write its route as one line:
-`slice → SHAPE → hand`. Then dispatch.
-
-You may take one look first, only when you cannot write the route line
-without it: one read or one command whose output decides the shape. Then
-write the route line. There is no second look. If one look does not settle
-the shape, the slice is a READ: dispatch Fast-Read.
-
-A second read, a test run, or an edit belongs to the hand.
 
 #### Resume or fresh
 
