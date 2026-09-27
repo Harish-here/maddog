@@ -95,3 +95,10 @@ def test_workdir_is_removed_even_when_the_adapter_crashes():
     with pytest.raises(RuntimeError, match="sdk died"):
         run(Boom())
     assert removed == [Path("/tmp/fake/todo-app")]
+
+
+def test_max_tier_stops_the_climb():
+    adapter = FakeAdapter({t: [Event("handoff", "Smart")] for t in ("low", "mid", "high")})
+    result = run(adapter, max_tier="mid")
+    assert result.lowest_tier is None
+    assert {t for _, t in adapter.calls} == {"low", "mid"}

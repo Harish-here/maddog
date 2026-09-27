@@ -7,3 +7,5 @@ claude-code:
 expected_tier:
   none: low
   high: mid
+# highest tier the runner climbs to; raise to high later
+max_tier: mid

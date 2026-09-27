@@ -35,6 +35,7 @@ class CaseResult:
     records: list[RunRecord] = field(default_factory=list)
     lowest_tier: str | None = None
     void_limited: bool = False
+    max_tier: str = "high"
 
 
 class VoidLimit(Exception):
@@ -75,12 +76,14 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
 
 
 def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS,
-             make=make_workdir, remove=remove_workdir) -> CaseResult:
+             make=make_workdir, remove=remove_workdir, max_tier: str = "high") -> CaseResult:
     if runs < MIN_RUNS:
         raise ValueError(f"runs must be at least {MIN_RUNS}, got {runs}")
+    if max_tier not in TIERS:
+        raise ValueError(f"max_tier must be one of {TIERS}, got {max_tier!r}")
 
-    result = CaseResult(case)
-    for tier in TIERS:
+    result = CaseResult(case, max_tier=max_tier)
+    for tier in TIERS[: TIERS.index(max_tier) + 1]:
         try:
             for version, plugin_path in plugins.items():
                 _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, result.records)

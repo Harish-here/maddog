@@ -14,7 +14,7 @@ def _flag(result: CaseResult, expected: str) -> str:
     if result.void_limited:
         return "VOID LIMIT"
     if result.lowest_tier is None:
-        return "NO PASSING TIER"
+        return f"NO PASSING TIER (tried up to {result.max_tier})"
     if TIERS.index(result.lowest_tier) > TIERS.index(expected):
         return "ABOVE EXPECTED"
     return ""

@@ -14,7 +14,7 @@ def test_advisor_cases_load_with_one_per_role():
 
 def test_every_runtime_ladder_has_every_tier():
     ladders = load_ladders()
-    runtimes = [key for key in ladders if key != "expected_tier"]
+    runtimes = [key for key in ladders if key not in ("expected_tier", "max_tier")]
     assert runtimes
     for runtime in runtimes:
         assert set(ladders[runtime]) == set(TIERS)
