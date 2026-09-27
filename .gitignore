@@ -1,3 +1,5 @@
 # gate rulings stay local; they record guard limitations and the repo publishes to users
 .claude/reviews/
 __pycache__/
+tests/results/
+tests/.venv/
