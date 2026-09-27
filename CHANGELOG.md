@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.4.0] - 2026-09-27
+
+### Changed
+- `skills/section-by-section/SKILL.md` — reviewed against itself, section by section, with the user closing every verdict and a judge gate on the finished draft (PASS WITH FIXES, all fixes closed). Diagnose runs every check instead of stopping at the first that fires, replacing the 3.2.0–3.3.2 ordered first-match test that gave a section only one verdict when several checks fired on it: a section now takes at most one placement verdict (REMOVE, SPLIT, MERGE, MOVE) plus any number of wording verdicts (REPLACE, RESHAPE, COMPRESS, REWORD). The `Tested:` block and the Discuss step's fenced template are folded into one check table (Check, Looked at, Result) shown at Diagnose and Write, in a fixed ten-row order so a skipped check shows as a missing row rather than a silent `clean`. Redundancy and Responsibility now run per sentence as well as per section, catching a partial overlap or an omission a whole-section test missed. Assembly's seven listed steps collapse to four: close every HOLD and GAP; rerun every check over the whole file; Verify, showing the outline and the description together; Compose, which now proposes a 500-line split. A Rulings list opens the ledger, and the ledger's `verdicts` column holds the closed set, placement first, in place of one verdict. This change waived the `author-agent` gate load-bearing instruction text normally routes through (plan decision D6); the section-by-section review and the judge gate stood in its place, and the release skill's independent reviewer still ran
+- `docs/section-by-section/spec.md` — §1, §2, §4 and §5 updated to drop "one verdict" and the ordered first-match test; §3, §6 and §7 corrected for the outside-files rule, the plural verdict column and Rulings list, and the one prohibition the body has carried since 3.3.0; a new §13 records the 3.4.0 change and its rulings
+- `README.md` — the section-by-section bullet now says one or more verdicts, and names the whole-file check after reassembly
+- `.claude-plugin/plugin.json` version 3.3.2 → 3.4.0
+
+### Added
+- Ambiguity check (a sentence with a second reading), and pointers and names split into their own checks instead of hiding inside clarity
+- outside files, named once at Start: redundancy, pointers and names may read a file the user names as something the target relies on
+
+### Debt
+- the replay test comparing the new draft against the pre-change file across the 11 catch patterns behind this release (plan slice 4, `docs/section-by-section/plan-2026-09-27.md`) is deferred to after release, at the user's instruction; open item recorded in `docs/section-by-section/state.md`
+
 ## [3.3.2] - 2026-09-21
 
 ### Fixed
