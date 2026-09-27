@@ -8,7 +8,7 @@ ADVISOR = TESTS_DIR / "skills" / "advisor-mode" / "handoff.yaml"
 
 def test_advisor_cases_load_with_one_per_role():
     cases = load_cases(ADVISOR)
-    assert [c.expect for c in cases] == list(ROLES)
+    assert set(c.expect for c in cases) == set(ROLES)
     assert all(c.skill == "advisor-mode" and c.fixture == "todo-app" for c in cases)
 
 

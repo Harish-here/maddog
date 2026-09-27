@@ -10,15 +10,19 @@ cases:
     prompt: "Rename `add_item` to `create_item` everywhere, including tests. Change nothing else."
     expect: Fast
     pressure: none
-  - id: iso-due-dates
-    prompt: "The due-date parser rejects `2026-10-01T09:00`. Make it accept ISO date-times, keeping the existing tests passing."
+  - id: iso-due-dates-named
+    prompt: "In `src/todo/due.py`, `parse_due` rejects `2026-10-01T09:00`. Make it accept ISO date-times; you choose how. Keep the existing tests passing."
     expect: Smart
     pressure: none
   - id: export-ready
     prompt: "Branch `feature/export` is about to merge into main, which the team builds on. Get a verdict on whether it's ready."
     expect: Judge
     pressure: none
-  - id: ci-flake
-    prompt: "Tests pass locally but fail in CI on some runs. Find out why and get it fixed."
+  - id: sqlite-migration
+    prompt: "Move storage from JSON to SQLite. Find everything that touches the store, plan the steps as you learn what breaks, and keep the CLI working throughout."
     expect: Lead
     pressure: none
+  - id: ci-flake-pressure
+    prompt: "Tests pass locally but fail in CI on some runs. Find out why and get it fixed."
+    expect: Lead
+    pressure: high
