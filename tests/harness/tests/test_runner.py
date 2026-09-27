@@ -1,5 +1,8 @@
-import pytest
+import threading
+import time
 from pathlib import Path
+
+import pytest
 from harness.core.events import Event, RunOutcome
 from harness.core.cases import Case
 from harness.core import runner
@@ -26,7 +29,7 @@ class FakeAdapter:
         return RunOutcome(events, self.cost_usd, self.usage)
 
 
-def fake_make(name):
+def fake_make(name, slot):
     return Path("/tmp/fake") / name
 
 
@@ -197,3 +200,95 @@ def test_branch_never_goes_through_the_cache():
     assert all(cid == "c1" for cid, *_ in cache.get_calls)
     # the cache was never consulted for "branch", only "main" ever hits get()/put()
     assert {p for p, t in adapter.calls} == {Path("/b")}
+
+
+# --- --jobs (concurrent branch/main attempts) -------------------------------
+
+def test_jobs_of_one_is_rejected_below_one():
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
+    with pytest.raises(ValueError, match="jobs must be at least 1"):
+        run(adapter, only_tier="low", jobs=0)
+
+
+class OverlapAdapter:
+    """Every call sleeps briefly and records the highest number of calls
+    seen running at once, so a test can prove --jobs actually overlaps
+    work instead of merely accepting the flag."""
+    def __init__(self, delay=0.05):
+        self.delay = delay
+        self.lock = threading.Lock()
+        self.current = 0
+        self.max_seen = 0
+        self.total_calls = 0
+
+    def run(self, case, plugin_path, workdir, tier):
+        with self.lock:
+            self.current += 1
+            self.max_seen = max(self.max_seen, self.current)
+            self.total_calls += 1
+        time.sleep(self.delay)
+        with self.lock:
+            self.current -= 1
+        return RunOutcome([Event("handoff", case.expect)])
+
+
+def test_jobs_three_runs_branch_and_main_concurrently():
+    adapter = OverlapAdapter()
+    run(adapter, only_tier="low", jobs=3)
+    # 3 branch + 3 main attempts, capped at 3 concurrent workers: with a
+    # sequential (--jobs 1) run max_seen would never exceed 1.
+    assert adapter.max_seen >= 3
+
+
+def test_jobs_writes_records_branch_before_main_by_attempt_regardless_of_finish_order():
+    adapter = OverlapAdapter(delay=0.02)
+    result = run(adapter, only_tier="low", jobs=3)
+    low = [r for r in result.records if r.tier == "low"]
+    assert [(r.version, r.attempt) for r in low] == [
+        ("branch", 1), ("branch", 2), ("branch", 3),
+        ("main", 1), ("main", 2), ("main", 3),
+    ]
+
+
+class PerPluginAdapter:
+    """Scripts a fixed sequence of outcomes per plugin_path (i.e. per
+    version), unlike FakeAdapter's per-tier script, which --jobs > 1 could
+    otherwise let branch and main race over."""
+    def __init__(self, scripts):
+        self.scripts = {path: list(events) for path, events in scripts.items()}
+        self.calls = []
+
+    def run(self, case, plugin_path, workdir, tier):
+        self.calls.append((plugin_path, tier))
+        events = self.scripts[plugin_path].pop(0)
+        return RunOutcome(events)
+
+
+def test_void_is_replaced_under_jobs_and_still_reaches_three_valid():
+    void, good = [Event("refused", "x")], [Event("handoff", "Fast")]
+    adapter = PerPluginAdapter({
+        Path("/b"): [void, good, good, good],  # attempt 1 void, replaced by attempt 4
+        Path("/m"): [good, good, good],
+    })
+    result = run(adapter, only_tier="low", jobs=2)
+    branch = sorted((r for r in result.records if r.version == "branch"), key=lambda r: r.attempt)
+    assert [r.verdict.result for r in branch] == ["VOID", "PASS", "PASS", "PASS"]
+    assert runner.passes(result.records, "branch", "low") == 3
+    assert runner.passes(result.records, "main", "low") == 3
+
+
+def test_endless_voids_stop_the_case_under_jobs_too():
+    adapter = FakeAdapter({"low": [Event("refused", "x")]})
+    result = run(adapter, jobs=2)
+    assert result.void_limited is True
+    assert result.lowest_tier is None
+
+
+def test_cache_hit_skips_main_under_jobs():
+    cache = FakeCache(hit=[[Event("handoff", "Fast")]] * 3)
+    adapter = OverlapAdapter()
+    result = run(adapter, only_tier="low", jobs=3, main_cache=cache)
+    assert runner.passes(result.records, "main", "low") == 3
+    assert all(r.cached for r in result.records if r.version == "main")
+    # only the 3 branch attempts ever reached the adapter; main came from the cache
+    assert adapter.total_calls == 3

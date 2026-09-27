@@ -180,6 +180,35 @@ least the required number of valid runs skips calling the model for
 are never cached — they are the thing under test, and must always run
 fresh.
 
+## Running attempts in parallel
+
+`--jobs N` (default 1) runs up to `N` of a case/tier's branch and main
+attempts at once instead of one at a time; tiers and cases still run in
+order. A VOID attempt is still replaced the same way, and `MAX_VOIDS`
+still ends the case. `runs.jsonl` and the report stay ordered
+branch-before-main, by attempt number, regardless of which attempt
+actually finished first.
+
+Concurrency also targets prompt caching: a session's system prompt
+includes its working directory and git state, so a fresh random workdir
+and fresh commit hashes on every run defeat the runtime's cache from the
+first differing byte on. Each job slot `k` (0..N-1) instead reuses one
+fixed path, `<system temp>/maddog-run-<k>/<fixture>`, emptied and
+rebuilt before each run; every fixture commit gets one fixed
+`GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE`, so identical content always
+hashes to an identical commit. A slot is held with an exclusive lock for
+the life of the process, so two `run.py` processes never share one; a
+locked slot number is skipped in favor of the next free one.
+
+On SIGINT or SIGTERM, `run.py` still removes the `main` baseline
+worktree and every slot folder before exiting non-zero — the signal is
+turned into an ordinary exception so the existing cleanup code runs. At
+startup, `run.py` also sweeps its own leftover `maddog-run-*`,
+`maddog-test-*`, and `maddog-baseline-*` folders (and any git worktree
+registered under one): a folder is removed only if the process that
+made it is no longer alive, or it carries no ownership marker and is
+over 24 hours old, so a live sibling run's folders are never touched.
+
 ## Harness-neutral architecture
 
 Per `PHILOSOPHY.md` §5 (abstract responsibility and authority; adapt

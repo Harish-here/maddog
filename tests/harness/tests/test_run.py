@@ -1,9 +1,12 @@
+import os
+import signal
 import subprocess
 
 import pytest
 import run
 from harness.core.cases import TESTS_DIR, Case
 from harness.core.events import Event, RunOutcome
+from harness.core.fixture import SlotPool as RealSlotPool
 
 
 def worktrees():
@@ -11,12 +14,16 @@ def worktrees():
                           capture_output=True, text=True).stdout
 
 
-def test_main_worktree_is_removed_when_a_case_crashes(monkeypatch):
+def test_main_worktree_is_removed_when_a_case_crashes(monkeypatch, tmp_path):
     monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: object())
     monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
     real_load_ladders = run.load_ladders
     fake_ladder = {"low": "x", "mid": "y", "high": "z"}
     monkeypatch.setattr(run, "load_ladders", lambda: {**real_load_ladders(), "rt": fake_ladder})
+    # Isolate this test from the real system temp dir: it must never sweep
+    # or create job-slot folders there, only under pytest's own tmp_path.
+    monkeypatch.setattr(run, "sweep", lambda repo_root: [])
+    monkeypatch.setattr(run, "SlotPool", lambda jobs: RealSlotPool(jobs, base=tmp_path))
 
     def crash(*args, **kwargs):
         raise RuntimeError("adapter died")
@@ -98,6 +105,10 @@ def _patch_run(monkeypatch, adapter, tmp_path):
     monkeypatch.setattr(run, "plugin_versions", lambda ref: {"branch": TESTS_DIR.parent, "main": TESTS_DIR.parent})
     monkeypatch.setattr(run, "remove_baseline", lambda versions: None)
     monkeypatch.setattr(run, "main_sha", lambda ref: "fakesha")
+    # Isolate this test from the real system temp dir: no sweep of it, and
+    # job slots land under pytest's own tmp_path, not /tmp.
+    monkeypatch.setattr(run, "sweep", lambda repo_root: [])
+    monkeypatch.setattr(run, "SlotPool", lambda jobs: RealSlotPool(jobs, base=tmp_path / "slots"))
     real_main_cache = run.MainCache
     captured = {}
 
@@ -154,3 +165,49 @@ def test_second_run_reuses_the_cached_main_records(monkeypatch, tmp_path):
     # Main's 3 runs come from the cache MainCache wrote on the first pass;
     # only the 3 branch runs go through the adapter this time.
     assert adapter2.tiers.count("low") == 3
+
+
+def test_jobs_below_one_is_a_parser_error():
+    with pytest.raises(SystemExit):
+        run.main(["skills/advisor-mode", "--runtime", "claude-code", "--jobs", "0"])
+
+
+def test_jobs_flag_runs_the_case_concurrently_and_still_writes_every_record(monkeypatch, tmp_path):
+    adapter = RecordingAdapter()
+    _patch_run(monkeypatch, adapter, tmp_path)
+    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags",
+             "--tier", "low", "--runs", "3", "--jobs", "3"])
+    # Same total work as any other run (3 branch + 3 main); --jobs changes
+    # how it's scheduled, never how much of it there is.
+    assert adapter.tiers.count("low") == 6
+
+
+class SelfKillingAdapter:
+    """Simulates an external SIGTERM landing mid-run: every call to run()
+    signals this same process before returning a normal outcome."""
+    def run(self, case, plugin_path, workdir, tier):
+        os.kill(os.getpid(), signal.SIGTERM)
+        return RunOutcome([Event("handoff", case.expect)])
+
+
+def test_sigterm_during_a_run_removes_the_baseline_worktree_and_slot_folders(monkeypatch, tmp_path):
+    adapter = SelfKillingAdapter()
+    monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: adapter)
+    monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
+    real_load_ladders = run.load_ladders
+    fake_ladder = {"low": "x", "mid": "y", "high": "z"}
+    monkeypatch.setattr(run, "load_ladders", lambda: {**real_load_ladders(), "rt": fake_ladder})
+    # sweep() itself is out of scope here (covered in test_sweep.py) and
+    # must never touch the real system temp dir from this test.
+    monkeypatch.setattr(run, "sweep", lambda repo_root: [])
+    monkeypatch.setattr(run, "SlotPool", lambda jobs: RealSlotPool(jobs, base=tmp_path))
+    real_main_cache = run.MainCache
+    monkeypatch.setattr(run, "MainCache", lambda cache_dir, **kw: real_main_cache(cache_dir=tmp_path / "cache", **kw))
+    # plugin_versions/remove_baseline are left real: this test's whole point
+    # is proving a real baseline worktree gets cleaned up on a stop signal.
+
+    before = worktrees()
+    rc = run.main(["skills/advisor-mode", "--runtime", "rt", "--case", "list-flags", "--runs", "3"])
+    assert rc == 1
+    assert worktrees() == before
+    assert list(tmp_path.glob("maddog-run-*")) == []

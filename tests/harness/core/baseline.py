@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from harness.core.cases import TESTS_DIR
+from harness.core import sweep
 
 REPO_ROOT = TESTS_DIR.parent
 
@@ -13,6 +14,7 @@ def plugin_versions(ref: str = "main") -> dict[str, Path]:
     # resolve(): on macOS the temp dir sits under the /var symlink, and git
     # worktree list prints the real /private/var path.
     root = Path(tempfile.mkdtemp(prefix="maddog-baseline-")).resolve()
+    sweep.write_marker(root)  # lets a later startup sweep tell this folder is ours
     worktree = root / "plugin"
     result = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "worktree", "add", "--detach", "-q", str(worktree), ref],

@@ -7,21 +7,36 @@
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --tier low --case rename-add-item --case list-flags
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --ladder
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --fresh-main
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --jobs 3
 
 Without --tier or --ladder, each case runs once, at its own expected tier
 (no climbing). --ladder opts into the old climb from low up to max_tier.
 """
 import argparse
+import signal
 import sys
 from datetime import datetime
 from pathlib import Path
 
 from harness.core.baseline import main_sha, plugin_versions, remove_baseline
 from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, expected_tier, load_cases, load_ladders
+from harness.core.fixture import SlotPool, make_workdir, remove_workdir
 from harness.core.maincache import CACHE_DIRNAME, MainCache, hash_file
 from harness.core.report import render, write_results
 from harness.core.runner import MIN_RUNS, run_case
+from harness.core.sweep import sweep
 from harness.runtimes import adapter_source_path, get_adapter
+
+
+class Stopped(Exception):
+    """Raised by the SIGTERM/SIGINT handler below so a stop signal still
+    unwinds through the run's `finally` blocks -- removing the baseline
+    worktree and the job slot folders -- instead of killing the process
+    mid-cleanup."""
+
+
+def _raise_stopped(signum, frame):
+    raise Stopped(f"stopped by signal {signum}")
 
 
 def select_cases(cases, case_ids, pressure):
@@ -46,12 +61,19 @@ def main(argv=None) -> int:
                         help="climb from low to max_tier, as the runner used to by default; not with --tier")
     parser.add_argument("--pressure", choices=PRESSURES, help="run only cases with this pressure")
     parser.add_argument("--runs", type=int, default=MIN_RUNS)
+    parser.add_argument("--jobs", type=int, default=1,
+                        help="run up to this many branch/main attempts at once per case/tier (default 1: sequential)")
     parser.add_argument("--fresh-main", action="store_true",
                         help="ignore and overwrite any cached main run for the selected cases")
     args = parser.parse_args(argv)
 
     if args.ladder and args.tier:
         parser.error("--ladder and --tier are mutually exclusive")
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
+
+    for folder in sweep(TESTS_DIR.parent):
+        print(f"swept leftover {folder}")
 
     case_file = TESTS_DIR / args.target / "handoff.yaml"
     cases = load_cases(case_file)
@@ -75,16 +97,32 @@ def main(argv=None) -> int:
         adapter_hash=hash_file(adapter_source_path(args.runtime)),
         fresh=args.fresh_main,
     )
+    slot_pool = SlotPool(args.jobs)
+
+    def make(fixture_name, slot):
+        return make_workdir(fixture_name, slot_pool.path(slot))
+
+    previous_term = signal.signal(signal.SIGTERM, _raise_stopped)
+    previous_int = signal.signal(signal.SIGINT, _raise_stopped)
     results = []
     try:
-        for case in cases:
-            only_tier = None if args.ladder else (args.tier or expected_tier(case, ladders))
-            print(f"running {case.id} (expect {case.expect})", flush=True)
-            results.append(run_case(case, adapter, plugins, runs=args.runs,
-                                   max_tier=ladders.get("max_tier", "high"),
-                                   only_tier=only_tier, main_cache=main_cache))
+        try:
+            for case in cases:
+                only_tier = None if args.ladder else (args.tier or expected_tier(case, ladders))
+                print(f"running {case.id} (expect {case.expect})", flush=True)
+                results.append(run_case(case, adapter, plugins, runs=args.runs,
+                                       max_tier=ladders.get("max_tier", "high"),
+                                       only_tier=only_tier, main_cache=main_cache,
+                                       jobs=args.jobs, make=make, remove=remove_workdir))
+        finally:
+            remove_baseline(plugins)
+            slot_pool.close()
+    except Stopped as e:
+        print(f"{e}; cleaned up and exiting", file=sys.stderr)
+        return 1
     finally:
-        remove_baseline(plugins)
+        signal.signal(signal.SIGTERM, previous_term)
+        signal.signal(signal.SIGINT, previous_int)
 
     report = render(results, ladders, args.runtime, ladder=args.ladder)
     out_dir = TESTS_DIR / "results" / datetime.now().strftime("%Y-%m-%dT%H%M%S")

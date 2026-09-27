@@ -15,6 +15,7 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier low --case rename-add-item --case list-flags
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --ladder
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --fresh-main
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --jobs 3
 
 By default each case runs 3 times on this working tree and 3 times on
 `main`, once, at its own expected tier — no climbing. A case's expected
@@ -36,6 +37,39 @@ Every run against a real model costs tokens and money. Runs use your
 existing Claude Code login unless `ANTHROPIC_API_KEY` is set, in which case
 they bill that key. The report and `runs.jsonl` record each run's cost in
 USD and its token usage, where the runtime reports them.
+
+### `--jobs`: running attempts in parallel
+
+`--jobs N` (default 1) runs up to `N` of a case/tier's branch and main
+attempts at once, instead of one at a time. Tiers and cases still run in
+order — only the attempts inside one case/tier overlap. A refused (VOID)
+attempt is still replaced the same way; `runs.jsonl` and the report list
+is still ordered branch-before-main, by attempt number, no matter which
+attempt actually finished first.
+
+Concurrent attempts also get cheaper: each job slot `k` reuses one fixed
+workdir path, `<system temp>/maddog-run-<k>/<fixture>`, emptied and
+rebuilt before every run instead of a fresh random path each time, and
+every fixture commit is stamped with the same fixed date. Runtime
+sessions include the workdir path and git state in their system prompt,
+so holding both constant lets the runtime's own prompt cache actually
+hit across runs, instead of missing on the first differing byte every
+time. Slot folders are removed when the run finishes, including on a
+stop signal (below).
+
+### Stopping a run
+
+SIGINT (Ctrl-C) and SIGTERM both still remove the `main` baseline
+worktree and every job slot folder before the process exits (with a
+non-zero status) — the signal is turned into an ordinary exception so
+the run's own cleanup code runs, the same as on any other error.
+
+A run also sweeps `tests/`' own leftover temp folders at startup:
+`maddog-run-*`, `maddog-test-*`, and `maddog-baseline-*` folders (and any
+git worktree registered under one) are removed if the process that made
+them isn't alive any more, or if they carry no ownership marker and are
+over 24 hours old. A folder currently owned by a live process — its own
+or a sibling run's — is always left alone.
 
 Harness unit tests (no model):
 
