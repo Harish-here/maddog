@@ -3,11 +3,10 @@
 Invokes the real guard script (`bash scripts/executor-guard.sh`) with a
 crafted PreToolUse JSON payload on stdin, exactly the shape the hook itself
 receives (agent_type, tool_input.command, cwd). `cwd` always points at a
-`tmp_path` workspace holding real files, since the guard's judge allowlist
-resolves paths against it and requires them to exist on disk.
-
-No model call, no network — pure subprocess + JSON, like the rest of
-tests/harness's unit tests.
+`tmp_path` workspace holding real files — some checks below no longer need
+an existing file to deny (option B removed judge's path-aware allowlist),
+but the workspace is kept so a command can reference a real path where one
+is written into the command string.
 """
 import json
 import subprocess
@@ -65,9 +64,10 @@ def assert_allow(command: str, agent_type: str, cwd: Path):
 
 @pytest.fixture
 def ws(tmp_path):
-    """A real workspace directory with the files the allowlist forms need
-    to resolve against — script files for every interpreter form, plus a
-    tests/ subtree pytest/unittest/bun/deno paths can point at."""
+    """A real workspace directory with a few files some commands below
+    reference by path — no longer load-bearing for judge's verdict (option
+    B denies every interpreter form regardless of path), kept so the
+    commands still read like realistic re-run invocations."""
     (tmp_path / "script.py").write_text("print('hi')\n")
     (tmp_path / "script.js").write_text("console.log('hi');\n")
     (tmp_path / "script.mjs").write_text("console.log('hi');\n")
@@ -78,22 +78,28 @@ def ws(tmp_path):
     return tmp_path
 
 
-@pytest.fixture
-def outside_py(tmp_path_factory):
-    """A real, existing .py file OUTSIDE any workspace this test hands the
-    guard as `cwd` — stands in for the review's `/usr/lib/python3/
-    tarfile.py` example (a real stdlib path that doesn't exist at that
-    literal location on every machine/Python build) without depending on
-    where this machine's stdlib happens to live."""
-    d = tmp_path_factory.mktemp("outside")
-    p = d / "outside.py"
-    p.write_text("print('should not run')\n")
-    return p
-
-
-# --- REVIEW FINDINGS: judge DENY -------------------------------------
+# --- OPTION B: judge denies every interpreter, every form, like lead -----
+# 2026-09-27 release review round 2 (commit 1e3ecec) found the judge
+# allowlist this replaced still leaking on `VAR=val` prefix-stripping (F1)
+# and on several wrapper forms (F2, covered separately below). Maintainer
+# decision: remove the allowlist rather than keep patching it — every one
+# of these now denies for judge exactly as it already did for lead.
 
 JUDGE_DENY_COMMANDS = [
+    # former allowlisted forms — all deny now that the allowlist is gone
+    "python3 script.py",
+    "python3 script.py --flag value",
+    "python3 -m pytest tests -q",
+    "python3 -m pytest tests/test_sample.py -v --tb=short",
+    "python3 -m pytest -k foo tests",
+    "python3 -m unittest tests",
+    "node script.js",
+    "node script.mjs",
+    "bun script.ts",
+    "bun run script.ts",
+    "bun test tests",
+    "deno run script.ts",
+    "deno test tests",
     # combined python short flags
     'python3 -Ic "print(1)"',
     'python3 -Sc "print(2)"',
@@ -115,28 +121,35 @@ JUDGE_DENY_COMMANDS = [
     "deno fmt .",
     "deno run -A x.ts",
     "deno eval 1",
-    # pytest options that write / aren't on the allowlist
+    # pytest options that write / aren't on the (now-removed) allowlist
     "python3 -m pytest --junitxml=README.md",
     "python3 -m pytest --basetemp=src",
     "python3 -m pytest -p some_plugin",
     "python3 -m pytest -o cache_dir=x",
     "python3 -m pytest --result-log=x",
     "python3 -m pytest -c pytest.ini",
-    # doctest: denied outright (decision — see header comment)
+    # doctest
     "python3 -m doctest README.md",
+    # F1: VAR=val prefixes must not launder a pytest/node re-run past denial
+    "PYTEST_ADDOPTS=--junitxml=README.md python3 -m pytest tests -q",
+    "NODE_OPTIONS='--import=data:text/javascript,x' node script.js",
+    # perl: denied outright, real script or not
+    "perl script.pl",
+    "perl -e 1",
 ]
 
 
 @pytest.mark.parametrize("command", JUDGE_DENY_COMMANDS)
-def test_judge_denies_review_finding(command, ws):
+def test_judge_denies_every_interpreter_form(command, ws):
     assert_deny(command, JUDGE, ws)
 
 
-def test_judge_denies_script_outside_cwd(ws, outside_py):
-    assert_deny(f"python3 {outside_py} --create x", JUDGE, ws)
-
-
-# --- pre-existing wrapper gap: both lead and judge -----------------------
+# --- wrapper hardening: both lead and judge -------------------------------
+# F2 (release review round 2): the env/nice/exec branches of the wrapper
+# stripper dropped some flags, stopped, and left an unrecognized leftover
+# flag as the "command" — unclassified, so it fell through to ALLOW. Each
+# wrapper branch now denies immediately on any flag/argument form it does
+# not fully enumerate, instead of falling through.
 
 WRAPPER_COMMANDS = [
     'sh -c "echo x > f"',
@@ -152,6 +165,12 @@ WRAPPER_COMMANDS = [
     "time python3 -c 1",
     "stdbuf -o0 python3 -c 1",
     "FOO=1 python3 -c 1",
+    # F2 escapes: previously ALLOWED for both lead and judge
+    'env -S \'sh -c "echo x > f"\'',
+    "env -P /usr/bin python3 -c 1",
+    "nice -n5 python3 -c 1",
+    "nice --adjustment=5 python3 -c 1",
+    "exec -a foo python3 -c 1",
 ]
 
 
@@ -165,51 +184,7 @@ def test_lead_denies_wrapped_command(command, ws):
     assert_deny(command, LEAD, ws)
 
 
-# --- ALLOWLIST FOR JUDGE: each form, with a real file ---------------------
-
-JUDGE_ALLOW_COMMANDS = [
-    # 1. python <script.py>
-    "python3 script.py",
-    "python3 script.py --flag value",
-    # 2. python -m pytest|unittest with allowlisted flags + existing paths
-    "python3 -m pytest tests -q",
-    "python3 -m pytest tests/test_sample.py -v --tb=short",
-    "python3 -m pytest -k foo tests",
-    "python3 -m pytest -k=foo tests",
-    "python3 -m pytest -rA tests",
-    'python3 -m pytest -m "slow" tests',
-    "python3 -m pytest tests::test_x",
-    "python3 -m unittest tests",
-    # 3. node <script>
-    "node script.js",
-    "node script.mjs",
-    # 4. bun <script> / bun run <script> / bun test <paths>
-    "bun script.ts",
-    "bun run script.ts",
-    "bun test tests",
-    # 5. deno run <script> / deno test <paths>
-    "deno run script.ts",
-    "deno test tests",
-]
-
-
-@pytest.mark.parametrize("command", JUDGE_ALLOW_COMMANDS)
-def test_judge_allows_allowlisted_form(command, ws):
-    assert_allow(command, JUDGE, ws)
-
-
-def test_judge_denies_pytest_c_flag_via_allowlist_not_inline_heuristic(ws):
-    # The review's false-positive check: python3 -m pytest -c pytest.ini
-    # stays denied, but because -c is not on the pytest allowlist — not
-    # because it looks like python's own -c inline-code flag. Covered
-    # already by JUDGE_DENY_COMMANDS; this just pins the reason text.
-    proc = run_guard("python3 -m pytest -c pytest.ini", JUDGE, ws)
-    data = json.loads(proc.stdout)
-    reason = data["hookSpecificOutput"]["permissionDecisionReason"]
-    assert "allow" in reason.lower()
-
-
-# --- lead still denies every interpreter form, allowlist or not ----------
+# --- lead still denies every interpreter form -----------------------------
 
 LEAD_STILL_DENIES = [
     "python3 script.py",
@@ -225,13 +200,6 @@ LEAD_STILL_DENIES = [
 @pytest.mark.parametrize("command", LEAD_STILL_DENIES)
 def test_lead_denies_every_interpreter_form(command, ws):
     assert_deny(command, LEAD, ws)
-
-
-# --- perl: deny outright for judge too ------------------------------------
-
-def test_judge_denies_perl_even_with_a_real_script(ws):
-    (ws / "script.pl").write_text("print \"hi\\n\";\n")
-    assert_deny("perl script.pl", JUDGE, ws)
 
 
 # --- executor-fast: unaffected by any of the above ------------------------
