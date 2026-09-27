@@ -36,6 +36,7 @@ class CaseResult:
     lowest_tier: str | None = None
     void_limited: bool = False
     max_tier: str = "high"
+    only_tier: str | None = None
 
 
 class VoidLimit(Exception):
@@ -76,14 +77,25 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
 
 
 def run_case(case: Case, adapter, plugins: dict[str, Path], runs: int = MIN_RUNS,
-             make=make_workdir, remove=remove_workdir, max_tier: str = "high") -> CaseResult:
+             make=make_workdir, remove=remove_workdir, max_tier: str = "high",
+             only_tier: str | None = None) -> CaseResult:
     if runs < MIN_RUNS:
         raise ValueError(f"runs must be at least {MIN_RUNS}, got {runs}")
     if max_tier not in TIERS:
         raise ValueError(f"max_tier must be one of {TIERS}, got {max_tier!r}")
+    if only_tier is not None and only_tier not in TIERS:
+        raise ValueError(f"only_tier must be one of {TIERS}, got {only_tier!r}")
 
-    result = CaseResult(case, max_tier=max_tier)
-    for tier in TIERS[: TIERS.index(max_tier) + 1]:
+    result = CaseResult(case, max_tier=max_tier, only_tier=only_tier)
+
+    if only_tier is not None:
+        # Run at exactly the specified tier, no climbing
+        tiers_to_run = [only_tier]
+    else:
+        # Normal behavior: start at low, climb to max_tier
+        tiers_to_run = TIERS[: TIERS.index(max_tier) + 1]
+
+    for tier in tiers_to_run:
         try:
             for version, plugin_path in plugins.items():
                 _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, result.records)

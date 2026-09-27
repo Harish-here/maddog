@@ -102,3 +102,32 @@ def test_max_tier_stops_the_climb():
     result = run(adapter, max_tier="mid")
     assert result.lowest_tier is None
     assert {t for _, t in adapter.calls} == {"low", "mid"}
+
+
+def test_only_tier_runs_exactly_that_tier_no_climb():
+    adapter = FakeAdapter({"mid": [Event("handoff", "Smart")], "high": [Event("handoff", "Fast")]})
+    result = run(adapter, only_tier="mid")
+    assert result.lowest_tier is None
+    assert result.only_tier == "mid"
+    assert {t for _, t in adapter.calls} == {"mid"}
+    assert len(result.records) == 6  # 3 branch + 3 main
+
+
+def test_only_tier_pass_stops_immediately():
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")], "mid": [Event("handoff", "Smart")]})
+    result = run(adapter, only_tier="low")
+    assert result.lowest_tier == "low"
+    assert result.only_tier == "low"
+    assert {t for _, t in adapter.calls} == {"low"}
+
+
+def test_only_tier_invalid_raises_valueerror():
+    adapter = FakeAdapter({"low": [Event("handoff", "Fast")]})
+    with pytest.raises(ValueError, match="only_tier must be one of"):
+        run(adapter, only_tier="invalid")
+
+
+def test_only_tier_appears_in_result():
+    adapter = FakeAdapter({"high": [Event("handoff", "Fast")]})
+    result = run(adapter, only_tier="high")
+    assert result.only_tier == "high"

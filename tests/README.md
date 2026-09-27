@@ -11,9 +11,12 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
 
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier mid --pressure decision
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier low --case rename-add-item --case list-flags
 
 Each case runs 3 times on this working tree and 3 times on `main`, starting at
 the `low` tier. A case that fails at least 2 of 3 climbs to the next tier, up to `max_tier` in `harness/runtimes/ladders.yaml` (currently `mid`).
+`--tier` runs each case at that tier only and never climbs; the comparison with `main` always runs.
 Every run calls a real model and costs tokens. Runs use your existing Claude
 Code login unless `ANTHROPIC_API_KEY` is set, in which case they bill that key.
 

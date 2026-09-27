@@ -12,8 +12,8 @@ def rec(version, tier, result, i=1, reason="r"):
     return RunRecord("c1", version, tier, i, [Event("handoff", "Smart")], Verdict(result, reason))
 
 
-def case_result(records, lowest, void_limited=False):
-    return CaseResult(Case("c1", "p", "Fast", "none", "advisor-mode", "todo-app"), records, lowest, void_limited)
+def case_result(records, lowest, void_limited=False, only_tier=None):
+    return CaseResult(Case("c1", "p", "Fast", "none", "advisor-mode", "todo-app"), records, lowest, void_limited, only_tier=only_tier)
 
 
 def test_table_shows_branch_and_main_passes_per_tier():
@@ -31,6 +31,17 @@ def test_above_expected_is_flagged():
 def test_no_passing_tier_and_void_limit_are_flagged():
     assert "NO PASSING TIER" in render([case_result([rec("branch", "high", "FAIL")], None)], LADDERS, "rt")
     assert "VOID LIMIT" in render([case_result([rec("branch", "low", "VOID")], None, True)], LADDERS, "rt")
+
+
+def test_only_tier_flag_when_no_pass():
+    text = render([case_result([rec("branch", "mid", "FAIL")], None, only_tier="mid")], LADDERS, "rt")
+    assert "NO PASS AT mid (only tier tried)" in text
+
+
+def test_only_tier_no_flag_when_pass():
+    recs = [rec("branch", "mid", "PASS", i) for i in (1, 2, 3)]
+    text = render([case_result(recs, "mid", only_tier="mid")], LADDERS, "rt")
+    assert "NO PASS AT" not in text and "VOID LIMIT" not in text and "NO PASSING TIER" not in text
 
 
 def test_failed_runs_list_their_events():
