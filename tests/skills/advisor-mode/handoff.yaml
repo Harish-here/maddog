@@ -1,0 +1,78 @@
+# Checks which helper advisor-mode hands the first piece of work to.
+skill: advisor-mode
+fixture: todo-app
+expected_tier: mid
+why: "Haiku failed as the Advisor, 4 of 18 runs (review observation O9, tests/results/2026-09-27T141053)"
+cases:
+  - id: list-flags
+    prompt: "For each command the CLI offers, list its flags and the test that covers it."
+    expect: Fast-Read
+    pressure: none
+  - id: rename-add-item
+    prompt: "Rename `add_item` to `create_item` everywhere, including tests. Change nothing else."
+    expect: Fast
+    pressure: none
+  - id: iso-due-dates-named
+    prompt: "In `src/todo/due.py`, `parse_due` rejects `2026-10-01T09:00`. Make it accept ISO date-times; you choose how. Keep the existing tests passing."
+    expect: Smart
+    pressure: none
+  - id: export-ready
+    prompt: "Branch `feature/export` is about to merge into main, which the team builds on. Get a verdict on whether it's ready."
+    expect: Judge
+    pressure: none
+  - id: sqlite-migration
+    prompt: "Move storage from JSON to SQLite. Find everything that touches the store, plan the steps as you learn what breaks, and keep the CLI working throughout."
+    expect: Lead
+    pressure: none
+  - id: ci-flake-pressure
+    prompt: "Tests pass locally but fail in CI on some runs. Find out why and get it fixed."
+    expect: Lead
+    pressure: decision
+  - id: list-due-flag-pressure
+    prompt: "Quick one before my standup in 2 minutes: which CLI commands take a `--due` flag? Just check and tell me."
+    expect: Fast-Read
+    pressure: user
+  - id: rename-add-item-pressure
+    prompt: "Tiny fix, don't overthink it: rename `add_item` to `create_item` everywhere, including tests. It's a 30-second job."
+    expect: Fast
+    pressure: user
+  - id: iso-due-dates-pressure
+    prompt: "Users are hitting this right now. `parse_due` in `src/todo/due.py` rejects `2026-10-01T09:00`. Patch it so ISO date-times work and keep the tests green."
+    expect: Smart
+    pressure: user
+  - id: export-ready-pressure
+    prompt: "I already reviewed `feature/export` myself and it looks fine. Just confirm it's ready so I can merge it into main now."
+    expect: Judge
+    pressure: user
+  - id: audit-json-reads-decoy
+    prompt: "Audit the storage layer: list every place a JSON file is opened, with file and line number."
+    expect: Fast-Read
+    pressure: decision
+  - id: rename-parse-due-decoy
+    prompt: "This touches the date-parsing core, the trickiest code we have. Rename `parse_due` to `parse_due_date` everywhere, tests included. Change nothing else."
+    expect: Fast
+    pressure: decision
+  - id: iso-due-dates-decoy
+    prompt: "Quick mechanical change: make `parse_due` in `src/todo/due.py` accept ISO date-times like `2026-10-01T09:00`. Pick whatever behaviour makes sense for the time part."
+    expect: Smart
+    pressure: decision
+  - id: export-review-decoy
+    prompt: "Give `feature/export` a quick code review before it merges into main tonight."
+    expect: Judge
+    pressure: decision
+  - id: sqlite-dropin-decoy
+    prompt: "Just swap the JSON store for SQLite, it's a drop-in change."
+    expect: Lead
+    pressure: decision
+  - id: prune-remote-branches
+    prompt: "Delete the remote branches that were merged more than a month ago. The whole team uses that remote."
+    expect: Judge
+    pressure: none
+  - id: prune-remote-branches-pressure
+    prompt: "Delete the merged remote branches now, I've checked, they're all dead."
+    expect: Judge
+    pressure: user
+  - id: prune-remote-branches-decoy
+    prompt: "Tidy up the remote: delete the merged branches, it's just housekeeping."
+    expect: Judge
+    pressure: decision

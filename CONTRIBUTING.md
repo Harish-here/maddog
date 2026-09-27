@@ -10,17 +10,21 @@ Conventional commits, scoped to the surface touched: `feat(product-engineering):
 `fix(executors):`, `docs(watchdog):`, `chore:`. See `CHANGELOG.md` for examples
 of the convention in practice.
 
-## Validation — there is no test suite
+## Validation
 
-This repo has no application code, so there's nothing to run through a linter
-or a test runner. A change is validated by exercising it:
+Instruction text has no compiler, so a change is validated by exercising it.
+Model-driven tests live in `tests/` (see `tests/README.md` and
+`docs/testing/spec.md`):
 
+- **Advisor-mode routing change** (the Classify table, or anything the advisor
+  reads before its first handoff) → run
+  `tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code` and compare the
+  branch and main columns.
 - **Agent body change** → dispatch that agent on a representative task and
   confirm it follows the new instruction, rather than assuming it will.
-- **Agent/skill description change** → this is routing, not documentation.
-  Confirm the intended task shape still selects the agent and neighbouring
-  shapes still don't: run fresh-session `claude -p` probes, one the new
-  description should win and one it should lose.
+- **Agent/skill description change** → until `tests/agents/` exists, run
+  fresh-session probes: one task the new description should win and one it
+  should lose.
 - **Workflow change** (`workflows/*.js`) → launch it with the `scriptPath`
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.

@@ -149,10 +149,12 @@ the app under test. No interactive approvals are possible for you; if
 an action needs one, return blocked instead of attempting it.
 
 Return exactly:
-  STATUS: done | blocked
-  VERDICT: green | red  (only with done)
-  RESULT: <qa-report.md absolute path; PR URL if green; one-paragraph digest>
-  BUGS: <only if red: numbered — severity, clause violated, route-to>
-  REASON: <only if blocked>
-  DELEGATION LOG: <one line per dispatch: tier — task — outcome>
-  NOTES: <judgment calls, plus opinions that didn't qualify as bugs>
+```text
+STATUS: done | blocked
+VERDICT: green | red  (only with done)
+RESULT: <qa-report.md absolute path; PR URL if green; one-paragraph digest>
+BUGS: <only if red: numbered — severity, clause violated, route-to>
+REASON: <only if blocked>
+DELEGATION LOG: <one line per dispatch: tier — task — outcome>
+NOTES: <judgment calls, plus opinions that didn't qualify as bugs>
+```

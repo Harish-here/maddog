@@ -23,7 +23,7 @@ you read the files your contracts hinge on directly, and every local
 judgment call goes in NOTES so it's reviewable.
 
 STACK RECON, breadth delegated, depth your own: dispatch the
-enumerations to executor-fast-read — storage engines and schemas, the
+enumerations to executor-fast-read as a SWEEP — storage engines and schemas, the
 service/port layer, API surface, background jobs, and the repo's layer
 boundaries and failure-handling idioms — with the same output-cap
 discipline product-ux uses: a dump-shaped return is rejected and
@@ -123,9 +123,11 @@ possible for you; if an action needs one, return blocked instead of
 attempting it.
 
 Return exactly:
-  STATUS: done | partial | blocked
-  RESULT: <blueprint-be.md absolute path + one-paragraph digest>
-  REASON: <only if blocked; needs-input (RESOLVE-AT: pm|ux|user) for bounces>
-  QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
-  DELEGATION LOG: <one line per dispatch: tier — task — outcome>
-  NOTES: <judgment calls made, assumptions, or issues found>
+```text
+STATUS: done | partial | blocked
+RESULT: <blueprint-be.md absolute path + one-paragraph digest>
+REASON: <only if blocked; needs-input (RESOLVE-AT: pm|ux|user) for bounces>
+QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
+DELEGATION LOG: <one line per dispatch: tier — task — outcome>
+NOTES: <judgment calls made, assumptions, or issues found>
+```

@@ -20,9 +20,59 @@
 #     instruction. executor-smart is deliberately NOT covered by this layer:
 #     it holds Write/Edit and editing files is its job. This layer also
 #     blanket-denies inline interpreters/scripting tools (python*, node*,
-#     deno, bun, perl, ed, xargs) for lead/judge outright, regardless of
-#     what they'd do — neither agent's read-only toolset needs one, so a
-#     denial by binary name costs them nothing real.
+#     deno, bun, perl, ed, xargs) for BOTH lead and judge outright, regardless
+#     of args or form — neither agent's read-only toolset needs any of them,
+#     so a denial by binary name costs neither agent anything real.
+#
+#     History: executor-judge briefly carried a narrower carve-out
+#     (maintainer decision 2026-09-26, option A; tightened to a strict
+#     ALLOWLIST 2026-09-27) so it could re-run gates itself
+#     (agents/executor-judge.md:104, Core Law 3) through a small set of
+#     positively-enumerated python/node/bun/deno forms. A second independent
+#     release review (round 2, on commit 1e3ecec) found the allowlist still
+#     leaking on two axes — `VAR=val` prefixes were stripped and discarded
+#     before classification (so e.g. `PYTEST_ADDOPTS=--junitxml=README.md
+#     python3 -m pytest tests -q` reached the allowlist looking like a bare
+#     `python3 -m pytest tests -q`), and several wrapper forms (`env -S`,
+#     `env -P`, `nice -n5`, `nice --adjustment=5`, `exec -a`) were only
+#     partially parsed by the stripper and then fell through unclassified.
+#     Maintainer decision (option B, 2026-09-27): remove the allowlist
+#     rather than keep patching it. Judge now denies every interpreter in
+#     every form, exactly like lead — including python/python2/python3/
+#     node/nodejs/deno/bun/perl/ed/xargs. Known, accepted limitation, not
+#     solved here: judge can no longer re-run a gate itself via Bash; that
+#     capability is deferred to a future dedicated gate-runner script (not
+#     yet written) rather than reopening an inline-interpreter allowlist.
+#
+#     Wrapper/prefix stripping (both lead and judge): the classification
+#     above (and the write-form denials just below it) runs against the
+#     command with leading `VAR=val` assignments and any of `env`,
+#     `command`, `exec`, `nice`, `nohup`, `time`, `timeout <duration>`, and
+#     `stdbuf` peeled off first — `env python3 -c 1`, `timeout 5 python3 -c
+#     1`, `FOO=1 python3 -c 1`, etc. are classified as the `python3 -c 1`
+#     they really are, not as `env`/`timeout`/an assignment falling through
+#     unclassified. A shell binary (`sh`, `bash`, `zsh`, `ksh`, `dash`,
+#     `ash`) found as the real command after that stripping denies outright
+#     for lead and judge, with or without `-c` — this guard does not parse a
+#     shell's own `-c` argument as a nested command line, so the only safe
+#     answer is to deny the shell invocation itself; `sh -c "echo x > f"`
+#     and similar never reach (and could not be reliably caught by) the
+#     write-form checks below.
+#
+#     Not a shell parser, but not silently permissive either (release
+#     review round 2, F2): each wrapper only fully understands a specific,
+#     enumerated set of its own flags (`nice`: `-n N` or a glued `-N` only;
+#     `env`: `VAR=val` assignments only, no flag at all; `exec`/`nohup`: no
+#     flag at all; `time`: `-p` only; `timeout`/`stdbuf`: a fixed enumerated
+#     flag set). A flag or argument form outside what a given wrapper's
+#     branch enumerates — `env -S '...'`, `env -P /usr/bin ...`, `nice -n5 ...`,
+#     `nice --adjustment=5 ...`, `exec -a foo ...`, an unrecognized `time`
+#     flag, etc. — DENIES immediately, inside the stripper, instead of
+#     falling through with that flag misread as the real command (which is
+#     how `env -S 'sh -c "echo x > f"'`, `nice --adjustment=5 python3 -c 1`,
+#     and `exec -a foo python3 -c 1` previously reached ALLOW: the stripper
+#     dropped some tokens, stopped, and left an unrecognized leftover flag
+#     as `tokens[0]`, matching no denial case). When unsure, deny.
 #
 #     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
 #     any path is examined" — the recursive-delete check below (which calls
@@ -285,6 +335,163 @@ split_command() {
   quote_walk chain "$1"
 }
 
+# --- wrapper/prefix stripping (lead/judge file-write classification) ---
+# Mutates the caller's GLOBAL `tokens`/`tokens_masked` arrays in place
+# (Bash 3.2: no nameref) so a wrapper cannot launder a write-form or
+# interpreter invocation past the classification that follows. Peels, in a
+# loop (wrappers can chain, e.g. `nice nohup timeout 5 env FOO=1 python3
+# -c 1`): any number of leading `VAR=val` assignments, then one of
+# env/command/exec/nice/nohup/time/timeout/stdbuf with its own flags/args.
+# Not a shell parser: each wrapper branch only fully understands a specific,
+# enumerated flag set for that wrapper (see the header comment); a flag or
+# argument form outside that set calls deny() directly and exits the whole
+# script from inside this function, rather than leaving an unrecognized
+# leftover token to fall through and be misread as the real command.
+strip_command_wrappers() {
+  local progressed=1 t
+  while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
+    progressed=0
+    if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
+      tokens=("${tokens[@]:1}")
+      tokens_masked=("${tokens_masked[@]:1}")
+      progressed=1
+      continue
+    fi
+    case "${tokens[0]##*/}" in
+      env)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # env's only fully-understood leading form is VAR=val assignments.
+        # ANY flag (env's flag surface is wide and easy to misparse: -S
+        # splits a whole new command line out of a string, -P/-i/-u/-C/-0
+        # change PATH/environment/argv0/cwd in ways this guard does not
+        # re-derive) denies immediately rather than risk laundering
+        # whatever env ends up running past this classification.
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          if [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
+            tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+          elif [ "${t:0:1}" = "-" ]; then
+            deny "env with a flag ($t) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command env ends up running."
+          else
+            break
+          fi
+        done
+        progressed=1
+        ;;
+      command)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # command's only flags (-p, -v, -V) take no argument, so dropping
+        # any leading '-' token is a complete understanding, not a guess.
+        while [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; do
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        done
+        progressed=1
+        ;;
+      exec)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
+          deny "exec with a flag (${tokens[0]}) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command exec ends up running."
+        fi
+        progressed=1
+        ;;
+      nohup)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
+          deny "nohup with a flag (${tokens[0]}) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command nohup ends up running."
+        fi
+        progressed=1
+        ;;
+      nice)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          case "$t" in
+            -n)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              else
+                deny "nice -n is missing its adjustment argument — this guard's wrapper stripper cannot classify what runs next."
+              fi
+              ;;
+            -[0-9]*)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+            -*)
+              deny "nice with a flag ($t) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command nice ends up running."
+              ;;
+            *) break ;;
+          esac
+        done
+        progressed=1
+        ;;
+      time)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]}" = "-p" ]; then
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        elif [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
+          deny "time with a flag (${tokens[0]}) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command time ends up running."
+        fi
+        progressed=1
+        ;;
+      timeout)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          case "$t" in
+            -s|-k)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              else
+                deny "timeout $t is missing its argument — this guard's wrapper stripper cannot classify what runs next."
+              fi
+              ;;
+            --signal=*|--kill-after=*|--preserve-status|--foreground|-v|--verbose)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+            -*)
+              deny "timeout with a flag ($t) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command timeout ends up running."
+              ;;
+            *) break ;;
+          esac
+        done
+        # the required DURATION positional
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        else
+          deny "timeout is missing its DURATION argument — this guard's wrapper stripper cannot classify what runs next."
+        fi
+        progressed=1
+        ;;
+      stdbuf)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ "${#tokens[@]}" -gt 0 ]; do
+          t="${tokens[0]}"
+          case "$t" in
+            -i|-o|-e)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              if [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              else
+                deny "stdbuf $t is missing its argument — this guard's wrapper stripper cannot classify what runs next."
+              fi
+              ;;
+            -i*|-o*|-e*)
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              ;;
+            -*)
+              deny "stdbuf with a flag ($t) is not fully understood by this guard's wrapper stripper — denying rather than risk misclassifying the command stdbuf ends up running."
+              ;;
+            *) break ;;
+          esac
+        done
+        progressed=1
+        ;;
+    esac
+  done
+}
+
 # --- read stdin once, tolerate absent/malformed input by allowing ---
 input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
@@ -511,16 +718,38 @@ while IFS= read -r segment; do
 
   # --- file-write denial (executor-lead and executor-judge only) ---
   if [ "$deny_writes" -eq 1 ]; then
+    # Wrapper/prefix stripping runs FIRST, mutating tokens/tokens_masked in
+    # place, so every check below (this block only — the shared
+    # irreversible-command checks above stay on the original tokens/cmd0)
+    # classifies the command a wrapper would otherwise launder past it.
+    # cmd0 is recomputed from the now-possibly-shorter tokens[0]; an empty
+    # tokens (e.g. the whole segment was just `FOO=bar`, or `env` with
+    # nothing after it) sets cmd0 to empty, matching no case below.
+    strip_command_wrappers
+    if [ "${#tokens[@]}" -gt 0 ]; then
+      cmd0="${tokens[0]##*/}"
+    else
+      cmd0=""
+    fi
+
     # any rm (not just recursive-force, already covered above) deletes a file
     if [ "$cmd0" = "rm" ]; then
       deny "rm deletes a file — this executor may not write, create, move, or delete files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
     fi
 
     case "$cmd0" in
+      sh|bash|zsh|ksh|dash|ash)
+        deny "$cmd0 is a shell invocation — this guard does not parse a shell's own -c argument or script as a nested command line, so it cannot classify what runs inside it; running a shell here would launder any write-form or interpreter invocation past every check in this file. This executor may not invoke a shell via Bash."
+        ;;
       cp|mv|install|touch|mkdir|truncate|tee|patch)
         deny "$cmd0 creates, overwrites, or moves a file — this executor may not write files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
         ;;
       python|python2|python3|node|nodejs|deno|bun|perl|ed|xargs)
+        # Option B (maintainer decision, 2026-09-27, release review round 2
+        # on commit 1e3ecec): both lead and judge blanket-deny every
+        # interpreter/scripting tool outright, regardless of args or form —
+        # see the header comment for why the judge allowlist this replaced
+        # was removed rather than patched further.
         deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
         ;;
       sed)

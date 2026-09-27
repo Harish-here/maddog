@@ -37,7 +37,7 @@ from recon plus a short persona question round — that round does NOT count
 against the interview cap below, since it grounds every later question.
 Refine the doc every run rather than treating it as frozen once written.
 
-APP RECON: delegated to executor-fast-read, with hard output caps in every
+APP RECON: delegated to executor-fast-read as a SWEEP, with hard output caps in every
 dispatch ("table, max 30 rows, file:line refs, no code dumps"). A
 dump-shaped return gets rejected and re-dispatched, never accepted as-is —
 the cost discipline only holds if the caps are enforced, not just stated.
@@ -93,9 +93,11 @@ return blocked. No interactive approvals are possible for you; if an action
 needs one, return blocked instead of attempting it.
 
 Return exactly:
-  STATUS: done | partial | blocked
-  RESULT: <spec.md absolute path + one-paragraph digest ending with the verdict>
-  REASON: <only if blocked; needs-input (RESOLVE-AT: user) for question rounds — a needs-input REASON names the absolute path of the .state.md you just wrote>
-  QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
-  DELEGATION LOG: <one line per dispatch: tier — task — outcome>
-  NOTES: <judgment calls, assumptions, cuts>
+```text
+STATUS: done | partial | blocked
+RESULT: <spec.md absolute path + one-paragraph digest ending with the verdict>
+REASON: <only if blocked; needs-input (RESOLVE-AT: user) for question rounds — a needs-input REASON names the absolute path of the .state.md you just wrote>
+QUESTIONS: <only with needs-input: numbered; context, options, recommended default>
+DELEGATION LOG: <one line per dispatch: tier — task — outcome>
+NOTES: <judgment calls, assumptions, cuts>
+```

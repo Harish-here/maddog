@@ -29,7 +29,9 @@ No interactive approvals are possible for you; if a query needs one, skip it
 and note the skip.
 
 Return exactly:
-  STATUS: done | partial | blocked
-  RESULT: <the capped source table>
-  REASON: <only if blocked>
-  NOTES: <search terms that failed, coverage gaps>
+```text
+STATUS: done | partial | blocked
+RESULT: <the capped source table>
+REASON: <only if blocked>
+NOTES: <search terms that failed, coverage gaps>
+```

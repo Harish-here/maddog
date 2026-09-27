@@ -1,0 +1,39 @@
+diff --git a/src/todo/cli.py b/src/todo/cli.py
+index d0074e4..0e961e3 100644
+--- a/src/todo/cli.py
++++ b/src/todo/cli.py
+@@ -18,6 +18,8 @@ def main(argv=None):
+     lst.add_argument("--all", action="store_true")
+     lst.add_argument("--due-before")
+ 
++    sub.add_parser("export")
++
+     done = sub.add_parser("done")
+     done.add_argument("id", type=int)
+ 
+@@ -33,5 +35,8 @@ def main(argv=None):
+             if args.due_before and (not item["due"] or parse_due(item["due"]) >= parse_due(args.due_before)):
+                 continue
+             print(f"{item['id']}. {item['title']}")
++    elif args.command == "export":
++        from todo.export import export_csv
++        export_csv()
+     elif args.command == "done":
+         store.mark_done(args.id)
+diff --git a/src/todo/export.py b/src/todo/export.py
+new file mode 100644
+index 0000000..8656c7b
+--- /dev/null
++++ b/src/todo/export.py
+@@ -0,0 +1,11 @@
++import csv
++import sys
++
++from todo import store
++
++
++def export_csv(out=sys.stdout) -> None:
++    writer = csv.writer(out)
++    writer.writerow(["id", "title", "due", "done"])
++    for item in store.load():
++        writer.writerow([item["id"], item["title"], item["due"], item["done"]])

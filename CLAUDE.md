@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 Beliefs: `PHILOSOPHY.md`. Visual identity and user-facing wording: `DESIGN.md`.
-Layout and routing: `README.md`. How a change is validated — there is no
-test suite and nothing compiles: `CONTRIBUTING.md` §Validation.
+Layout and routing: `README.md`. How a change is validated — nothing
+compiles; model-driven tests live in `tests/`: `CONTRIBUTING.md` §Validation.
 
 ## Publishing
 
@@ -18,11 +18,16 @@ text goes through `.claude/skills/author-agent`, which gates via
   `scripts/executor-guard.sh` denies their Bash write-forms too. Granting
   either tool dissolves the invariant.
 - Adapter set — the only paths where runtime mechanics may live: agent and
-  skill frontmatter, `hooks/`, `scripts/`, `workflows/`, `.github/`,
-  `.claude/`, `.claude-plugin/`. Shipped bodies (`agents/*.md`, `skills/**`)
+  skill frontmatter, `hooks/`, `scripts/`, `workflows/`, `tests/`, `.github/`,
+  `.claude/`, `.claude-plugin/`. Within `tests/`, only code under
+  `tests/harness/runtimes/` names runtime identifiers; `tests/README.md` and
+  `tests/requirements.txt` may name the runtime they document. Shipped bodies (`agents/*.md`, `skills/**`)
   name capabilities (write, edit, shell, web), never runtime tool
   identifiers, settings keys, or APIs (`PHILOSOPHY.md` point 5).
 - `.claude/` is repo-internal and is never registered as a plugin surface.
+- Model-driven tests score from recorded tool calls, never a model's words or
+  a grading model. `tests/harness/` enforces isolation, voided runs, and the
+  main-branch baseline: change the harness, never bypass it.
 
 ## Distribution mechanics
 
@@ -32,3 +37,8 @@ auto-wired (undocumented). Agent frontmatter `hooks:` and `permissionMode:`
 are ignored in plugin agents — guard hooks arrive via `hooks/hooks.json`.
 Skill edits take effect immediately; agent edits need `/reload-plugins` or a
 restart; workflow reload is undocumented, so restart to be sure.
+
+## Advisor sessions
+
+After context compaction in an advisor-mode session, re-read
+`skills/advisor-mode/SKILL.md` before the next dispatch.
