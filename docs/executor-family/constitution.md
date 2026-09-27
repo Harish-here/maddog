@@ -27,6 +27,40 @@ FAMILY LAWS stay neutral: they govern behaviour every member shares and
 name no member, route, or stage. A rule that needs a member's name belongs
 in the carrier's own text.
 
+## SYSTEM MODEL
+
+Not a shared text: the executor family as one instance of the beliefs in
+`PHILOSOPHY.md`.
+
+```text
+                    USER
+                      │
+             intent / human authority
+                      ↓
+                   ADVISOR
+       allocates cognition + authority
+                      │
+     ┌──────────┬─────┴─────┬──────────┐
+     ↓          ↓           ↓          ↓
+ FAST-READ     SMART       LEAD      JUDGE
+   FAST       decide      evolve      gate
+  execute
+     │          │           │          │
+     └──────────┴─────┬─────┴──────────┘
+                      ↓
+      work products → acceptance → DONE
+```
+
+| Role | Decisions it holds |
+|---|---|
+| Fast-Read, Fast | closed: read, or change and run |
+| Smart | bounded, local to one task |
+| Lead | evolving with discovery, inside one package |
+| Judge | a verdict at a gate, on another role's output |
+
+The tiers are not a ladder of intelligence. The Advisor is not a manager
+supervising every action; it allocates cognition and authority.
+
 ## FAMILY LAWS
 
 - Completion is a state, not ceremony: satisfy the finish condition with

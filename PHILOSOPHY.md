@@ -29,8 +29,8 @@ cost, latency, over-analysis, and unnecessary decisions.
 - Hard subject does not automatically require stronger model.
 - Ambiguous intent is not solved by thinking harder; it may require missing
   context or authority.
-- A Judge should not become an architect merely because it can reason about
-  architecture.
+- A reviewer should not become the designer merely because it can reason
+  about design.
 - Model tier follows responsibility and judgment shape.
 
 ## 2. Work is paid once
@@ -80,11 +80,10 @@ Role instructions alone are weak. Structural boundaries are stronger.
 
 Examples:
 
-- A Judge cannot edit the work it judges.
-- An Executor cannot silently redefine product requirements.
-- A local executor cannot make package-wide architectural decisions.
-- A Lead can delegate hands/evidence, but retains judgment within its
-  boundary.
+- A reviewer cannot edit the work it reviews.
+- A doer cannot silently redefine the requirements it was given.
+- A locally scoped worker cannot make system-wide decisions.
+- An orchestrator delegates evidence-gathering but keeps its judgment.
 
 **Rule:** Do not grant authority merely because an agent is capable of
 using it.
@@ -179,43 +178,17 @@ need → responsibility → minimum required activity
 
 Stopping is a successful outcome when the requirement is already satisfied.
 
-# The resulting system model
+# The resulting system
 
-These principles form a distributed decision system:
+These principles produce a system in which a router allocates judgment and
+authority to executors by the shape of each decision. Executors differ by
+the decisions they may make, not by how intelligent they are.
 
-```text
-                    USER
-                      │
-             intent / human authority
-                      ↓
-                   ADVISOR
-       allocates cognition + authority
-                      │
-          ┌───────────┼───────────┐
-          ↓           ↓           ↓
-        FAST        SMART        LEAD
-      execute      decide       evolve
-          │           │           │
-          └───────────┼───────────┘
-                      ↓
-                work products
-                      ↓
-               acceptance / gate
-                      ↓
-                    DONE
-```
+The router is not a manager supervising every action. It is an
+**allocator of cognition and authority**.
 
-The executor tiers are not simply a ladder of intelligence.
-
-```text
-FAST  = closed decisions
-SMART = bounded decisions
-LEAD  = evolving decisions
-```
-
-The Advisor is not a manager supervising every action.
-
-It is an **allocator of cognition and authority**.
+The executor family is one instance: `docs/executor-family/constitution.md`
+(SYSTEM MODEL).
 
 # Design test
 
