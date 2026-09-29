@@ -19,8 +19,8 @@
 
 maddog is a place for some really good skills and agents, along with some
 no-brainer stuff: four executor tiers, a researcher, and a product pipeline,
-written as plain prose any agent runtime can load. Currently we distribute
-as a plugin for Claude; soon, for every other ecosystem.
+written as plain prose any agent runtime can load. It ships adapters for both
+Claude and Codex.
 
 ## Design philosophy
 
@@ -47,6 +47,20 @@ See `PHILOSOPHY.md` for the full statement of each point.
 See `DESIGN.md` for the visual identity: wordmark, colour, type, and the wording rules for user-facing text.
 
 ## Install
+
+### Codex
+
+This checkout is ready for Codex. Run Codex from the repository root; it
+auto-discovers project skills in `.agents/skills/` and custom subagents in
+`.codex/agents/`. Start a workflow with `$advisor-mode`, or ask Codex to
+delegate to a named agent such as `executor-smart` or `product-pm`.
+
+The shared contracts remain under `skills/` and `agents/`. The Codex adapter
+layers contain runtime configuration, model tiers, sandbox boundaries, and
+small translations for Claude-only mechanics. See `AGENTS.md` for the
+operating rules.
+
+### Claude
 
 ```
 /plugin marketplace add Harish-here/maddog

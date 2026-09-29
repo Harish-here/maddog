@@ -1,0 +1,10 @@
+name = "executor-smart"
+description = "Bounded implementation, diagnosis, or review agent for work requiring local judgment within a fixed boundary."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Read and follow `agents/executor-smart.md` after its YAML frontmatter.
+Own one bounded package requiring local judgment. Preserve the dispatch boundary and output contract.
+The parent session's approval policy governs irreversible or privileged actions.
+"""

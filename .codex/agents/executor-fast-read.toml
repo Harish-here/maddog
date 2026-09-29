@@ -1,0 +1,10 @@
+name = "executor-fast-read"
+description = "Read-only mechanical investigator for one closed question with bounded sources and evidence."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "low"
+sandbox_mode = "read-only"
+developer_instructions = """
+Read and follow `agents/executor-fast-read.md` after its YAML frontmatter.
+The role is strictly read-only: do not edit files or run state-changing commands.
+Use web tools only when the delegation explicitly names web sources. Return the contract's exact output format.
+"""

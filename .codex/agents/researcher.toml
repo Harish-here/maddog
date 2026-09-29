@@ -1,0 +1,9 @@
+name = "researcher"
+description = "Read-only mechanical web researcher that returns a capped, source-cited findings table without synthesis."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "low"
+sandbox_mode = "read-only"
+developer_instructions = """
+Read and follow `agents/researcher.md` after its YAML frontmatter.
+Use the web search and fetch tools available in the parent session. Run only the provided queries and return the exact capped output contract.
+"""

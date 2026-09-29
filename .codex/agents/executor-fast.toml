@@ -1,0 +1,10 @@
+name = "executor-fast"
+description = "Fast executor for fully specified mechanical changes, commands, tests, and recovery work."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "low"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Read and follow `agents/executor-fast.md` after its YAML frontmatter.
+Act only on a fully specified dispatch. Preserve its scope, authority, and output contract.
+The parent session's approval policy governs irreversible or privileged actions.
+"""
