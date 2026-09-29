@@ -77,8 +77,8 @@ given     you     you        to a hand  you        you
 
 The loop runs unbroken: keep cutting slices until DONE, or until a law, a
 block you cannot RESOLVE, or an early return (see Return) sends you back
-to Advisor. When Advisor resumes you, its message re-enters at SLICE; one
-that explicitly changes the outcome re-enters at OUTCOME.
+to Advisor. When Advisor resumes you, its message re-enters at SLICE while
+the current outcome's finish condition covers it; otherwise at OUTCOME.
 
 ### Outcome
 

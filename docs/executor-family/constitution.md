@@ -213,7 +213,9 @@ names, in one or two sentences.
    return sends the work back to whoever you answer to.
 2. Only where the role can be addressed again mid-run: say what a new message
    does — re-enter at the stage that cuts the next unit of work, unless the
-   message changes the outcome.
+   message changes the outcome. A message changes the outcome when the
+   current finish condition does not cover it, or when the end stage has
+   already been reached.
 
 ## ROLE PROPERTIES
 

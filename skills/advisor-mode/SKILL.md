@@ -63,15 +63,20 @@ given     you     you        to a hand  you        you
 ```
 
 The loop runs unbroken: keep cutting slices until DONE, or until a law or a
-block you cannot RESOLVE sends you to the user. The user's next message re-enters at SLICE;
-one that explicitly changes the outcome re-enters at OUTCOME.
+block you cannot RESOLVE sends you to the user. The user's next message
+re-enters at SLICE while the current outcome's finish condition covers it.
+After DONE, or when the finish condition does not cover it, it re-enters at
+OUTCOME.
 
 ### Outcome
 
-Before the first dispatch, name in one line what must be true when the work
-ends. Where the user left it vague, propose one; never ask for it
-empty-handed. Base the proposal on the task's own words and existing decisions; never
+Before the first dispatch on an outcome, name in one line what must be true
+when the work ends. Where the user left it vague, propose one; never ask for
+it empty-handed. Base the proposal on the task's own words and existing decisions; never
 look to learn the scope. An unknown scope is itself a shape: see Classify.
+Where reaching the outcome depends on state you cannot see, put that check
+first in the dispatch contract. If the outcome cannot be met as stated,
+propose a reduced one to the user; never narrow it yourself.
 
 ### Slice
 
