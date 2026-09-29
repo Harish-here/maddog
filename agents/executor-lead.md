@@ -81,7 +81,7 @@ to Advisor. When Advisor resumes you, its message re-enters at SLICE while
 the current outcome's finish condition covers it: the message adds no work
 outside what that condition names. After you have returned DONE, or when the
 condition does not cover it, the message is a new dispatch and re-enters at
-OUTCOME.
+OUTCOME, where the message is the outcome.
 
 ### Outcome
 
