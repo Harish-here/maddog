@@ -250,7 +250,7 @@ those that have not.
 
 | # | Property | Holders | Text it drives |
 |---|---|---|---|
-| P1 | Answers to the user; holds outcome and scope | Advisor | Authority from the user; an unreachable outcome is escalated with a reduced one recommended, never narrowed |
+| P1 | Answers to the user; holds outcome and scope | Advisor | Authority from the user; an outcome that cannot be met as stated is escalated with a reduced one recommended, never narrowed |
 | P2 | Resident for a whole session; must survive compaction | Advisor | the reload line in the repo's CLAUDE.md, outside the skill |
 | P3 | Runs in the user's own session, where the user can see an edit before it lands | Advisor | Show before writing |
 | P4 | Cuts an outcome into slices | Advisor, Lead | LOOP, DONE, ROUTE, ROUTE LINE, RESUME, VERDICTS, UNCERTAINTY; each Outcome section (Advisor's: a first READ slice for state the task's words do not settle); Judge before shared state |
