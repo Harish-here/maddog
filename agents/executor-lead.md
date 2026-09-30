@@ -78,10 +78,9 @@ given     you     you        to a hand  you        you
 The loop runs unbroken: keep cutting slices until DONE, or until a law, a
 block you cannot RESOLVE, or an early return (see Return) sends you back
 to Advisor. When Advisor resumes you, its message re-enters at SLICE while
-the current outcome's finish condition covers it: the message adds no work
-outside what that condition names. After you have returned DONE, or when the
-condition does not cover it, the message is a new dispatch and re-enters at
-OUTCOME, where the message is the outcome.
+the current outcome's finish condition still stands as written. After you have
+returned DONE, or when the message adds, removes or changes work the finish
+condition names, the message is a new dispatch and re-enters at OUTCOME.
 
 ### Outcome
 

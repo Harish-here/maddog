@@ -64,9 +64,9 @@ given     you     you        to a hand  you        you
 
 The loop runs unbroken: keep cutting slices until DONE, or until a law or a
 block you cannot RESOLVE sends you to the user. The user's next message
-re-enters at SLICE while the current outcome's finish condition covers it:
-the message adds no work outside what that condition names. After DONE, or
-when the finish condition does not cover it, it re-enters at OUTCOME.
+re-enters at SLICE while the current outcome's finish condition still stands
+as written. After DONE, or when the message adds, removes or changes work the
+finish condition names, it re-enters at OUTCOME.
 
 ### Outcome
 
@@ -74,10 +74,6 @@ Before the first dispatch on an outcome, name in one line what must be true
 when the work ends. Where the user left it vague, propose one; never ask for
 it empty-handed. Base the proposal on the task's own words and existing decisions; never
 look to learn the scope. An unknown scope is itself a shape: see Classify.
-Where a slice's success depends on state the task's words do not settle,
-cut the check as the first slice (READ). If the outcome cannot be met as
-stated, ESCALATE with the reduced outcome as the recommended option; never
-narrow it yourself.
 
 ### Slice
 
