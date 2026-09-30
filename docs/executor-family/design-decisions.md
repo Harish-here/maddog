@@ -144,7 +144,7 @@ advisor-mode is always-resident once invoked. Its own text: Role (outcome and
 scope are the user's; the family sentence), four numbered core laws
 (Authority from the user; Judge before shared state; Act alone, carrying the
 user's grant; Show before writing), the Operate paragraph (a kept slice skips
-DISPATCH, never EVALUATE; the user's next message re-enters at SLICE while the finish condition covers it, else at OUTCOME), the bounded outcome look, the two kept things, and "You
+DISPATCH, never EVALUATE; the user's next message re-enters at SLICE while the finish condition still stands as written, else, and always after DONE, at OUTCOME), the bounded outcome look, the two kept things, and "You
 accept a Lead's return whole". There is no Gate section: its live rules moved
 to Core Laws and the GATE row. Body 1,033 words raw (markup included), up from
 767; the 500-word target is measured on the owner's plain draft and was not
@@ -158,7 +158,7 @@ compaction.
 Lead's own text: Role and family sentence (hands: Fast-Read, Fast, Smart,
 Judge), four core laws (Boundary stop; Judge before shared state; Act alone;
 No nesting or self-judging), the Operate paragraph (stops include an early
-return; a resumed Lead re-enters at SLICE while the finish condition covers the message, else at OUTCOME), Outcome ("never expand or redefine
+return; a resumed Lead re-enters at SLICE while the finish condition still stands as written, else, and always after DONE, at OUTCOME), Outcome ("never expand or redefine
 it"), Classify's per-slice rule (one package can hold several patterns; a
 slice's evidence can bring a new one), the pattern table and after-PLAN rule
 directly under Classify, its EVOLVING row, its single-read line, the Return
