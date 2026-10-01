@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.1.0] - 2026-10-01
+
+### Added
+- `skills/memory-refine/SKILL.md` — audits saved memory notes and returns a keep, rewrite, or delete call per note, with evidence; changes nothing until the user approves (d2008be)
+
+### Docs
+- `README.md` lists memory-refine under Skills
+- `skills.sh.json` groups memory-refine under Session discipline
+- `.claude-plugin/plugin.json` version 4.0.0 → 4.1.0
+
 ## [4.0.0] - 2026-09-27
 
 ### Breaking
