@@ -160,6 +160,9 @@ the workflow via its `scriptPath`.
   long it stays loaded and who reads it, agent or person (AGENTS.md or README,
   a memory index, a frontmatter description, a SKILL.md body, a brief, a state
   file, a decision ledger, a dispatch prompt's output format).
+- **memory-refine** — audits saved memory notes and returns a keep, rewrite,
+  or delete call per note, with evidence; changes nothing until the user
+  approves.
 - **mine-session** — extracts reusable collaboration patterns from a working
   session; arm it at session start, distill at session end.
 - **plain-english** — governs how replies and questions are worded for the
