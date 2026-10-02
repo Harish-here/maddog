@@ -9,5 +9,7 @@
   "icon": "./assets/icon.svg",
   "documentationUrl": "https://github.com/Harish-here/maddog#readme",
   "supportUrl": "https://github.com/Harish-here/maddog/issues",
+  "privacyPolicyUrl": "https://github.com/Harish-here/maddog/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/Harish-here/maddog/blob/main/LICENSE",
   "keywords": ["agents", "subagents", "delegation", "multi-agent", "advisor", "executor", "workflow", "product-engineering", "planning"]
 }
