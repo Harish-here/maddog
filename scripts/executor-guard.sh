@@ -112,7 +112,10 @@
 #   - print a hookSpecificOutput deny JSON and exit 0 (DENY, exit 2 would
 #     also block but gives the model no reason — always use the JSON form).
 # Any failure to parse input, or absence of jq, ALLOWS the call — never
-# block on our own inability to inspect the command.
+# block on our own inability to inspect the command. Exception: once the
+# caller is known to be executor-lead or executor-judge, an unexpected
+# non-zero exit (an internal guard bug) DENIES instead — see the
+# fail-closed backstop below the scope check.
 
 set -uo pipefail
 
@@ -511,6 +514,23 @@ case "$agent_type" in
   *) exit 0 ;;
 esac
 
+# --- fail-closed backstop (lead/judge only) ---
+# Past this point, any unexpected non-zero exit (an unbound variable under
+# `set -u`, a bad substitution, ...) would reach Claude Code as a
+# "non-blocking" hook error and the Bash call would run UNCHECKED. For the
+# two read-only executors, turn that into a deny instead. Every intended path
+# exits 0 (allow, or deny() which exits 0 after printing), so a non-zero
+# status here can only be an internal failure. The JSON is static: no jq.
+if [ "$deny_writes" -eq 1 ]; then
+  fail_closed() {
+    local rc=$?
+    [ "$rc" -eq 0 ] && return 0
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"executor-guard.sh hit an internal error while inspecting this command, so it was denied rather than allowed unchecked. Simplify the command, or return blocked to your caller.","additionalContext":"Blocked by executor-guard.sh (fail-closed backstop). STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason - do not attempt the command."}}'
+    exit 0
+  }
+  trap fail_closed EXIT
+fi
+
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -z "$cmd" ] && exit 0
 
@@ -816,7 +836,12 @@ while IFS= read -r segment; do
     # comparison so `'/dev/null'` and `"/dev/null"` match too. Widened no
     # further than /dev/null.)
     redirect_i=0
-    for mtok in "${tokens_masked[@]}"; do
+    # strip_command_wrappers above can leave tokens/tokens_masked EMPTY (a
+    # segment that was only `FOO=bar`, `env`, `timeout 5`, ...). Bash 3.2
+    # (macOS /bin/bash) raises "unbound variable" under `set -u` when a bare
+    # "${arr[@]}" expands an empty array — the ${arr[@]+...} form expands to
+    # nothing instead (same idiom as path-guard-lib.sh).
+    for mtok in "${tokens_masked[@]+"${tokens_masked[@]}"}"; do
       if [[ "$mtok" =~ [0-9]*(\>\>?|\&\>\>?)([^[:space:]]*)$ ]]; then
         rest="${BASH_REMATCH[2]}"
         raw_tok="${tokens[$redirect_i]}"
