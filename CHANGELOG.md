@@ -8,7 +8,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 - `scripts/executor-guard.sh` no longer crashes under macOS bash 3.2 when a command segment strips to nothing (`FOO=bar`, `env`, `timeout 5`). The crash exited non-zero before the deny check, so Claude Code ran the command unchecked: `BASE=main; cp a b` or `FOO=bar; echo x > f` slipped past the executor-lead and executor-judge write denial (5de9d52).
-- `scripts/executor-guard.sh` now fails closed for executor-lead and executor-judge: an unexpected internal error denies the command instead of allowing it. executor-fast and executor-smart are unchanged (5de9d52).
+- `scripts/executor-guard.sh` now fails closed for executor-lead and executor-judge: once the guard has identified one of them as the caller, an unexpected internal error denies the command instead of allowing it. Malformed input and a missing `jq` still allow, as before. executor-fast and executor-smart are unchanged (5de9d52)
 
 ### Notes for users
 - Run `/reload-plugins` or restart after updating; the installed 4.1.0 guard keeps the hole until then.
