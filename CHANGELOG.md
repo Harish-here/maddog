@@ -17,10 +17,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `scripts/com.maddog.watchdog-resume.plist` — its header comment points at the new setup script path (7418785)
 
 ### Fixed
-- The directory's credential finding (MCP_FORWARDS_CREDENTIAL_ENV): the script that reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` no longer ships as a plugin script (7418785)
+- The directory's credential finding (MCP_FORWARDS_CREDENTIAL_ENV): the script that reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` moves out of the plugin's `scripts/` into the repo-internal `.claude/scripts/`. An install still copies `.claude/`, so a directory re-scan may still flag it (7418785)
 
 ### Notes for users
-- Anyone who ran `setup-watchdog.sh` from the installed plugin must now run it from a clone of the repository (`.claude/scripts/setup-watchdog.sh`). The links it made in `~/.claude` point at the old path, so re-run setup from the clone to re-point them.
+- `setup-watchdog.sh` moved from `scripts/` to `.claude/scripts/`. If you ran it before, its links in `~/.claude` point at the old path: re-run it from its new path, in a repo clone or in the installed plugin, to re-point them.
 
 ### Docs
 - `DESIGN.md` 2.0.0 — the picture mark and the SVG wordmark (f57bad0)
