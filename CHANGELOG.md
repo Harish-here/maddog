@@ -10,7 +10,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `.claude-plugin/plugin.json` gains `icon`, `documentationUrl` and `supportUrl` for the Anthropic directory listing: the icon fixes the ICON_MISSING finding, and the two URLs fill the listing's Documentation and Support fields (0683976)
 - `assets/icon.svg` — the "M" picture mark used as the plugin icon (f57bad0)
 - `assets/wordmark-dark.svg`, `assets/wordmark-light.svg` — the wordmark as SVG images in dark and light variants, generated from `assets/wordmark.txt` by `scripts/gen-wordmark.py` (f57bad0)
-- `PRIVACY.md`, plus `privacyPolicyUrl` (PRIVACY.md) and `termsOfServiceUrl` (the MIT LICENSE) in `.claude-plugin/plugin.json`, filling the listing's Privacy policy and Terms of service fields
+- `PRIVACY.md`, plus `privacyPolicyUrl` (PRIVACY.md) and `termsOfServiceUrl` (the MIT LICENSE) in `.claude-plugin/plugin.json`, filling the listing's Privacy policy and Terms of service fields (83a0281)
 
 ### Changed
 - `README.md` — the wordmark is now an SVG image with dark and light variants, in place of the text art (f57bad0)
