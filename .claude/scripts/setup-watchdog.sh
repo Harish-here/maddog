@@ -6,7 +6,7 @@
 # backed up to <name>.bak first, never deleted.
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 
 mkdir -p "$CLAUDE_DIR/channels/telegram" "$CLAUDE_DIR/watchdogs"
@@ -26,7 +26,7 @@ link() {
 # Checkpoint-ping helper the sdd-task-loop workflow calls by default.
 # Reads TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID from ~/.claude/channels/telegram/.env
 # (never versioned here) — see workflows/sdd-task-loop.js header for the contract.
-link "$REPO_DIR/scripts/tg-notify.sh" "$CLAUDE_DIR/channels/telegram/notify.sh"
+link "$REPO_DIR/.claude/scripts/tg-notify.sh" "$CLAUDE_DIR/channels/telegram/notify.sh"
 
 # watchdog-resume: LaunchAgent that relaunches a paused unattended run once its
 # resume time passes. Symlink the script, then generate the plist from the
