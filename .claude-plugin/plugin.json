@@ -1,10 +1,15 @@
 {
   "name": "maddog",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Delegated intelligence: an advisor routes each task by the judgment it needs (closed, bounded, or evolving) to executors that hold only the authority their role requires, plus a planning-to-PR pipeline for building features.",
   "author": { "name": "Harish Ravi", "url": "https://github.com/Harish-here" },
   "homepage": "https://github.com/Harish-here/maddog",
   "repository": "https://github.com/Harish-here/maddog",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
+  "documentationUrl": "https://github.com/Harish-here/maddog#readme",
+  "supportUrl": "https://github.com/Harish-here/maddog/issues",
+  "privacyPolicyUrl": "https://github.com/Harish-here/maddog/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/Harish-here/maddog/blob/main/LICENSE",
   "keywords": ["agents", "subagents", "delegation", "multi-agent", "advisor", "executor", "workflow", "product-engineering", "planning"]
 }

@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.1.0] - 2026-10-02
+
+### Added
+- `.claude-plugin/plugin.json` gains `icon`, `documentationUrl` and `supportUrl` for the Anthropic directory listing: the icon fixes the ICON_MISSING finding, and the two URLs fill the listing's Documentation and Support fields (0683976)
+- `assets/icon.svg` — the "M" picture mark used as the plugin icon (f57bad0)
+- `assets/wordmark-dark.svg`, `assets/wordmark-light.svg` — the wordmark as SVG images in dark and light variants, generated from `assets/wordmark.txt` by `scripts/gen-wordmark.py` (f57bad0)
+- `PRIVACY.md`, plus `privacyPolicyUrl` (PRIVACY.md) and `termsOfServiceUrl` (the MIT LICENSE) in `.claude-plugin/plugin.json`, filling the listing's Privacy policy and Terms of service fields (83a0281)
+
+### Changed
+- `README.md` — the wordmark is now an SVG image with dark and light variants, in place of the text art (f57bad0)
+- `scripts/tg-notify.sh` and `scripts/setup-watchdog.sh` moved to `.claude/scripts/`. They are repo-internal helpers, no longer plugin scripts (7418785)
+- `scripts/com.maddog.watchdog-resume.plist` — its header comment points at the new setup script path (7418785)
+
+### Fixed
+- The directory's credential finding (MCP_FORWARDS_CREDENTIAL_ENV): the script that reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` moves out of the plugin's `scripts/` into the repo-internal `.claude/scripts/`. An install still copies `.claude/`, so a directory re-scan may still flag it (7418785)
+
+### Notes for users
+- `setup-watchdog.sh` moved from `scripts/` to `.claude/scripts/`. If you ran it before, its links in `~/.claude` point at the old path: re-run it from its new path, in a repo clone or in the installed plugin, to re-point them.
+
+### Docs
+- `DESIGN.md` 2.0.0 — the picture mark and the SVG wordmark (f57bad0)
+- `SECURITY.md` — describes the two maintainer-run helpers in `.claude/scripts/` and what the setup script links and writes (7418785)
+- `.claude-plugin/plugin.json` version 4.0.0 → 4.1.0
+
 ## [4.0.0] - 2026-09-27
 
 ### Breaking
