@@ -6,5 +6,8 @@
   "homepage": "https://github.com/Harish-here/maddog",
   "repository": "https://github.com/Harish-here/maddog",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
+  "documentationUrl": "https://github.com/Harish-here/maddog#readme",
+  "supportUrl": "https://github.com/Harish-here/maddog/issues",
   "keywords": ["agents", "subagents", "delegation", "multi-agent", "advisor", "executor", "workflow", "product-engineering", "planning"]
 }
