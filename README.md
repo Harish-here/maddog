@@ -1,19 +1,9 @@
-<table align="center"><tr><td>
-
-<pre>
-███╗   ███╗ █████╗ ██████╗ ██████╗  ██████╗  ██████╗
-████╗ ████║██╔══██╗██╔══██╗██╔══██╗██╔═══██╗██╔════╝
-██╔████╔██║███████║██║  ██║██║  ██║██║   ██║██║  ███╗
-██║╚██╔╝██║██╔══██║██║  ██║██║  ██║██║   ██║██║   ██║
-██║ ╚═╝ ██║██║  ██║██████╔╝██████╔╝╚██████╔╝╚██████╔╝
-╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝  ╚═════╝  ╚═════╝
-
-═════════════════════════════════════════════════════
-            S K I L L S   &amp;   A G E N T S
-═════════════════════════════════════════════════════
-</pre>
-
-</td></tr></table>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/wordmark-dark.svg">
+    <img src="assets/wordmark-light.svg" alt="maddog — Skills &amp; Agents" width="600">
+  </picture>
+</p>
 
 # maddog
 
@@ -147,7 +137,7 @@ code and routes bugs back to the responsible stage.
 `workflows/sdd-task-loop.js` ships as the general-usage plan-execution
 engine. `workflows/` and `scripts/` (the guard hooks, the watchdog) ship in
 the plugin tarball but, unlike `agents/` and `skills/`, are not
-auto-registered — the watchdog wiring is `scripts/setup-watchdog.sh`; launch
+auto-registered — the watchdog wiring is `.claude/scripts/setup-watchdog.sh` (repo-only, not a plugin script); launch
 the workflow via its `scriptPath`.
 
 ### Skills (`skills/`)

@@ -1,6 +1,6 @@
 # maddog Design System
 
-Version: 1.0.1
+Version: 2.0.0
 
 ## 1. Purpose and scope
 
@@ -35,10 +35,13 @@ fallback: `assets/wordmark-ascii.txt` (figlet `slant`, art 43
 columns, `=` rules), 43×10 — used when Unicode is unsupported or
 width is 43–52 columns.
 
-It ships as preformatted text: a centred `<pre>` block in README, a
-fenced block elsewhere, plain text in any terminal splash. It is
-never re-typeset in another font, and never rendered as an image
-where text can go.
+It ships in two forms. In README and any web page it is an image:
+`assets/wordmark-dark.svg` and `assets/wordmark-light.svg`, rebuilt
+cell for cell from `assets/wordmark.txt` (█ as filled cells,
+box-drawing shadow as single centre-line strokes, subtitle as stroked
+letters), swapped by colour scheme, alt text "maddog — Skills &
+Agents". In terminals and fenced blocks it ships as the text file.
+The image is generated from the text file, never redrawn by hand.
 
 **Colour.** `--md-ink` on `--md-paper`, or `--md-text-primary` on
 `--md-paper-dark`. No colour inside the art. The ampersand in the
@@ -54,8 +57,13 @@ blank line above and below.
 when Unicode is unsupported or width is 43–52 columns, subtitle alone
 below 43.
 
-**Don't:** re-typeset in another font; render as an image; add colour
-inside the glyphs.
+**Don't:** re-typeset in another font; hand-draw or re-typeset the
+image (it is generated from the text file); add colour inside the
+glyphs.
+
+**Picture mark.** `assets/icon.svg`, the first glyph "M" in
+the same construction on a `--md-paper-dark` rounded square. Used
+only where the full mark cannot fit, such as the directory listing icon.
 
 ## 4. Colour
 
@@ -147,7 +155,7 @@ a minor version.
 
 - `assets/wordmark.txt`, `assets/wordmark-ascii.txt`.
 - Family assets: reserved.
-- `assets/` holds the wordmark files and nothing else at 1.0.0.
+- `assets/` holds the wordmark text files, the two wordmark images, and the picture mark.
 
 ## 10. Versioning
 
