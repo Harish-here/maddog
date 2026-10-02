@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.1.1] - 2026-10-02
+
+### Fixed
+- `scripts/executor-guard.sh` no longer crashes under macOS bash 3.2 when a command segment strips to nothing (`FOO=bar`, `env`, `timeout 5`). The crash exited non-zero before the deny check, so Claude Code ran the command unchecked: `BASE=main; cp a b` or `FOO=bar; echo x > f` slipped past the executor-lead and executor-judge write denial (5de9d52).
+- `scripts/executor-guard.sh` now fails closed for executor-lead and executor-judge: an unexpected internal error denies the command instead of allowing it. executor-fast and executor-smart are unchanged (5de9d52).
+
+### Notes for users
+- Run `/reload-plugins` or restart after updating; the installed 4.1.0 guard keeps the hole until then.
+
 ## [4.1.0] - 2026-10-02
 
 ### Added
