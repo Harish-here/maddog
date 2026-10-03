@@ -34,7 +34,7 @@ The core of maddog. Start a session with a task:
 
 Claude becomes the advisor. It keeps the thinking: it plans the work,
 hands each piece to the right team member, and checks what comes back
-before calling it done.
+before calling it done. Run it on a mid-tier model or above.
 
 Each piece goes to a team member by the judgment it needs, not by how hard
 the topic sounds. A one-line config change in a complex system still goes
@@ -57,14 +57,14 @@ result.
 /maddog:product-engineering Let users export their data as CSV
 ```
 
-Takes one feature from idea to pull request. You approve a spec, a design
-mockup, and a build plan. Then the feature is built, tested, and opened as
-a pull request.
+Takes one feature from idea to pull request. You approve the spec and the
+design mockup. Then the feature is planned, built, tested, and opened as a
+pull request.
 
 | Agent | Produces |
 |---|---|
 | `product-pm` | The product spec |
-| `product-ux` | The user experience and a clickable mockup |
+| `product-ux` | The user experience and an HTML mockup |
 | `product-be` | The backend plan |
 | `product-ui` | The frontend plan |
 | `product-qa` | A verified build and the pull request (needs [Playwright MCP](https://github.com/microsoft/playwright-mcp)) |
