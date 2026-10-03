@@ -29,7 +29,7 @@ Model-driven tests live in `tests/` (see `tests/README.md` and
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.
 
-See `README.md` §Architecture for the repo layout; the validation model is the section above.
+See `CLAUDE.md` for the repo layout and distribution mechanics; the validation model is the section above.
 
 ## Authoring agent/skill instruction text
 
