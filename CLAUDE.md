@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Beliefs: `PHILOSOPHY.md`. Visual identity and user-facing wording: `DESIGN.md`.
-Layout and routing: `README.md`. How a change is validated — nothing
+Routing and the shipped catalog: `README.md`. How a change is validated — nothing
 compiles; model-driven tests live in `tests/`: `CONTRIBUTING.md` §Validation.
 
 ## Publishing
