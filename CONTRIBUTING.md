@@ -29,7 +29,7 @@ Model-driven tests live in `tests/` (see `tests/README.md` and
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.
 
-See `README.md` §Architecture for the repo layout; the validation model is the section above.
+See `CLAUDE.md` for the repo layout and distribution mechanics; the validation model is the section above.
 
 ## Authoring agent/skill instruction text
 
@@ -47,5 +47,14 @@ bump `version` in `.claude-plugin/plugin.json` and add an entry to
 `CHANGELOG.md`.
 
 ## Releases
+
+Every change headed for `main` goes through the `release` skill
+(`.claude/skills/release/SKILL.md`): prepare the branch, run the checks, get
+it cleared, open the pull request, publish after the merge. A table in the
+skill says which changes need an independent reviewer — anything users
+receive does, and so does anything that runs the checks themselves. The
+skill never merges; it stops at the open pull request. Merging is the
+maintainer's own hand, and where a reviewer was required, only while the
+verdict names the pull request's current head commit.
 
 Before submitting or releasing, run `claude plugin validate .claude-plugin/plugin.json` — invoking the validator at the repo root validates only the marketplace manifest and never exercises the plugin. Known, accepted warning: CLAUDE.md at the plugin root is maintainer context (instructions for developing this repo), not consumer context, so the 'not loaded as project context' warning is expected and --strict is deliberately not this repo's gate. Tag releases as both `v<version>` and `<name>--v<version>` (the plugin CLI's convention), with plugin.json, CHANGELOG, and tags agreeing on the version.

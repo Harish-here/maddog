@@ -7,34 +7,10 @@
 
 # maddog
 
-maddog is a place for some really good skills and agents, along with some
-no-brainer stuff: four executor tiers, a researcher, and a product pipeline,
-written as plain prose any agent runtime can load. Currently we distribute
-as a plugin for Claude; soon, for every other ecosystem.
-
-## Design philosophy
-
-- **Judgment is expensive.** Spend intelligence where decisions change
-  outcomes — judgment shape routes the task, not subject difficulty.
-- **Work is paid once.** Reuse completed work — evidence, decisions,
-  artifacts — until its basis changes; a downstream agent should not
-  rediscover it.
-- **Authority follows responsibility.** An agent gets only the authority
-  and capabilities its responsibility requires; structural boundaries hold
-  this, not role instructions alone.
-- **Human judgment is scarce.** Spend human judgment only on decisions
-  requiring human authority; escalate a compressed decision, not raw
-  uncertainty.
-- **Separate responsibility from mechanism.** Roles, responsibilities,
-  authority, and contracts define behavior; runtime mechanisms implement
-  them, so the core never depends on one harness's mechanics.
-- **Outcome over activity.** Every action must earn its cost — change the
-  outcome, resolve uncertainty, or produce reusable evidence — or it does
-  not happen.
-
-See `PHILOSOPHY.md` for the full statement of each point.
-
-See `DESIGN.md` for the visual identity: wordmark, colour, type, and the wording rules for user-facing text.
+Run your coding agent as an **organisation**, not an assistant.
+maddog gives Claude Code a team: cheap hands for routine work, senior
+judgment where it counts, and a pipeline that takes a feature from idea
+to pull request.
 
 ## Install
 
@@ -43,161 +19,77 @@ See `DESIGN.md` for the visual identity: wordmark, colour, type, and the wording
 /plugin install maddog@maddog
 ```
 
-The marketplace installs straight from `main` HEAD, so every merge to main
-is effectively a publish. Skills arrive namespaced (`/maddog:advisor-mode`).
-Update later with `/plugin marketplace update maddog`.
+Restart your session after installing.
 
-- Agent frontmatter `hooks:` / `permissionMode:` are ignored for
-  plugin-shipped agents — the executor guards arrive instead via the
-  plugin's `hooks/hooks.json`, and `permissionMode: dontAsk` does not apply,
-  so executors may surface permission prompts; add allowlist entries for the
-  commands you delegate.
-- **Prerequisite:** `product-qa`'s live-drive verification requires the
-  playwright MCP browser tools — configure it separately, or `product-qa`
-  returns blocked at its prerequisite check.
+Using another agent runtime? `npx skills add Harish-here/maddog` installs
+the skills only.
 
-After installing or updating, run `/reload-plugins` or restart the
-session: agents load at session start, skills reload live.
+## advisor-mode
 
-**Also on skills.sh:**
+The core of maddog. Start a session with a task:
 
 ```
-npx skills add Harish-here/maddog
+/maddog:advisor-mode Add rate limiting to the public API
 ```
 
-This installs the maddog skills into other agent runtimes. The executor and
-product agents that `advisor-mode` and `product-engineering` dispatch come
-only with the plugin install above.
+Claude becomes the advisor. It keeps the thinking: it plans the work,
+hands each piece to the right team member, and checks what comes back
+before calling it done. Run it on a mid-tier model or above.
 
-## What ships
+Each piece goes to a team member by the judgment it needs, not by how hard
+the topic sounds. A one-line config change in a complex system still goes
+to the fast tier. You pay for strong models only where they change the
+result.
 
-### Agents (`agents/`)
+| Team member | Takes on |
+|---|---|
+| `executor-fast-read` | Finding and quoting facts |
+| `executor-fast` | Routine edits, test runs, git |
+| `executor-smart` | Focused work that needs judgment |
+| `executor-lead` | Multi-step work where each step depends on the last |
+| `executor-judge` | An independent pass or fail, with no power to edit |
 
-**Executor family** (`executor-fast`, `executor-fast-read`, `executor-smart`, `executor-lead`,
-`executor-judge`) — one ladder of judgment, bought by task shape. Fast and
-smart do the work; lead holds memory across a package and orchestrates
-fast-read, fast, smart, and judge inside it; judge can rent only the
-read-only fast-tier hand and rules on the others' output with a PASS,
-FAIL, or STOP verdict — it can never edit. The guard scripts enforce the
-last part.
+## Also in maddog
 
-- **executor-fast** — runs fully-specified mechanical tasks on a cheap,
-  fast model: a decided edit, one rule across many files, test and build
-  runs, git and service operations, state recovery, bug reproduction, code
-  from a frozen brief.
-- **executor-fast-read** — runs fully-specified read-only mechanical tasks
-  on the same cheap, fast tier, holding no shell and no edit: where
-  something lives, what the source says verbatim, whether a claim holds;
-  holds web access (WebSearch, WebFetch) when the dispatch names web
-  sources.
-- **executor-smart** — runs one delegated task needing local judgment but
-  inside a fixed boundary, on a mid-tier model: a feature or refactor
-  matching existing patterns, transforming a structure across versions or
-  modules without losing behavior, diagnosing an uncertain cause from
-  bounded evidence, or reviewing an artifact against explicit criteria.
-- **executor-lead** — owns evolving work inside a delegated boundary on a
-  high-tier model: adaptive decomposition, evidence-driven sequencing,
-  package-level judgment with memory across steps; orchestrates
-  executor-fast-read, executor-fast, executor-smart, and executor-judge
-  inside its package, and never judges its own package.
-- **executor-judge** — renders independent acceptance verdicts on another
-  intelligence's output, on a high-tier model: plan/design review before
-  execution, and review of an executed outcome against its acceptance bar;
-  issues PASS, FAIL, or STOP, can rent only executor-fast-read, and holds
-  no Write/Edit — it cannot fix anything it rules on.
+### product-engineering
 
-**Researcher** — a separate role from executor routing, kept for the
-product pipeline's web research needs; web access inside executor routing
-lives on `executor-fast-read` when a dispatch names web sources.
+```
+/maddog:product-engineering Let users export their data as CSV
+```
 
-- **researcher** — mechanical web research on a cheap model: runs the
-  searches it's handed and returns a capped, source-cited findings table,
-  no synthesis.
+Takes one feature from idea to pull request. You approve the spec and the
+design mockup. Then the feature is planned, built, tested, and opened as a
+pull request.
 
-**Product pipeline** (`product-pm` → `product-ux` → `product-be` →
-`product-ui` → `product-qa`) — five ordered stages, each consuming the
-previous stage's artifact under `docs/product/<slug>/`; qa is read-only on
-code and routes bugs back to the responsible stage.
+| Agent | Produces |
+|---|---|
+| `product-pm` | The product spec |
+| `product-ux` | The user experience and an HTML mockup |
+| `product-be` | The backend plan |
+| `product-ui` | The frontend plan |
+| `product-qa` | A verified build and the pull request (needs [Playwright MCP](https://github.com/microsoft/playwright-mcp)) |
 
-- **product-pm** — turns one feature/epic into a shippable product spec,
-  grounded in research, persona, and app recon. First stage of the
-  product-engineering pipeline.
-- **product-ux** — designs the user experience for one spec'd feature and
-  has the HTML mockup rendered from it. Second stage.
-- **product-be** — plans the server-side work for one designed feature into
-  a precise backend blueprint. Third stage.
-- **product-ui** — plans the implementation of one designed feature,
-  mapping every mockup element to real components. Fourth stage.
-- **product-qa** — verifies one implemented feature against its product
-  artifacts, runs gates and e2e, and opens the PR only at zero open bugs.
-  Final stage.
+`researcher` runs web searches for the pipeline and returns cited findings.
 
-### Workflows and scripts
+### More skills
 
-`workflows/sdd-task-loop.js` ships as the general-usage plan-execution
-engine. `workflows/` and `scripts/` (the guard hooks, the watchdog) ship in
-the plugin tarball but, unlike `agents/` and `skills/`, are not
-auto-registered — the watchdog wiring is `.claude/scripts/setup-watchdog.sh` (repo-only, not a plugin script); launch
-the workflow via its `scriptPath`.
+| Skill | What it does |
+|---|---|
+| `section-by-section` | Reviews a skill or agent file with you, one section at a time |
+| `efficient-md` | Keeps markdown files for agents and people short and well shaped |
+| `plain-english` | Makes Claude's replies clear and direct |
+| `mine-session` | Turns a working session into lessons for next time |
 
-### Skills (`skills/`)
+## Philosophy
 
-- **advisor-mode** — runs a session as the Advisor: classifies work by
-  judgment shape, routes every slice to an executor hand, and checks what
-  comes back. Run it on a mid-tier model or above; a low-tier model does
-  not hold the role.
-- **efficient-md** — shapes a markdown artifact's length and structure by how
-  long it stays loaded and who reads it, agent or person (AGENTS.md or README,
-  a memory index, a frontmatter description, a SKILL.md body, a brief, a state
-  file, a decision ledger, a dispatch prompt's output format).
-- **mine-session** — extracts reusable collaboration patterns from a working
-  session; arm it at session start, distill at session end.
-- **plain-english** — governs how replies and questions are worded for the
-  user.
-- **product-engineering** — orchestrates the full PM → UX → BE → UI →
-  execution → QA pipeline for one feature; not for small tweaks or single
-  bug fixes.
-- **section-by-section** — walks one existing skill or agent file with the
-  user, section by section; the user closes each section with one or more
-  verdicts, then the whole reassembled file is checked against its purpose;
-  the run produces a draft and a verdict ledger, never editing the target.
-
-`author-agent`, `release`, and `review-agent` live under `.claude/skills/`
-and are repo-internal maintainer tooling — they never ship in the plugin.
-`advisor-mode`, `product-engineering` and `section-by-section` are
-slash-command only (`disable-model-invocation: true`) — invoke them by
-name, they don't auto-trigger on a matching description.
-
-## Architecture, in brief
-
-Route every task on its *shape*, never the subject's sophistication: a task
-with every decision already closed and objective acceptance goes to
-`executor-fast`; the read-only slice of that shape — locating,
-quoting, or verifying, with no shell and nothing to write — goes to
-`executor-fast-read`; one task carrying local judgment inside a fixed
-boundary goes to `executor-smart`; a package needing judgment with memory
-across several steps goes to `executor-lead`; a verdict on another
-intelligence's output goes to `executor-judge`. `product-engineering` is a
-second, orthogonal axis — a discipline pipeline, not a judgment tier.
+Spend intelligence where it changes the outcome, give each agent only the
+authority its job needs, and ask the human only for decisions that are
+truly theirs. The full reasoning is in [PHILOSOPHY.md](PHILOSOPHY.md).
 
 ## Contributing
 
-`main` is protected — changes land by pull request. See `CONTRIBUTING.md`
-for commit style, the validation model and the model-driven tests in `tests/`,
-and when to route new or overhauled agent/skill text through the `author-agent`
-gated-authoring loop.
-
-## Releasing
-
-Every change headed for `main` goes through the `release` skill
-(`.claude/skills/release/SKILL.md`): prepare the branch, run the checks, get
-it cleared, open the pull request, publish after the merge. A table in the
-skill says which changes need an independent reviewer — anything users
-receive does, and so does anything that runs the checks themselves. The
-skill never merges; it stops at the open pull request. Merging is the
-maintainer's own hand, and where a reviewer was required, only while the
-verdict names the pull request's current head commit.
+Changes land by pull request. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see `LICENSE`.
+MIT. See [LICENSE](LICENSE).
