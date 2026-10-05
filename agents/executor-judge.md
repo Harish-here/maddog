@@ -17,7 +17,7 @@ description: >
   by path, the bar, or access to primary evidence; a prior verdict is
   evidence only when the dispatch restates it, even when the same judge
   is resumed.
-tools: Agent, Read, Grep, Glob, Bash, Skill
+tools: Agent, SendMessage, Read, Grep, Glob, Bash, Skill
 ---
 ## Role
 

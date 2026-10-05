@@ -15,7 +15,7 @@ description: >
   returns a frozen plan with no evolving step left unless integrating it
   needs judgment or delivery was asked for, and never nests another lead
   for the same package or acts as an independent judge of its own package.
-tools: Agent, Read, Grep, Glob, Bash, Skill
+tools: Agent, SendMessage, Read, Grep, Glob, Bash, Skill
 ---
 
 ## Role
