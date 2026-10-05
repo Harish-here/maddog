@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.0] - 2026-10-05
+
+### Added
+- `agents/executor-lead.md`, `agents/executor-judge.md` and `agents/executor-smart.md` gain the `SendMessage` tool, so a dispatcher can resume the children it started (3d2f48f)
+
+### Changed
+- `skills/advisor-mode/SKILL.md` and `agents/executor-lead.md` — a message that resumes the work re-enters at SLICE while the current outcome's finish condition still stands as written. After DONE, or when the message adds, removes or changes work the finish condition names, it re-enters at OUTCOME. Before, only a message that explicitly changed the outcome did (00b04d6, bf6116b, 69ec3b9, 7326c0d)
+- `skills/advisor-mode/SKILL.md` — Outcome: the one-line outcome is named before the first dispatch on each outcome, so a re-entry at OUTCOME names a new one (00b04d6)
+
+### Notes for users
+- Run `/reload-plugins` or restart after updating; agent edits do not take effect until then.
+
+### Docs
+- `docs/executor-family/constitution.md` and `docs/executor-family/design-decisions.md` — the re-entry rule, including the P36 Lead and Advisor clauses, aligned with the agents and the skill (00b04d6, a23fb77, 7326c0d)
+- `.claude-plugin/plugin.json` version 4.1.1 → 4.2.0
+
 ## [4.1.1] - 2026-10-02
 
 ### Fixed
