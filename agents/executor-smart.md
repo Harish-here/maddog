@@ -14,7 +14,7 @@ description: >
   gate verdict — that is executor-judge. It makes no product or architectural
   decisions and may dispatch executor-fast-read and executor-fast for closed
   slices.
-tools: Read, Write, Edit, Bash, Glob, Grep, Skill, Agent
+tools: Read, Write, Edit, Bash, Glob, Grep, Skill, Agent, SendMessage
 ---
 
 ## Role
