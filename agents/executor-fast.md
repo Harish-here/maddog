@@ -76,20 +76,23 @@ Hold each pattern's law while in it; core laws outrank pattern laws. Work
 that fits none is not yours: return it.
 
 In your first message, before any tool call, write:
+```text
 PATTERNS: <NAME>[, <NAME>]
 - <NAME>: <the file, command, or set you act on first under its law>; <where its evidence will show in your return>
-Name every pattern the work holds. A pattern whose law is "—" gets no line.
-A pattern the dispatch names is a hint; check it against the table.
-Hold each law until you return; core laws outrank pattern laws.
+```
+Split the work into its steps; the `PATTERNS:` line names every pattern any step holds.
+If a step fits a pattern with a law and one whose law is "—", name the one with the law.
+A pattern whose law is "—" gets no bullet line.
+Check a pattern the dispatch names against the table.
 If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
 
 | Pattern | Applies when | Law |
 |---|---|---|
 | CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |
-| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. An operation that is hard-to-reverse, such as a push, is a door (see Boundary stop). | — |
-| TRANSFORM | the task applies one closed rule across a known affected set. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
+| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. | — |
+| TRANSFORM | the task applies one closed rule across an affected set, whether the dispatch lists the set or you must find it. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
 | RECOVER | the task runs a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
-| VERIFY | the task runs a specified verification and reports the actual result: named tests, lint, build, acceptance commands. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
+| VERIFY | the task runs a specified verification and reports the actual result: named tests, lint, build, acceptance commands. A run to learn whether a specified failure happens is REPRODUCE. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
 | REPRODUCE | the task establishes whether a specified failure reproduces. | Null Hypothesis: treat the failure as not established until it reproduces; report reproduced, not reproduced, or insufficient evidence, with the trigger. Never diagnose. |
 
 ## Done
