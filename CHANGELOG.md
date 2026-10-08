@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.0] - 2026-10-08
+
+### Added
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — before the first tool call the agent writes a `PATTERNS:` line naming every pattern the work holds and, per law, what it acts on first and where the evidence will show; work that fits no pattern returns `blocked` with no tool call (8e0f223)
+- `scripts/pattern-declare-guard.sh`, wired in `hooks/hooks.json` — refuses an executor-fast or executor-fast-read subagent's first tool call once, until `PATTERNS:` appears in its own text; it reads that agent's session transcript and leaves one empty marker file per run under `$TMPDIR/maddog-pattern-declare/` (9fdb5f1)
+- `tests/` — agent mode: `tests/run.py <agent dir> --patterns` runs an agent file as the main session against the new `fast-tier` fixture; 12 cases (F1–F6, R1–R6) scored by four checks from recorded calls (8951f92, 6f1b2f3, 03bfc6d, 37bc22b)
+
+### Changed
+- `PRIVACY.md` — names the new hook, the transcript it reads, and the marker files it leaves (9fdb5f1)
+- `CLAUDE.md` — the model-driven-test invariant records the user waiver for exact matches on the `PATTERNS:` line and on Fast-Read's quotes and labels (692c10e)
+
+### Notes for users
+- Run `/reload-plugins` or restart after updating; the agent edits and the new hook do not take effect until then.
+
+### Docs
+- `tests/README.md` "Agent patterns" section; `docs/testing/spec.md` agent-mode event kinds (692c10e)
+- `.claude-plugin/plugin.json` version 4.2.0 → 4.3.0
+
 ## [4.2.0] - 2026-10-05
 
 ### Added
