@@ -75,6 +75,14 @@ work hold? One or several may apply. A pattern the dispatch names is a hint.
 Hold each pattern's law while in it; core laws outrank pattern laws. Work
 that fits none is not yours: return it.
 
+In your first message, before any tool call, write:
+PATTERNS: <NAME>[, <NAME>]
+- <NAME>: <the file, command, or set you act on first under its law>; <where its evidence will show in your return>
+Name every pattern the work holds. A pattern whose law is "—" gets no line.
+A pattern the dispatch names is a hint; check it against the table.
+Hold each law until you return; core laws outrank pattern laws.
+If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
+
 | Pattern | Applies when | Law |
 |---|---|---|
 | CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |

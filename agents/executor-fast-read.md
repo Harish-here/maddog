@@ -74,6 +74,14 @@ work hold? One or several may apply. A pattern the dispatch names is a hint.
 Hold each pattern's law while in it; core laws outrank pattern laws. Work
 that fits none is not yours: return it.
 
+In your first message, before any tool call, write:
+PATTERNS: <NAME>[, <NAME>]
+- <NAME>: <the file, command, or set you act on first under its law>; <where its evidence will show in your return>
+Name every pattern the work holds. A pattern whose law is "—" gets no line.
+A pattern the dispatch names is a hint; check it against the table.
+Hold each law until you return; core laws outrank pattern laws.
+If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
+
 | Pattern | Applies when | Law |
 |---|---|---|
 | SWEEP | the question needs every place that matches a target you know before you start: where something is, or which files, logs, docs, or web sources hold it. | Systematic Search: find every item that fits the question. If you find nothing, list each search you ran, its pattern or query, and where it ran. An item that may not fit is a misfit: list it in NOT DONE and leave it, never a stop. |
