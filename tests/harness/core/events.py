@@ -1,9 +1,14 @@
-"""The six kinds of event every run is turned into. Names no runtime."""
+"""The kinds of event every run is turned into. Names no runtime.
+
+Skill mode uses the first six. Agent mode (an agent file run as the main
+session) also records `say` (a block of the agent's own text), `final` (its
+last message), and `changed` (a file that differs from the fixture's first
+commit once the session ends)."""
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Protocol
 
-KINDS = ("handoff", "write", "read", "command", "skill_load", "refused")
+KINDS = ("handoff", "write", "read", "command", "skill_load", "refused", "say", "final", "changed")
 
 
 @dataclass(frozen=True)

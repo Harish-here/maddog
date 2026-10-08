@@ -64,6 +64,24 @@ def make_workdir(name: str, slot_path: Path) -> Path:
     return workdir
 
 
+def _git_out(workdir: Path, *args: str) -> str:
+    return subprocess.run([*GIT, "-c", "core.quotepath=off", "-C", str(workdir), *args],
+                          check=True, capture_output=True, text=True).stdout
+
+
+def changed_files(workdir: Path) -> list[str]:
+    """Paths (relative to `workdir`, sorted) that differ from the fixture's
+    first commit when a session ends: modified, deleted, or new files, whether
+    the agent left them uncommitted, staged, or committed. Agent mode records
+    these as `changed` events, so a check sees an edit made by any means (an
+    edit tool, sed -i, a redirect, git commit) and an untouched file.
+    Git-ignored files (the fixture's own __pycache__) never count."""
+    root = _git_out(workdir, "rev-list", "--max-parents=0", "HEAD").split()[0]
+    changed = set(_git_out(workdir, "diff", "--name-only", "--no-renames", root).splitlines())
+    changed |= set(_git_out(workdir, "ls-files", "--others", "--exclude-standard").splitlines())
+    return sorted(changed)
+
+
 def remove_workdir(workdir: Path) -> None:
     shutil.rmtree(Path(workdir), ignore_errors=True)
 

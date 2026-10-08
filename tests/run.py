@@ -11,6 +11,12 @@
 
 Without --tier or --ladder, each case runs once, at its own expected tier
 (no climbing). --ladder opts into the old climb from low up to max_tier.
+
+A folder's handoff.yaml runs in skill mode. With --patterns, the folder's
+patterns.yaml runs instead, in agent mode: each case runs that agent file as
+the main session, to completion.
+
+    tests/.venv/bin/python tests/run.py agents/executor-fast --runtime <name> --patterns
 """
 import argparse
 import shutil
@@ -21,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 from harness.core.baseline import main_sha, plugin_versions, remove_baseline, branch_with_skill
-from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, expected_tier, load_cases, load_ladders
+from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, AgentCase, expected_tier, load_agent_cases, load_cases, load_ladders
 from harness.core.fixture import SlotPool, make_workdir, remove_workdir
 from harness.core.maincache import CACHE_DIRNAME, MainCache, hash_file
 from harness.core.report import render, write_results
@@ -92,6 +98,8 @@ def main(argv=None) -> int:
     parser.add_argument("--fresh-main", action="store_true",
                         help="ignore and overwrite any cached main run for the selected cases")
     parser.add_argument("--skill-file", type=Path, help="test this draft skill file instead of the branch's; agents and everything else come from this tree")
+    parser.add_argument("--patterns", action="store_true",
+                        help="run the folder's patterns.yaml in agent mode, not its handoff.yaml")
     args = parser.parse_args(argv)
 
     if args.ladder and args.tier:
@@ -104,8 +112,10 @@ def main(argv=None) -> int:
     for folder in sweep(TESTS_DIR.parent):
         print(f"swept leftover {folder}")
 
-    case_file = TESTS_DIR / args.target / "handoff.yaml"
-    cases = load_cases(case_file)
+    if args.patterns and args.skill_file:
+        parser.error("--skill-file is for skill targets; --patterns runs the agent files from this tree")
+    case_file = TESTS_DIR / args.target / ("patterns.yaml" if args.patterns else "handoff.yaml")
+    cases = load_agent_cases(case_file) if args.patterns else load_cases(case_file)
 
     try:
         cases = select_cases(cases, args.case, args.pressure)

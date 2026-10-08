@@ -1,4 +1,5 @@
 """Load case files and the ladder config. Names no runtime."""
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -61,6 +62,96 @@ def load_cases(path: Path) -> list[Case]:
             # No case-level override: inherit the file-level pair, if any.
             tier, why = file_tier, file_why
         cases.append(Case(raw["id"], raw["prompt"], raw["expect"], raw["pressure"], skill, fixture, tier, why))
+    if not cases:
+        raise ValueError(f"{path}: no cases")
+    return cases
+
+
+# --- agent cases: an agent file run as the main session, scored by four checks ---
+
+AGENT_ROLES = ("Fast", "Fast-Read")  # the executors whose declared patterns these cases test
+PATTERN_NAMES = ("CHANGE", "OPERATE", "TRANSFORM", "RECOVER", "VERIFY", "REPRODUCE", "SWEEP", "TRACE", "EXTRACT")
+CALL_KINDS = ("read", "write", "command")
+LABELS = ("CONFIRMED", "CONTRADICTED", "NO EVIDENCE")
+# Keys a case may use for check 4 (the law check). Anything else is a typo.
+CHECK_KEYS = ("edits_include", "edits_exclude", "no_edits", "before", "then",
+              "command_runs", "return_quotes", "return_lacks", "label")
+CASE_KEYS = ("id", "prompt", "patterns", "first_call")
+# Check keys that read the agent's returned words. Only Fast-Read's quotes and labels are waived.
+WORDS_KEYS = ("return_quotes", "return_lacks", "label")
+
+
+@dataclass(frozen=True)
+class AgentCase:
+    id: str
+    prompt: str
+    expect: str        # the role under test, Fast or Fast-Read; the adapter maps it to the agent file
+    fixture: str
+    patterns: tuple    # the pattern names the work holds: check 2 wants all of them declared
+    first_call: dict   # {"kind": [..], "target": regex}: check 3
+    checks: dict       # check 4: only keys from CHECK_KEYS
+    pressure: str = "none"            # agent cases always run at the low tier
+    expected_tier: str | None = None  # unused; the report and run.py read the attribute
+
+
+def _regex(where: str, text) -> str:
+    if not isinstance(text, str):
+        raise ValueError(f"{where}: expected a regex string, got {text!r}")
+    try:
+        re.compile(text)
+    except re.error as e:
+        raise ValueError(f"{where}: bad regex {text!r}: {e}") from None
+    return text
+
+
+def load_agent_cases(path: Path) -> list[AgentCase]:
+    data = yaml.safe_load(Path(path).read_text())
+    expect, fixture = data.get("expect"), data.get("fixture")
+    if expect not in AGENT_ROLES:
+        raise ValueError(f"{path}: 'expect' must be one of {', '.join(AGENT_ROLES)}, got {expect!r}")
+    if not fixture:
+        raise ValueError(f"{path}: missing 'fixture'")
+
+    cases, seen = [], set()
+    for raw in data.get("cases", []):
+        for field in CASE_KEYS:
+            if field not in raw:
+                raise ValueError(f"{path}: a case is missing '{field}'")
+        cid = raw["id"]
+        if cid in seen:
+            raise ValueError(f"{path}: duplicate case id {cid!r}")
+        seen.add(cid)
+        unknown_patterns = [p for p in raw["patterns"] if p not in PATTERN_NAMES]
+        if not raw["patterns"] or unknown_patterns:
+            raise ValueError(f"{path}: case {cid}: patterns must be a non-empty list from {PATTERN_NAMES}, got {raw['patterns']!r}")
+
+        first_call = dict(raw["first_call"])
+        kinds = first_call.get("kind")
+        kinds = [kinds] if isinstance(kinds, str) else list(kinds or [])
+        if not kinds or any(k not in CALL_KINDS for k in kinds):
+            raise ValueError(f"{path}: case {cid}: first_call.kind must be from {CALL_KINDS}, got {first_call.get('kind')!r}")
+        first_call = {"kind": kinds, "target": _regex(f"{path}: case {cid}: first_call.target", first_call.get("target"))}
+
+        checks = {k: v for k, v in raw.items() if k not in CASE_KEYS}
+        unknown = sorted(set(checks) - set(CHECK_KEYS))
+        if unknown:
+            raise ValueError(f"{path}: case {cid}: unknown check key(s) {', '.join(unknown)}; known: {', '.join(CHECK_KEYS)}")
+        words = sorted(set(checks) & set(WORDS_KEYS))
+        if words and expect != "Fast-Read":
+            raise ValueError(f"{path}: case {cid}: {', '.join(words)} score a model's words; the waiver "
+                             f"(2026-10-08) allows that for Fast-Read's quotes and labels only")
+        for key in ("before", "then"):
+            for pair in checks.get(key, []):
+                if len(pair) != 2:
+                    raise ValueError(f"{path}: case {cid}: every {key} entry is a pair [earlier, later], got {pair!r}")
+                for part in pair:
+                    _regex(f"{path}: case {cid}: {key}", part)
+        if "command_runs" in checks and not isinstance(checks["command_runs"], str):
+            raise ValueError(f"{path}: case {cid}: command_runs is one command string")
+        if "label" in checks and checks["label"] not in LABELS:
+            raise ValueError(f"{path}: case {cid}: label must be one of {LABELS}")
+
+        cases.append(AgentCase(cid, raw["prompt"], expect, fixture, tuple(raw["patterns"]), first_call, checks))
     if not cases:
         raise ValueError(f"{path}: no cases")
     return cases

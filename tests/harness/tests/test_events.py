@@ -2,8 +2,8 @@ import pytest
 from harness.core.events import Event, KINDS
 
 
-def test_kinds_are_the_six_from_the_spec():
-    assert KINDS == ("handoff", "write", "read", "command", "skill_load", "refused")
+def test_kinds_are_the_six_from_the_spec_plus_the_three_agent_mode_kinds():
+    assert KINDS == ("handoff", "write", "read", "command", "skill_load", "refused", "say", "final", "changed")
 
 
 def test_event_rejects_unknown_kind():
