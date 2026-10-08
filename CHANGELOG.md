@@ -12,6 +12,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `tests/` — agent mode: `tests/run.py <agent dir> --patterns` runs an agent file as the main session against the new `fast-tier` fixture; 12 cases (F1–F6, R1–R6) scored by four checks from recorded calls (8951f92, 6f1b2f3, 03bfc6d, 37bc22b)
 
 ### Changed
+- `agents/executor-fast.md` — the agent splits the work into steps before naming patterns; when a step fits a pattern with a law and one without, it names the one with the law; TRANSFORM covers a set the agent must find; a run to learn whether a specified failure happens is REPRODUCE; OPERATE's repeated door sentence is dropped (c3f8ebb)
+- `agents/executor-fast-read.md` — Core Law 1: every quote is copied exactly under Diplomatic Transcription; EXTRACT applies when the answer is a source's own words; TRACE says "link" for each hop; the `PATTERNS:` template names a source, not a command (c3f8ebb)
 - `PRIVACY.md` — names the new hook, the transcript it reads, and the marker files it leaves (9fdb5f1)
 - `CLAUDE.md` — the model-driven-test invariant records the user waiver for exact matches on the `PATTERNS:` line and on Fast-Read's quotes and labels (692c10e)
 
