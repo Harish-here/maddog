@@ -7,9 +7,13 @@ steps listed below.
 
 ## What runs, and what it touches
 
-- **Hooks.** `scripts/executor-guard.sh` and `scripts/judge-dispatch-guard.sh`
-  read the pending tool call that Claude Code passes them, and answer allow
-  or deny. They keep nothing. When you set `MADDOG_DISPATCH_PROBE`, the
+- **Hooks.** `scripts/executor-guard.sh`, `scripts/judge-dispatch-guard.sh`
+  and `scripts/pattern-declare-guard.sh` read the pending tool call that
+  Claude Code passes them, and answer allow or deny. The first two keep
+  nothing. The third also reads the calling agent's own session transcript on
+  your machine, and leaves one empty file per executor-fast or
+  executor-fast-read run in `maddog-pattern-declare/` under `$TMPDIR` (or
+  `/tmp`). When you set `MADDOG_DISPATCH_PROBE`, the
   dispatch guard appends every agent dispatch it sees, including the full
   prompt text, to `maddog-dispatch-probe.log` in `$TMPDIR` (or `/tmp`) on
   your machine.
