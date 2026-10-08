@@ -6,7 +6,8 @@ from pathlib import Path
 
 from harness.core.cases import Case, TIERS
 from harness.core.events import Event
-from harness.core.score import Verdict, score
+from harness.core.agent_score import score_case
+from harness.core.score import Verdict
 
 MIN_RUNS = 3
 MAX_VOIDS = 3  # per version per tier; past this the case is reported, not retried
@@ -30,12 +31,15 @@ class RunRecord:
     cached: bool = False  # True when this record came from the main-run cache, not a fresh run
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "case": self.case_id, "version": self.version, "tier": self.tier,
             "attempt": self.attempt, "events": [e.to_dict() for e in self.events],
             "result": self.verdict.result, "reason": self.verdict.reason,
             "cost_usd": self.cost_usd, "usage": self.usage, "cached": self.cached,
         }
+        if self.verdict.checks is not None:  # agent cases only; skill-mode lines stay as they were
+            out["checks"] = self.verdict.checks
+        return out
 
 
 @dataclass
@@ -73,7 +77,7 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
         cached = main_cache.get(case, tier, runs)
         if cached is not None:
             for i, events in enumerate(cached, start=1):
-                records.append(RunRecord(case.id, version, tier, i, events, score(events, case.expect), cached=True))
+                records.append(RunRecord(case.id, version, tier, i, events, score_case(events, case), cached=True))
             return
 
     valid = 0
@@ -88,7 +92,7 @@ def _run_at_tier(case, adapter, version, plugin_path, tier, runs, make, remove, 
         finally:
             remove(workdir)
         events = outcome.events
-        verdict = score(events, case.expect)
+        verdict = score_case(events, case)
         records.append(RunRecord(case.id, version, tier, attempt, events, verdict, outcome.cost_usd, outcome.usage))
         if verdict.result == "VOID":
             voids += 1

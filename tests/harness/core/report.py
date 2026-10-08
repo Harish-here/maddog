@@ -41,6 +41,27 @@ def _flag(result: CaseResult, expected: str, ladder: bool) -> str:
     return ""
 
 
+CHECK_COLUMNS = (("1", "1 PATTERNS line"), ("2", "2 patterns"), ("3", "3 first call"), ("4", "4 law"))
+
+
+def _check_cell(records, version, tier, key) -> str:
+    scored = [r for r in records if r.version == version and r.tier == tier and r.verdict.checks is not None]
+    return f"{sum(1 for r in scored if r.verdict.checks[key])}/{len(scored)}"
+
+
+def _checks_section(results: list[CaseResult]) -> list[str]:
+    """Agent cases only: how many runs passed each of the four checks, branch / main."""
+    lines = ["## Checks (branch / main)", "",
+             "| Case | Tier | " + " | ".join(label for _, label in CHECK_COLUMNS) + " |",
+             "|---|---|" + "---|" * len(CHECK_COLUMNS)]
+    for result in results:
+        for tier in [t for t in TIERS if any(r.tier == t for r in result.records)]:
+            cells = [f"{_check_cell(result.records, 'branch', tier, key)} / {_check_cell(result.records, 'main', tier, key)}"
+                     for key, _ in CHECK_COLUMNS]
+            lines.append(f"| {result.case.id} | {tier} | " + " | ".join(cells) + " |")
+    return lines + [""]
+
+
 def render(results: list[CaseResult], ladders: dict, runtime: str, ladder: bool = False) -> str:
     lines = [f"# Test report — {runtime}", ""]
     if ladder:
@@ -75,13 +96,19 @@ def render(results: list[CaseResult], ladders: dict, runtime: str, ladder: bool 
                 lines.append(f"| {result.case.id} | {result.case.expect} | {tier} | {branch} | {main} | {cost} | {flag} |")
 
     lines += ["", f"**Total cost:** {_fmt_cost(total_cost if any_cost else None)}", ""]
+    if any(r.verdict.checks is not None for result in results for r in result.records):
+        lines += _checks_section(results)
     lines += ["## Failed and void runs", ""]
     for result in results:
         for r in result.records:
             if r.verdict.result == "PASS":
                 continue
-            events = ", ".join(f"{e.kind}:{e.detail}" for e in r.events) or "(none)"
             lines.append(f"- **{r.case_id}** {r.version} {r.tier} #{r.attempt} — {r.verdict.result}: {r.verdict.reason}")
+            if r.verdict.checks is not None and r.version == "main":
+                continue  # agent mode: main fails check 1 by design; its reason line is enough
+            # An agent run's events carry whole blocks of the agent's text: cut each to one line's worth.
+            limit = None if r.verdict.checks is None else 120
+            events = ", ".join(f"{e.kind}:{e.detail[:limit]}" for e in r.events) or "(none)"
             lines.append(f"  - events: {events}")
     return "\n".join(lines) + "\n"
 

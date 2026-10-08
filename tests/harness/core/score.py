@@ -8,6 +8,7 @@ from harness.core.events import Event
 class Verdict:
     result: str  # PASS | FAIL | VOID
     reason: str
+    checks: dict | None = None  # agent cases: {"1": bool, "2": bool, "3": bool, "4": bool}; skill cases: None
 
 
 def score(events: list[Event], expect: str) -> Verdict:
