@@ -1,0 +1,90 @@
+# Does the Fast-Read role declare its patterns first, and apply each pattern's law?
+# Scored from recorded tool calls and, by user waiver 2026-10-08, the PATTERNS: line
+# and the exact quotes and CONFIRMED / CONTRADICTED / NO EVIDENCE labels in its
+# return. See tests/README.md, "Agent patterns".
+# Matchers (first_call.target, before) are regexes over "<kind>:<detail>" of each call.
+expect: Fast-Read
+fixture: fast-tier
+cases:
+  - id: R1
+    patterns: [SWEEP]
+    prompt: |
+      GOAL: list every call to `parse_money` in this repo.
+      BOUNDARY: read-only. Calls only: not definitions, and not mentions in comments or docs.
+      DONE-WHEN: each call is listed as file:line followed by the exact calling line.
+    first_call: {kind: [read], target: 'parse_money'}
+    return_quotes:
+      - 'price = money.parse_money(price_text)'
+      - 'price = money.parse_money(row["price"])'
+      - 'return int(round(parse_money(text) * 100))'
+    return_lacks:
+      - 'def parse_money(text: str) -> float:'
+      - 'def parse_money_cents(text: str) -> int:'
+      - '# parse_money is not used here: prices are already floats'
+      - '`parse_money` handles'
+
+  - id: R2
+    patterns: [TRACE]
+    prompt: |
+      GOAL: trace the call to `fetch_stock` made in `cmd_sync` (src/stockroom/cli.py) to its definition, and from there to the config key it reads.
+      BOUNDARY: read-only. Start at `cmd_sync`. Follow only that path.
+      DONE-WHEN: you have cited, in order, the calling line, the definition line, and the config line that sets the key, each quoted exactly.
+    first_call: {kind: [read], target: 'cli\.py|cmd_sync'}
+    before:
+      - ['^read:.*(cli\.py|cmd_sync)', '^read:.*(remote\.py|fetch_stock)']
+      - ['^read:.*(remote\.py|fetch_stock)', '^read:.*(settings\.toml|timeout)']
+    return_quotes:
+      - 'return fetch_stock("warehouse-1")'
+      - 'def fetch_stock(warehouse: str) -> list[dict]:'
+      - 'timeout = 30'
+
+  - id: R3
+    patterns: [EXTRACT]
+    prompt: |
+      GOAL: quote the line in config/settings.toml that sets the retry limit.
+      BOUNDARY: read-only; that file only.
+      DONE-WHEN: the line is quoted exactly as written, with file:line.
+    first_call: {kind: [read], target: 'settings\.toml|max_retries'}
+    return_quotes:
+      - 'max_retries    = 5   # per-request cap'
+
+  - id: R4
+    patterns: [VERIFY]
+    prompt: |
+      GOAL: check this claim: config/settings.toml sets the maximum upload size to 10 MB.
+      BOUNDARY: read-only; that file only.
+      DONE-WHEN: the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'settings\.toml|max_upload'}
+    label: CONTRADICTED
+    return_quotes:
+      - 'max_upload_mb = 25'
+
+  - id: R5
+    patterns: [SWEEP, EXTRACT]
+    prompt: |
+      GOAL: find every place the setting `cache_ttl` is defined (given a value), and quote each definition.
+      BOUNDARY: read-only; any file in this repo. A definition gives the setting a value; reading or mentioning it is not one.
+      DONE-WHEN: each definition is listed as file:line followed by the exact line.
+    first_call: {kind: [read], target: 'cache_ttl'}
+    return_quotes:
+      - 'cache_ttl = 300'
+      - 'cache_ttl = 5'
+      - '"cache_ttl": 60,'
+    return_lacks:
+      - 'cache_ttl_margin = 2'
+      - 'Set cache_ttl in config/settings.toml'
+
+  - id: R6
+    patterns: [TRACE, VERIFY]
+    prompt: |
+      GOAL: follow the call to `fetch_stock` made in `cmd_sync` (src/stockroom/cli.py) to the config key it reads, and check this claim: the code's default for that key is 10.
+      BOUNDARY: read-only. Start at `cmd_sync`.
+      DONE-WHEN: the path is cited in order from the calling line to the config line that sets the key, and the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'cli\.py|cmd_sync'}
+    before:
+      - ['^read:.*(cli\.py|cmd_sync)', '^read:.*(remote\.py|fetch_stock)']
+      - ['^read:.*(remote\.py|fetch_stock)', '^read:.*(settings\.toml|timeout)']
+    label: CONTRADICTED
+    return_quotes:
+      - 'timeout = settings.get("remote", "timeout", 15)'
+      - 'timeout = 30'

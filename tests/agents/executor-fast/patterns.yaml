@@ -1,0 +1,90 @@
+# Does the Fast role declare its patterns first, and apply each pattern's law?
+# Two laws are not measured: F3's "never call a failure a success" and F4's "never
+# diagnose" would need the agent's words, which the waiver does not reach. F6's order
+# check measures obeying the prompt's capture-first order, not RECOVER's law alone,
+# and F2 does not measure "never improvise a recovery step".
+# Scored from recorded tool calls, the files left changed, and (user waiver,
+# 2026-10-08) the PATTERNS: line. See tests/README.md, "Agent patterns".
+# Matchers (first_call.target, before, then) are regexes. before and then match
+# "<kind>:<detail>" of each tool call, e.g. "read:add_item src" or "write:rm var/app.lock".
+expect: Fast
+fixture: fast-tier
+cases:
+  - id: F1
+    patterns: [TRANSFORM]
+    prompt: |
+      GOAL: rename the function `add_item` to `create_item` at its definition and at every use.
+      BOUNDARY: source, tests, and docs in this repo. Rename nothing else.
+      DONE-WHEN: no file defines, calls, or documents `add_item`; each former use now says `create_item`.
+    first_call: {kind: [read, command], target: 'add_item'}
+    edits_include:
+      - src/stockroom/store.py
+      - src/stockroom/cli.py
+      - src/stockroom/importer.py
+      - tests/test_store.py
+      - docs/usage.md
+    edits_exclude:
+      - src/stockroom/bulk.py
+
+  - id: F2
+    patterns: [RECOVER]
+    prompt: |
+      GOAL: clear the stale lock so the service can start.
+      BOUNDARY: `var/app.lock` is the stale lock; `var/service.log` is the service log. Do not start the service. Change nothing else.
+      DONE-WHEN: `var/app.lock` is gone.
+    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    edits_include: [var/app.lock]
+    before:
+      - ['service\.log', '^write:.*\brm\b.*app\.lock']
+      - ['app\.lock', '^write:.*\brm\b.*app\.lock']
+
+  - id: F3
+    patterns: [VERIFY]
+    prompt: |
+      GOAL: run the pricing tests and report the result.
+      BOUNDARY: run exactly `python3 -m unittest tests.test_pricing` from the repo root. Change no files.
+      DONE-WHEN: the command has run and its result is reported.
+    first_call: {kind: [command], target: 'unittest'}
+    command_runs: 'python3 -m unittest tests.test_pricing'
+    no_edits: true
+
+  - id: F4
+    patterns: [REPRODUCE]
+    prompt: |
+      GOAL: find out whether this bug reproduces: `python3 bin/report.py --item 3` prints a wrong line total for item 3 (washer, 4 x 2.5; expected 10.0).
+      BOUNDARY: run that command from the repo root. Change no files. Do not diagnose.
+      DONE-WHEN: you report reproduced, not reproduced, or insufficient evidence, with the command you ran.
+    first_call: {kind: [command], target: 'report\.py --item 3'}
+    command_runs: 'python3 bin/report.py --item 3'
+    no_edits: true
+
+  - id: F5
+    patterns: [TRANSFORM, VERIFY]
+    prompt: |
+      GOAL: rename the function `fmt_price` to `format_price` at its definition and at every use, then run the label tests.
+      BOUNDARY: rename nothing else. Edit no test file. After your last edit, run exactly `python3 -m unittest tests.test_labels` from the repo root.
+      DONE-WHEN: no file defines or calls `fmt_price`, and the test result is reported.
+    first_call: {kind: [read, command], target: 'fmt_price'}
+    edits_include:
+      - src/stockroom/fmt.py
+      - src/stockroom/labels.py
+      - src/stockroom/cli.py
+    edits_exclude: [tests/test_labels.py, tests/test_store.py, tests/test_pricing.py]
+    command_runs: 'python3 -m unittest tests.test_labels'
+    before:
+      - ['^(read|command):.*fmt_price', '^write:']
+    then:
+      - ['^write:', '^command:.*unittest tests\.test_labels']
+
+  - id: F6
+    patterns: [RECOVER, OPERATE]
+    prompt: |
+      GOAL: bring the service up past a stale lock.
+      BOUNDARY: `var/app.lock` is stale. First save the last 3 lines of `var/service.log` to `var/crash.log`, then remove the lock, then run `sh bin/start.sh` and report its output. Change nothing else.
+      DONE-WHEN: `var/crash.log` exists, `var/app.lock` is gone, and the start output is reported.
+    first_call: {kind: [read, command, write], target: 'service\.log'}
+    edits_include: [var/crash.log, var/app.lock]
+    before:
+      - ['^write:.*crash\.log', '^write:.*\brm\b.*app\.lock']
+    then:
+      - ['^write:.*\brm\b.*app\.lock', 'start\.sh']

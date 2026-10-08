@@ -1,0 +1,4 @@
+# Development overrides
+[cache]
+cache_ttl = 5
+cache_ttl_margin = 2
