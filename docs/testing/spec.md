@@ -232,7 +232,10 @@ means writing one new adapter file — no change to cases, core, or reports.
   They never name agent IDs, model names, or slash-command syntax.
 - **The core** works on an ordered event log. An **event** is one recorded
   step in a session. There are six kinds: `handoff` (which role), `write`,
-  `read`, `command`, `skill_load`, `refused`.
+  `read`, `command`, `skill_load`, `refused`. Agent mode (an agent file run
+  as the main session, `tests/agents/`) adds three: `say` (a block of the
+  agent's own text), `final` (its last message), and `changed` (a file that
+  differs from the fixture's first commit when the session ends).
 - **The adapter interface** is `run(case, plugin_path, workdir, tier) →
   event log`. The adapter owns: invocation syntax (today,
   `/maddog:advisor-mode …`); mapping roles to agent IDs (for example,

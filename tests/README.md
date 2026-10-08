@@ -120,9 +120,74 @@ a report showed the case needs a higher tier and you accepted that — either
 on the case itself, or once at the top of the file for every case that
 doesn't set its own.
 
+## Agent patterns (`tests/agents/`)
+
+    tests/.venv/bin/python tests/run.py agents/executor-fast --runtime claude-code --patterns --jobs 3
+    tests/.venv/bin/python tests/run.py agents/executor-fast-read --runtime claude-code --patterns --case R4
+
+`--patterns` runs the folder's `patterns.yaml` in agent mode; without it the
+folder's `handoff.yaml` runs in skill mode, as before. Each case runs the
+agent's own file as the main session, to completion, in a copy of the
+`fast-tier` fixture: the file's body is the system prompt, its `tools:` line
+the tool set, its `effort:` line the effort. This is a main-session proxy for
+a real dispatch, good for comparing this branch with `main`, not a replica of
+a subagent (Claude Code adds its own wrapper text to those). No plugin loads,
+so nothing from this repo's `hooks/` can fire: the cases measure the agent
+text alone. The only hook is the harness's own fence: file tools may not write
+outside the workdir and the shell may not reach out (curl, ssh, sudo, git
+push); a hit voids and reruns the run. It is not a sandbox, because a shell
+command can still write outside the workdir. The branch run reads the agent
+file from this working tree, the `main` run from the `main` worktree. Both run
+at the case's expected tier (`low`, Haiku), 3 runs each.
+
+A run passes only if all four checks pass:
+
+1. the text `PATTERNS:` is in the agent's own text before its first tool
+   call, in any position and with any markup around it (the user-locked rule;
+   `scripts/pattern-declare-guard.sh` applies the same one)
+2. the line holding it names every pattern the case expects; naming more is fine, so
+   declaring every pattern passes this check and checks 3 and 4 catch a wrong
+   classification
+3. the first tool call is the kind and target the case expects; this is strict,
+   so an `ls` or a Glob before the grep fails it. Setup steps are not scored
+   and are skipped when choosing the first call: a step that only changes
+   directory or sets up the shell (`cd`, `pushd`, `popd`, `export X=1`, `X=1`,
+   `set -e`, `unset X`). `cd /w && grep -rn x .` is scored as the grep; a lone
+   `cd` followed by an edit still fails
+4. the law check for that case: files changed or left alone (read from git
+   after the session, committed edits included), the order of calls, the
+   command run, and, for Fast-Read, the exact quotes and the `CONFIRMED` /
+   `CONTRADICTED` / `NO EVIDENCE` label in its return
+
+`main` has no declaration rule, so checks 1 and 2 fail there by design; compare
+checks 3 and 4 between branch and `main`. The report adds a "Checks (branch /
+main)" table, one row per case, and a failed run's reason names the check that
+failed.
+
+A shell call that chains steps (`a && b; c`) is recorded as one event per step,
+in order (split on `&&`, `||`, `;` and newlines outside quotes; a pipeline stays
+one step and counts as its head command), so the order checks score the order
+of the steps, not of the calls; setup steps (above) are kept in the log but not
+matched. The split is not a shell parser: it does not
+look inside `$( )` or `( )`.
+
+Not measured: whether Fast calls a failure a success (Goodhart, the F3 law),
+and whether it diagnoses a bug it was told only to reproduce (F4); both would
+need a model's words in a place the waiver does not reach. F6's order check
+measures obeying the capture-first order its prompt dictates, not RECOVER's law
+independently, and F2 does not measure "never improvise a recovery step". The
+case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
+file that is not Fast-Read's.
+
+Scoring a model's words is waived for exactly two things, by user waiver
+2026-10-08: the `PATTERNS:` line (both agents), and Fast-Read's returned quotes
+and verdict labels. There is no grading model. To add a case, copy an entry in
+`patterns.yaml`, give it a known answer the fixture makes true, and add that
+answer to `harness/tests/test_fast_tier_fixture.py`.
+
 ## Layout
 
 - `harness/core/`: names no runtime. Cases, fixtures, baseline, runner, scoring, report.
 - `harness/runtimes/`: the only place runtime details live. One adapter per runtime, plus `ladders.yaml`.
-- `fixtures/`: practice repos, copied to a temp folder outside this repo per run.
+- `fixtures/`: practice repos, copied to a temp folder outside this repo per run (`todo-app` for skills, `fast-tier` for agents).
 - `skills/`, `agents/`, `scripts/`: case files, mirroring the repo's own folders.

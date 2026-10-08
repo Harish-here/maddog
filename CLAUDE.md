@@ -25,9 +25,12 @@ text goes through `.claude/skills/author-agent`, which gates via
   name capabilities (write, edit, shell, web), never runtime tool
   identifiers, settings keys, or APIs (`PHILOSOPHY.md` point 5).
 - `.claude/` is repo-internal and is never registered as a plugin surface.
-- Model-driven tests score from recorded tool calls, never a model's words or
-  a grading model. `tests/harness/` enforces isolation, voided runs, and the
-  main-branch baseline: change the harness, never bypass it.
+- Model-driven tests score from recorded tool calls, never a grading model,
+  and never a model's words — except, by user waiver 2026-10-08, exact
+  matches in `tests/agents/` on a fast-tier agent's `PATTERNS:` line and on
+  Fast-Read's returned quotes and verdict labels. `tests/harness/` enforces
+  isolation, voided runs, and the main-branch baseline: change the harness,
+  never bypass it.
 
 ## Distribution mechanics
 
