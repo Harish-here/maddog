@@ -238,6 +238,28 @@ def test_label_passes_only_when_it_is_the_one_label_in_result():
     assert score_agent(run_with(DECLARE, SEARCH), case).checks["4"] is False  # no return at all
 
 
+def test_label_check_reads_a_result_field_wrapped_in_markdown():
+    case = make_case(label="CONTRADICTED")
+    bold = "**RESULT:**\n\n**CONTRADICTED**\n\nThe file sets `max_upload_mb = 25`.\n\nNOT DONE: none"
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", bold)), case).checks["4"] is True
+    assert result_field(bold).strip().startswith("**CONTRADICTED**")
+
+
+def test_label_check_fails_when_the_return_has_no_result_field():
+    case = make_case(label="CONTRADICTED")
+    no_field = "## Claim Assessment\n\n**CONTRADICTED**\n\nNOT DONE: none"
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", no_field)), case).checks["4"] is False
+    assert result_field(no_field) == ""
+
+
+def test_label_check_still_fails_on_a_wrong_label_inside_markdown():
+    case = make_case(label="CONTRADICTED")
+    wrong = "**RESULT:** NO EVIDENCE\n\nNOT DONE: none"
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", wrong)), case).checks["4"] is False
+    plain = "RESULT: NO EVIDENCE\nNOT DONE: none"
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", plain)), case).checks["4"] is False
+
+
 def test_no_label_check_ignores_labels_in_not_done():
     assert result_field("RESULT: a\nNOT DONE: NO EVIDENCE for b").strip() == "a"
 

@@ -45,7 +45,9 @@ CHECK_NAMES = {"1": "PATTERNS line before the first call", "2": "declared patter
                "3": "first call", "4": "law check"}
 PATTERNS_LINE = re.compile(r"^.*?PATTERNS:[ \t]*(.*)$", re.MULTILINE)  # the line holding the marker; the rest of it is the names
 SETUP_STEP = re.compile(r"^(cd|pushd|popd)(\s|$)|^set\s+[-+]|^(export|unset)\s+\w+|^\w+=\S*$")
-RESULT_FIELD = re.compile(r"^[ \t]*RESULT:(.*?)(?=^[ \t]*NOT DONE:|\Z)", re.MULTILINE | re.DOTALL)
+# A model may wrap a field name in markdown (`**RESULT:**`, `## RESULT:`, `- RESULT:`); it is still the field.
+MARK = r"[ \t>#*_`-]*"
+RESULT_FIELD = re.compile(rf"^{MARK}RESULT[ \t]*:[*_` \t]*(.*?)(?=^{MARK}NOT DONE[ \t]*:|\Z)", re.MULTILINE | re.DOTALL)
 LABEL = re.compile(r"CONFIRMED|CONTRADICTED|NO EVIDENCE")
 
 
