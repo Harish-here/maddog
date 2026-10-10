@@ -1,86 +1,32 @@
 name: Validate manifest and frontmatter
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+# One job, no model runs. .github/validate.sh holds every check; the job only
+# prepares the machine. Merging needs this job (`validate`) to pass.
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - run: pip install pyyaml
-      - run: |
-          python3 << 'VALIDATE'
-          import json
-          import yaml
-          from pathlib import Path
-          import re
-          import sys
-
-          errors = []
-
-          # Validate frontmatter YAML in markdown skill files
-          for pattern in ['skills/*/SKILL.md', '.claude/skills/*/SKILL.md', 'agents/*.md']:
-              for md_file in Path('.').glob(pattern):
-                  try:
-                      with open(md_file) as f:
-                          content = f.read()
-                          if content.startswith('---'):
-                              end = content.find('---', 3)
-                              if end > 0:
-                                  frontmatter = content[3:end].strip()
-                                  yaml.safe_load(frontmatter)
-                  except Exception as e:
-                      errors.append(f'{md_file}: {e}')
-
-          # Validate JSON files
-          for pattern in ['.claude-plugin/*.json']:
-              for json_file in Path('.').glob(pattern):
-                  try:
-                      json.loads(json_file.read_text())
-                  except Exception as e:
-                      errors.append(f'{json_file}: {e}')
-
-          # Check version consistency
-          try:
-              plugin_version = json.loads(Path('.claude-plugin/plugin.json').read_text()).get('version')
-              changelog = Path('CHANGELOG.md').read_text()
-              match = re.search(r'^## \[([^\]]+)\]', changelog, re.MULTILINE)
-              changelog_version = match.group(1) if match else None
-              if plugin_version != changelog_version:
-                  errors.append(f'Version mismatch: plugin.json={plugin_version}, CHANGELOG={changelog_version}')
-          except Exception as e:
-              errors.append(f'Version check: {e}')
-
-          if errors:
-              for err in errors:
-                  print(err)
-              sys.exit(1)
-          VALIDATE
-      - run: python3 scripts/fragment-check.py
-
-  # Every test that needs no model: the harness unit tests and the guard-script
-  # tests. Model-driven runs (tests/run.py) are never started here.
-  offline-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # the harness tests check out main as a baseline
-      - name: Make a local main branch for the baseline checkout
+          fetch-depth: 0  # the harness tests and the release gate read main's history
+      - name: Make a local main branch from origin/main
         run: git rev-parse --verify -q main || git branch main origin/main
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
       - run: pip install -r tests/requirements.txt
-      - name: Require jq (guard tests skip without it)
-        run: jq --version || (sudo apt-get update && sudo apt-get install -y jq)
-      - run: python -m pytest tests/harness tests/guard -q
+      - name: Install jq if missing
+        run: command -v jq || (sudo apt-get update && sudo apt-get install -y jq)
+      - run: bash .github/validate.sh

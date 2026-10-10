@@ -87,9 +87,9 @@ Harness unit tests (no model):
 
     tests/.venv/bin/python -m pytest tests/harness tests/guard -q
 
-These offline tests are cheap and always run in full. CI runs them on every
-pull request and push to main (the `offline-tests` job in
-`.github/workflows/validate.yml`); model runs never run in CI.
+These offline tests are cheap and always run in full. CI runs them as one
+step of `.github/validate.sh` on every pull request (see "CI and the release
+gate" below); model runs never run in CI.
 
 ### `--changed`: run only the model tests a change touches
 
@@ -107,7 +107,8 @@ file with no `covers:` covers nothing and is never selected:
 
 `--changed [BASE]` (BASE defaults to `main`) replaces the target. The changed
 files are `git diff --name-only BASE...HEAD` plus uncommitted changes to
-tracked files. It checks every `skills/*/handoff.yaml` (skill mode) and
+tracked files; changed files under `tests/` and `.claude/` select nothing. It
+checks every `skills/*/handoff.yaml` (skill mode) and
 `agents/*/patterns.yaml` (agent mode), and runs each one whose `covers:`
 matches a changed file, one after another, in its own mode. Give a target or
 `--changed`, not both. `--case`, `--patterns` and `--skill-file` do not mix
@@ -117,6 +118,84 @@ apply to every selected file.
 `--dry-run` (with `--changed`) prints the changed files, the selected case
 files, and each one's case count and runs x sides, then exits without calling
 a model. Nothing selected prints that and exits 0.
+
+### `--changed --record`: record a release
+
+    tests/.venv/bin/python tests/run.py --changed --record --runtime claude-code
+
+The release run. It refuses unless local `main` equals `origin/main` (it runs
+`git fetch origin` first; BASE is `main`, or `origin/main`, which is then the
+same commit). Then, in order:
+
+1. runs the offline tests (`pytest tests/harness tests/guard`); any failure stops it;
+2. selects test files from the changed files. Only files outside `tests/` and
+   `.claude/` select, so a tests-only or repo-internal change selects nothing.
+   A test file's globs are its `covers:` in the base tree plus its `covers:` in
+   this tree. Nothing selected prints "no covered changes", writes nothing and
+   exits 0. A selected test file that this branch deleted stops the run;
+3. refuses when something is selected but `.claude-plugin/plugin.json` still
+   has main's version ("bump the version first"), and when a tracked covered
+   file has uncommitted changes (the fingerprints are of committed content);
+4. runs every selected file in full: every case, at its expected tier, `--runs`
+   times (at least 3) on each side. `--case`, `--pressure`, `--tier`,
+   `--ladder`, `--dry-run` and `--runs` below 3 are refused;
+5. writes `tests/releases/<version>/`, replacing an earlier recording of the
+   same version, and prints the attempt number (kept in the manifest as
+   `attempt`, so re-recording until a lucky pass shows in review).
+
+The pass rule per case: the branch passes at least as often as `main`, and in
+at least 2 of 3 runs (generally `ceil(2/3 * runs)`). A case fails whenever it
+hit the void limit or either side has fewer than `--runs` valid runs. A test
+file passes when all of its cases pass. The command exits 1 after writing a
+recording that failed the rule; the gate rejects it.
+
+`tests/releases/<version>/` holds, all committed:
+
+- `manifest.json`: version, tested and base commits, changed files, attempt,
+  runs, per test file its mode, results path (`tests/results/<time>/`), cases
+  `{branch_pass, main_pass, valid_runs, void_limited, verdict}`, verdict and
+  fingerprints, plus the offline summary line, total cost in USD and the time.
+  No runtime or model name appears anywhere under `tests/releases/`.
+- `offline.txt`: the pytest summary line.
+- `<test-folder>.md` (for example `skills-advisor-mode.md`): that file's case
+  table, with no runtime column.
+
+A fingerprint is a sha256 of one file's content: every tracked file matched by
+the test file's base-or-head `covers:` globs, and the test file itself. Raw
+`runs.jsonl` and transcripts stay in the git-ignored `tests/results/`. Old
+`tests/releases/*` folders stay in the repo.
+
+### CI and the release gate
+
+`tests/gate.py --base <ref>` is the offline half. It needs no model and takes
+seconds:
+
+    tests/.venv/bin/python tests/gate.py --base origin/main
+
+It prints "no covered changes" and exits 0 when no changed file selects a test
+file. Otherwise it fails when any of these holds: the version equals the
+base's; `tests/releases/<version>/manifest.json` is missing, or its `version`
+differs from the folder name; the manifest lacks a selected test file or any
+case id in that file's current yaml; any verdict is fail; a selected test file
+was deleted; a fingerprinted file is missing or its hash changed; or a file
+now matched by the base-or-head `covers:` has no fingerprint.
+
+`.github/validate.sh` holds every pull-request check and is the single thing
+CI runs. It stops at the first failure, in this order: frontmatter, JSON and
+version consistency; `scripts/fragment-check.py`; `bash -n` on `scripts/*.sh`;
+every command path in `hooks/hooks.json` exists; `jq` is installed; the offline
+tests; the gate (`--base ${BASE:-origin/main}`). Run it locally with the test
+venv's python, from a clone that has a local `main`:
+
+    PYTHON=tests/.venv/bin/python .github/validate.sh
+
+`.github/workflows/validate.yml` has one job, `validate`, on `pull_request`
+only: it fetches full history, creates local `main` from `origin/main`, sets up
+Python 3.13 with a pip cache, installs `jq` if missing, then runs the script. A
+newer push cancels the older run. The job name `validate` is what main requires,
+so a release with covered changes and no passing recording cannot merge. For the
+merge tree to equal the tested tree, main must also require branches to be up to
+date before merging.
 
 ## Read a report
 
@@ -225,3 +304,5 @@ answer to `harness/tests/test_fast_tier_fixture.py`.
 - `harness/runtimes/`: the only place runtime details live. One adapter per runtime, plus `ladders.yaml`.
 - `fixtures/`: practice repos, copied to a temp folder outside this repo per run (`todo-app` for skills, `fast-tier` for agents).
 - `skills/`, `agents/`, `scripts/`: case files, mirroring the repo's own folders.
+- `releases/`: one folder per recorded version, written by `--record` and read by `gate.py`.
+- `gate.py`: the offline release gate.
