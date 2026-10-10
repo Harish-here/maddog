@@ -93,16 +93,16 @@ cases:
       - 'timeout = settings.get("remote", "timeout", 15)'
       - 'timeout = 30'
 
-  # R7 and R8 use numbered questions, R9 prose: the shapes real dispatches use.
+  # R7 to R12 use the shapes real dispatches use: numbered items (R7, R10, R11, R12),
+  # numbered questions (R8), prose (R9). R10 and R11 are full-length dispatches.
   - id: R7
     patterns: [SWEEP, VERIFY]
     prompt: |
-      GOAL: answer three numbered questions about the setting `page_size`.
+      GOAL: report where the setting `page_size` is defined, and check one claim about its default.
       BOUNDARY: read-only; any file in this repo. A definition gives the setting a value.
-      Q1. Where is `page_size` defined? List each place as file:line.
-      Q2. Quote the defining line exactly.
-      Q3. Is this claim true: the built-in default for `page_size` is 100? Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
-      DONE-WHEN: each question is answered in order.
+      1. List each definition as file:line followed by the exact line.
+      2. Claim: the built-in default for `page_size` is 100. Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
+      DONE-WHEN: both items are answered in order, each with its quoted line.
     first_call: {kind: [read], target: 'page_size'}
     label: CONTRADICTED
     return_quotes:
@@ -139,3 +139,71 @@ cases:
       - 'timeout = 90'
     return_lacks:
       - 'timeout = settings.get("remote", "timeout", 15)'
+
+  # R10: a TRACE through code only (no config), ending in a claim the last line confirms.
+  # Full-length dispatch. Each link is cited, so each calling and defining line is a quote.
+  - id: R10
+    patterns: [TRACE, VERIFY]
+    prompt: |
+      PURPOSE: before anyone touches the report code, I need the exact path from the report command down to the line total, with the lines as written.
+      GOAL: trace the call to `render_line` made in `cmd_report` (src/stockroom/cli.py) down to where the line total is computed, and check one claim about that last line.
+      BOUNDARY: read-only. Start at `cmd_report` and follow only that path: each call to its definition, and the next call inside it. Draw no conclusions and do not say whether anything is a bug.
+      1. Cite the line in `cmd_report` that calls `render_line`, then the definition line of `render_line`.
+      2. Cite the line inside `render_line` that calls `line_total`, then the definition line of `line_total`.
+      3. Quote the line in `line_total` that returns its result.
+      4. Claim: `line_total` converts the price to an integer before multiplying. Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
+      If a link points to more than one place or to nothing, stop there and report it as the last link.
+      DONE-WHEN: items 1 to 4 are answered in order, each line quoted exactly as written with file:line.
+      RETURN: the items in order, then the label. At most 15 lines.
+    first_call: {kind: [read], target: 'cli\.py|cmd_report'}
+    before:
+      - ['^read:.*(cli\.py|cmd_report)', '^read:.*(report\.py|render_line)']
+      - ['^read:.*(report\.py|render_line)', '^read:.*(pricing\.py|line_total)']
+    label: CONFIRMED
+    return_quotes:
+      - 'return render_line(store.get_item(item_id))'
+      - 'def render_line(item: dict) -> str:'
+      - 'total = line_total(item["qty"], item["price"])'
+      - 'def line_total(qty: int, price: float) -> float:'
+      - 'return qty * int(price)'
+
+  # R11: EXTRACT alone, in a full-length dispatch with a length cap. Three named places, so
+  # nothing is searched for. The law is copying exactly: the odd spacing in the first quote
+  # is the check that a model did not tidy it.
+  - id: R11
+    patterns: [EXTRACT]
+    prompt: |
+      PURPOSE: I am writing the setup notes and need three pieces of text copied exactly, not paraphrased.
+      GOAL: copy out three pieces of text from this repo, each exactly as written.
+      BOUNDARY: read-only; only the three places named below. Do not tidy spacing, fix typos, or reword. Do not explain what the text means or whether it is right.
+      1. In `config/settings.toml`, copy the `[uploads]` header and every line under it up to the blank line, with file:line for each.
+      2. In `src/stockroom/defaults.py`, copy line 1 (the module docstring), with file:line.
+      3. In `src/stockroom/report.py`, copy the comment line, with file:line.
+      Copy each text whole. If one runs past 10 lines, copy the first 10 and mark the cut `[omitted: N lines]`.
+      If a named place does not exist, stop and report that instead of looking elsewhere.
+      DONE-WHEN: each of the three is copied in order, character for character, with its file:line.
+      RETURN: the three copies in order, no commentary. At most 20 lines.
+    first_call: {kind: [read], target: 'settings\.toml|uploads|max_retries'}
+    return_quotes:
+      - 'max_retries    = 5   # per-request cap'
+      - 'max_upload_mb = 25'
+      - '"""Built-in defaults, used when config/settings.toml sets nothing."""'
+      - '# parse_money is not used here: prices are already floats'
+
+  # R12: a numbered sweep. The two calls are the whole set; the definition of `get` and the
+  # `.get(` calls inside it are the decoys.
+  - id: R12
+    patterns: [SWEEP]
+    prompt: |
+      GOAL: find every place the code reads a setting.
+      BOUNDARY: read-only; files under `src/` only. A read is a call to `settings.get(`; the definition of `get` and the code inside it are not reads.
+      1. Search `src/` for every call to `settings.get(`.
+      2. List each as file:line followed by the exact line.
+      DONE-WHEN: each read is listed, each with its exact line.
+    first_call: {kind: [read], target: 'settings'}
+    return_quotes:
+      - 'timeout = settings.get("remote", "timeout", 15)'
+      - 'return settings.get("uploads", "max_retries", 3)'
+    return_lacks:
+      - 'def get(section: str, key: str, default=None):'
+      - 'return data.get(section, {}).get(key, default)'

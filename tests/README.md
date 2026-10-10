@@ -292,11 +292,23 @@ and whether it diagnoses a bug it was told only to reproduce (F4); both would
 need a model's words in a place the waiver does not reach. F6's order check
 measures obeying the capture-first order its prompt dictates, not RECOVER's law
 independently, and F2 and F9 do not measure "never improvise a recovery step".
-Each agent has nine cases. F7, F8, F9, R7 and R8 use the shapes real dispatches use,
-numbered steps (Fast) and numbered questions (Fast-Read); R9 is prose.
+Each agent has twelve cases, written in the shapes real dispatches use (measured
+on the Fast and Fast-Read dispatches of 2026-09-01 to 10-09). F1 to F6 and R1 to R6
+are short single-purpose prompts, with the command under GOAL or COMMAND and limits
+under BOUNDARY. F7 to F12 are numbered steps (Fast); R7 and R10 to R12 are numbered
+items, R8 numbered questions, R9 prose (Fast-Read). F10 and F12 (Fast) and R10 and
+R11 (Fast-Read) are full-length dispatches of 160 to 200 words: a PURPOSE line, GOAL,
+numbered steps, a BOUNDARY with do-nots, a stop-and-report clause, DONE-WHEN, and a
+RETURN line with a length cap.
 F7 commits in the fresh practice repo, and a committed edit still counts as
-changed. F8 sends steps 2 to 4 to one pattern (VERIFY), so its law is scored as
-the order edit, prepare, test and the exact test command. The case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
+changed; F11 renames, then commits, and is scored as search, edits, commit. F8 sends
+steps 2 to 4 to one pattern (VERIFY), so its law is scored as
+the order edit, prepare, test and the exact test command; F10 is the same shape
+with one edit and one test run. F12 declares REPRODUCE and VERIFY: the
+trigger runs first, as given, before the tests, and nothing changes. R10 traces
+a call chain through code to a claim the last line confirms (the only
+CONFIRMED label in the suite); R11 copies three named places exactly; R12 sweeps
+for the two reads of the settings file. The case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
 file that is not Fast-Read's.
 
 Scoring a model's words is waived for exactly two things, by user waiver

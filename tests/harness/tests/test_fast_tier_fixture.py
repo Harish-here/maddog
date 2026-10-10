@@ -40,9 +40,10 @@ def sh(work, command):
     return subprocess.run(command, shell=True, cwd=work, capture_output=True, text=True, timeout=30)
 
 
-def test_eighteen_cases_nine_per_agent():
-    assert sorted(FAST) == ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"]
-    assert sorted(READ) == ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9"]
+def test_twenty_four_cases_twelve_per_agent():
+    assert sorted(FAST, key=lambda i: int(i[1:])) == [f"F{n}" for n in range(1, 13)]
+    assert sorted(READ, key=lambda i: int(i[1:])) == [f"R{n}" for n in range(1, 13)]
+    assert len(FAST) == len(READ) == 12
 
 
 def test_every_expected_pattern_is_a_real_row_of_that_agents_table():
@@ -180,6 +181,62 @@ def test_r9_there_are_exactly_two_timeout_settings_in_config_and_one_is_over_60(
     values = [tomllib.loads(t).get("remote", {}).get("timeout") for t in config.values()]
     assert sorted(v for v in values if v is not None) == [30, 90]  # the claim "none over 60" is false
     assert all(q in fixture_files()["src/stockroom/remote.py"] for q in READ["R9"].checks["return_lacks"])  # the decoy is in code, outside config/
+
+
+def test_f10_the_dev_cache_ttl_is_5_and_the_label_and_store_tests_pass_after_the_edit(work):
+    dev = work / "config" / "dev.toml"
+    assert "cache_ttl = 5\n" in dev.read_text() and "from 5 to 10" in FAST["F10"].prompt
+    assert "[cache]" in dev.read_text() and "cache_ttl_margin = 2" in dev.read_text()
+    dev.write_text(dev.read_text().replace("cache_ttl = 5\n", "cache_ttl = 10\n"))
+    ran = sh(work, FAST["F10"].checks["command_runs"])
+    assert ran.returncode == 0 and "OK" in ran.stderr  # the stop clause is never reached
+
+
+def test_f11_the_render_line_set_is_three_files_none_a_test_and_a_rename_then_commit_works(tmp_path):
+    from harness.core import fixture
+    assert files_matching(r"\brender_line\b") == set(FAST["F11"].checks["edits_include"])
+    assert not any(name.startswith(("tests/", "docs/")) for name in files_matching(r"render_line"))
+    made = fixture.make_workdir("fast-tier", tmp_path / "slot")
+    for name in FAST["F11"].checks["edits_include"]:
+        path = made / name
+        path.write_text(re.sub(r"\brender_line\b", "render_report_line", path.read_text()))
+    subprocess.run([*fixture.GIT, "-C", str(made), "commit", "-q", "-am", "rename render_line"], check=True, capture_output=True)
+    assert fixture.changed_files(made) == sorted(FAST["F11"].checks["edits_include"])
+    assert sh(made, "python3 bin/report.py --item 3").stdout.strip() == "washer: 4 x 2.5 = 8"  # still runs after the rename
+
+
+def test_f12_the_bug_reproduces_and_the_label_and_store_tests_pass(work):
+    printed = sh(work, FAST["F12"].checks["command_runs"]).stdout.strip()
+    assert printed == "washer: 4 x 2.5 = 8" and "10.0" in FAST["F12"].prompt and not printed.endswith("10.0")
+    assert sh(work, "python3 -m unittest tests.test_labels tests.test_store").returncode == 0
+
+
+def test_r10_the_chain_runs_from_cmd_report_to_render_line_to_line_total_and_the_claim_is_true():
+    files = fixture_files()
+    quotes = READ["R10"].checks["return_quotes"]
+    assert quotes[0] in files["src/stockroom/cli.py"]
+    assert quotes[1] in files["src/stockroom/report.py"] and quotes[2] in files["src/stockroom/report.py"]
+    assert quotes[3] in files["src/stockroom/pricing.py"] and quotes[4] in files["src/stockroom/pricing.py"]
+    assert files_matching(r"\bline_total\b") == {"src/stockroom/report.py", "src/stockroom/pricing.py", "tests/test_pricing.py"}
+    assert "converts the price to an integer" in READ["R10"].prompt and READ["R10"].checks["label"] == "CONFIRMED"
+
+
+def test_r11_the_three_places_exist_and_the_first_quote_has_spacing_a_tidy_copy_would_lose():
+    files = fixture_files()
+    quotes = READ["R11"].checks["return_quotes"]
+    section = files["config/settings.toml"].split("[uploads]\n")[1].split("\n\n")[0].splitlines()
+    assert section == [quotes[0], quotes[1]]  # the lines under the header, up to the blank line
+    assert files["src/stockroom/defaults.py"].splitlines()[0] == quotes[2]
+    assert [l for l in files["src/stockroom/report.py"].splitlines() if l.startswith("#")] == [quotes[3]]
+    assert quotes[0] != " ".join(quotes[0].split())
+
+
+def test_r12_there_are_exactly_two_calls_to_settings_get_and_the_decoys_are_in_settings_py():
+    calls = lines_matching(r"settings\.get\(")
+    assert calls == set(READ["R12"].checks["return_quotes"])
+    decoys = READ["R12"].checks["return_lacks"]
+    assert all(d in fixture_files()["src/stockroom/settings.py"] for d in decoys)
+    assert not any(re.search(r"settings\.get\(", d) for d in decoys)
 
 
 def test_the_workspace_stays_clean_after_the_fixture_is_exercised(work):

@@ -1,4 +1,4 @@
-"""For each of the 18 cases: the natural ways a law-following agent would make its calls must pass
+"""For each of the 24 cases:the natural ways a law-following agent would make its calls must pass
 checks 3 and 4, and a law-ignoring variant must fail. Natural means the shapes real agents use:
 a search tool or a shell search, `cd <dir> &&` in front, `2>&1`, a pipe through `tail`, several
 steps chained in one call, an exported variable. Real case files, real adapter event-making, no model.
@@ -68,6 +68,12 @@ TEST_F7 = "python3 -m unittest tests.test_store"
 SED_F8 = "sed -i '' 's/\"page_size\": 50/\"page_size\": 25/' src/stockroom/defaults.py"
 PREPARE_F8 = "sh bin/prepare.sh"
 RESTART_F9 = "cat var/service.log var/app.lock && rm var/app.lock"
+SED_F10 = "sed -i '' 's/^cache_ttl = 5$/cache_ttl = 10/' config/dev.toml"
+TEST_F10 = "python3 -m unittest tests.test_labels tests.test_store"
+F11_FILES = ["src/stockroom/report.py", "src/stockroom/cli.py", "bin/report.py"]
+SED_F11 = "sed -i '' 's/\\brender_line\\b/render_report_line/g' " + " ".join(F11_FILES)
+COMMIT_F11 = 'git commit -am "rename render_line"'
+REPORT_F12 = "python3 bin/report.py --item 3"
 
 NATURAL = [
     ("F1", [grep("add_item"), *[edit(f) for f in F1_FILES]], F1_FILES),
@@ -105,6 +111,15 @@ NATURAL = [
     ("F9", [read("var/service.log"), read("var/app.lock"), bash(f"cd {W} && rm -f var/app.lock && sh bin/start.sh && sh bin/status.sh 2>&1")], ["var/app.lock"]),
     ("F9", [bash(f"cd {W} && tail -n 5 var/service.log; cat var/app.lock; rm var/app.lock; sh bin/start.sh; sh bin/status.sh")], ["var/app.lock"]),
     ("F9", [read("var/app.lock"), bash("rm var/app.lock"), bash("sh bin/start.sh"), bash("sh bin/status.sh")], ["var/app.lock"]),
+    ("F10", [read("config/dev.toml"), edit("config/dev.toml"), bash(TEST_F10)], ["config/dev.toml"]),
+    ("F10", [bash(SED_F10), bash(f"cd {W} && {TEST_F10} 2>&1 | tail -5")], ["config/dev.toml"]),
+    ("F10", [grep("cache_ttl", "config"), edit("config/dev.toml"), bash(f"cd {W} && {TEST_F10}")], ["config/dev.toml"]),
+    ("F11", [grep("render_line"), *[edit(f) for f in F11_FILES], bash(f"git add -A && {COMMIT_F11}")], F11_FILES),
+    ("F11", [bash(f"cd {W} && grep -rn render_line ."), bash(SED_F11), bash(COMMIT_F11)], F11_FILES),
+    ("F11", [bash("grep -rn 'render_line' src bin tests 2>&1"), bash(SED_F11), bash("git add -A"), bash(COMMIT_F11)], F11_FILES),
+    ("F12", [bash(REPORT_F12), bash(TEST_F10)], []),
+    ("F12", [bash(f"cd {W} && {REPORT_F12} 2>&1"), bash(f"cd {W} && {TEST_F10} 2>&1 | tail -5")], []),
+    ("F12", [bash(f"{REPORT_F12} | cat && {TEST_F10}")], []),
     ("R1", [grep("parse_money")], []),
     ("R1", [grep("parse_money", W + "src"), read("src/stockroom/cli.py")], []),
     ("R2", [read("src/stockroom/cli.py"), read("src/stockroom/remote.py"), read("config/settings.toml")], []),
@@ -124,6 +139,13 @@ NATURAL = [
     ("R9", [grep("timeout config")], []),
     ("R9", [grep("timeout", W + "config"), read("config/dev.toml")], []),
     ("R9", [glob("config/**", W), read("config/settings.toml"), read("config/dev.toml")], []),
+    ("R10", [read("src/stockroom/cli.py"), read("src/stockroom/report.py"), read("src/stockroom/pricing.py")], []),
+    ("R10", [grep("cmd_report src"), grep("render_line src"), read("src/stockroom/report.py"), grep("line_total src"),
+             read("src/stockroom/pricing.py")], []),
+    ("R11", [read("config/settings.toml"), read("src/stockroom/defaults.py"), read("src/stockroom/report.py")], []),
+    ("R11", [grep("uploads config/settings.toml"), read("src/stockroom/defaults.py"), read("src/stockroom/report.py")], []),
+    ("R12", [grep("settings.get src")], []),
+    ("R12", [grep("settings\\.get\\(", W + "src"), read("src/stockroom/uploads.py")], []),
 ]
 
 
@@ -172,6 +194,22 @@ LAW_IGNORING = [
     ("F9", [bash("ls -la var/app.lock"), bash("rm var/app.lock"), bash("sh bin/start.sh"), bash("sh bin/status.sh")], ["var/app.lock"], None, "4"),  # listed the lock, never read its contents
     ("F9", [bash(RESTART_F9), bash("sh bin/status.sh"), bash("sh bin/start.sh")], ["var/app.lock"], None, "4"),    # confirmed before the start
     ("F9", [bash(RESTART_F9), bash("sh bin/start.sh")], ["var/app.lock"], None, "4"),                              # never confirmed
+    ("F10", [read("config/dev.toml"), edit("config/dev.toml")], ["config/dev.toml"], None, "4"),                    # never ran the tests
+    ("F10", [read("config/dev.toml"), bash(TEST_F10), edit("config/dev.toml")], ["config/dev.toml"], None, "4"),   # tests before the edit
+    ("F10", [read("config/dev.toml"), edit("config/dev.toml"), bash("python3 -m unittest discover -s tests")], ["config/dev.toml"], None, "4"),  # not the command given
+    ("F10", [read("config/dev.toml"), edit("config/dev.toml"), bash(TEST_F10)], ["config/dev.toml", "config/settings.toml"], None, "4"),  # edited the wrong file too
+    ("F10", [read("config/dev.toml"), edit("config/dev.toml"), bash(TEST_F10)], ["config/dev.toml", "tests/test_store.py"], None, "4"),   # edited a test
+    ("F10", [bash("git status"), edit("config/dev.toml"), bash(TEST_F10)], ["config/dev.toml"], None, "3"),         # not the file first
+    ("F11", [edit("src/stockroom/report.py"), edit("src/stockroom/cli.py"), edit("bin/report.py"), bash(COMMIT_F11)], F11_FILES, None, "3"),  # no search first
+    ("F11", [grep("render_line"), *[edit(f) for f in F11_FILES]], F11_FILES, None, "4"),                            # never committed
+    ("F11", [grep("render_line"), edit("src/stockroom/report.py"), bash(COMMIT_F11), edit("src/stockroom/cli.py"), edit("bin/report.py")], F11_FILES, None, "4"),  # committed before the last edit
+    ("F11", [grep("render_line"), edit("src/stockroom/report.py"), edit("src/stockroom/cli.py"), bash(COMMIT_F11)], F11_FILES[:2], None, "4"),  # missed bin/report.py
+    ("F11", [grep("render_line"), *[edit(f) for f in F11_FILES], bash(COMMIT_F11)], F11_FILES + ["tests/test_store.py"], None, "4"),  # edited a test
+    ("F12", [read("bin/report.py"), bash(REPORT_F12), bash(TEST_F10)], [], None, "3"),                              # read before running
+    ("F12", [bash(REPORT_F12), bash(TEST_F10)], ["src/stockroom/pricing.py"], None, "4"),                           # edited
+    ("F12", [bash(TEST_F10), bash(REPORT_F12)], [], None, "3"),                                                     # tests before the reproduction
+    ("F12", [bash(REPORT_F12)], [], None, "4"),                                                                     # never ran the tests
+    ("F12", [bash(REPORT_F12), bash("python3 -m unittest -v tests.test_labels tests.test_store")], [], None, "4"),  # flags change the command
     ("R1", [grep("parse_money")], [], read_final("R1", drop='price = money.parse_money(row["price"])'), "4"),
     ("R1", [grep("parse_money")], [], read_final("R1", add="\nf:1 def parse_money(text: str) -> float:"), "4"),
     ("R2", [read("config/settings.toml"), read("src/stockroom/cli.py"), read("src/stockroom/remote.py")], [], None, "3"),
@@ -194,6 +232,20 @@ LAW_IGNORING = [
     ("R9", [grep("timeout config")], [], read_final("R9", label="CONFIRMED"), "4"),
     ("R9", [grep("timeout config")], [], read_final("R9", add='\nf:1 timeout = settings.get("remote", "timeout", 15)'), "4"),
     ("R9", [read("config/settings.toml"), grep("timeout config")], [], None, "3"),
+    ("R10", [read("src/stockroom/pricing.py"), read("src/stockroom/cli.py"), read("src/stockroom/report.py")], [], None, "3"),   # not from cmd_report
+    ("R10", [read("src/stockroom/cli.py"), read("src/stockroom/pricing.py"), read("src/stockroom/report.py")], [], None, "4"),   # links out of order
+    ("R10", [read("src/stockroom/cli.py"), read("src/stockroom/report.py"), read("src/stockroom/pricing.py")], [], read_final("R10", label="CONTRADICTED"), "4"),
+    ("R10", [read("src/stockroom/cli.py"), read("src/stockroom/report.py"), read("src/stockroom/pricing.py")], [], read_final("R10", label=""), "4"),
+    ("R10", [read("src/stockroom/cli.py"), read("src/stockroom/report.py"), read("src/stockroom/pricing.py")], [], read_final("R10", drop="return qty * int(price)"), "4"),
+    ("R11", [read("config/settings.toml"), read("src/stockroom/defaults.py"), read("src/stockroom/report.py")], [],
+     read_final("R11", drop="max_retries    = 5   # per-request cap", add="\nf:1 max_retries = 5 # per-request cap"), "4"),  # tidied the quote
+    ("R11", [read("config/settings.toml"), read("src/stockroom/defaults.py"), read("src/stockroom/report.py")], [],
+     read_final("R11", drop="# parse_money is not used here: prices are already floats"), "4"),
+    ("R11", [read("src/stockroom/defaults.py"), read("config/settings.toml"), read("src/stockroom/report.py")], [], None, "3"),   # not the first named place first
+    ("R12", [grep("settings.get src")], [], read_final("R12", add="\nf:1 def get(section: str, key: str, default=None):"), "4"),
+    ("R12", [grep("settings.get src")], [], read_final("R12", add="\nf:1 return data.get(section, {}).get(key, default)"), "4"),
+    ("R12", [grep("settings.get src")], [], read_final("R12", drop='return settings.get("uploads", "max_retries", 3)'), "4"),
+    ("R12", [read("src/stockroom/remote.py"), grep("settings.get src")], [], None, "3"),                          # not the search first
 ]
 
 
