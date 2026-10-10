@@ -22,9 +22,8 @@ Model-driven tests live in `tests/` (see `tests/README.md` and
   branch and main columns.
 - **Agent body change** → dispatch that agent on a representative task and
   confirm it follows the new instruction, rather than assuming it will.
-- **Agent/skill description change** → until `tests/agents/` exists, run
-  fresh-session probes: one task the new description should win and one it
-  should lose.
+- **Agent/skill description change** → run that agent's cases:
+  `tests/.venv/bin/python tests/run.py agents/<name> --runtime claude-code --patterns`.
 - **Workflow change** (`workflows/*.js`) → launch it with the `scriptPath`
   option; a running session snapshots workflows at session start and won't
   pick up an edit mid-run.

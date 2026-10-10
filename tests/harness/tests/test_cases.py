@@ -1,6 +1,6 @@
 import pytest
 from harness.core.cases import (
-    TESTS_DIR, load_cases, load_ladders, expected_tier, ROLES, TIERS,
+    TESTS_DIR, AgentCase, load_agent_cases, load_cases, load_ladders, expected_tier, ROLES, TIERS,
 )
 
 ADVISOR = TESTS_DIR / "skills" / "advisor-mode" / "handoff.yaml"
@@ -117,3 +117,87 @@ def test_file_level_why_without_expected_tier_is_rejected(tmp_path):
                         "  - {id: a, prompt: p, expect: Fast, pressure: none}\n")
     with pytest.raises(ValueError, match="expected_tier"):
         load_cases(p)
+
+
+# --- agent cases (patterns.yaml) ---
+
+AGENT_FILE = """
+expect: Fast
+fixture: fast-tier
+cases:
+  - id: X1
+    prompt: "do it"
+    patterns: [TRANSFORM, VERIFY]
+    first_call: {kind: [read, command], target: 'add_item'}
+    edits_include: [src/a.py]
+    before: [['grep', '^write:']]
+"""
+
+
+def write_patterns(tmp_path, text):
+    path = tmp_path / "patterns.yaml"
+    path.write_text(text)
+    return path
+
+
+def test_a_good_file_loads_into_an_agent_case(tmp_path):
+    (case,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE))
+    assert isinstance(case, AgentCase)
+    assert (case.id, case.expect, case.fixture) == ("X1", "Fast", "fast-tier")
+    assert case.patterns == ("TRANSFORM", "VERIFY")
+    assert case.first_call == {"kind": ["read", "command"], "target": "add_item"}
+    assert case.checks == {"edits_include": ["src/a.py"], "before": [["grep", "^write:"]]}
+    assert expected_tier(case, load_ladders()) == "low"  # agent cases carry no pressure and run at the low tier
+
+
+def test_a_single_kind_string_becomes_a_list(tmp_path):
+    (case,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE.replace("[read, command]", "read")))
+    assert case.first_call["kind"] == ["read"]
+
+
+@pytest.mark.parametrize("old, new, message", [
+    ("expect: Fast", "expect: executor-fast", "'expect' must be one of"),
+    ("[TRANSFORM, VERIFY]", "[TRANSFORMING]", "patterns must be"),
+    ("edits_include:", "edit_include:", "unknown check key"),
+    ("[read, command]", "[search]", "first_call.kind"),
+    ("'add_item'", "'add_item('", "bad regex"),
+    ("[['grep', '^write:']]", "[['grep']]", "pair"),
+    ("    prompt: \"do it\"\n", "", "missing 'prompt'"),
+])
+def test_a_bad_file_fails_loudly(tmp_path, old, new, message):
+    with pytest.raises(ValueError, match=message):
+        load_agent_cases(write_patterns(tmp_path, AGENT_FILE.replace(old, new)))
+
+
+@pytest.mark.parametrize("extra", ["    return_quotes: ['q']\n", "    return_lacks: ['q']\n", "    label: CONTRADICTED\n"])
+def test_checks_on_a_models_words_are_for_fast_read_only(tmp_path, extra):
+    # The waiver (2026-10-08) reaches Fast-Read's quotes and labels and nothing else.
+    with pytest.raises(ValueError, match="waiver"):
+        load_agent_cases(write_patterns(tmp_path, AGENT_FILE + extra))
+    (case,) = load_agent_cases(write_patterns(tmp_path, (AGENT_FILE + extra).replace("expect: Fast\n", "expect: Fast-Read\n")))
+    assert case.expect == "Fast-Read"
+
+
+def test_a_duplicate_id_is_an_error(tmp_path):
+    two = AGENT_FILE + AGENT_FILE.split("cases:\n")[1]
+    with pytest.raises(ValueError, match="duplicate case id"):
+        load_agent_cases(write_patterns(tmp_path, two))
+
+
+def test_known_weak_is_an_optional_issue_url_and_not_a_check(tmp_path):
+    url = "https://github.com/Harish-here/maddog/issues/76"
+    (case,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE + f'    known_weak: "{url}"\n'))
+    assert case.known_weak == url and "known_weak" not in case.checks
+    (plain,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE))
+    assert plain.known_weak is None
+
+
+@pytest.mark.parametrize("line", [
+    'known_weak: ""', 'known_weak: "   "', "known_weak: 76", "known_weak: [x]", "known_weak:",
+    'known_weak: "see the tracker"', 'known_weak: "https://example.com/issues/76"',
+    'known_weak: "https://github.com/Harish-here/maddog/pull/76"',
+    'known_weak: "https://github.com/Harish-here/maddog/issues/76 extra"',
+])
+def test_known_weak_must_be_an_issue_url(tmp_path, line):
+    with pytest.raises(ValueError, match="known_weak must be a non-empty issue URL"):
+        load_agent_cases(write_patterns(tmp_path, AGENT_FILE + f"    {line}\n"))

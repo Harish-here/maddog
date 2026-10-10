@@ -1,0 +1,10 @@
+# stockroom settings
+[remote]
+timeout = 30
+
+[uploads]
+max_retries    = 5   # per-request cap
+max_upload_mb = 25
+
+[cache]
+cache_ttl = 300

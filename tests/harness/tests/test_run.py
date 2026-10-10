@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 import run
-from harness.core.cases import TESTS_DIR, Case
+from harness.core.cases import TESTS_DIR, AgentCase, Case
 from harness.core.events import Event, RunOutcome
 from harness.core.fixture import SlotPool as RealSlotPool
+from harness.tests.test_cases import AGENT_FILE
 
 
 def worktrees():
@@ -343,3 +344,45 @@ def test_skill_file_folder_removed_after_crash(monkeypatch, tmp_path):
     # Count skillfile folders after
     after_count = len(list(temp_root.glob("maddog-skillfile-*")))
     assert after_count == before_count, "skillfile folder should be cleaned up after crash"
+
+
+def test_run_py_loads_patterns_yaml_only_when_asked(monkeypatch, tmp_path):
+    folder = tmp_path / "agents" / "executor-fast"
+    folder.mkdir(parents=True)
+    (folder / "patterns.yaml").write_text(AGENT_FILE)
+    (folder / "handoff.yaml").write_text(
+        "skill: advisor-mode\nfixture: todo-app\ncases:\n  - {id: H1, prompt: p, expect: Fast, pressure: none}\n")
+    monkeypatch.setattr(run, "TESTS_DIR", tmp_path)
+    seen = {}
+
+    def stop(cases, *args, **kwargs):
+        seen["cases"] = cases
+        raise RuntimeError("stop here")
+
+    monkeypatch.setattr(run, "get_adapter", lambda runtime, ladders: object())
+    monkeypatch.setattr(run, "adapter_source_path", lambda runtime: __file__)
+    monkeypatch.setattr(run, "sweep", lambda root: [])
+    monkeypatch.setattr(run, "plugin_versions", lambda ref: {"branch": tmp_path, "main": tmp_path})
+    monkeypatch.setattr(run, "remove_baseline", lambda plugins: None)
+    monkeypatch.setattr(run, "main_sha", lambda ref: "sha")
+    monkeypatch.setattr(run, "run_cases", stop)
+    with pytest.raises(RuntimeError, match="stop here"):
+        run.main(["agents/executor-fast", "--runtime", "claude-code", "--patterns", "--case", "X1"])
+    assert [c.id for c in seen["cases"]] == ["X1"] and isinstance(seen["cases"][0], AgentCase)
+    # Without the flag the same folder runs its handoff.yaml, as before: patterns.yaml is never preferred.
+    with pytest.raises(RuntimeError, match="stop here"):
+        run.main(["agents/executor-fast", "--runtime", "claude-code", "--case", "H1"])
+    assert [c.id for c in seen["cases"]] == ["H1"] and not isinstance(seen["cases"][0], AgentCase)
+
+
+def test_run_py_refuses_skill_file_for_an_agent_target(monkeypatch, tmp_path, capsys):
+    folder = tmp_path / "agents" / "executor-fast"
+    folder.mkdir(parents=True)
+    (folder / "patterns.yaml").write_text(AGENT_FILE)
+    draft = tmp_path / "draft.md"
+    draft.write_text("x")
+    monkeypatch.setattr(run, "TESTS_DIR", tmp_path)
+    monkeypatch.setattr(run, "sweep", lambda root: [])
+    with pytest.raises(SystemExit):
+        run.main(["agents/executor-fast", "--runtime", "claude-code", "--patterns", "--skill-file", str(draft)])
+    assert "--skill-file is for skill targets" in capsys.readouterr().err

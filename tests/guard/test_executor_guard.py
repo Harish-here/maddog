@@ -206,10 +206,170 @@ def test_lead_denies_every_interpreter_form(command, ws):
 
 def test_fast_allows_ls(ws):
     assert_allow("ls", FAST, ws)
+    assert run_guard("ls", FAST, ws).stdout == ""  # an allow is silent, not a JSON decision
 
 
 def test_fast_denies_git_reset_hard(ws):
     assert_deny("git reset --hard", FAST, ws)
+
+
+# --- heredoc bodies --------------------------------------------------------
+# A body fed to a non-shell program is data, not commands; a body fed to a
+# shell (or to anything the guard cannot identify) is still checked line by
+# line, and the skip ends at the delimiter.
+
+def test_fast_allows_python_heredoc_with_paren_body(ws):
+    command = "python3 - <<'EOF'\n(1+2)\nEOF"
+    assert_allow(command, FAST, ws)
+    assert run_guard(command, FAST, ws).stdout == ""
+
+
+def test_fast_allows_cat_heredoc_to_file(ws):
+    assert_allow("cat > f.json <<'EOF'\n{\"a\":1}\nEOF", FAST, ws)
+
+
+def test_fast_allows_unquoted_delimiter_heredoc(ws):
+    assert_allow("python3 - <<EOF\n(1+2)\nEOF", FAST, ws)
+
+
+def test_fast_allows_spaced_and_quoted_delimiter_heredoc(ws):
+    assert_allow('python3 - << "EOF"\n(1+2)\nEOF', FAST, ws)
+
+
+def test_fast_allows_dash_heredoc_with_tab_indented_terminator(ws):
+    assert_allow("python3 - <<-EOF\n\t(1+2)\n\tEOF", FAST, ws)
+
+
+def test_fast_dash_heredoc_terminator_needs_the_dash(ws):
+    # without `-`, a tab-indented line is not the terminator, so the body
+    # never ends and is put back: the guard checks it (and denies the '(')
+    assert_deny("python3 - <<EOF\n(1+2)\n\tEOF", FAST, ws)
+
+
+def test_fast_denies_recursive_delete_in_bash_heredoc(ws):
+    assert_deny("bash <<'EOF'\nrm -rf /tmp/../etc\nEOF", FAST, ws)
+
+
+def test_fast_denies_hard_reset_in_sh_heredoc(ws):
+    assert_deny("sh <<EOF\ngit reset --hard\nEOF", FAST, ws)
+
+
+def test_fast_denies_hard_reset_in_path_qualified_shell_heredoc(ws):
+    assert_deny("/bin/bash <<EOF\ngit reset --hard\nEOF", FAST, ws)
+
+
+def test_fast_denies_hard_reset_in_wrapped_shell_heredoc(ws):
+    assert_deny("env FOO=1 bash <<EOF\ngit reset --hard\nEOF", FAST, ws)
+
+
+def test_fast_denies_heredoc_piped_into_shell(ws):
+    assert_deny("cat <<'EOF' | bash\ngit reset --hard\nEOF", FAST, ws)
+
+
+PUSH = "git push --force origin main"
+
+
+def test_fast_allows_python_dash_heredoc(ws):
+    assert_allow("python3 - <<'EOF'\nprint((1+2))\nEOF", FAST, ws)
+
+
+def test_fast_allows_jq_heredoc(ws):
+    assert_allow("jq . <<'EOF'\n{\"a\":(1)}\nEOF", FAST, ws)
+
+
+def test_fast_allows_heredoc_after_a_chained_command(ws):
+    assert_allow("cd . && python3 - <<'EOF'\n(1+2)\nEOF", FAST, ws)
+
+
+# Each command is a shell-fed or unidentified reader the guard once skipped
+# (or could): the body is a push, so it must be checked and denied.
+@pytest.mark.parametrize("header", [
+    "cat <<'EOF' | \"bash\"",
+    "cat <<'EOF' | $SHELL",
+    "setsid bash <<'EOF'",
+    "flock f bash <<'EOF'",
+    "busybox sh <<'EOF'",
+    "at now <<'EOF'",
+    "parallel <<'EOF'",
+    "cat <<'EOF' > >(bash)",
+    "while read l; do $l; done <<'EOF'",
+    "awk -f /dev/stdin <<'EOF'",
+    "\"python3\" - <<'EOF'",
+    "$PY - <<'EOF'",
+    "cat <<'EOF' && bash",
+    "cat <<'EOF'; bash",
+])
+def test_fast_denies_push_body_unless_reader_is_allowlisted(header, ws):
+    assert_deny(f"{header}\n{PUSH}\nEOF", FAST, ws)
+
+
+def test_fast_denies_body_of_heredoc_header_ending_in_a_pipe(ws):
+    assert_deny(f"cat <<'EOF' |\n{PUSH}\nEOF\nbash", FAST, ws)
+
+
+def test_fast_denies_body_when_next_line_continues_the_pipeline(ws):
+    assert_deny(f"cat <<'EOF'\n{PUSH}\nEOF\n| bash", FAST, ws)
+
+
+def test_fast_denies_body_inside_a_loop_piped_to_a_shell(ws):
+    assert_deny(f"for x in 1\ndo\ncat <<'EOF'\n{PUSH}\nEOF\ndone | bash", FAST, ws)
+
+
+def test_fast_denies_body_when_header_ends_in_a_backslash(ws):
+    assert_deny(f"cat <<'EOF' \\\n| bash\n{PUSH}\nEOF", FAST, ws)
+
+
+def test_fast_denies_body_when_consumer_cannot_be_identified(ws):
+    assert_deny("<<EOF\ngit reset --hard\nEOF", FAST, ws)
+
+
+def test_fast_denies_command_after_skipped_heredoc(ws):
+    assert_deny("python3 - <<'EOF'\n(1+2)\nEOF\ngit reset --hard", FAST, ws)
+
+
+def test_fast_denies_body_when_terminator_never_appears(ws):
+    assert_deny("python3 - <<'EOF'\ngit reset --hard", FAST, ws)
+
+
+def test_fast_skips_only_the_non_shell_body_of_two_heredocs(ws):
+    # same line, but `cat` is not a shell: both bodies are data
+    assert_allow("cat <<A <<B\n(1)\nA\n(2)\nB", FAST, ws)
+
+
+def test_lead_and_judge_still_deny_interpreter_with_heredoc(ws):
+    command = "python3 - <<'EOF'\nprint(1)\nEOF"
+    assert_deny(command, LEAD, ws)
+    assert_deny(command, JUDGE, ws)
+
+
+def test_lead_still_denies_redirect_into_file_with_heredoc(ws):
+    assert_deny("cat > f.json <<'EOF'\n{}\nEOF", LEAD, ws)
+
+
+# --- deny wording ----------------------------------------------------------
+
+def _deny_context(command: str, agent_type: str, cwd: Path) -> str:
+    proc = run_guard(command, agent_type, cwd)
+    assert _is_deny(proc), proc.stdout
+    return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+def test_fast_denial_does_not_claim_a_file_write_ban(ws):
+    ctx = _deny_context("git reset --hard", FAST, ws)
+    assert "write files" not in ctx
+    assert "irreversible actions" in ctx
+    assert "STOP and return blocked" in ctx
+
+
+def test_smart_denial_does_not_claim_a_file_write_ban(ws):
+    assert "write files" not in _deny_context("git reset --hard", "executor-smart", ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_denial_names_the_file_write_ban(agent, ws):
+    ctx = _deny_context("git reset --hard", agent, ws)
+    assert "write files" in ctx
+    assert "STOP and return blocked" in ctx
 
 
 # --- shell script syntax --------------------------------------------------

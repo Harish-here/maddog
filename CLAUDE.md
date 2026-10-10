@@ -20,14 +20,18 @@ text goes through `.claude/skills/author-agent`, which gates via
 - Adapter set — the only paths where runtime mechanics may live: agent and
   skill frontmatter, `hooks/`, `scripts/`, `workflows/`, `tests/`, `.github/`,
   `.claude/`, `.claude-plugin/`. Within `tests/`, only code under
-  `tests/harness/runtimes/` names runtime identifiers; `tests/README.md` and
+  `tests/harness/runtimes/` names runtime identifiers, and `tests/guard/`, which
+  tests the hook scripts against their runtime's own protocol; `tests/README.md` and
   `tests/requirements.txt` may name the runtime they document. Shipped bodies (`agents/*.md`, `skills/**`)
   name capabilities (write, edit, shell, web), never runtime tool
   identifiers, settings keys, or APIs (`PHILOSOPHY.md` point 5).
 - `.claude/` is repo-internal and is never registered as a plugin surface.
-- Model-driven tests score from recorded tool calls, never a model's words or
-  a grading model. `tests/harness/` enforces isolation, voided runs, and the
-  main-branch baseline: change the harness, never bypass it.
+- Model-driven tests score from recorded tool calls, never a grading model,
+  and never a model's words — except, by user waiver 2026-10-08, exact
+  matches in `tests/agents/` on a fast-tier agent's `PATTERNS:` line and on
+  Fast-Read's returned quotes and verdict labels. `tests/harness/` enforces
+  isolation, voided runs, and the main-branch baseline: change the harness,
+  never bypass it.
 
 ## Distribution mechanics
 

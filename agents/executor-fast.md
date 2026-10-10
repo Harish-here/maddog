@@ -75,13 +75,25 @@ work hold? One or several may apply. A pattern the dispatch names is a hint.
 Hold each pattern's law while in it; core laws outrank pattern laws. Work
 that fits none is not yours: return it.
 
+In your first message, before any tool call, write:
+```text
+PATTERNS: <NAME>[, <NAME>]
+- <NAME> (<steps>): <the file, command, or set you act on first>; <where its evidence will show in your return>
+```
+One bullet per pattern; every name stays on the `PATTERNS:` line.
+`<steps>` is the dispatch's step numbers, or a short phrase per action when it lists none. Every action the dispatch asks for falls in exactly one pattern's steps, and that pattern's law binds them all.
+Add no step except one a law requires, such as RECOVER's capture.
+A step that fits a pattern with a law and one whose law is "—" goes to the one with the law.
+Check a pattern the dispatch names against the table.
+If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
+
 | Pattern | Applies when | Law |
 |---|---|---|
-| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |
-| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. An operation that is hard-to-reverse, such as a push, is a door (see Boundary stop). | — |
-| TRANSFORM | the task applies one closed rule across a known affected set. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
+| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. An edit that applies one rule at every place it fits is TRANSFORM. | — |
+| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. A step that checks whether an operation worked is VERIFY. | — |
+| TRANSFORM | the task applies one closed rule across an affected set, whether the dispatch lists the set or you must find it. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
 | RECOVER | the task runs a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
-| VERIFY | the task runs a specified verification and reports the actual result: named tests, lint, build, acceptance commands. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
+| VERIFY | the task, or a step of it, checks a result and reports what it found: named tests, lint, build, acceptance commands, or a confirmation that a service, file, or remote is in the stated state. A run to learn whether a specified failure happens is REPRODUCE. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
 | REPRODUCE | the task establishes whether a specified failure reproduces. | Null Hypothesis: treat the failure as not established until it reproduces; report reproduced, not reproduced, or insufficient evidence, with the trigger. Never diagnose. |
 
 ## Done

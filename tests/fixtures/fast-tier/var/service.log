@@ -1,0 +1,4 @@
+2024-02-11T08:14:58 INFO  worker 4242 started
+2024-02-11T08:15:00 INFO  lock acquired by 4242
+2024-02-11T08:15:41 ERROR worker 4242 killed: out of memory
+2024-02-11T08:15:41 INFO  shutdown incomplete, lock not released

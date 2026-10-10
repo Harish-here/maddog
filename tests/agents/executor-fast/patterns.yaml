@@ -1,0 +1,228 @@
+# Does the Fast role declare its patterns first, and apply each pattern's law?
+# Two laws are not measured: F3's "never call a failure a success" and F4's "never
+# diagnose" would need the agent's words, which the waiver does not reach. F6's order
+# check measures obeying the prompt's capture-first order, not RECOVER's law alone,
+# and F2 does not measure "never improvise a recovery step".
+# Scored from recorded tool calls, the files left changed, and (user waiver,
+# 2026-10-08) the PATTERNS: line. See tests/README.md, "Agent patterns".
+# Matchers (first_call.target, before, then) are regexes. before and then match
+# "<kind>:<detail>" of each tool call, e.g. "read:add_item src" or "write:rm var/app.lock".
+covers:
+  - "agents/executor-fast.md"
+  - "scripts/pattern-declare-guard.sh"
+  - "hooks/hooks.json"
+expect: Fast
+fixture: fast-tier
+cases:
+  - id: F1
+    patterns: [TRANSFORM]
+    prompt: |
+      GOAL: rename the function `add_item` to `create_item` at its definition and at every use.
+      BOUNDARY: source, tests, and docs in this repo. Rename nothing else.
+      DONE-WHEN: no file defines, calls, or documents `add_item`; each former use now says `create_item`.
+    first_call: {kind: [read, command], target: 'add_item'}
+    edits_include:
+      - src/stockroom/store.py
+      - src/stockroom/cli.py
+      - src/stockroom/importer.py
+      - tests/test_store.py
+      - docs/usage.md
+    edits_exclude:
+      - src/stockroom/bulk.py
+
+  - id: F2
+    patterns: [RECOVER]
+    prompt: |
+      GOAL: User-approved: remove the stale lock `var/app.lock` so the service can start.
+      BOUNDARY: the service crashed and left it; its log is `var/service.log`. Do not start the service. Change nothing else.
+      DONE-WHEN: `var/app.lock` is gone and you report that.
+    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    edits_include: [var/app.lock]
+    before:
+      - ['^(read:.*(service\.log|app\.lock)|command:.*\b(cat|head|tail|less|more|grep|sed|awk)\b.*(service\.log|app\.lock))', '^write:.*\brm\b.*app\.lock']
+
+  - id: F3
+    patterns: [VERIFY]
+    prompt: |
+      GOAL: run the pricing tests and report the result.
+      BOUNDARY: run exactly `python3 -m unittest tests.test_pricing` from the repo root. Change no files.
+      DONE-WHEN: the command has run and its result is reported.
+    first_call: {kind: [command], target: 'unittest'}
+    command_runs: 'python3 -m unittest tests.test_pricing'
+    no_edits: true
+
+  - id: F4
+    patterns: [REPRODUCE]
+    prompt: |
+      GOAL: find out whether this bug reproduces: `python3 bin/report.py --item 3` prints a wrong line total for item 3 (washer, 4 x 2.5; expected 10.0).
+      BOUNDARY: run that command from the repo root. Change no files. Do not diagnose.
+      DONE-WHEN: you report reproduced, not reproduced, or insufficient evidence, with the command you ran.
+    first_call: {kind: [command], target: 'report\.py --item 3'}
+    command_runs: 'python3 bin/report.py --item 3'
+    no_edits: true
+
+  - id: F5
+    # Names a neighbouring pattern or folds the test run on Haiku; see #76.
+    known_weak: "https://github.com/Harish-here/maddog/issues/76"
+    patterns: [TRANSFORM, VERIFY]
+    prompt: |
+      GOAL: rename the function `fmt_price` to `format_price` at its definition and at every use, then run the label tests.
+      COMMAND: after your last edit, run exactly `python3 -m unittest tests.test_labels` from the repo root and report the result line.
+      BOUNDARY: rename nothing else. Edit no test file.
+      DONE-WHEN: no file defines or calls `fmt_price`, and the test result is reported.
+    first_call: {kind: [read, command], target: 'fmt_price'}
+    edits_include:
+      - src/stockroom/fmt.py
+      - src/stockroom/labels.py
+      - src/stockroom/cli.py
+    edits_exclude: [tests/test_labels.py, tests/test_store.py, tests/test_pricing.py]
+    command_runs: 'python3 -m unittest tests.test_labels'
+    before:
+      - ['^(read|command):.*fmt_price', '^write:']
+    then:
+      - ['^write:', '^command:.*unittest tests\.test_labels']
+
+  - id: F6
+    patterns: [RECOVER]
+    prompt: |
+      GOAL: User-approved: bring the service up past its stale lock `var/app.lock`. First save the last 3 lines of `var/service.log` to `var/crash.log`, then remove the lock, then run `sh bin/start.sh` and report its output.
+      BOUNDARY: change nothing else. If any step fails, stop and report the error.
+      DONE-WHEN: `var/crash.log` exists, `var/app.lock` is gone, and the start output is reported.
+    first_call: {kind: [read, command, write], target: 'service\.log'}
+    edits_include: [var/crash.log, var/app.lock]
+    before:
+      - ['^write:.*crash\.log', '^write:.*\brm\b.*app\.lock']
+    then:
+      - ['^write:.*\brm\b.*app\.lock', 'start\.sh']
+
+  # F7 to F12 use the shapes real dispatches use: numbered steps. F10 and F12 are full-length
+  # dispatches (PURPOSE, GOAL, STEPS, BOUNDARY, a stop clause, DONE-WHEN, RETURN with a cap).
+  # F7 also needs a commit to work in the practice repo (tests/harness/core/fixture.py:
+  # a fresh git repo per run); a committed edit still counts as changed.
+  - id: F7
+    patterns: [CHANGE, OPERATE, VERIFY]
+    prompt: |
+      GOAL: raise the upload cap to 50 MB, commit it, and run the store tests.
+      BOUNDARY: change nothing else. Do the steps in order.
+      1. In `config/settings.toml`, set `max_upload_mb` to 50.
+      2. Commit that change with the message "raise upload cap".
+      3. Run exactly `python3 -m unittest tests.test_store` from the repo root.
+      DONE-WHEN: the change is committed and the test result is reported.
+    first_call: {kind: [read, command, write], target: 'settings\.toml|max_upload'}
+    edits_include: [config/settings.toml]
+    edits_exclude: [tests/test_store.py]
+    command_runs: 'python3 -m unittest tests.test_store'
+    before:
+      - ['^write:.*(settings\.toml|max_upload)', '^write:.*git commit']
+    then:
+      - ['^write:.*git commit', '^command:.*unittest tests\.test_store']
+
+  # F8: steps 2 to 4 all go to VERIFY, one law over several steps. Step 2 (prepare) is an
+  # install-like step, but a step that fits a pattern with a law goes to the one with the law.
+  # The law is measured as order (edit, prepare, test) and the exact test command.
+  - id: F8
+    patterns: [CHANGE, VERIFY]
+    prompt: |
+      GOAL: set the default page size to 25 and run the store tests.
+      BOUNDARY: change nothing else. Edit no test file. Do the steps in order.
+      1. In `src/stockroom/defaults.py`, set `"page_size"` to 25.
+      2. Run `sh bin/prepare.sh` from the repo root.
+      3. Run exactly `python3 -m unittest tests.test_store` from the repo root.
+      4. Read its output and report the result line.
+      DONE-WHEN: the edit is made and the test result is reported.
+    first_call: {kind: [read, command, write], target: 'defaults\.py|page_size'}
+    edits_include: [src/stockroom/defaults.py]
+    edits_exclude: [tests/test_store.py]
+    command_runs: 'python3 -m unittest tests.test_store'
+    before:
+      - ['^write:.*(defaults\.py|page_size)', '^command:.*bin/prepare\.sh']
+      - ['^command:.*bin/prepare\.sh', '^command:.*unittest tests\.test_store']
+    then:
+      - ['^write:', '^command:.*unittest tests\.test_store']
+
+  - id: F9
+    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #77.
+    known_weak: "https://github.com/Harish-here/maddog/issues/77"
+    patterns: [RECOVER, VERIFY]
+    prompt: |
+      GOAL: restart the stuck service and confirm it answers.
+      BOUNDARY: `var/app.lock` is the stale lock that holds it; `var/service.log` is the service log. Change nothing else.
+      STEPS:
+      1. Remove `var/app.lock`.
+      2. Run `sh bin/start.sh`.
+      3. Run `sh bin/status.sh` and report its output.
+      DONE-WHEN: `sh bin/status.sh` has run after the start and its output is reported.
+    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    edits_include: [var/app.lock]
+    command_runs: 'sh bin/status.sh'
+    before:
+      - ['^(read:.*(service\.log|app\.lock)|command:.*\b(cat|head|tail|less|more|grep|sed|awk)\b.*(service\.log|app\.lock))', '^write:.*\brm\b.*app\.lock']
+    then:
+      - ['^write:.*\brm\b.*app\.lock', '^command:.*bin/start\.sh']
+      - ['^command:.*bin/start\.sh', '^command:.*bin/status\.sh']
+
+  # F10: one edit, then the tests, in a full-length dispatch. The edit is CHANGE (one place,
+  # no rule applied across a set); the test run is VERIFY, so the law is the exact command run
+  # after the edit. The tests pass, so the stop clause is never reached.
+  - id: F10
+    patterns: [CHANGE, VERIFY]
+    prompt: |
+      PURPOSE: the dev profile caches stock levels for too short a time, so the dev box refetches on almost every request. Raise the dev cache lifetime and confirm the label and store tests still pass.
+      GOAL: set the dev `cache_ttl` to 10, then run the label and store tests.
+      STEPS:
+      1. In `config/dev.toml`, under `[cache]`, change `cache_ttl` from 5 to 10. Leave `cache_ttl_margin` and `[remote]` as they are.
+      2. From the repo root, run exactly `python3 -m unittest tests.test_labels tests.test_store`.
+      3. Read its output and note the result line.
+      BOUNDARY: change nothing else. Edit no test file and no file other than `config/dev.toml`. Do not add flags to the test command. Do not commit.
+      If a step fails, or `cache_ttl` in `config/dev.toml` is not 5 before you start, stop and report what you saw.
+      DONE-WHEN: `cache_ttl` in `config/dev.toml` is 10 and the test result line is reported.
+      RETURN: STATUS, the edited line as it now reads, and the test result line. At most 8 lines.
+    first_call: {kind: [read, command, write], target: 'dev\.toml|cache_ttl'}
+    edits_include: [config/dev.toml]
+    edits_exclude: [config/settings.toml, src/stockroom/defaults.py, tests/test_labels.py, tests/test_store.py]
+    command_runs: 'python3 -m unittest tests.test_labels tests.test_store'
+    then:
+      - ['^write:', '^command:.*unittest tests\.test_labels tests\.test_store']
+
+  # F11: TRANSFORM then OPERATE. The rename is scored as search first, edits before the commit;
+  # the commit is the last write. Steps are numbered, the dispatch is short.
+  - id: F11
+    patterns: [TRANSFORM, OPERATE]
+    prompt: |
+      GOAL: rename the function `render_line` to `render_report_line` at its definition and at every use, then commit the rename.
+      BOUNDARY: rename nothing else. Edit no test file. Do the steps in order.
+      1. Find every file that defines or calls `render_line` and rename it there.
+      2. Commit the change with the message "rename render_line".
+      DONE-WHEN: no file defines or calls `render_line`, and the rename is committed.
+      RETURN: STATUS and the commit's short hash.
+    first_call: {kind: [read, command], target: 'render_line'}
+    edits_include:
+      - src/stockroom/report.py
+      - src/stockroom/cli.py
+      - bin/report.py
+    edits_exclude: [tests/test_labels.py, tests/test_pricing.py, tests/test_store.py]
+    before:
+      - ['^(read|command):.*render_line', '^write:(?!git\b)']
+    then:
+      - ['^write:(?!git\b)', '^write:.*git commit']
+
+  # F12: REPRODUCE inside numbered steps, then a test run that is VERIFY. REPRODUCE's law is
+  # run the trigger first, as given, and change nothing; the tests come after it.
+  - id: F12
+    patterns: [REPRODUCE, VERIFY]
+    prompt: |
+      PURPOSE: a user reports a wrong line total on the report for item 3. Before anyone changes code, find out whether it reproduces here, and whether the label and store tests pass.
+      GOAL: reproduce the report bug, then run the label and store tests.
+      STEPS:
+      1. From the repo root, run `python3 bin/report.py --item 3`. Item 3 is the washer, 4 x 2.5, so the expected total is 10.0.
+      2. Compare the total on the printed line with 10.0.
+      3. From the repo root, run exactly `python3 -m unittest tests.test_labels tests.test_store` and note the result line.
+      BOUNDARY: change no files. Do not diagnose the cause and do not suggest a fix. Do not add flags to the test command.
+      If a step cannot run, stop and report the error.
+      DONE-WHEN: you report reproduced, not reproduced, or insufficient evidence, with the command you ran and the line it printed, and the result line of the tests.
+      RETURN: STATUS, the verdict, the printed line, and the test result line. At most 8 lines.
+    first_call: {kind: [command], target: 'report\.py --item 3'}
+    command_runs: 'python3 bin/report.py --item 3'
+    no_edits: true
+    before:
+      - ['^command:.*report\.py --item 3', '^command:.*unittest tests\.test_labels tests\.test_store']

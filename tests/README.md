@@ -10,7 +10,7 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
 ## Run
 
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code
-    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake-pressure
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier mid --pressure decision
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier low --case rename-add-item --case list-flags
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --ladder
@@ -28,6 +28,8 @@ else the `pressure` mapping in `harness/runtimes/ladders.yaml`.
 next tier whenever fewer than half of a case's branch runs pass, up to `max_tier` in
 `ladders.yaml` (currently `mid`). `--ladder` and `--tier` cannot be used
 together.
+
+`--runs N` sets how many times each case runs on each side (default 3). `--pressure <name>` keeps only the cases tagged with that pressure.
 
 `main`'s runs are reused across invocations: once a case/tier has enough
 valid `main` runs on disk, later runs skip calling the model for `main`
@@ -83,7 +85,146 @@ or a sibling run's — is always left alone.
 
 Harness unit tests (no model):
 
-    tests/.venv/bin/python -m pytest tests/harness -q
+    tests/.venv/bin/python -m pytest tests/harness tests/guard -q
+
+These offline tests are cheap and always run in full. CI runs them as one
+step of `.github/validate.sh` on every pull request (see "CI and the release
+gate" below); model runs never run in CI.
+
+### `--changed`: run only the model tests a change touches
+
+    tests/.venv/bin/python tests/run.py --changed --runtime claude-code --dry-run
+    tests/.venv/bin/python tests/run.py --changed --runtime claude-code
+    tests/.venv/bin/python tests/run.py --changed origin/main --runtime claude-code
+
+Each case file lists the repo files it tests in a top-level `covers:` list of
+repo-relative globs (`*` stays within one folder, `**` crosses folders). A
+file with no `covers:` covers nothing and is never selected:
+
+    covers:
+      - "skills/advisor-mode/**"
+    covers_frontmatter:
+      - "agents/executor-*.md"
+
+`covers_frontmatter:` is an optional second list of globs. A matched file
+selects the test only when its YAML frontmatter (the text between the leading
+`---` lines) differs between BASE and this tree; an added or deleted file counts
+as changed, and a body-only edit selects nothing. Release fingerprints hash only
+that frontmatter block for such a file, so the gate ignores later body edits but
+fails on a frontmatter edit. A file matched by both keys in one test is covered
+in full (`covers:` wins). Globs are the base-and-head union, as for `covers:`.
+
+`--changed [BASE]` (BASE defaults to `main`) replaces the target. The changed
+files are `git diff --name-only BASE...HEAD` plus uncommitted changes to
+tracked files; changed files under `tests/` and `.claude/` select nothing. It
+checks every `skills/*/handoff.yaml` (skill mode) and
+`agents/*/patterns.yaml` (agent mode), and runs each one whose `covers:`
+matches a changed file, one after another, in its own mode. Give a target or
+`--changed`, not both. `--case`, `--patterns` and `--skill-file` do not mix
+with `--changed`; `--tier`, `--pressure`, `--runs`, `--jobs` and the rest
+apply to every selected file.
+
+`--dry-run` (with `--changed`) prints the changed files, the selected case
+files, and each one's case count and runs x sides, then exits without calling
+a model. Nothing selected prints that and exits 0.
+
+### `--changed --record`: record a release
+
+    tests/.venv/bin/python tests/run.py --changed --record --runtime claude-code
+
+The release run. It refuses unless local `main` equals `origin/main` (it runs
+`git fetch origin` first; BASE is `main`, or `origin/main`, which is then the
+same commit). Then, in order:
+
+1. runs the offline tests (`pytest tests/harness tests/guard`); any failure stops it;
+2. selects test files from the changed files. Only files outside `tests/` and
+   `.claude/` select, so a tests-only or repo-internal change selects nothing.
+   A test file's globs are its `covers:` in the base tree plus its `covers:` in
+   this tree. Nothing selected prints "no covered changes", writes nothing and
+   exits 0. A selected test file that this branch deleted stops the run;
+3. refuses when something is selected but `.claude-plugin/plugin.json` still
+   has main's version ("bump the version first"), and when a tracked covered
+   file has uncommitted changes (the fingerprints are of committed content);
+4. runs every selected file in full: every case, at its expected tier, `--runs`
+   times (at least 3) on each side. `--case`, `--pressure`, `--tier`,
+   `--ladder`, `--dry-run` and `--runs` below 3 are refused;
+5. writes `tests/releases/<version>/`, replacing an earlier recording of the
+   same version, and prints the attempt number (kept in the manifest as
+   `attempt`, so re-recording until a lucky pass shows in review).
+
+The pass rule differs by mode. Both modes fail a case that hit the void limit,
+or when either side has fewer than `--runs` valid runs.
+
+- Skill mode, per case: the branch passes at least `main`'s passes minus one (a
+  one-run gap is allowed); no floor. A file passes when all its cases pass.
+- Agent mode, per file. The file passes when all three hold: (a) the branch
+  passes at least 75% of its runs summed over every case; (b) no case has 0
+  branch passes; (c) every case has branch passes at least `main`'s minus one.
+  A case's own verdict covers (b) and (c); the file verdict adds (a). So 27 of
+  36 (75%) passes, 26 of 36 (72.2%) fails, and a case at 0 of 3 fails the file
+  however high the rest.
+
+The command exits 1 after writing a recording that failed the rule; the gate
+rejects it.
+
+A case in `patterns.yaml` may carry `known_weak: "<issue URL>"` (a non-empty
+string; the loader rejects anything else). It excuses that case from the zero
+rule only: it may sit at 0 branch passes, and the one-run gap to `main` still
+applies, as do the void limit and the valid-run count. Its runs still count
+toward the file's 75%. The recording shows the URL in the manifest and as a
+`known weak (<URL>)` flag in the case table. The marker must link an issue
+that tracks the weakness; a case without one fails the zero rule as before.
+
+`tests/releases/<version>/` holds, all committed:
+
+- `manifest.json`: version, tested and base commits, changed files, attempt,
+  runs, per test file its mode, results path (`tests/results/<time>/`), cases
+  `{branch_pass, main_pass, valid_runs, void_limited, verdict}`, the file's
+  `branch_pass`, `branch_runs` and `pass_rate`, its verdict and
+  fingerprints, plus the offline summary line, total cost in USD and the time.
+  No runtime or model name appears anywhere under `tests/releases/`.
+- `offline.txt`: the pytest summary line.
+- `<test-folder>.md` (for example `skills-advisor-mode.md`): that file's case
+  table, with no runtime column.
+
+A fingerprint is a sha256 of one file's content: every tracked file matched by
+the test file's base-or-head `covers:` globs, and the test file itself. A file
+matched only by `covers_frontmatter:` is hashed by its frontmatter block alone. Raw
+`runs.jsonl` and transcripts stay in the git-ignored `tests/results/`. Old
+`tests/releases/*` folders stay in the repo.
+
+### CI and the release gate
+
+`tests/gate.py --base <ref>` is the offline half. It needs no model and takes
+seconds:
+
+    tests/.venv/bin/python tests/gate.py --base origin/main
+
+It prints "no covered changes" and exits 0 when no changed file selects a test
+file. Otherwise it fails when any of these holds: the version equals the
+base's; `tests/releases/<version>/manifest.json` is missing, or its `version`
+differs from the folder name; the manifest lacks a selected test file or any
+case id in that file's current yaml; any case or file verdict is fail; an
+agent-mode file's case numbers sum to under 75% branch passes; a selected test file
+was deleted; a fingerprinted file is missing or its hash changed; or a file
+now matched by the base-or-head `covers:` has no fingerprint.
+
+`.github/validate.sh` holds every pull-request check and is the single thing
+CI runs. It stops at the first failure, in this order: frontmatter, JSON and
+version consistency; `scripts/fragment-check.py`; `bash -n` on `scripts/*.sh`;
+every command path in `hooks/hooks.json` exists; `jq` is installed; the offline
+tests; the gate (`--base ${BASE:-origin/main}`). Run it locally with the test
+venv's python, from a clone that has a local `main`:
+
+    PYTHON=tests/.venv/bin/python .github/validate.sh
+
+`.github/workflows/validate.yml` has one job, `validate`, on `pull_request`
+only: it fetches full history, creates local `main` from `origin/main`, sets up
+Python 3.13 with a pip cache, installs `jq` if missing, then runs the script. A
+newer push cancels the older run. The job name `validate` is what main requires,
+so a release with covered changes and no passing recording cannot merge. For the
+merge tree to equal the tested tree, main must also require branches to be up to
+date before merging.
 
 ## Read a report
 
@@ -118,11 +259,96 @@ Fast-Read, Fast, Smart, Judge, Lead), `pressure` (`none`, `user`, or `decision`)
 pressure before the first run. Optional: `expected_tier` plus `why`, only when
 a report showed the case needs a higher tier and you accepted that — either
 on the case itself, or once at the top of the file for every case that
-doesn't set its own.
+doesn't set its own. A new case file also needs a `covers:` list, or
+`--changed` never selects it.
+
+## Agent patterns (`tests/agents/`)
+
+    tests/.venv/bin/python tests/run.py agents/executor-fast --runtime claude-code --patterns --jobs 3
+    tests/.venv/bin/python tests/run.py agents/executor-fast-read --runtime claude-code --patterns --case R4
+
+`--patterns` runs the folder's `patterns.yaml` in agent mode; without it the
+folder's `handoff.yaml` runs in skill mode, as before. Each case runs the
+agent's own file as the main session, to completion, in a copy of the
+`fast-tier` fixture: the file's body is the system prompt, its `tools:` line
+the tool set, its `effort:` line the effort. This is a main-session proxy for
+a real dispatch, good for comparing this branch with `main`, not a replica of
+a subagent (Claude Code adds its own wrapper text to those). No plugin loads,
+so nothing from this repo's `hooks/` can fire: the cases measure the agent
+text alone. The only hook is the harness's own fence: file tools may not write
+outside the workdir and the shell may not reach out (curl, ssh, sudo, git
+push); a hit voids and reruns the run. It is not a sandbox, because a shell
+command can still write outside the workdir. The branch run reads the agent
+file from this working tree, the `main` run from the `main` worktree. Both run
+at the case's expected tier (`low`, Haiku), 3 runs each.
+
+A run passes only if all four checks pass:
+
+1. the text `PATTERNS:` is in the agent's own text before its first tool
+   call, in any position and with any markup around it (the user-locked rule;
+   `scripts/pattern-declare-guard.sh` applies the same one)
+2. the line holding it names every pattern the case expects; naming more is fine, so
+   declaring every pattern passes this check and checks 3 and 4 catch a wrong
+   classification
+3. the first tool call is the kind and target the case expects; this is strict,
+   so an `ls` or a Glob before the grep fails it. Setup steps are not scored
+   and are skipped when choosing the first call: a step that only changes
+   directory or sets up the shell (`cd`, `pushd`, `popd`, `pwd`, `export X=1`, `X=1`,
+   `set -e`, `unset X`), a bare `echo` with no `>`, `>>` or pipe, or exactly
+   `git rev-parse --show-toplevel`. `cd /w && grep -rn x .` is scored as the grep; a lone
+   `cd` followed by an edit still fails
+4. the law check for that case: files changed or left alone (read from git
+   after the session, committed edits included), the order of calls, the
+   command run, and, for Fast-Read, the exact quotes and the `CONFIRMED` /
+   `CONTRADICTED` / `NO EVIDENCE` label in its return
+
+`main` has no declaration rule, so checks 1 and 2 fail there by design; compare
+checks 3 and 4 between branch and `main`. The report adds a "Checks (branch /
+main)" table, one row per case, and a failed run's reason names the check that
+failed.
+
+A shell call that chains steps (`a && b; c`) is recorded as one event per step,
+in order (split on `&&`, `||`, `;` and newlines outside quotes; a pipeline stays
+one step and counts as its head command), so the order checks score the order
+of the steps, not of the calls; setup steps (above) are kept in the log but not
+matched. The split is not a shell parser: it does not
+look inside `$( )` or `( )`.
+
+Not measured: whether Fast calls a failure a success (Goodhart, the F3 law),
+and whether it diagnoses a bug it was told only to reproduce (F4); both would
+need a model's words in a place the waiver does not reach. F6's order check
+measures obeying the capture-first order its prompt dictates, not RECOVER's law
+independently, and F2 and F9 do not measure "never improvise a recovery step".
+Each agent has twelve cases, written in the shapes real dispatches use (measured
+on the Fast and Fast-Read dispatches of 2026-09-01 to 10-09). F1 to F6 and R1 to R6
+are short single-purpose prompts, with the command under GOAL or COMMAND and limits
+under BOUNDARY. F7 to F12 are numbered steps (Fast); R7 and R10 to R12 are numbered
+items, R8 numbered questions, R9 prose (Fast-Read). F10 and F12 (Fast) and R10 and
+R11 (Fast-Read) are full-length dispatches of 160 to 200 words: a PURPOSE line, GOAL,
+numbered steps, a BOUNDARY with do-nots, a stop-and-report clause, DONE-WHEN, and a
+RETURN line with a length cap.
+F7 commits in the fresh practice repo, and a committed edit still counts as
+changed; F11 renames, then commits, and is scored as search, edits, commit. F8 sends
+steps 2 to 4 to one pattern (VERIFY), so its law is scored as
+the order edit, prepare, test and the exact test command; F10 is the same shape
+with one edit and one test run. F12 declares REPRODUCE and VERIFY: the
+trigger runs first, as given, before the tests, and nothing changes. R10 traces
+a call chain through code to a claim the last line confirms (the only
+CONFIRMED label in the suite); R11 copies three named places exactly; R12 sweeps
+for the two reads of the settings file. The case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
+file that is not Fast-Read's.
+
+Scoring a model's words is waived for exactly two things, by user waiver
+2026-10-08: the `PATTERNS:` line (both agents), and Fast-Read's returned quotes
+and verdict labels. There is no grading model. To add a case, copy an entry in
+`patterns.yaml`, give it a known answer the fixture makes true, and add that
+answer to `harness/tests/test_fast_tier_fixture.py`.
 
 ## Layout
 
 - `harness/core/`: names no runtime. Cases, fixtures, baseline, runner, scoring, report.
 - `harness/runtimes/`: the only place runtime details live. One adapter per runtime, plus `ladders.yaml`.
-- `fixtures/`: practice repos, copied to a temp folder outside this repo per run.
+- `fixtures/`: practice repos, copied to a temp folder outside this repo per run (`todo-app` for skills, `fast-tier` for agents).
 - `skills/`, `agents/`, `scripts/`: case files, mirroring the repo's own folders.
+- `releases/`: one folder per recorded version, written by `--record` and read by `gate.py`.
+- `gate.py`: the offline release gate.

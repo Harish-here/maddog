@@ -1,4 +1,8 @@
 # Checks which helper advisor-mode hands the first piece of work to.
+covers:
+  - "skills/advisor-mode/**"
+covers_frontmatter:
+  - "agents/executor-*.md"
 skill: advisor-mode
 fixture: todo-app
 expected_tier: mid

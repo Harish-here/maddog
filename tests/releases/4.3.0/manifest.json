@@ -1,0 +1,392 @@
+{
+  "version": "4.3.0",
+  "tested_commit": "4d2a153135a51ce6ae52d02a9c445d7aa48cdc12",
+  "base_commit": "7b003f21f6050e702ceb1bb2439639c0988b3d65",
+  "changed_files": [
+    ".claude-plugin/plugin.json",
+    ".claude/skills/release/SKILL.md",
+    ".github/validate.sh",
+    ".github/workflows/validate.yml",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "PRIVACY.md",
+    "agents/executor-fast-read.md",
+    "agents/executor-fast.md",
+    "docs/testing/spec.md",
+    "hooks/hooks.json",
+    "scripts/executor-guard.sh",
+    "scripts/pattern-declare-guard.sh",
+    "tests/README.md",
+    "tests/agents/executor-fast-read/patterns.yaml",
+    "tests/agents/executor-fast/patterns.yaml",
+    "tests/fixtures/fast-tier/.gitignore",
+    "tests/fixtures/fast-tier/bin/prepare.sh",
+    "tests/fixtures/fast-tier/bin/report.py",
+    "tests/fixtures/fast-tier/bin/start.sh",
+    "tests/fixtures/fast-tier/bin/status.sh",
+    "tests/fixtures/fast-tier/config/dev.toml",
+    "tests/fixtures/fast-tier/config/settings.toml",
+    "tests/fixtures/fast-tier/data/items.csv",
+    "tests/fixtures/fast-tier/docs/usage.md",
+    "tests/fixtures/fast-tier/src/stockroom/__init__.py",
+    "tests/fixtures/fast-tier/src/stockroom/bulk.py",
+    "tests/fixtures/fast-tier/src/stockroom/cli.py",
+    "tests/fixtures/fast-tier/src/stockroom/defaults.py",
+    "tests/fixtures/fast-tier/src/stockroom/fmt.py",
+    "tests/fixtures/fast-tier/src/stockroom/importer.py",
+    "tests/fixtures/fast-tier/src/stockroom/labels.py",
+    "tests/fixtures/fast-tier/src/stockroom/money.py",
+    "tests/fixtures/fast-tier/src/stockroom/pricing.py",
+    "tests/fixtures/fast-tier/src/stockroom/remote.py",
+    "tests/fixtures/fast-tier/src/stockroom/report.py",
+    "tests/fixtures/fast-tier/src/stockroom/settings.py",
+    "tests/fixtures/fast-tier/src/stockroom/store.py",
+    "tests/fixtures/fast-tier/src/stockroom/uploads.py",
+    "tests/fixtures/fast-tier/tests/__init__.py",
+    "tests/fixtures/fast-tier/tests/test_labels.py",
+    "tests/fixtures/fast-tier/tests/test_pricing.py",
+    "tests/fixtures/fast-tier/tests/test_store.py",
+    "tests/fixtures/fast-tier/var/app.lock",
+    "tests/fixtures/fast-tier/var/service.log",
+    "tests/gate.py",
+    "tests/guard/test_executor_guard.py",
+    "tests/guard/test_pattern_declare_guard.py",
+    "tests/harness/core/agent_score.py",
+    "tests/harness/core/cases.py",
+    "tests/harness/core/changed.py",
+    "tests/harness/core/events.py",
+    "tests/harness/core/fixture.py",
+    "tests/harness/core/maincache.py",
+    "tests/harness/core/release.py",
+    "tests/harness/core/report.py",
+    "tests/harness/core/runner.py",
+    "tests/harness/core/score.py",
+    "tests/harness/core/shell.py",
+    "tests/harness/runtimes/claude_code.py",
+    "tests/harness/runtimes/test_agent_case_matrix.py",
+    "tests/harness/runtimes/test_claude_code_agent.py",
+    "tests/harness/tests/test_agent_score.py",
+    "tests/harness/tests/test_cases.py",
+    "tests/harness/tests/test_changed.py",
+    "tests/harness/tests/test_ci.py",
+    "tests/harness/tests/test_events.py",
+    "tests/harness/tests/test_fast_tier_fixture.py",
+    "tests/harness/tests/test_fixture.py",
+    "tests/harness/tests/test_maincache.py",
+    "tests/harness/tests/test_release.py",
+    "tests/harness/tests/test_report.py",
+    "tests/harness/tests/test_run.py",
+    "tests/harness/tests/test_shell.py",
+    "tests/run.py",
+    "tests/skills/advisor-mode/handoff.yaml"
+  ],
+  "attempt": 7,
+  "runs": 3,
+  "tests": [
+    {
+      "path": "tests/agents/executor-fast-read/patterns.yaml",
+      "mode": "agent",
+      "results": "tests/results/2026-10-10T221447",
+      "cases": {
+        "R1": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R2": {
+          "tier": "low",
+          "branch_pass": 2,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R3": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R4": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R5": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R6": {
+          "tier": "low",
+          "branch_pass": 2,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R7": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R8": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R9": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R10": {
+          "tier": "low",
+          "branch_pass": 1,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass",
+          "known_weak": "https://github.com/Harish-here/maddog/issues/76"
+        },
+        "R11": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "R12": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        }
+      },
+      "branch_pass": 32,
+      "branch_runs": 36,
+      "pass_rate": 0.889,
+      "verdict": "pass",
+      "fingerprints": {
+        "agents/executor-fast-read.md": "036b47601610571e3f020e62e7ddfd3fa01d6e73c5461e9add77a3aaf7fd0fad",
+        "hooks/hooks.json": "b9edb5c7d1e96ea979b0838bfe360f5aa6a46a16b70ffcf6b917340ca5d56e0f",
+        "scripts/pattern-declare-guard.sh": "af1cd46270621b45b3e3b193e3d9c1bdbe0b0fb70b0ce9eb80da16c5fec233f9",
+        "tests/agents/executor-fast-read/patterns.yaml": "e7a52182a30ad460a3ccee53bb47d5e206b742aea2cb4c6080c64ba9f3a5f968"
+      }
+    },
+    {
+      "path": "tests/agents/executor-fast/patterns.yaml",
+      "mode": "agent",
+      "results": "tests/results/2026-10-10T221933",
+      "cases": {
+        "F1": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F2": {
+          "tier": "low",
+          "branch_pass": 1,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F3": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F4": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F5": {
+          "tier": "low",
+          "branch_pass": 1,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass",
+          "known_weak": "https://github.com/Harish-here/maddog/issues/76"
+        },
+        "F6": {
+          "tier": "low",
+          "branch_pass": 2,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F7": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F8": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F9": {
+          "tier": "low",
+          "branch_pass": 0,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass",
+          "known_weak": "https://github.com/Harish-here/maddog/issues/77"
+        },
+        "F10": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F11": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        },
+        "F12": {
+          "tier": "low",
+          "branch_pass": 3,
+          "main_pass": 0,
+          "valid_runs": {
+            "branch": 3,
+            "main": 3
+          },
+          "void_limited": false,
+          "verdict": "pass"
+        }
+      },
+      "branch_pass": 28,
+      "branch_runs": 36,
+      "pass_rate": 0.778,
+      "verdict": "pass",
+      "fingerprints": {
+        "agents/executor-fast.md": "6e14bb0410b34726a114732e794dd00c3282a43cbef54f1c8b4168b3ad2264d2",
+        "hooks/hooks.json": "b9edb5c7d1e96ea979b0838bfe360f5aa6a46a16b70ffcf6b917340ca5d56e0f",
+        "scripts/pattern-declare-guard.sh": "af1cd46270621b45b3e3b193e3d9c1bdbe0b0fb70b0ce9eb80da16c5fec233f9",
+        "tests/agents/executor-fast/patterns.yaml": "26438def87e8bee78353a9206a40a6413ec8dcb876746b62eecd28b50d034234"
+      }
+    }
+  ],
+  "offline": "740 passed in 34.13s",
+  "total_cost_usd": 1.1513,
+  "time": "2026-10-10T16:49:33+00:00"
+}

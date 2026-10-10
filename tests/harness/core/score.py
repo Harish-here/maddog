@@ -1,6 +1,7 @@
 """Score one run from its event log. Pure logic; names no runtime."""
 from dataclasses import dataclass
 
+from harness.core.cases import AgentCase
 from harness.core.events import Event
 
 
@@ -8,6 +9,16 @@ from harness.core.events import Event
 class Verdict:
     result: str  # PASS | FAIL | VOID
     reason: str
+    checks: dict | None = None  # agent cases: {"1": bool, "2": bool, "3": bool, "4": bool}; skill cases: None
+
+
+def score_case(events: list[Event], case) -> Verdict:
+    """The one entry point the runner calls: agent cases get four checks,
+    skill cases keep the handoff score."""
+    if isinstance(case, AgentCase):
+        from harness.core.agent_score import score_agent  # agent_score imports Verdict from here
+        return score_agent(events, case)
+    return score(events, case.expect)
 
 
 def score(events: list[Event], expect: str) -> Verdict:

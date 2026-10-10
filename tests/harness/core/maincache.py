@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from harness.core.cases import Case
+from harness.core.cases import AgentCase, Case
 from harness.core.events import Event
 
 CACHE_DIRNAME = ".main-cache"
@@ -30,10 +30,13 @@ class CacheKey:
     prompt: str           # the case's prompt
     fixture: str          # the case's fixture
     adapter_hash: str     # hash of the adapter source file
+    role: str = ""        # agent cases only: the role under test; "" keeps every skill-mode digest unchanged
 
     def digest(self) -> str:
-        raw = "\x1f".join([self.sha, self.runtime, self.model, self.prompt, self.fixture, self.adapter_hash])
-        return hashlib.sha256(raw.encode()).hexdigest()
+        parts = [self.sha, self.runtime, self.model, self.prompt, self.fixture, self.adapter_hash]
+        if self.role:
+            parts.append(self.role)
+        return hashlib.sha256("\x1f".join(parts).encode()).hexdigest()
 
 
 class MainCache:
@@ -50,7 +53,8 @@ class MainCache:
         self.fresh = fresh
 
     def _key(self, case: Case, tier: str) -> CacheKey:
-        return CacheKey(self.sha, self.runtime, self.model_ladder[tier], case.prompt, case.fixture, self.adapter_hash)
+        return CacheKey(self.sha, self.runtime, self.model_ladder[tier], case.prompt, case.fixture, self.adapter_hash,
+                        case.expect if isinstance(case, AgentCase) else "")
 
     def _path(self, case: Case, tier: str) -> Path:
         return self.cache_dir / f"{self._key(case, tier).digest()}.json"

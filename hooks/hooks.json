@@ -18,6 +18,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/judge-dispatch-guard.sh"
           }
         ]
+      },
+      {
+        "matcher": "Read|Grep|Glob|Edit|Write|Bash|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/pattern-declare-guard.sh"
+          }
+        ]
       }
     ]
   }

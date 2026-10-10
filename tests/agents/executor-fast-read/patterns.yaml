@@ -1,0 +1,211 @@
+# Does the Fast-Read role declare its patterns first, and apply each pattern's law?
+# Scored from recorded tool calls and, by user waiver 2026-10-08, the PATTERNS: line
+# and the exact quotes and CONFIRMED / CONTRADICTED / NO EVIDENCE labels in its
+# return. See tests/README.md, "Agent patterns".
+# Matchers (first_call.target, before) are regexes over "<kind>:<detail>" of each call.
+covers:
+  - "agents/executor-fast-read.md"
+  - "scripts/pattern-declare-guard.sh"
+  - "hooks/hooks.json"
+expect: Fast-Read
+fixture: fast-tier
+cases:
+  - id: R1
+    patterns: [SWEEP]
+    prompt: |
+      GOAL: list every call to `parse_money` in this repo.
+      BOUNDARY: read-only. Calls only: not definitions, and not mentions in comments or docs.
+      DONE-WHEN: each call is listed as file:line followed by the exact calling line.
+    first_call: {kind: [read], target: 'parse_money'}
+    return_quotes:
+      - 'price = money.parse_money(price_text)'
+      - 'price = money.parse_money(row["price"])'
+      - 'return int(round(parse_money(text) * 100))'
+    return_lacks:
+      - 'def parse_money(text: str) -> float:'
+      - 'def parse_money_cents(text: str) -> int:'
+      - '# parse_money is not used here: prices are already floats'
+      - '`parse_money` handles'
+
+  - id: R2
+    patterns: [TRACE]
+    prompt: |
+      GOAL: trace the call to `fetch_stock` made in `cmd_sync` (src/stockroom/cli.py) to its definition, and from there to the config key it reads.
+      BOUNDARY: read-only. Start at `cmd_sync`. Follow only that path.
+      DONE-WHEN: you have cited, in order, the calling line, the line that starts `def fetch_stock`, and the config line that sets the key, each quoted exactly.
+    first_call: {kind: [read], target: 'cli\.py|cmd_sync'}
+    before:
+      - ['^read:.*(cli\.py|cmd_sync)', '^read:.*(remote\.py|fetch_stock)']
+      - ['^read:.*(remote\.py|fetch_stock)', '^read:.*(settings\.toml|timeout)']
+    return_quotes:
+      - 'return fetch_stock("warehouse-1")'
+      - 'def fetch_stock(warehouse: str) -> list[dict]:'
+      - 'timeout = 30'
+
+  - id: R3
+    patterns: [EXTRACT]
+    prompt: |
+      GOAL: quote the line in config/settings.toml that sets the retry limit.
+      BOUNDARY: read-only; that file only.
+      DONE-WHEN: the line is quoted exactly as written, with file:line.
+    first_call: {kind: [read], target: 'settings\.toml|max_retries'}
+    return_quotes:
+      - 'max_retries    = 5   # per-request cap'
+
+  - id: R4
+    patterns: [VERIFY]
+    prompt: |
+      GOAL: check this claim: config/settings.toml sets the maximum upload size to 10 MB.
+      BOUNDARY: read-only; that file only.
+      DONE-WHEN: the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'settings\.toml|max_upload'}
+    label: CONTRADICTED
+    return_quotes:
+      - 'max_upload_mb = 25'
+
+  - id: R5
+    patterns: [SWEEP]
+    prompt: |
+      GOAL: find every place the setting `cache_ttl` is defined (given a value), and quote each definition.
+      BOUNDARY: read-only; any file in this repo. A definition gives the setting a value; reading or mentioning it is not one.
+      DONE-WHEN: each definition is listed as file:line followed by the exact line.
+    first_call: {kind: [read], target: 'cache_ttl'}
+    return_quotes:
+      - 'cache_ttl = 300'
+      - 'cache_ttl = 5'
+      - '"cache_ttl": 60,'
+    return_lacks:
+      - 'cache_ttl_margin = 2'
+      - 'Set cache_ttl in config/settings.toml'
+
+  - id: R6
+    patterns: [TRACE, VERIFY]
+    prompt: |
+      GOAL: follow the call to `fetch_stock` made in `cmd_sync` (src/stockroom/cli.py) to the config key it reads, and check this claim: the code's default for that key is 10.
+      BOUNDARY: read-only. Start at `cmd_sync`.
+      DONE-WHEN: the path is cited in order from the calling line to the config line that sets the key, and the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'cli\.py|cmd_sync'}
+    before:
+      - ['^read:.*(cli\.py|cmd_sync)', '^read:.*(remote\.py|fetch_stock)']
+      - ['^read:.*(remote\.py|fetch_stock)', '^read:.*(settings\.toml|timeout)']
+    label: CONTRADICTED
+    return_quotes:
+      - 'timeout = settings.get("remote", "timeout", 15)'
+      - 'timeout = 30'
+
+  # R7 to R12 use the shapes real dispatches use: numbered items (R7, R10, R11, R12),
+  # numbered questions (R8), prose (R9). R10 and R11 are full-length dispatches.
+  - id: R7
+    patterns: [SWEEP, VERIFY]
+    prompt: |
+      GOAL: report where the setting `page_size` is defined, and check one claim about its default.
+      BOUNDARY: read-only; any file in this repo. A definition gives the setting a value.
+      1. List each definition as file:line followed by the exact line.
+      2. Claim: the built-in default for `page_size` is 100. Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
+      DONE-WHEN: both items are answered in order, each with its quoted line.
+    first_call: {kind: [read], target: 'page_size'}
+    label: CONTRADICTED
+    return_quotes:
+      - '"page_size": 50,'
+
+  - id: R8
+    patterns: [TRACE]
+    prompt: |
+      GOAL: answer two numbered questions about the call to `retry_limit` made in `cmd_retries` (src/stockroom/cli.py).
+      BOUNDARY: read-only. Start at `cmd_retries`. Follow only that path.
+      Q1. Follow the call to its definition, and from there to the config key it reads. Cite, in order, the calling line, the definition line, and the line that names the key, each quoted exactly.
+      Q2. Quote the line in config/settings.toml that sets that key, exactly as written, with file:line.
+      DONE-WHEN: both questions are answered in order.
+    first_call: {kind: [read], target: 'cli\.py|cmd_retries'}
+    before:
+      - ['^read:.*(cli\.py|cmd_retries)', '^read:.*(uploads\.py|retry_limit)']
+      - ['^read:.*(uploads\.py|retry_limit)', '^read:.*(settings\.toml|max_retries)']
+    return_quotes:
+      - 'return retry_limit()'
+      - 'def retry_limit() -> int:'
+      - 'return settings.get("uploads", "max_retries", 3)'
+      - 'max_retries    = 5   # per-request cap'
+
+  - id: R9
+    patterns: [SWEEP, VERIFY]
+    prompt: |
+      GOAL: find every timeout setting in the config files, and check this claim: no timeout setting is over 60.
+      BOUNDARY: read-only; files under config/ only. A timeout setting is a line `timeout = <number>`.
+      DONE-WHEN: each timeout setting is listed as file:line followed by the exact line, and the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'timeout|^config/(\*|$)'}
+    label: CONTRADICTED
+    return_quotes:
+      - 'timeout = 30'
+      - 'timeout = 90'
+    return_lacks:
+      - 'timeout = settings.get("remote", "timeout", 15)'
+
+  # R10: a TRACE through code only (no config), ending in a claim the last line confirms.
+  # Full-length dispatch. Each link is cited, so each calling and defining line is a quote.
+  - id: R10
+    # Folds the claim check into TRACE on Haiku; see #76.
+    known_weak: "https://github.com/Harish-here/maddog/issues/76"
+    patterns: [TRACE, VERIFY]
+    prompt: |
+      PURPOSE: before anyone touches the report code, I need the exact path from the report command down to the line total, with the lines as written.
+      GOAL: trace the call to `render_line` made in `cmd_report` (src/stockroom/cli.py) down to where the line total is computed, and check one claim about that last line.
+      BOUNDARY: read-only. Start at `cmd_report` and follow only that path: each call to its definition, and the next call inside it. Draw no conclusions and do not say whether anything is a bug.
+      1. Cite the line in `cmd_report` that calls `render_line`, then the definition line of `render_line`.
+      2. Cite the line inside `render_line` that calls `line_total`, then the definition line of `line_total`.
+      3. Quote the line in `line_total` that returns its result.
+      4. Claim: `line_total` converts the price to an integer before multiplying. Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
+      If a link points to more than one place or to nothing, stop there and report it as the last link.
+      DONE-WHEN: items 1 to 4 are answered in order, each line quoted exactly as written with file:line.
+      RETURN: the items in order, then the label. At most 15 lines.
+    first_call: {kind: [read], target: 'cli\.py|cmd_report'}
+    before:
+      - ['^read:.*(cli\.py|cmd_report)', '^read:.*(report\.py|render_line)']
+      - ['^read:.*(report\.py|render_line)', '^read:.*(pricing\.py|line_total)']
+    label: CONFIRMED
+    return_quotes:
+      - 'return render_line(store.get_item(item_id))'
+      - 'def render_line(item: dict) -> str:'
+      - 'total = line_total(item["qty"], item["price"])'
+      - 'def line_total(qty: int, price: float) -> float:'
+      - 'return qty * int(price)'
+
+  # R11: EXTRACT alone, in a full-length dispatch with a length cap. Three named places, so
+  # nothing is searched for. The law is copying exactly: the odd spacing in the first quote
+  # is the check that a model did not tidy it.
+  - id: R11
+    patterns: [EXTRACT]
+    prompt: |
+      PURPOSE: I am writing the setup notes and need three pieces of text copied exactly, not paraphrased.
+      GOAL: copy out three pieces of text from this repo, each exactly as written.
+      BOUNDARY: read-only; only the three places named below. Do not tidy spacing, fix typos, or reword. Do not explain what the text means or whether it is right.
+      1. In `config/settings.toml`, copy the `[uploads]` header and every line under it up to the blank line, with file:line for each.
+      2. In `src/stockroom/defaults.py`, copy line 1 (the module docstring), with file:line.
+      3. In `src/stockroom/report.py`, copy the comment line, with file:line.
+      Copy each text whole. If one runs past 10 lines, copy the first 10 and mark the cut `[omitted: N lines]`.
+      If a named place does not exist, stop and report that instead of looking elsewhere.
+      DONE-WHEN: each of the three is copied in order, character for character, with its file:line.
+      RETURN: the three copies in order, no commentary. At most 20 lines.
+    first_call: {kind: [read], target: 'settings\.toml|uploads|max_retries'}
+    return_quotes:
+      - 'max_retries    = 5   # per-request cap'
+      - 'max_upload_mb = 25'
+      - '"""Built-in defaults, used when config/settings.toml sets nothing."""'
+      - '# parse_money is not used here: prices are already floats'
+
+  # R12: a numbered sweep. The two calls are the whole set; the definition of `get` and the
+  # `.get(` calls inside it are the decoys.
+  - id: R12
+    patterns: [SWEEP]
+    prompt: |
+      GOAL: find every place the code reads a setting.
+      BOUNDARY: read-only; files under `src/` only. A read is a call to `settings.get(`; the definition of `get` and the code inside it are not reads.
+      1. Search `src/` for every call to `settings.get(`.
+      2. List each as file:line followed by the exact line.
+      DONE-WHEN: each read is listed, each with its exact line.
+    first_call: {kind: [read], target: 'settings'}
+    return_quotes:
+      - 'timeout = settings.get("remote", "timeout", 15)'
+      - 'return settings.get("uploads", "max_retries", 3)'
+    return_lacks:
+      - 'def get(section: str, key: str, default=None):'
+      - 'return data.get(section, {}).get(key, default)'
