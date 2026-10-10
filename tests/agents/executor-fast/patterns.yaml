@@ -39,8 +39,7 @@ cases:
     first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
     edits_include: [var/app.lock]
     before:
-      - ['service\.log', '^write:.*\brm\b.*app\.lock']
-      - ['app\.lock', '^write:.*\brm\b.*app\.lock']
+      - ['^(read:.*(service\.log|app\.lock)|command:.*\b(cat|head|tail|less|more|grep|sed|awk)\b.*(service\.log|app\.lock))', '^write:.*\brm\b.*app\.lock']
 
   - id: F3
     patterns: [VERIFY]
