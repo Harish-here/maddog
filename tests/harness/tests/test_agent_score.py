@@ -1,9 +1,10 @@
 import pytest
 from harness.core.agent_score import (
-    declared_patterns, normalize_command, result_field, score_agent, score_case,
+    declared_patterns, normalize_command, result_field, score_agent,
 )
 from harness.core.cases import AgentCase, Case
 from harness.core.events import Event
+from harness.core.score import score_case
 
 
 def make_case(patterns=("TRANSFORM",), first_call=None, **checks):

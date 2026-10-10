@@ -6,8 +6,7 @@ from pathlib import Path
 
 from harness.core.cases import Case, TIERS
 from harness.core.events import Event
-from harness.core.agent_score import score_case
-from harness.core.score import Verdict
+from harness.core.score import Verdict, score_case
 
 MIN_RUNS = 3
 MAX_VOIDS = 3  # per version per tier; past this the case is reported, not retried

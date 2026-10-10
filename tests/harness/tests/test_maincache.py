@@ -1,4 +1,4 @@
-from harness.core.cases import Case
+from harness.core.cases import AgentCase, Case
 from harness.core.events import Event
 from harness.core.maincache import CacheKey, MainCache, hash_file
 
@@ -82,3 +82,20 @@ def test_cache_key_digest_is_deterministic():
     k1 = CacheKey("sha", "rt", "model", "prompt", "fixture", "hash")
     k2 = CacheKey("sha", "rt", "model", "prompt", "fixture", "hash")
     assert k1.digest() == k2.digest()
+
+
+def test_the_cache_key_separates_roles_and_leaves_skill_digests_alone():
+    base = dict(sha="s", runtime="r", model="m", prompt="p", fixture="f", adapter_hash="h")
+    assert CacheKey(**base).digest() != CacheKey(**base, role="Fast").digest()
+    assert CacheKey(**base, role="Fast").digest() != CacheKey(**base, role="Fast-Read").digest()
+    # A skill-mode digest: same fields in the same order, nothing appended.
+    assert CacheKey(**base).digest() == CacheKey(**base, role="").digest()
+
+
+def test_main_cache_keeps_two_agents_with_one_prompt_apart(tmp_path):
+    cache = MainCache(tmp_path, "sha", "claude-code", {"low": "haiku"}, "hash")
+    a = AgentCase("A", "same prompt", "Fast", "fast-tier", ("VERIFY",), {"kind": ["read"], "target": "."}, {})
+    b = AgentCase("B", "same prompt", "Fast-Read", "fast-tier", ("VERIFY",), {"kind": ["read"], "target": "."}, {})
+    cache.put(a, "low", [[Event("say", "x")]] * 3)
+    assert cache.get(a, "low", 3) is not None
+    assert cache.get(b, "low", 3) is None

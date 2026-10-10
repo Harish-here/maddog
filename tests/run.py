@@ -79,7 +79,7 @@ def select_cases(cases, case_ids, pressure):
             raise ValueError(f"unknown case ids: {', '.join(unknown)}")
         cases = [c for c in cases if c.id in case_ids]
     if pressure:
-        cases = [c for c in cases if c.pressure == pressure]
+        cases = [c for c in cases if getattr(c, "pressure", "none") == pressure]  # agent cases carry no pressure: they count as "none"
     return cases
 
 

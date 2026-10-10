@@ -38,7 +38,7 @@ import re
 
 from harness.core.cases import CALL_KINDS, AgentCase
 from harness.core.events import Event
-from harness.core.score import Verdict, score
+from harness.core.score import Verdict
 from harness.core.shell import first_in_pipeline
 
 CHECK_NAMES = {"1": "PATTERNS line before the first call", "2": "declared patterns",
@@ -49,14 +49,6 @@ SETUP_STEP = re.compile(r"^(cd|pushd|popd)(\s|$)|^set\s+[-+]|^(export|unset)\s+\
 MARK = r"[ \t>#*_`-]*"
 RESULT_FIELD = re.compile(rf"^{MARK}RESULT[ \t]*:[*_` \t]*(.*?)(?=^{MARK}NOT DONE[ \t]*:|\Z)", re.MULTILINE | re.DOTALL)
 LABEL = re.compile(r"CONFIRMED|CONTRADICTED|NO EVIDENCE")
-
-
-def score_case(events: list[Event], case) -> Verdict:
-    """The one entry point the runner calls: agent cases get four checks,
-    skill cases keep the handoff score."""
-    if isinstance(case, AgentCase):
-        return score_agent(events, case)
-    return score(events, case.expect)
 
 
 def score_agent(events: list[Event], case: AgentCase) -> Verdict:

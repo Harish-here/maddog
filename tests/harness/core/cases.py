@@ -90,8 +90,6 @@ class AgentCase:
     patterns: tuple    # the pattern names the work holds: check 2 wants all of them declared
     first_call: dict   # {"kind": [..], "target": regex}: check 3
     checks: dict       # check 4: only keys from CHECK_KEYS
-    pressure: str = "none"            # agent cases always run at the low tier
-    expected_tier: str | None = None  # unused; the report and run.py read the attribute
 
 
 def _regex(where: str, text) -> str:
@@ -161,7 +159,9 @@ def load_ladders(path: Path = LADDERS_FILE) -> dict:
     return yaml.safe_load(Path(path).read_text())
 
 
-def expected_tier(case: Case, ladders: dict) -> str:
+def expected_tier(case: Case | AgentCase, ladders: dict) -> str:
+    if isinstance(case, AgentCase):
+        return TIERS[0]  # agent cases carry no pressure and always run at the low tier
     if case.expected_tier:
         return case.expected_tier
     return ladders["expected_tier"][case.pressure]
