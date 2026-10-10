@@ -81,7 +81,7 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_labels']
 
   - id: F6
-    patterns: [RECOVER, OPERATE]
+    patterns: [RECOVER]
     prompt: |
       GOAL: bring the service up past a stale lock.
       BOUNDARY: `var/app.lock` is stale. First save the last 3 lines of `var/service.log` to `var/crash.log`, then remove the lock, then run `sh bin/start.sh` and report its output. Change nothing else.

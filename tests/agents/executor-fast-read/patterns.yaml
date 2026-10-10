@@ -64,7 +64,7 @@ cases:
       - 'max_upload_mb = 25'
 
   - id: R5
-    patterns: [SWEEP, EXTRACT]
+    patterns: [SWEEP]
     prompt: |
       GOAL: find every place the setting `cache_ttl` is defined (given a value), and quote each definition.
       BOUNDARY: read-only; any file in this repo. A definition gives the setting a value; reading or mentioning it is not one.
@@ -109,7 +109,7 @@ cases:
       - '"page_size": 50,'
 
   - id: R8
-    patterns: [TRACE, EXTRACT]
+    patterns: [TRACE]
     prompt: |
       GOAL: answer two numbered questions about the call to `retry_limit` made in `cmd_retries` (src/stockroom/cli.py).
       BOUNDARY: read-only. Start at `cmd_retries`. Follow only that path.
