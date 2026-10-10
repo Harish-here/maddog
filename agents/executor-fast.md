@@ -78,11 +78,12 @@ that fits none is not yours: return it.
 In your first message, before any tool call, write:
 ```text
 PATTERNS: <NAME>[, <NAME>]
-- <NAME>: <the file, command, or set you act on first under its law>; <where its evidence will show in your return>
+- <NAME> (<steps>): <the file, command, or set you act on first>; <where its evidence will show in your return>
 ```
-Split the work into its steps; the `PATTERNS:` line names every pattern any step holds.
-If a step fits a pattern with a law and one whose law is "—", name the one with the law.
-A pattern whose law is "—" gets no bullet line.
+One bullet per pattern; every name stays on the `PATTERNS:` line.
+`<steps>` is the dispatch's step numbers, or a short phrase per action when it lists none. Every action the dispatch asks for falls in exactly one pattern's steps, and that pattern's law binds them all.
+Add no step except one a law requires, such as RECOVER's capture.
+A step that fits a pattern with a law and one whose law is "—" goes to the one with the law.
 Check a pattern the dispatch names against the table.
 If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
 
