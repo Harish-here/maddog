@@ -7,13 +7,18 @@ any of its globs. `*` stays inside one folder; `**` crosses folders.
 Release selection (`select_for_base`) is stricter: files under `tests/` and
 `.claude/` never select, and a test file's globs are the union of its
 `covers:` in the base tree and in the working tree.
+
+An optional `covers_frontmatter:` list works the same way, except a matched file
+selects the test only when its YAML frontmatter block differs between the base
+tree and the working tree (an added or deleted file counts as changed). A file
+matched by both keys in one test is covered in full: `covers:` wins.
 """
 import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from harness.core.cases import load_covers, parse_covers
+from harness.core.cases import load_covers, load_covers_frontmatter, parse_covers, parse_covers_frontmatter
 
 # (folder pattern under tests/, case file name, runs in agent mode)
 TEST_KINDS = (
@@ -88,6 +93,20 @@ def selecting_files(changed) -> list[str]:
     return [f for f in changed if not f.startswith(NON_SELECTING)]
 
 
+def frontmatter_block(text: str | None) -> str | None:
+    """The text between a file's leading `---` line and the next `---` line,
+    "" when it has no such block, None when the file does not exist."""
+    if text is None:
+        return None
+    lines = text.splitlines()
+    if not lines or lines[0].rstrip() != "---":
+        return ""
+    for i in range(1, len(lines)):
+        if lines[i].rstrip() == "---":
+            return "\n".join(lines[1:i])
+    return ""
+
+
 @dataclass(frozen=True)
 class SelectedTest:
     path: str            # repo-relative case file
@@ -95,10 +114,20 @@ class SelectedTest:
     base_covers: tuple   # covers: in the base tree, () when the file is new
     head_covers: tuple   # covers: in the working tree, () when the file is gone
     in_head: bool        # False: the file was deleted on this branch
+    base_fm_covers: tuple = ()  # covers_frontmatter: in the base tree
+    head_fm_covers: tuple = ()  # covers_frontmatter: in the working tree
 
     @property
     def covers(self) -> tuple:
         return tuple(dict.fromkeys(self.base_covers + self.head_covers))
+
+    @property
+    def covers_frontmatter(self) -> tuple:
+        return tuple(dict.fromkeys(self.base_fm_covers + self.head_fm_covers))
+
+    def frontmatter_only(self, path: str) -> bool:
+        """True when `path` is covered by frontmatter alone: `covers:` wins over `covers_frontmatter:`."""
+        return matches(self.covers_frontmatter, path) and not matches(self.covers, path)
 
 
 @dataclass(frozen=True)
@@ -128,13 +157,13 @@ def _kind_of(path: str):
 
 
 def base_tests(repo_root: Path, ref: str) -> dict:
-    """{repo-relative case file: (kind index, agent_mode, covers)} as committed at `ref`."""
+    """{repo-relative case file: (kind index, agent_mode, covers, covers_frontmatter)} as committed at `ref`."""
     found = {}
     for path in _git_text(repo_root, "ls-tree", "-r", "--name-only", ref, "--", "tests").splitlines():
         kind = _kind_of(path)
         if kind is not None:
-            covers = parse_covers(f"{ref}:{path}", _git_text(repo_root, "show", f"{ref}:{path}"))
-            found[path] = (kind[0], kind[1], covers)
+            label, text = f"{ref}:{path}", _git_text(repo_root, "show", f"{ref}:{path}")
+            found[path] = (kind[0], kind[1], parse_covers(label, text), parse_covers_frontmatter(label, text))
     return found
 
 
@@ -144,13 +173,39 @@ def head_tests(repo_root: Path) -> dict:
     for path, _ in discover(repo_root / "tests"):
         rel = path.relative_to(repo_root).as_posix()
         kind = _kind_of(rel)
-        found[rel] = (kind[0], kind[1], load_covers(path))
+        found[rel] = (kind[0], kind[1], load_covers(path), load_covers_frontmatter(path))
     return found
+
+
+def base_frontmatter(repo_root: Path, ref: str, path: str) -> str | None:
+    """`path`'s frontmatter block as committed at `ref`; None when it is not there."""
+    try:
+        return frontmatter_block(_git_text(repo_root, "show", f"{ref}:{path}"))
+    except ValueError:
+        return None
+
+
+def head_frontmatter(repo_root: Path, path: str) -> str | None:
+    """`path`'s frontmatter block in the working tree; None when the file is gone."""
+    f = Path(repo_root) / path
+    return frontmatter_block(f.read_text()) if f.is_file() else None
+
+
+def selects(repo_root: Path, base: str, test: SelectedTest, selecting) -> bool:
+    """A selecting file selects `test` when `covers:` matches it, or when only
+    `covers_frontmatter:` does and the file's frontmatter differs from the base's."""
+    for f in selecting:
+        if matches(test.covers, f):
+            return True
+        if test.frontmatter_only(f) and base_frontmatter(repo_root, base, f) != head_frontmatter(repo_root, f):
+            return True
+    return False
 
 
 def select_for_base(repo_root: Path, base: str, changed) -> Selection:
     """The case files a release must have tested: those whose base-or-head
-    `covers:` match a changed file that is allowed to select. `tests/releases/**`
+    `covers:` match a changed file that is allowed to select, or whose
+    `covers_frontmatter:` match one whose frontmatter changed. `tests/releases/**`
     is under tests/, so it never selects."""
     selecting = selecting_files(changed)
     old, new = base_tests(repo_root, base), head_tests(repo_root)
@@ -158,7 +213,8 @@ def select_for_base(repo_root: Path, base: str, changed) -> Selection:
     for path in sorted(set(old) | set(new), key=lambda p: ((new.get(p) or old[p])[0], p)):
         agent_mode = (new.get(path) or old[path])[1]
         t = SelectedTest(path, agent_mode, old[path][2] if path in old else (),
-                         new[path][2] if path in new else (), path in new)
-        if any(matches(t.covers, f) for f in selecting):
+                         new[path][2] if path in new else (), path in new,
+                         old[path][3] if path in old else (), new[path][3] if path in new else ())
+        if selects(repo_root, base, t, selecting):
             selected.append(t)
     return Selection(list(changed), selecting, selected)

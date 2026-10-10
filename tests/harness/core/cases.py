@@ -25,11 +25,17 @@ class Case:
     why: str | None = None            # required with expected_tier
 
 
+def _globs(path: Path, data: dict, key: str) -> tuple[str, ...]:
+    globs = data.get(key, [])
+    if not isinstance(globs, list) or not all(isinstance(g, str) and g for g in globs):
+        raise ValueError(f"{path}: '{key}' must be a list of non-empty glob strings, got {globs!r}")
+    return tuple(globs)
+
+
 def _covers(path: Path, data: dict) -> tuple[str, ...]:
-    covers = data.get("covers", [])
-    if not isinstance(covers, list) or not all(isinstance(g, str) and g for g in covers):
-        raise ValueError(f"{path}: 'covers' must be a list of non-empty glob strings, got {covers!r}")
-    return tuple(covers)
+    """Validate both glob keys; return `covers:`."""
+    _globs(path, data, "covers_frontmatter")
+    return _globs(path, data, "covers")
 
 
 def parse_covers(label, text: str) -> tuple[str, ...]:
@@ -37,9 +43,20 @@ def parse_covers(label, text: str) -> tuple[str, ...]:
     return _covers(label, yaml.safe_load(text))
 
 
+def parse_covers_frontmatter(label, text: str) -> tuple[str, ...]:
+    """The `covers_frontmatter:` globs: files that select the test only when their frontmatter changes."""
+    data = yaml.safe_load(text)
+    _covers(label, data)
+    return _globs(label, data, "covers_frontmatter")
+
+
 def load_covers(path: Path) -> tuple[str, ...]:
     """The repo-relative globs a case file says it covers; absent means none."""
     return parse_covers(path, Path(path).read_text())
+
+
+def load_covers_frontmatter(path: Path) -> tuple[str, ...]:
+    return parse_covers_frontmatter(path, Path(path).read_text())
 
 
 def load_cases(path: Path) -> list[Case]:

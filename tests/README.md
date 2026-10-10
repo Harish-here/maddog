@@ -103,7 +103,16 @@ file with no `covers:` covers nothing and is never selected:
 
     covers:
       - "skills/advisor-mode/**"
+    covers_frontmatter:
       - "agents/executor-*.md"
+
+`covers_frontmatter:` is an optional second list of globs. A matched file
+selects the test only when its YAML frontmatter (the text between the leading
+`---` lines) differs between BASE and this tree; an added or deleted file counts
+as changed, and a body-only edit selects nothing. Release fingerprints hash only
+that frontmatter block for such a file, so the gate ignores later body edits but
+fails on a frontmatter edit. A file matched by both keys in one test is covered
+in full (`covers:` wins). Globs are the base-and-head union, as for `covers:`.
 
 `--changed [BASE]` (BASE defaults to `main`) replaces the target. The changed
 files are `git diff --name-only BASE...HEAD` plus uncommitted changes to
@@ -171,7 +180,8 @@ rejects it.
   table, with no runtime column.
 
 A fingerprint is a sha256 of one file's content: every tracked file matched by
-the test file's base-or-head `covers:` globs, and the test file itself. Raw
+the test file's base-or-head `covers:` globs, and the test file itself. A file
+matched only by `covers_frontmatter:` is hashed by its frontmatter block alone. Raw
 `runs.jsonl` and transcripts stay in the git-ignored `tests/results/`. Old
 `tests/releases/*` folders stay in the repo.
 

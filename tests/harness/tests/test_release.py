@@ -9,8 +9,8 @@ import pytest
 import run
 from harness.core.cases import Case, load_agent_cases, load_cases, load_ladders
 from harness.core.changed import select_for_base, selecting_files
-from harness.core.release import (case_verdict, check_gate, dirty_covered, entry_for, file_verdict, fingerprint_paths,
-                                  plugin_version, slug_of)
+from harness.core.release import (case_verdict, check_gate, dirty_covered, entry_for, file_hash, file_verdict,
+                                  fingerprint_of, fingerprint_paths, plugin_version, slug_of, text_hash)
 from harness.core.runner import CaseResult, RunRecord
 from harness.core.score import Verdict
 from harness.tests.test_cases import AGENT_FILE
@@ -650,3 +650,77 @@ def test_gate_cli_prints_and_exits(capsys, monkeypatch, repo):
 def test_plugin_version_reads_the_tree_or_a_ref(repo):
     bump(repo, "1.0.9")
     assert (plugin_version(repo), plugin_version(repo, "main")) == ("1.0.9", "1.0.0")
+
+
+# --- covers_frontmatter: fingerprints and the gate ---
+
+AGENT_MD = "---\nname: a\ndescription: first\n---\nbody one\n"
+FM_COVERS = SKILL_FILE.replace(SKILL_COVERS, '["skills/s1/**"]\ncovers_frontmatter: ["agents/a.md"]')
+
+
+@pytest.fixture
+def fm_repo(repo):
+    """Base: s1 covers skills/s1/** in full and agents/a.md by frontmatter only."""
+    git(repo, "checkout", "-q", "main")
+    write(repo, "agents/a.md", AGENT_MD)
+    write(repo, "tests/skills/s1/handoff.yaml", FM_COVERS)
+    commit(repo, "frontmatter-only coverage of agents/a.md")
+    git(repo, "checkout", "-q", "-b", "feat2")
+    return repo
+
+
+DESCRIPTION_CHANGED = AGENT_MD.replace("first", "second")
+
+
+def fm_release(repo, text):
+    """Bump the version and change agents/a.md to `text`."""
+    write(repo, ".claude-plugin/plugin.json", json.dumps({"version": "1.0.1"}))
+    write(repo, "agents/a.md", text)
+    commit(repo, "release")
+
+
+def test_a_body_only_edit_does_not_select_and_a_description_edit_does(fm_repo):
+    write(fm_repo, "agents/a.md", AGENT_MD.replace("body one", "body two"))
+    commit(fm_repo, "body only")
+    assert names(select(fm_repo, "main")) == []
+    write(fm_repo, "agents/a.md", DESCRIPTION_CHANGED)
+    commit(fm_repo, "description")
+    assert names(select(fm_repo, "main")) == ["tests/skills/s1/handoff.yaml"]
+
+
+def test_fingerprint_of_a_frontmatter_only_file_hashes_the_block_not_the_file(fm_repo):
+    fm_release(fm_repo, DESCRIPTION_CHANGED)
+    (test,) = select(fm_repo, "main").selected
+    assert "agents/a.md" in fingerprint_paths(fm_repo, test)
+    assert fingerprint_of(fm_repo, test, "agents/a.md") == text_hash("name: a\ndescription: second")
+    assert fingerprint_of(fm_repo, test, "agents/a.md") != file_hash(fm_repo / "agents/a.md")
+    assert fingerprint_of(fm_repo, test, "skills/s1/SKILL.md") == file_hash(fm_repo / "skills/s1/SKILL.md")
+
+
+@pytest.fixture
+def fm_recorded(fake, fm_repo):
+    fm_release(fm_repo, DESCRIPTION_CHANGED)
+    assert go() == 0
+    assert check_gate(fm_repo, "main")[0] == []
+    return fm_repo
+
+
+def test_the_gate_passes_when_only_the_body_changed_after_recording(fm_recorded):
+    write(fm_recorded, "agents/a.md", DESCRIPTION_CHANGED.replace("body one", "body three"))
+    commit(fm_recorded, "body edit after recording")
+    assert fails_of(fm_recorded) == []
+
+
+def test_the_gate_fails_when_the_description_changed_after_recording(fm_recorded):
+    write(fm_recorded, "agents/a.md", AGENT_MD.replace("first", "third"))
+    commit(fm_recorded, "description edit after recording")
+    assert any("agents/a.md changed since it was tested" in f for f in fails_of(fm_recorded))
+
+
+def test_recording_is_not_blocked_by_an_uncommitted_body_edit_to_a_frontmatter_only_file(fm_repo):
+    fm_release(fm_repo, DESCRIPTION_CHANGED)
+    write(fm_repo, "agents/a.md", DESCRIPTION_CHANGED.replace("body one", "dirty body"))
+    (test,) = select(fm_repo, "main").selected
+    assert dirty_covered(fm_repo, [test]) == []
+    write(fm_repo, "agents/a.md", AGENT_MD.replace("first", "dirty description"))
+    assert dirty_covered(fm_repo, [test]) == ["agents/a.md"]

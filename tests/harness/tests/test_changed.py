@@ -3,8 +3,9 @@ import subprocess
 
 import pytest
 import run
-from harness.core.cases import TESTS_DIR, load_agent_cases, load_cases, load_covers
-from harness.core.changed import changed_files, discover, glob_to_regex, matches, select_tests
+from harness.core.cases import TESTS_DIR, load_agent_cases, load_cases, load_covers, load_covers_frontmatter
+from harness.core.changed import (changed_files, discover, frontmatter_block, glob_to_regex, matches, select_for_base,
+                                  select_tests)
 from harness.tests.test_cases import AGENT_FILE
 
 SKILL_FILE = "skill: x\nfixture: todo-app\ncases:\n  - {id: a, prompt: p, expect: Fast, pressure: none}\n"
@@ -44,7 +45,9 @@ def test_agent_case_files_validate_covers_too(tmp_path):
 
 
 def test_the_shipped_case_files_declare_their_covers():
-    assert load_covers(TESTS_DIR / "skills/advisor-mode/handoff.yaml") == ("skills/advisor-mode/**", "agents/executor-*.md")
+    advisor = TESTS_DIR / "skills/advisor-mode/handoff.yaml"
+    assert load_covers(advisor) == ("skills/advisor-mode/**",)
+    assert load_covers_frontmatter(advisor) == ("agents/executor-*.md",)
     for agent in ("executor-fast", "executor-fast-read"):
         assert load_covers(TESTS_DIR / "agents" / agent / "patterns.yaml") == (
             f"agents/{agent}.md", "scripts/pattern-declare-guard.sh", "hooks/hooks.json")
@@ -173,14 +176,14 @@ def boom(*a, **k):
 
 
 def test_dry_run_prints_changed_files_selection_and_counts_then_exits(monkeypatch, capsys):
-    fake_selection(monkeypatch, None, ["agents/executor-fast.md", "README.md"])
+    fake_selection(monkeypatch, None, ["agents/executor-fast.md", "skills/advisor-mode/SKILL.md"])
     monkeypatch.setattr(run, "run_cases", boom)
     monkeypatch.setattr(run, "get_adapter", boom)
     assert run.main(["--changed", "--runtime", "rt", "--dry-run"]) == 0
     out = capsys.readouterr().out
     assert "changed files vs main: 2" in out
     assert "agents/executor-fast.md" in out
-    assert "tests/skills/advisor-mode/handoff.yaml (skill mode)" in out  # agents/executor-*.md covers it
+    assert "tests/skills/advisor-mode/handoff.yaml (skill mode)" in out  # skills/advisor-mode/** covers it
     assert "tests/agents/executor-fast/patterns.yaml (agent mode)" in out
     assert "tests/agents/executor-fast-read/patterns.yaml" not in out
     n = len(load_agent_cases(TESTS_DIR / "agents/executor-fast/patterns.yaml"))
@@ -224,3 +227,118 @@ def test_an_unknown_base_is_a_usage_error(monkeypatch):
     with pytest.raises(SystemExit) as e:
         run.main(["--changed", "nope", "--runtime", "rt", "--dry-run"])
     assert e.value.code == 2
+
+
+# --- covers_frontmatter: ---
+
+FM_FILE = '---\nname: x\ndescription: first\n---\nbody one\n'
+
+
+@pytest.mark.parametrize("text, expected", [
+    (FM_FILE, "name: x\ndescription: first"),
+    ("---\nname: x\n---\n---\nnot the block\n", "name: x"),
+    ("---\r\nname: x\r\n---\r\nbody", "name: x"),
+    ("no frontmatter\n---\nfoo\n---\n", ""),
+    ("---\nunclosed: yes\n", ""),
+    ("", ""),
+    (None, None),
+])
+def test_frontmatter_block_is_the_text_between_the_leading_dashes(text, expected):
+    assert frontmatter_block(text) == expected
+
+
+def test_covers_frontmatter_loads_and_defaults_to_nothing(tmp_path):
+    assert load_covers_frontmatter(write(tmp_path, "handoff.yaml", SKILL_FILE)) == ()
+    path = write(tmp_path, "h2.yaml", 'covers_frontmatter:\n  - "agents/*.md"\n' + SKILL_FILE)
+    assert load_covers_frontmatter(path) == ("agents/*.md",) and load_covers(path) == ()
+
+
+@pytest.mark.parametrize("bad", ["covers_frontmatter: a.md\n", "covers_frontmatter: [1]\n", "covers_frontmatter: ['']\n"])
+def test_covers_frontmatter_must_be_a_list_of_strings(tmp_path, bad):
+    path = write(tmp_path, "handoff.yaml", bad + SKILL_FILE)
+    for load in (load_covers_frontmatter, load_covers, load_cases):
+        with pytest.raises(ValueError, match="'covers_frontmatter' must be a list"):
+            load(path)
+
+
+CASES = "skill: s\nfixture: todo-app\ncases:\n  - {id: a, prompt: p, expect: Fast, pressure: none}\n"
+
+
+@pytest.fixture
+def fm_repo(tmp_path):
+    """main has tests/skills/s/handoff.yaml covering skills/s/** in full and agents/*.md by frontmatter."""
+    git(tmp_path, "init", "-q", "-b", "main")
+    write(tmp_path, "tests/skills/s/handoff.yaml",
+          'covers: ["skills/s/**"]\ncovers_frontmatter: ["agents/*.md", "skills/s/both.md"]\n' + CASES)
+    write(tmp_path, "agents/fast.md", FM_FILE)
+    write(tmp_path, "skills/s/both.md", FM_FILE)
+    git(tmp_path, "add", "."), git(tmp_path, "commit", "-q", "-m", "base")
+    git(tmp_path, "checkout", "-q", "-b", "feat")
+    return tmp_path
+
+
+def picked(repo):
+    return [t.path for t in select_for_base(repo, "main", changed_files(repo, "main")).selected]
+
+
+def commit_all(repo):
+    git(repo, "add", "."), git(repo, "commit", "-q", "-m", "c")
+
+
+def test_advisor_mode_is_selected_by_an_executor_description_edit_but_not_a_body_edit(tmp_path):
+    handoff = (TESTS_DIR / "skills/advisor-mode/handoff.yaml").read_text()
+    git(tmp_path, "init", "-q", "-b", "main")
+    write(tmp_path, "tests/skills/advisor-mode/handoff.yaml", handoff)
+    write(tmp_path, "agents/executor-fast.md", FM_FILE)
+    git(tmp_path, "add", "."), git(tmp_path, "commit", "-q", "-m", "base")
+    git(tmp_path, "checkout", "-q", "-b", "feat")
+    write(tmp_path, "agents/executor-fast.md", FM_FILE.replace("body one", "body two"))
+    commit_all(tmp_path)
+    assert picked(tmp_path) == []
+    write(tmp_path, "agents/executor-fast.md", FM_FILE.replace("first", "second"))
+    commit_all(tmp_path)
+    assert picked(tmp_path) == ["tests/skills/advisor-mode/handoff.yaml"]
+
+
+def test_a_body_only_edit_to_a_frontmatter_covered_file_selects_nothing(fm_repo):
+    write(fm_repo, "agents/fast.md", FM_FILE.replace("body one", "body two"))
+    commit_all(fm_repo)
+    assert picked(fm_repo) == []
+
+
+def test_a_frontmatter_edit_selects_the_test(fm_repo):
+    write(fm_repo, "agents/fast.md", FM_FILE.replace("first", "second"))
+    commit_all(fm_repo)
+    assert picked(fm_repo) == ["tests/skills/s/handoff.yaml"]
+
+
+def test_an_uncommitted_frontmatter_edit_selects_too(fm_repo):
+    write(fm_repo, "agents/fast.md", FM_FILE.replace("first", "second"))
+    assert picked(fm_repo) == ["tests/skills/s/handoff.yaml"]
+
+
+def test_an_added_frontmatter_covered_file_counts_as_changed(fm_repo):
+    write(fm_repo, "agents/new.md", "body only, no frontmatter\n")
+    commit_all(fm_repo)
+    assert picked(fm_repo) == ["tests/skills/s/handoff.yaml"]
+
+
+def test_a_deleted_frontmatter_covered_file_counts_as_changed(fm_repo):
+    (fm_repo / "agents/fast.md").unlink()
+    commit_all(fm_repo)
+    assert picked(fm_repo) == ["tests/skills/s/handoff.yaml"]
+
+
+def test_a_file_matched_by_both_keys_is_covered_in_full(fm_repo):
+    write(fm_repo, "skills/s/both.md", FM_FILE.replace("body one", "body two"))
+    commit_all(fm_repo)
+    assert picked(fm_repo) == ["tests/skills/s/handoff.yaml"]  # covers: wins, so a body edit selects
+
+
+def test_frontmatter_globs_are_the_union_of_base_and_head(fm_repo):
+    write(fm_repo, "tests/skills/s/handoff.yaml", 'covers: ["skills/s/**"]\n' + CASES)  # head drops the key
+    write(fm_repo, "agents/fast.md", FM_FILE.replace("first", "second"))
+    commit_all(fm_repo)
+    (test,) = select_for_base(fm_repo, "main", changed_files(fm_repo, "main")).selected
+    assert test.base_fm_covers == ("agents/*.md", "skills/s/both.md") and test.head_fm_covers == ()
+    assert test.covers_frontmatter == ("agents/*.md", "skills/s/both.md")

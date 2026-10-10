@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 from harness.core.cases import load_agent_cases, load_cases
-from harness.core.changed import SelectedTest, changed_files, matches, select_for_base
+from harness.core.changed import SelectedTest, changed_files, frontmatter_block, matches, select_for_base
 from harness.core.runner import passes
 
 RELEASES = "tests/releases"
@@ -94,23 +94,45 @@ def file_hash(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def text_hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def fingerprint_paths(repo_root: Path, test: SelectedTest) -> list[str]:
-    """Tracked files matched by the test's base-or-head covers, plus its own yaml."""
+    """Tracked files matched by the test's base-or-head covers or covers_frontmatter, plus its own yaml."""
     root = Path(repo_root)
     paths = [p for p in _git(root, "ls-files").splitlines()
-             if matches(test.covers, p) and not p.startswith(RELEASES + "/") and (root / p).is_file()]
+             if (matches(test.covers, p) or matches(test.covers_frontmatter, p))
+             and not p.startswith(RELEASES + "/") and (root / p).is_file()]
     return sorted(set(paths) | {test.path})
 
 
+def fingerprint_of(repo_root: Path, test: SelectedTest, path: str) -> str:
+    """A file's fingerprint: its whole content, or only its frontmatter block when
+    the test covers it by `covers_frontmatter:` alone. The gate uses the same function."""
+    f = Path(repo_root) / path
+    if path != test.path and test.frontmatter_only(path):
+        return text_hash(frontmatter_block(f.read_text()))
+    return file_hash(f)
+
+
 def fingerprints(repo_root: Path, test: SelectedTest) -> dict:
-    return {p: file_hash(Path(repo_root) / p) for p in fingerprint_paths(repo_root, test)}
+    return {p: fingerprint_of(repo_root, test, p) for p in fingerprint_paths(repo_root, test)}
 
 
 def dirty_covered(repo_root: Path, tests) -> list[str]:
-    """Covered files (and case files) with uncommitted changes to tracked content."""
+    """Covered files (and case files) with uncommitted changes to tracked content.
+    A frontmatter-only file counts only when its frontmatter, not just its body, changed."""
     dirty = set(_git(repo_root, "diff", "--name-only", "HEAD").splitlines())
-    covered = {p for t in tests for p in fingerprint_paths(repo_root, t)}
-    return sorted(dirty & covered)
+    out = set()
+    for t in tests:
+        for p in set(fingerprint_paths(repo_root, t)) & dirty:
+            if p != t.path and t.frontmatter_only(p):
+                committed = frontmatter_block(_git(repo_root, "show", f"HEAD:{p}"))
+                if committed == frontmatter_block((Path(repo_root) / p).read_text()):
+                    continue
+            out.add(p)
+    return sorted(out)
 
 
 # --- recording ---
@@ -221,7 +243,7 @@ def check_gate(repo_root: Path, base: str):
             f = root / path
             if not f.is_file():
                 fails.append(f"{test.path}: fingerprinted file is missing: {path}")
-            elif file_hash(f) != digest:
+            elif fingerprint_of(root, test, path) != digest:
                 fails.append(f"{test.path}: {path} changed since it was tested")
         fails += [f"{test.path}: {p} is covered but has no fingerprint" for p in fingerprint_paths(root, test) if p not in prints]
     return fails, "" if fails else f"gate ok: {len(selection.selected)} test file(s) recorded for {version}"
