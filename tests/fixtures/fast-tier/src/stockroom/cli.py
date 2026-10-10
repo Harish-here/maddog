@@ -3,6 +3,7 @@ from stockroom import money, store
 from stockroom.fmt import fmt_price
 from stockroom.remote import fetch_stock
 from stockroom.report import render_line
+from stockroom.uploads import retry_limit
 
 
 def cmd_add(name: str, qty: str, price_text: str) -> str:
@@ -17,3 +18,7 @@ def cmd_report(item_id: int) -> str:
 
 def cmd_sync() -> list[dict]:
     return fetch_stock("warehouse-1")
+
+
+def cmd_retries() -> int:
+    return retry_limit()

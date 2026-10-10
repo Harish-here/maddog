@@ -92,3 +92,50 @@ cases:
     return_quotes:
       - 'timeout = settings.get("remote", "timeout", 15)'
       - 'timeout = 30'
+
+  # R7 and R8 use numbered questions, R9 prose: the shapes real dispatches use.
+  - id: R7
+    patterns: [SWEEP, EXTRACT, VERIFY]
+    prompt: |
+      GOAL: answer three numbered questions about the setting `page_size`.
+      BOUNDARY: read-only; any file in this repo. A definition gives the setting a value.
+      Q1. Where is `page_size` defined? List each place as file:line.
+      Q2. Quote the defining line exactly.
+      Q3. Is this claim true: the built-in default for `page_size` is 100? Label it CONFIRMED, CONTRADICTED, or NO EVIDENCE, and quote the line you cite.
+      DONE-WHEN: each question is answered in order.
+    first_call: {kind: [read], target: 'page_size'}
+    label: CONTRADICTED
+    return_quotes:
+      - '"page_size": 50,'
+
+  - id: R8
+    patterns: [TRACE, EXTRACT]
+    prompt: |
+      GOAL: answer two numbered questions about the call to `retry_limit` made in `cmd_retries` (src/stockroom/cli.py).
+      BOUNDARY: read-only. Start at `cmd_retries`. Follow only that path.
+      Q1. Follow the call to its definition, and from there to the config key it reads. Cite, in order, the calling line, the definition line, and the line that names the key, each quoted exactly.
+      Q2. Quote the line in config/settings.toml that sets that key, exactly as written, with file:line.
+      DONE-WHEN: both questions are answered in order.
+    first_call: {kind: [read], target: 'cli\.py|cmd_retries'}
+    before:
+      - ['^read:.*(cli\.py|cmd_retries)', '^read:.*(uploads\.py|retry_limit)']
+      - ['^read:.*(uploads\.py|retry_limit)', '^read:.*(settings\.toml|max_retries)']
+    return_quotes:
+      - 'return retry_limit()'
+      - 'def retry_limit() -> int:'
+      - 'return settings.get("uploads", "max_retries", 3)'
+      - 'max_retries    = 5   # per-request cap'
+
+  - id: R9
+    patterns: [SWEEP, VERIFY]
+    prompt: |
+      GOAL: find every timeout setting in the config files, and check this claim: no timeout setting is over 60.
+      BOUNDARY: read-only; files under config/ only. A timeout setting is a line `timeout = <number>`.
+      DONE-WHEN: each timeout setting is listed as file:line followed by the exact line, and the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
+    first_call: {kind: [read], target: 'timeout'}
+    label: CONTRADICTED
+    return_quotes:
+      - 'timeout = 30'
+      - 'timeout = 90'
+    return_lacks:
+      - 'timeout = settings.get("remote", "timeout", 15)'

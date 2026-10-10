@@ -40,9 +40,9 @@ def sh(work, command):
     return subprocess.run(command, shell=True, cwd=work, capture_output=True, text=True, timeout=30)
 
 
-def test_twelve_cases_six_per_agent():
-    assert sorted(FAST) == ["F1", "F2", "F3", "F4", "F5", "F6"]
-    assert sorted(READ) == ["R1", "R2", "R3", "R4", "R5", "R6"]
+def test_eighteen_cases_nine_per_agent():
+    assert sorted(FAST) == ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"]
+    assert sorted(READ) == ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9"]
 
 
 def test_every_expected_pattern_is_a_real_row_of_that_agents_table():
@@ -125,6 +125,61 @@ def test_r4_the_claim_is_false():
 def test_r5_there_are_exactly_three_definitions_of_cache_ttl():
     defined = lines_matching(r"""cache_ttl["']?\s*[=:]""")
     assert defined == set(READ["R5"].checks["return_quotes"])
+
+
+def test_f7_a_commit_works_in_the_practice_repo_and_the_committed_edit_counts_as_changed(tmp_path):
+    from harness.core import fixture
+    made = fixture.make_workdir("fast-tier", tmp_path / "slot")
+    settings = made / "config" / "settings.toml"
+    assert "max_upload_mb = 25" in settings.read_text() and "to 50 MB" in FAST["F7"].prompt
+    settings.write_text(settings.read_text().replace("max_upload_mb = 25", "max_upload_mb = 50"))
+    subprocess.run([*fixture.GIT, "-C", str(made), "commit", "-q", "-am", "raise upload cap"], check=True, capture_output=True)
+    assert subprocess.run(["git", "-C", str(made), "status", "--porcelain"], capture_output=True, text=True).stdout == ""
+    assert fixture.changed_files(made) == FAST["F7"].checks["edits_include"]
+    assert sh(made, FAST["F7"].checks["command_runs"]).returncode == 0  # the step 3 tests pass
+
+
+def test_f8_the_edit_target_exists_prepare_runs_and_the_store_tests_pass_after_the_edit(work):
+    defaults = work / "src" / "stockroom" / "defaults.py"
+    assert '"page_size": 50,' in defaults.read_text() and "to 25" in FAST["F8"].prompt
+    prepared = sh(work, "sh bin/prepare.sh")
+    assert prepared.returncode == 0 and prepared.stdout.strip() == "environment ready"
+    defaults.write_text(defaults.read_text().replace('"page_size": 50,', '"page_size": 25,'))
+    assert sh(work, FAST["F8"].checks["command_runs"]).returncode == 0
+
+
+def test_f9_the_service_does_not_answer_until_the_lock_is_removed_and_it_is_started(work):
+    stuck = sh(work, "sh bin/status.sh")
+    assert stuck.returncode == 1 and "no answer" in stuck.stderr
+    (work / "var" / "app.lock").unlink()
+    assert sh(work, "sh bin/start.sh").stdout.strip() == "service started"
+    answering = sh(work, FAST["F9"].checks["command_runs"])
+    assert answering.returncode == 0 and answering.stdout.strip() == "service answers"
+
+
+def test_r7_page_size_is_defined_once_and_the_claim_of_100_is_false():
+    defined = lines_matching(r"""page_size["']?\s*[=:]""")
+    assert defined == set(READ["R7"].checks["return_quotes"])
+    assert "is 100" in READ["R7"].prompt and not re.search(r"page_size\W+100\b", "\n".join(fixture_files().values()))
+
+
+def test_r8_the_chain_runs_from_cmd_retries_to_the_definition_to_the_key():
+    files = fixture_files()
+    assert "def cmd_retries() -> int:\n    return retry_limit()" in files["src/stockroom/cli.py"]
+    assert "def retry_limit() -> int:" in files["src/stockroom/uploads.py"]
+    assert 'return settings.get("uploads", "max_retries", 3)' in files["src/stockroom/uploads.py"]
+    assert READ["R8"].checks["return_quotes"][-1] in files["config/settings.toml"]
+    assert files_matching(r"\bretry_limit\b") == {"src/stockroom/cli.py", "src/stockroom/uploads.py"}
+
+
+def test_r9_there_are_exactly_two_timeout_settings_in_config_and_one_is_over_60():
+    import tomllib
+    config = {n: t for n, t in fixture_files().items() if n.startswith("config/")}
+    lines = {line.strip() for t in config.values() for line in t.splitlines() if re.match(r"\s*timeout\s*=", line)}
+    assert lines == set(READ["R9"].checks["return_quotes"])
+    values = [tomllib.loads(t).get("remote", {}).get("timeout") for t in config.values()]
+    assert sorted(v for v in values if v is not None) == [30, 90]  # the claim "none over 60" is false
+    assert all(q in fixture_files()["src/stockroom/remote.py"] for q in READ["R9"].checks["return_lacks"])  # the decoy is in code, outside config/
 
 
 def test_the_workspace_stays_clean_after_the_fixture_is_exercised(work):

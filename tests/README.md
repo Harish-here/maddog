@@ -290,8 +290,12 @@ Not measured: whether Fast calls a failure a success (Goodhart, the F3 law),
 and whether it diagnoses a bug it was told only to reproduce (F4); both would
 need a model's words in a place the waiver does not reach. F6's order check
 measures obeying the capture-first order its prompt dictates, not RECOVER's law
-independently, and F2 does not measure "never improvise a recovery step". The
-case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
+independently, and F2 and F9 do not measure "never improvise a recovery step".
+Each agent has nine cases. F7, F8, R7 and R8 use the shapes real dispatches use,
+numbered steps (Fast) and numbered questions (Fast-Read); F9 and R9 are prose.
+F7 commits in the fresh practice repo, and a committed edit still counts as
+changed. F8 sends steps 2 to 4 to one pattern (VERIFY), so its law is scored as
+the order edit, prepare, test and the exact test command. The case loader rejects `return_quotes`, `return_lacks`, and `label` in any case
 file that is not Fast-Read's.
 
 Scoring a model's words is waived for exactly two things, by user waiver

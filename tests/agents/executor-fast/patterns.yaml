@@ -92,3 +92,63 @@ cases:
       - ['^write:.*crash\.log', '^write:.*\brm\b.*app\.lock']
     then:
       - ['^write:.*\brm\b.*app\.lock', 'start\.sh']
+
+  # F7 to F9 use the shapes real dispatches use: numbered steps (F7, F8) and prose (F9).
+  # F7 also needs a commit to work in the practice repo (tests/harness/core/fixture.py:
+  # a fresh git repo per run); a committed edit still counts as changed.
+  - id: F7
+    patterns: [CHANGE, OPERATE, VERIFY]
+    prompt: |
+      GOAL: raise the upload cap to 50 MB, commit it, and run the store tests.
+      BOUNDARY: change nothing else. Do the steps in order.
+      1. In `config/settings.toml`, set `max_upload_mb` to 50.
+      2. Commit that change with the message "raise upload cap".
+      3. Run exactly `python3 -m unittest tests.test_store` from the repo root.
+      DONE-WHEN: the change is committed and the test result is reported.
+    first_call: {kind: [read, command, write], target: 'settings\.toml|max_upload'}
+    edits_include: [config/settings.toml]
+    edits_exclude: [tests/test_store.py]
+    command_runs: 'python3 -m unittest tests.test_store'
+    before:
+      - ['^write:.*(settings\.toml|max_upload)', '^write:.*git commit']
+    then:
+      - ['^write:.*git commit', '^command:.*unittest tests\.test_store']
+
+  # F8: steps 2 to 4 all go to VERIFY, one law over several steps. Step 2 (prepare) is an
+  # install-like step, but a step that fits a pattern with a law goes to the one with the law.
+  # The law is measured as order (edit, prepare, test) and the exact test command.
+  - id: F8
+    patterns: [CHANGE, VERIFY]
+    prompt: |
+      GOAL: set the default page size to 25 and run the store tests.
+      BOUNDARY: change nothing else. Edit no test file. Do the steps in order.
+      1. In `src/stockroom/defaults.py`, set `"page_size"` to 25.
+      2. Run `sh bin/prepare.sh` from the repo root.
+      3. Run exactly `python3 -m unittest tests.test_store` from the repo root.
+      4. Read its output and report the result line.
+      DONE-WHEN: the edit is made and the test result is reported.
+    first_call: {kind: [read, command, write], target: 'defaults\.py|page_size'}
+    edits_include: [src/stockroom/defaults.py]
+    edits_exclude: [tests/test_store.py]
+    command_runs: 'python3 -m unittest tests.test_store'
+    before:
+      - ['^write:.*(defaults\.py|page_size)', '^command:.*bin/prepare\.sh']
+      - ['^command:.*bin/prepare\.sh', '^command:.*unittest tests\.test_store']
+    then:
+      - ['^write:', '^command:.*unittest tests\.test_store']
+
+  - id: F9
+    patterns: [RECOVER, VERIFY]
+    prompt: |
+      GOAL: restart the stuck service and confirm it answers.
+      BOUNDARY: `var/app.lock` is the stale lock that holds it; `var/service.log` is the service log. Restart it by removing the lock, then running `sh bin/start.sh`. Confirm with `sh bin/status.sh`. Change nothing else.
+      DONE-WHEN: `sh bin/status.sh` has run after the start and its output is reported.
+    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    edits_include: [var/app.lock]
+    command_runs: 'sh bin/status.sh'
+    before:
+      - ['service\.log', '^write:.*\brm\b.*app\.lock']
+      - ['app\.lock', '^write:.*\brm\b.*app\.lock']
+    then:
+      - ['^write:.*\brm\b.*app\.lock', '^command:.*bin/start\.sh']
+      - ['^command:.*bin/start\.sh', '^command:.*bin/status\.sh']
