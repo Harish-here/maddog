@@ -66,3 +66,21 @@ jobs:
               sys.exit(1)
           VALIDATE
       - run: python3 scripts/fragment-check.py
+
+  # Every test that needs no model: the harness unit tests and the guard-script
+  # tests. Model-driven runs (tests/run.py) are never started here.
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the harness tests check out main as a baseline
+      - name: Make a local main branch for the baseline checkout
+        run: git rev-parse --verify -q main || git branch main origin/main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -r tests/requirements.txt
+      - name: Require jq (guard tests skip without it)
+        run: jq --version || (sudo apt-get update && sudo apt-get install -y jq)
+      - run: python -m pytest tests/harness tests/guard -q

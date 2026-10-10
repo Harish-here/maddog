@@ -7,6 +7,10 @@
 # 2026-10-08) the PATTERNS: line. See tests/README.md, "Agent patterns".
 # Matchers (first_call.target, before, then) are regexes. before and then match
 # "<kind>:<detail>" of each tool call, e.g. "read:add_item src" or "write:rm var/app.lock".
+covers:
+  - "agents/executor-fast.md"
+  - "scripts/pattern-declare-guard.sh"
+  - "hooks/hooks.json"
 expect: Fast
 fixture: fast-tier
 cases:

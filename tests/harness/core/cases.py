@@ -25,8 +25,21 @@ class Case:
     why: str | None = None            # required with expected_tier
 
 
+def _covers(path: Path, data: dict) -> tuple[str, ...]:
+    covers = data.get("covers", [])
+    if not isinstance(covers, list) or not all(isinstance(g, str) and g for g in covers):
+        raise ValueError(f"{path}: 'covers' must be a list of non-empty glob strings, got {covers!r}")
+    return tuple(covers)
+
+
+def load_covers(path: Path) -> tuple[str, ...]:
+    """The repo-relative globs a case file says it covers; absent means none."""
+    return _covers(path, yaml.safe_load(Path(path).read_text()))
+
+
 def load_cases(path: Path) -> list[Case]:
     data = yaml.safe_load(Path(path).read_text())
+    _covers(path, data)
     skill = data.get("skill")
     fixture = data.get("fixture")
     if not fixture:
@@ -104,6 +117,7 @@ def _regex(where: str, text) -> str:
 
 def load_agent_cases(path: Path) -> list[AgentCase]:
     data = yaml.safe_load(Path(path).read_text())
+    _covers(path, data)
     expect, fixture = data.get("expect"), data.get("fixture")
     if expect not in AGENT_ROLES:
         raise ValueError(f"{path}: 'expect' must be one of {', '.join(AGENT_ROLES)}, got {expect!r}")

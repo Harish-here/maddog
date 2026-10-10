@@ -87,6 +87,37 @@ Harness unit tests (no model):
 
     tests/.venv/bin/python -m pytest tests/harness tests/guard -q
 
+These offline tests are cheap and always run in full. CI runs them on every
+pull request and push to main (the `offline-tests` job in
+`.github/workflows/validate.yml`); model runs never run in CI.
+
+### `--changed`: run only the model tests a change touches
+
+    tests/.venv/bin/python tests/run.py --changed --runtime claude-code --dry-run
+    tests/.venv/bin/python tests/run.py --changed --runtime claude-code
+    tests/.venv/bin/python tests/run.py --changed origin/main --runtime claude-code
+
+Each case file lists the repo files it tests in a top-level `covers:` list of
+repo-relative globs (`*` stays within one folder, `**` crosses folders). A
+file with no `covers:` covers nothing and is never selected:
+
+    covers:
+      - "skills/advisor-mode/**"
+      - "agents/executor-*.md"
+
+`--changed [BASE]` (BASE defaults to `main`) replaces the target. The changed
+files are `git diff --name-only BASE...HEAD` plus uncommitted changes to
+tracked files. It checks every `skills/*/handoff.yaml` (skill mode) and
+`agents/*/patterns.yaml` (agent mode), and runs each one whose `covers:`
+matches a changed file, one after another, in its own mode. Give a target or
+`--changed`, not both. `--case`, `--patterns` and `--skill-file` do not mix
+with `--changed`; `--tier`, `--pressure`, `--runs`, `--jobs` and the rest
+apply to every selected file.
+
+`--dry-run` (with `--changed`) prints the changed files, the selected case
+files, and each one's case count and runs x sides, then exits without calling
+a model. Nothing selected prints that and exits 0.
+
 ## Read a report
 
 `tests/results/<time>/report.md` has one row per case per tier, with a
@@ -120,7 +151,8 @@ Fast-Read, Fast, Smart, Judge, Lead), `pressure` (`none`, `user`, or `decision`)
 pressure before the first run. Optional: `expected_tier` plus `why`, only when
 a report showed the case needs a higher tier and you accepted that — either
 on the case itself, or once at the top of the file for every case that
-doesn't set its own.
+doesn't set its own. A new case file also needs a `covers:` list, or
+`--changed` never selects it.
 
 ## Agent patterns (`tests/agents/`)
 

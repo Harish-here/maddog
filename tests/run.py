@@ -2,7 +2,7 @@
 """Run model-driven tests.
 
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name>
-    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --case ci-flake
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --case ci-flake-pressure
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --tier mid --pressure decision
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --tier low --case rename-add-item --case list-flags
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime <name> --ladder
@@ -17,6 +17,13 @@ patterns.yaml runs instead, in agent mode: each case runs that agent file as
 the main session, to completion.
 
     tests/.venv/bin/python tests/run.py agents/executor-fast --runtime <name> --patterns
+
+--changed [BASE] replaces the target: it runs every test file whose `covers:`
+globs match a file changed since BASE (default main) or uncommitted, each in
+its own mode. --dry-run lists the selection and calls no model.
+
+    tests/.venv/bin/python tests/run.py --changed --runtime <name> --dry-run
+    tests/.venv/bin/python tests/run.py --changed origin/main --runtime <name>
 """
 import argparse
 import shutil
@@ -26,6 +33,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+from harness.core.changed import changed_files, discover, select_tests
 from harness.core.baseline import main_sha, plugin_versions, remove_baseline, branch_with_skill
 from harness.core.cases import TESTS_DIR, TIERS, PRESSURES, AgentCase, expected_tier, load_agent_cases, load_cases, load_ladders
 from harness.core.fixture import SlotPool, make_workdir, remove_workdir
@@ -85,7 +93,13 @@ def select_cases(cases, case_ids, pressure):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("target", help="folder under tests/ holding handoff.yaml, e.g. skills/advisor-mode")
+    parser.add_argument("target", nargs="?",
+                        help="folder under tests/ holding handoff.yaml, e.g. skills/advisor-mode; not with --changed")
+    parser.add_argument("--changed", nargs="?", const="main", default=None, metavar="BASE",
+                        help="instead of a target, run every test whose covers: globs match a file changed "
+                             "since BASE (default main) or uncommitted")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="with --changed: print the changed files and the selected tests, then exit without calling a model")
     parser.add_argument("--runtime", required=True, help="a runtime listed in harness/runtimes/ladders.yaml")
     parser.add_argument("--case", action="append", help="run only cases with these ids (repeatable)")
     parser.add_argument("--tier", choices=TIERS, help="run each case at this tier only, never climbing")
@@ -102,6 +116,14 @@ def main(argv=None) -> int:
                         help="run the folder's patterns.yaml in agent mode, not its handoff.yaml")
     args = parser.parse_args(argv)
 
+    if args.changed is not None and args.target:
+        parser.error("give a target or --changed, not both")
+    if args.changed is None and not args.target:
+        parser.error("give a target or --changed")
+    if args.dry_run and args.changed is None:
+        parser.error("--dry-run goes with --changed")
+    if args.changed is not None and (args.case or args.skill_file or args.patterns):
+        parser.error("--changed picks each file's cases and mode; it cannot be combined with --case, --skill-file or --patterns")
     if args.ladder and args.tier:
         parser.error("--ladder and --tier are mutually exclusive")
     if args.jobs < 1:
@@ -109,21 +131,70 @@ def main(argv=None) -> int:
     if args.skill_file and not args.skill_file.exists():
         parser.error(f"skill file does not exist: {args.skill_file}")
 
+    if args.changed is not None:
+        return _run_changed(parser, args)
+
     for folder in sweep(TESTS_DIR.parent):
         print(f"swept leftover {folder}")
 
     if args.patterns and args.skill_file:
         parser.error("--skill-file is for skill targets; --patterns runs the agent files from this tree")
     case_file = TESTS_DIR / args.target / ("patterns.yaml" if args.patterns else "handoff.yaml")
-    cases = load_agent_cases(case_file) if args.patterns else load_cases(case_file)
+    return _run_file(parser, args, case_file, args.patterns)
 
+
+def _load_selected(parser, args, case_file, agent_mode, strict=True):
+    cases = load_agent_cases(case_file) if agent_mode else load_cases(case_file)
     try:
         cases = select_cases(cases, args.case, args.pressure)
     except ValueError as e:
         parser.error(str(e))
-
-    if not cases:
+    if not cases and strict:
         parser.error(f"no cases match the filters in {case_file}")
+    return cases
+
+
+def _run_changed(parser, args) -> int:
+    """--changed: pick test files by their covers:, then run (or, with
+    --dry-run, only list) each in its own mode."""
+    try:
+        changed = changed_files(TESTS_DIR.parent, args.changed)
+    except ValueError as e:
+        parser.error(str(e))
+    selected = select_tests(discover(TESTS_DIR), changed)
+    root = TESTS_DIR.parent
+    print(f"changed files vs {args.changed}: {len(changed)}")
+    for f in changed:
+        print(f"  {f}")
+    if not selected:
+        print("no model tests selected: no changed file matches any test's covers:")
+        return 0
+    print(f"selected test files: {len(selected)}")
+    plan = []
+    for path, agent_mode in selected:
+        cases = _load_selected(parser, args, path, agent_mode, strict=False)
+        plan.append((path, agent_mode, cases))
+        mode = "agent" if agent_mode else "skill"
+        print(f"  {path.relative_to(root)} ({mode} mode): {len(cases)} cases x {args.runs} runs x 2 sides (branch, main) "
+              f"= {len(cases) * args.runs * 2} runs, fewer if main is cached")
+    if args.dry_run:
+        return 0
+
+    for folder in sweep(TESTS_DIR.parent):
+        print(f"swept leftover {folder}")
+    for path, agent_mode, cases in plan:
+        if not cases:
+            print(f"skipping {path.relative_to(root)}: no cases match the filters")
+            continue
+        rc = _run_file(parser, args, path, agent_mode)
+        if rc != 0:
+            return rc
+    return 0
+
+
+def _run_file(parser, args, case_file, agent_mode) -> int:
+    """Run one case file: skill mode for handoff.yaml, agent mode for patterns.yaml."""
+    cases = _load_selected(parser, args, case_file, agent_mode)
 
     # If --skill-file is provided, validate that all cases use the same skill.
     if args.skill_file:

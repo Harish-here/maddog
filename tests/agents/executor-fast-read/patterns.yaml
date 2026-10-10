@@ -3,6 +3,10 @@
 # and the exact quotes and CONFIRMED / CONTRADICTED / NO EVIDENCE labels in its
 # return. See tests/README.md, "Agent patterns".
 # Matchers (first_call.target, before) are regexes over "<kind>:<detail>" of each call.
+covers:
+  - "agents/executor-fast-read.md"
+  - "scripts/pattern-declare-guard.sh"
+  - "hooks/hooks.json"
 expect: Fast-Read
 fixture: fast-tier
 cases:
