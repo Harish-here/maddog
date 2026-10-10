@@ -20,7 +20,8 @@ text goes through `.claude/skills/author-agent`, which gates via
 - Adapter set — the only paths where runtime mechanics may live: agent and
   skill frontmatter, `hooks/`, `scripts/`, `workflows/`, `tests/`, `.github/`,
   `.claude/`, `.claude-plugin/`. Within `tests/`, only code under
-  `tests/harness/runtimes/` names runtime identifiers; `tests/README.md` and
+  `tests/harness/runtimes/` names runtime identifiers, and `tests/guard/`, which
+  tests the hook scripts against their runtime's own protocol; `tests/README.md` and
   `tests/requirements.txt` may name the runtime they document. Shipped bodies (`agents/*.md`, `skills/**`)
   name capabilities (write, edit, shell, web), never runtime tool
   identifiers, settings keys, or APIs (`PHILOSOPHY.md` point 5).

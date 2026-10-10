@@ -15,14 +15,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - `agents/executor-fast.md`, `agents/executor-fast-read.md` — each declared pattern claims its range of steps (the dispatch's numbered steps or questions, else one phrase per action) and its law binds the whole range; every named pattern gets a bullet (90b54f5); a step that checks a result is VERIFY (01227bc)
-- `agents/executor-fast.md` — an edit that applies one rule at every place it fits is TRANSFORM (73b89fd); earlier in this release: the agent splits the work into steps before naming patterns, a step fitting a pattern with a law and one without names the one with the law, a run to learn whether a specified failure happens is REPRODUCE (c3f8ebb)
+- `agents/executor-fast.md` — an edit that applies one rule at every place it fits is TRANSFORM (73b89fd); a step that fits a pattern with a law and one without goes to the one with the law, and a run to learn whether a specified failure happens is REPRODUCE (c3f8ebb)
 - `agents/executor-fast-read.md` — Core Law 1: every quote is copied exactly under Diplomatic Transcription; EXTRACT applies when the answer is a source's own words; TRACE says "link" for each hop (c3f8ebb)
-- `scripts/executor-guard.sh` — a heredoc body fed to a non-shell program is no longer checked as commands (bodies fed to a shell still are); the denial text mentions file writes only to executor-lead and executor-judge, which are the only executors denied them (9f4a513)
+- `scripts/executor-guard.sh` — a heredoc body is skipped only when an allowlisted reader (python3, cat, jq and a few others) takes it as a plain command with nothing piped or chained after; every other heredoc body is still checked as commands. The denial text mentions file writes only to executor-lead and executor-judge, the only executors denied them (9f4a513, e9f061d)
 - Model-test pass rules — agent-mode files pass when at least 75% of their runs pass, no case scores zero (unless marked `known_weak` with a linked issue), and every case stays within one run of `main`; skill-mode cases stay within one run of `main` (2eafe7d, 9099396, 3afbfd5, ea4f57e)
 - `PRIVACY.md` — names the new hook, the transcript it reads, and the marker files it leaves (9fdb5f1)
 - `CLAUDE.md` — the model-driven-test invariant records the user waiver for exact matches on the `PATTERNS:` line and on Fast-Read's quotes and labels (692c10e)
+- `CLAUDE.md` — `tests/guard/` may name runtime identifiers, since it tests the hook scripts against their runtime's own protocol
 
-### Known weak
+### Known issues
 - Fast-Read case R10 (a trace closed by a claim check) and Fast case F5 (a rename closed by a test run) are marked `known_weak`: on Haiku the agent folds the closing check into the step before it, or names a neighbouring pattern (#76)
 - Fast case F9 is marked `known_weak`: given numbered steps that start with "remove the lock", the agent on Haiku can skip RECOVER's capture step and delete first (#77)
 
