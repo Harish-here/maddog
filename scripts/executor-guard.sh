@@ -135,7 +135,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
 
 deny() {
   local reason="$1"
-  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh irreversible actions or write files via Bash. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the command."
+  # deny_writes is set further down (scope check), after this function is
+  # defined; it is read at call time. Only lead/judge are barred from writing
+  # files, so only their denials say so — fast/smart may write files.
+  local what="irreversible actions"
+  [ "${deny_writes:-0}" -eq 1 ] && what="irreversible actions or write files via Bash"
+  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh ${what}. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the command."
   local reason_json ctx_json
   reason_json="$(printf '%s' "$reason" | jq -Rs .)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"
@@ -495,6 +500,159 @@ strip_command_wrappers() {
   done
 }
 
+# --- heredoc bodies fed to a non-shell program ---------------------------
+# split_command treats every newline as a segment boundary, so the body of
+# `python3 - <<'EOF'` / `cat > f.json <<'EOF'` would be judged line by line as
+# if each line were a command ((1+2) -> "unquoted '(' starts a subshell").
+# skip_heredoc_bodies runs BEFORE the split and deletes a body (and its
+# terminator line) only when every command on the heredoc's line is positively
+# identified as a non-shell. A shell consumer, or any command the guard cannot
+# identify, keeps its body in the text so it is still checked as commands
+# (fail toward checking). A body whose terminator never appears is kept too.
+# Not handled: a heredoc nested inside a body that is kept (its lines are
+# checked as before), and a body written to a file and run later
+# (`cat > s.sh <<EOF` ... `bash s.sh`). `$(...)` inside an unquoted body is
+# not examined, as it was not before.
+HEREDOC_SHELLS=" bash sh zsh dash ksh ash fish csh tcsh eval source . sudo doas su ssh xargs "
+
+# Prints the real command of one segment (wrappers peeled, basename), or "?"
+# when it cannot be identified (leading redirect, wrapper form the stripper
+# rejects). Runs in a subshell at the call site, so the deny() override and
+# the tokens mutation stay local.
+heredoc_consumer() {
+  deny() { printf '?'; exit 0; }
+  local tok_lit tok_masked
+  tokens=()
+  tokens_masked=()
+  while IFS=$'\x1f' read -r tok_lit tok_masked; do
+    tokens+=("$tok_lit")
+    tokens_masked+=("$tok_masked")
+  done < <(quote_walk word "$1")
+  strip_command_wrappers
+  if [ "${#tokens[@]}" -eq 0 ]; then
+    printf '?'
+    return 0
+  fi
+  case "${tokens_masked[0]}" in
+    [0-9]*[\<\>]*|[\<\>]*) printf '?'; return 0 ;;
+  esac
+  printf '%s' "${tokens[0]##*/}"
+}
+
+skip_heredoc_bodies() {
+  local text="$1"
+  case "$text" in
+    *'<<'*) : ;;
+    *) printf '%s' "$text"; return 0 ;;
+  esac
+  local line seg segs consumer check cmp l m rest dash i j n k
+  local active=0 active_delim="" active_dash=0 active_skip=0
+  local qn=0 qi=0 q_skip=1
+  local -a out=() held=() lits=() mks=() q_delim=() q_dash=()
+  while IFS= read -r line; do
+    if [ "$active" -eq 1 ]; then
+      cmp="$line"
+      [ "$active_dash" -eq 1 ] && cmp="${line#"${line%%[!$'\t']*}"}"
+      if [ "$cmp" = "$active_delim" ]; then
+        # terminator: dropped with a skipped body, kept with a checked one
+        [ "$active_skip" -eq 0 ] && out+=("$line")
+        held=()
+        active=0
+        if [ "$qi" -lt "$qn" ]; then
+          active=1
+          active_delim="${q_delim[$qi]}"
+          active_dash="${q_dash[$qi]}"
+          active_skip="$q_skip"
+          qi=$((qi + 1))
+        fi
+      elif [ "$active_skip" -eq 1 ]; then
+        held+=("$line")
+      else
+        out+=("$line")
+      fi
+      continue
+    fi
+    out+=("$line")
+    case "$line" in *'<<'*) : ;; *) continue ;; esac
+    # header line: find every heredoc operator and every command on the line
+    check=0
+    qn=0
+    qi=0
+    q_delim=()
+    q_dash=()
+    segs="$(split_command "$line")"
+    while IFS= read -r seg; do
+      seg="${seg#"${seg%%[![:space:]]*}"}"
+      seg="${seg%"${seg##*[![:space:]]}"}"
+      [ -z "$seg" ] && continue
+      consumer="$(heredoc_consumer "$seg")"
+      case "$consumer" in
+        '?') check=1 ;;
+        *) case "$HEREDOC_SHELLS" in *" $consumer "*) check=1 ;; esac ;;
+      esac
+      lits=()
+      mks=()
+      while IFS=$'\x1f' read -r l m; do
+        lits+=("$l")
+        mks+=("$m")
+      done < <(quote_walk word "$seg")
+      n=${#lits[@]}
+      j=0
+      while [ "$j" -lt "$n" ]; do
+        m="${mks[$j]}"
+        l="${lits[$j]}"
+        i=0
+        while [ "$i" -lt "${#m}" ]; do
+          if [ "${m:i:2}" = "<<" ]; then
+            if [ "${m:i+2:1}" = "<" ]; then # <<< here-string, not a heredoc
+              i=$((i + 3))
+              continue
+            fi
+            rest="${l:i+2}"
+            dash=0
+            if [ "${rest:0:1}" = "-" ]; then
+              dash=1
+              rest="${rest:1}"
+            fi
+            if [ -z "$rest" ] && [ $((j + 1)) -lt "$n" ]; then
+              rest="${lits[$((j + 1))]}"
+            fi
+            rest="${rest//\'/}"
+            rest="${rest//\"/}"
+            rest="${rest//\\/}"
+            if [ -z "$rest" ]; then
+              check=1 # delimiter not recoverable: do not skip anything
+            else
+              q_delim[$qn]="$rest"
+              q_dash[$qn]="$dash"
+              qn=$((qn + 1))
+            fi
+            break
+          fi
+          i=$((i + 1))
+        done
+        j=$((j + 1))
+      done
+    done <<< "$segs"
+    # every queued body shares the line's verdict: skip only when no command
+    # on the line is a shell or unidentified
+    q_skip=1
+    [ "$check" -eq 1 ] && q_skip=0
+    if [ "$qn" -gt 0 ]; then
+      active=1
+      active_delim="${q_delim[0]}"
+      active_dash="${q_dash[0]}"
+      active_skip="$q_skip"
+      qi=1
+    fi
+  done <<< "$text"
+  # a skipped body that never reached its terminator is put back
+  if [ "$active" -eq 1 ] && [ "${#held[@]}" -gt 0 ]; then
+    for k in "${held[@]}"; do out+=("$k"); done
+  fi
+  printf '%s\n' "${out[@]}"
+}
+
 # --- read stdin once, tolerate absent/malformed input by allowing ---
 input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
@@ -537,6 +695,9 @@ cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 # .cwd resolves a relative path token before the recursive-delete check's
 # normalize_path call, below — see the chained-cd known limit in the header.
 cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+
+# --- drop heredoc bodies fed to non-shell programs before splitting ---
+cmd="$(skip_heredoc_bodies "$cmd")"
 
 # --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
 segments_raw="$(split_command "$cmd")"
