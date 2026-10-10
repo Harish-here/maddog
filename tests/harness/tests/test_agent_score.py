@@ -97,12 +97,18 @@ def test_check3_fails_with_no_call_at_all():
     assert v.checks["3"] is False and "no tool call" in v.reason
 
 
-# ---- setup steps are not scored (cd, pushd, export, set -e, VAR=value)
+# ---- setup steps are not scored (cd, pushd, pwd, export, set -e, VAR=value)
 
-@pytest.mark.parametrize("setup", ["cd /w", "pushd /w", "export PYTHONDONTWRITEBYTECODE=1", "set -e", "set -euo pipefail",
+@pytest.mark.parametrize("setup", ["cd /w", "pushd /w", "pwd", "export PYTHONDONTWRITEBYTECODE=1", "set -e", "set -euo pipefail",
                                    "unset X", "PYTHONDONTWRITEBYTECODE=1"])
 def test_check3_skips_a_setup_step_before_the_real_first_call(setup):
     v = score_agent(run_with(DECLARE, Event("command", setup), SEARCH), make_case())
+    assert v.checks["3"] is True
+
+
+def test_pwd_then_the_report_call_makes_the_report_call_the_first_call():
+    case = make_case(first_call={"kind": ["command"], "target": "report.py"})
+    v = score_agent(run_with(DECLARE, Event("command", "pwd"), Event("command", "python3 bin/report.py --item 3")), case)
     assert v.checks["3"] is True
 
 

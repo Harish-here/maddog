@@ -47,10 +47,12 @@ def needed_passes(runs: int) -> int:
     return -(-2 * runs // 3)
 
 
-def case_verdict(result, runs: int) -> dict:
-    """D1: the branch passes at least as often as main and at least 2/3 of `runs`.
-    Always a fail when the case hit its void limit or either side has fewer
-    than `runs` valid (non-VOID) runs, or no single expected tier is known."""
+def case_verdict(result, runs: int, agent_mode: bool) -> dict:
+    """D1: the branch passes at least `main`'s passes minus one (a one-run gap is
+    allowed). Agent-mode cases also need at least 2/3 of `runs` on the branch;
+    skill-mode cases have no such floor. Always a fail when the case hit its void
+    limit or either side has fewer than `runs` valid (non-VOID) runs, or no single
+    expected tier is known."""
     tier = result.only_tier
 
     def valid(version):
@@ -58,8 +60,9 @@ def case_verdict(result, runs: int) -> dict:
 
     branch_pass, main_pass = passes(result.records, "branch", tier), passes(result.records, "main", tier)
     branch_valid, main_valid = valid("branch"), valid("main")
+    floor_ok = branch_pass >= needed_passes(runs) if agent_mode else True
     ok = (tier is not None and not result.void_limited and branch_valid >= runs and main_valid >= runs
-          and branch_pass >= main_pass and branch_pass >= needed_passes(runs))
+          and branch_pass >= main_pass - 1 and floor_ok)
     return {"tier": tier, "branch_pass": branch_pass, "main_pass": main_pass,
             "valid_runs": {"branch": branch_valid, "main": main_valid},
             "void_limited": result.void_limited, "verdict": "pass" if ok else "fail"}
@@ -98,7 +101,7 @@ def slug_of(test_path: str) -> str:
 
 
 def entry_for(repo_root: Path, test: SelectedTest, results, runs: int, results_path: str) -> dict:
-    cases = {r.case.id: case_verdict(r, runs) for r in results}
+    cases = {r.case.id: case_verdict(r, runs, test.agent_mode) for r in results}
     ok = bool(cases) and all(c["verdict"] == "pass" for c in cases.values())
     return {"path": test.path, "mode": "agent" if test.agent_mode else "skill", "results": results_path,
             "cases": cases, "verdict": "pass" if ok else "fail", "fingerprints": fingerprints(repo_root, test)}

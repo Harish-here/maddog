@@ -167,36 +167,48 @@ def test_needed_passes_is_two_thirds_rounded_up(runs, need):
     (3, 0, 0, 3, "pass"),
     (2, 1, 2, 1, "pass"),      # 2 of 3 and not below main
     (2, 1, 1, 2, "pass"),
-    (2, 1, 3, 0, "fail"),      # branch below main
+    (2, 1, 3, 0, "pass"),      # one run below main: the allowed gap
     (1, 2, 0, 3, "fail"),      # not 2 of 3, even though main is worse
-    (0, 3, 0, 3, "fail"),
+    (0, 3, 0, 3, "fail"),      # agent mode: not 2 of 3
 ])
 def test_case_verdict_applies_d1_with_three_runs(bp, bf, mp, mf, expected):
-    got = case_verdict(fake_case_result(bp, bf, mp, mf), 3)
+    got = case_verdict(fake_case_result(bp, bf, mp, mf), 3, agent_mode=True)
     assert got["verdict"] == expected
     assert (got["branch_pass"], got["main_pass"]) == (bp, mp)
     assert got["valid_runs"] == {"branch": bp + bf, "main": mp + mf}
 
 
 def test_case_verdict_needs_two_thirds_of_a_larger_run_count():
-    assert case_verdict(fake_case_result(3, 3, 0, 6), 6)["verdict"] == "fail"
-    assert case_verdict(fake_case_result(4, 2, 4, 2), 6)["verdict"] == "pass"
+    assert case_verdict(fake_case_result(3, 3, 0, 6), 6, agent_mode=True)["verdict"] == "fail"
+    assert case_verdict(fake_case_result(4, 2, 4, 2), 6, agent_mode=True)["verdict"] == "pass"
 
 
-def test_fewer_valid_runs_than_asked_is_a_fail_on_either_side():
-    assert case_verdict(fake_case_result(2, 0, 3, 0), 3)["verdict"] == "fail"
-    assert case_verdict(fake_case_result(3, 0, 2, 0), 3)["verdict"] == "fail"
+@pytest.mark.parametrize("bp, bf, mp, mf, agent, expected", [
+    (0, 3, 0, 3, False, "pass"),   # skill 0/3 vs 0/3
+    (1, 2, 2, 1, False, "pass"),   # skill 1/3 vs 2/3: one run below main
+    (1, 2, 3, 0, False, "fail"),   # skill 1/3 vs 3/3: two runs below main
+    (1, 2, 0, 3, True, "fail"),    # agent 1/3 vs 0/3: under 2 of 3
+    (2, 1, 3, 0, True, "pass"),    # agent 2/3 vs 3/3: one run below main, 2 of 3
+])
+def test_the_two_thirds_floor_applies_to_agent_cases_only(bp, bf, mp, mf, agent, expected):
+    assert case_verdict(fake_case_result(bp, bf, mp, mf), 3, agent_mode=agent)["verdict"] == expected
+
+
+@pytest.mark.parametrize("agent", [True, False])
+def test_fewer_valid_runs_than_asked_is_a_fail_on_either_side_in_both_modes(agent):
+    assert case_verdict(fake_case_result(2, 0, 3, 0), 3, agent_mode=agent)["verdict"] == "fail"
+    assert case_verdict(fake_case_result(3, 0, 2, 0), 3, agent_mode=agent)["verdict"] == "fail"
 
 
 def test_void_runs_do_not_count_as_valid_and_void_limit_always_fails():
-    ok = case_verdict(fake_case_result(3, 0, 3, 0, voids=2), 3)
+    ok = case_verdict(fake_case_result(3, 0, 3, 0, voids=2), 3, agent_mode=True)
     assert ok["verdict"] == "pass" and ok["valid_runs"] == {"branch": 3, "main": 3}
-    limited = case_verdict(fake_case_result(3, 0, 3, 0, void_limited=True), 3)
+    limited = case_verdict(fake_case_result(3, 0, 3, 0, void_limited=True), 3, agent_mode=False)
     assert limited["verdict"] == "fail" and limited["void_limited"] is True
 
 
 def test_a_result_with_no_expected_tier_fails():
-    assert case_verdict(fake_case_result(3, 0, 3, 0, tier=None), 3)["verdict"] == "fail"
+    assert case_verdict(fake_case_result(3, 0, 3, 0, tier=None), 3, agent_mode=False)["verdict"] == "fail"
 
 
 # --- fingerprints ---

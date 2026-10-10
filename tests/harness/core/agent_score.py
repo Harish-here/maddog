@@ -21,7 +21,7 @@ position, with any markup around it. Check 2 then reads the pattern names from t
 line that holds it.
 
 Setup steps are not scored. A step that only changes directory or sets up the
-shell (`cd <dir>`, `pushd`, `popd`, `export X=1`, `X=1`, `set -e`, `unset X`) is
+shell (`cd <dir>`, `pushd`, `popd`, `pwd`, `export X=1`, `X=1`, `set -e`, `unset X`) is
 kept in the event log but skipped when choosing the first call (check 3) and when
 matching `before`, `then` and `command_runs`, so `cd /w && python3 -m unittest t`
 is scored as the test run it is. A lone `cd` followed by an edit still fails check 3.
@@ -44,7 +44,7 @@ from harness.core.shell import first_in_pipeline
 CHECK_NAMES = {"1": "PATTERNS line before the first call", "2": "declared patterns",
                "3": "first call", "4": "law check"}
 PATTERNS_LINE = re.compile(r"^.*?PATTERNS:[ \t]*(.*)$", re.MULTILINE)  # the line holding the marker; the rest of it is the names
-SETUP_STEP = re.compile(r"^(cd|pushd|popd)(\s|$)|^set\s+[-+]|^(export|unset)\s+\w+|^\w+=\S*$")
+SETUP_STEP = re.compile(r"^(cd|pushd|popd|pwd)(\s|$)|^set\s+[-+]|^(export|unset)\s+\w+|^\w+=\S*$")
 # A model may wrap a field name in markdown (`**RESULT:**`, `## RESULT:`, `- RESULT:`); it is still the field.
 MARK = r"[ \t>#*_`-]*"
 RESULT_FIELD = re.compile(rf"^{MARK}RESULT[ \t]*:[*_` \t]*(.*?)(?=^{MARK}NOT DONE[ \t]*:|\Z)", re.MULTILINE | re.DOTALL)

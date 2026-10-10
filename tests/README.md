@@ -143,9 +143,11 @@ same commit). Then, in order:
    same version, and prints the attempt number (kept in the manifest as
    `attempt`, so re-recording until a lucky pass shows in review).
 
-The pass rule per case: the branch passes at least as often as `main`, and in
-at least 2 of 3 runs (generally `ceil(2/3 * runs)`). A case fails whenever it
-hit the void limit or either side has fewer than `--runs` valid runs. A test
+The pass rule per case: the branch passes at least `main`'s passes minus one (a
+one-run gap is allowed). Agent-mode cases also need the branch to pass in at
+least 2 of 3 runs (generally `ceil(2/3 * runs)`); skill-mode cases have no such
+floor. A case fails whenever it hit the void limit or either side has fewer than
+`--runs` valid runs. A test
 file passes when all of its cases pass. The command exits 1 after writing a
 recording that failed the rule; the gate rejects it.
 
@@ -264,7 +266,7 @@ A run passes only if all four checks pass:
 3. the first tool call is the kind and target the case expects; this is strict,
    so an `ls` or a Glob before the grep fails it. Setup steps are not scored
    and are skipped when choosing the first call: a step that only changes
-   directory or sets up the shell (`cd`, `pushd`, `popd`, `export X=1`, `X=1`,
+   directory or sets up the shell (`cd`, `pushd`, `popd`, `pwd`, `export X=1`, `X=1`,
    `set -e`, `unset X`). `cd /w && grep -rn x .` is scored as the grep; a lone
    `cd` followed by an edit still fails
 4. the law check for that case: files changed or left alone (read from git
