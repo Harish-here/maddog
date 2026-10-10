@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 import run
-from harness.core.cases import Case, load_agent_cases, load_cases, load_ladders
+from harness.core.cases import AgentCase, Case, load_agent_cases, load_cases, load_ladders
 from harness.core.changed import select_for_base, selecting_files
 from harness.core.release import (case_verdict, check_gate, dirty_covered, entry_for, file_hash, file_verdict,
                                   fingerprint_of, fingerprint_paths, plugin_version, slug_of, text_hash)
@@ -270,6 +270,27 @@ def test_a_result_with_no_expected_tier_fails():
     assert case_verdict(fake_case_result(3, 0, 3, 0, tier=None), 3, agent_mode=False)["verdict"] == "fail"
 
 
+WEAK_URL = "https://github.com/Harish-here/maddog/issues/76"
+WEAK = AgentCase("w1", "p", "Fast", "todo-app", ("TRACE",), {"kind": ["read"], "target": "x"}, {}, WEAK_URL)
+
+
+@pytest.mark.parametrize("bp, bf, mp, mf, expected", [
+    (0, 3, 0, 3, "pass"),      # the zero rule is excused for a known_weak case
+    (0, 3, 1, 2, "pass"),      # the one-run gap still applies
+    (0, 3, 2, 1, "fail"),      # two runs below main still fails
+    (1, 2, 3, 0, "fail"),
+])
+def test_known_weak_case_is_excused_from_the_zero_rule_only(bp, bf, mp, mf, expected):
+    got = case_verdict(fake_case_result(bp, bf, mp, mf, case=WEAK), 3, agent_mode=True)
+    assert got["verdict"] == expected and got["known_weak"] == WEAK_URL
+
+
+def test_known_weak_case_keeps_the_void_limit_and_the_valid_run_rules():
+    assert case_verdict(fake_case_result(3, 0, 3, 0, void_limited=True, case=WEAK), 3, agent_mode=True)["verdict"] == "fail"
+    assert case_verdict(fake_case_result(0, 2, 0, 3, case=WEAK), 3, agent_mode=True)["verdict"] == "fail"
+    assert "known_weak" not in case_verdict(fake_case_result(3, 0, 3, 0, case=CASE), 3, agent_mode=True)
+
+
 # --- fingerprints ---
 
 def test_fingerprint_paths_are_tracked_covered_files_plus_the_case_file(repo):
@@ -303,6 +324,7 @@ class Fake:
     """Replaces everything in run.py that touches a model, the network, or a long test run."""
     def __init__(self, monkeypatch, repo):
         self.passing = True
+        self.counts = {}  # (version, case id) -> passing runs, overriding `passing`
         self.file_runs = []
         self.offline = (0, "488 passed in 9.99s")
         self.synced = True
@@ -323,7 +345,7 @@ class Fake:
         for case in cases:
             records = []
             for version in ("branch", "main"):
-                n_pass = args.runs if (self.passing or version == "main") else 0
+                n_pass = self.counts.get((version, case.id), args.runs if (self.passing or version == "main") else 0)
                 verdicts = ["PASS"] * n_pass + ["FAIL"] * (args.runs - n_pass)
                 records += [RunRecord(case.id, version, "low", i, [], Verdict(v, "r"), cost_usd=0.5)
                             for i, v in enumerate(verdicts, 1)]
@@ -731,3 +753,57 @@ def test_recording_is_not_blocked_by_an_uncommitted_body_edit_to_a_frontmatter_o
     assert dirty_covered(fm_repo, [test]) == []
     write(fm_repo, "agents/a.md", AGENT_MD.replace("first", "dirty description"))
     assert dirty_covered(fm_repo, [test]) == ["agents/a.md"]
+
+
+# --- known_weak: a case excused from the zero rule, through record and gate ---
+
+WEAK_URL = "https://github.com/Harish-here/maddog/issues/76"
+
+
+def weak_agent_file(cases):
+    """cases: [(id, known_weak URL or None)], in a patterns.yaml that covers scripts/g.sh."""
+    out = f"covers: {AGENT_COVERS}\nexpect: Fast\nfixture: fast-tier\ncases:\n"
+    for cid, url in cases:
+        out += f"  - id: {cid}\n    prompt: do it\n    patterns: [TRACE, VERIFY]\n    first_call: {{kind: [read], target: cli}}\n"
+        if url:
+            out += f'    known_weak: "{url}"\n'
+    return out
+
+
+def record_weak(fake, repo, cases, counts):
+    """Write the agent file, bump, change the covered script, and record with the given run counts."""
+    write(repo, "tests/agents/a1/patterns.yaml", weak_agent_file(cases))
+    fake.counts.update(counts)
+    bump(repo)
+    write(repo, "scripts/g.sh", "echo h")
+    commit(repo)
+    return go()
+
+
+def test_a_known_weak_case_at_zero_passes_the_gate_when_the_file_holds_75_percent(fake, repo):
+    cases = [("c1", None), ("c2", None), ("c3", None), ("c4", None), ("w1", WEAK_URL)]
+    assert record_weak(fake, repo, cases, {("branch", "w1"): 0, ("main", "w1"): 0}) == 0
+    assert fails_of(repo) == []
+    entry = agent_entry(manifest_of(repo))
+    assert entry["cases"]["w1"]["known_weak"] == WEAK_URL and entry["cases"]["w1"]["verdict"] == "pass"
+    assert (entry["branch_pass"], entry["branch_runs"]) == (12, 15)
+    assert f"known weak ({WEAK_URL})" in (repo / "tests/releases/1.0.1/agents-a1.md").read_text()
+
+
+def test_the_same_zero_case_without_the_marker_fails_the_gate(fake, repo):
+    cases = [("c1", None), ("c2", None), ("c3", None), ("c4", None), ("w1", None)]
+    assert record_weak(fake, repo, cases, {("branch", "w1"): 0, ("main", "w1"): 0}) == 1
+    assert any("case w1 verdict is 'fail'" in f for f in fails_of(repo))
+
+
+def test_a_known_weak_case_two_runs_below_main_fails_the_gate(fake, repo):
+    cases = [("c1", None), ("c2", None), ("c3", None), ("c4", None), ("w1", WEAK_URL)]
+    assert record_weak(fake, repo, cases, {("branch", "w1"): 0, ("main", "w1"): 2}) == 1
+    assert any("case w1 verdict is 'fail'" in f for f in fails_of(repo))
+
+
+def test_a_known_weak_cases_runs_count_in_the_file_rate(fake, repo):
+    cases = [("c1", None), ("c2", None), ("w1", WEAK_URL)]
+    assert record_weak(fake, repo, cases, {("branch", "w1"): 0, ("main", "w1"): 0}) == 1
+    assert all(c["verdict"] == "pass" for c in agent_entry(manifest_of(repo))["cases"].values())
+    assert any("branch passed 6 of 9 runs, under 75%" in f for f in fails_of(repo))

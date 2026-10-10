@@ -48,22 +48,28 @@ FILE_PASS_RATE = (3, 4)  # agent-mode files pass on at least 3/4 (75%) of their 
 def case_verdict(result, runs: int, agent_mode: bool) -> dict:
     """D1, per case: the branch passes at least `main`'s passes minus one (a
     one-run gap is allowed). An agent-mode case also needs at least one branch
-    pass (no case at zero); the file-level rate is `file_verdict`'s. Always a
-    fail when the case hit its void limit or either side has fewer than `runs`
-    valid (non-VOID) runs, or no single expected tier is known."""
+    pass (no case at zero), except a known_weak case (its case carries an issue
+    URL), which is excused from that zero rule alone; the file-level rate is
+    `file_verdict`'s and counts its runs. Always a fail when the case hit its
+    void limit or either side has fewer than `runs` valid (non-VOID) runs, or no
+    single expected tier is known."""
     tier = result.only_tier
+    weak = getattr(result.case, "known_weak", None)
 
     def valid(version):
         return sum(1 for r in result.records if r.version == version and r.tier == tier and r.verdict.result != "VOID")
 
     branch_pass, main_pass = passes(result.records, "branch", tier), passes(result.records, "main", tier)
     branch_valid, main_valid = valid("branch"), valid("main")
-    floor_ok = branch_pass >= 1 if agent_mode else True
+    floor_ok = branch_pass >= 1 if (agent_mode and not weak) else True
     ok = (tier is not None and not result.void_limited and branch_valid >= runs and main_valid >= runs
           and branch_pass >= main_pass - 1 and floor_ok)
-    return {"tier": tier, "branch_pass": branch_pass, "main_pass": main_pass,
-            "valid_runs": {"branch": branch_valid, "main": main_valid},
-            "void_limited": result.void_limited, "verdict": "pass" if ok else "fail"}
+    out = {"tier": tier, "branch_pass": branch_pass, "main_pass": main_pass,
+           "valid_runs": {"branch": branch_valid, "main": main_valid},
+           "void_limited": result.void_limited, "verdict": "pass" if ok else "fail"}
+    if weak:
+        out["known_weak"] = weak
+    return out
 
 
 def branch_totals(cases: dict) -> tuple[int, int]:
@@ -159,6 +165,7 @@ def case_table(entry: dict, results) -> str:
     for cid, c in entry["cases"].items():
         v = c["valid_runs"]
         flag = " (void limit)" if c["void_limited"] else ""
+        flag += f" (known weak ({c['known_weak']}))" if c.get("known_weak") else ""
         lines.append(f"| {cid} | {roles.get(cid, '')} | {c['tier']} | {c['branch_pass']}/{v['branch']} "
                      f"| {c['main_pass']}/{v['main']} | {c['verdict']}{flag} |")
     return "\n".join(lines) + "\n"

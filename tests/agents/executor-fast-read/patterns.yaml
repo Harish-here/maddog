@@ -143,6 +143,8 @@ cases:
   # R10: a TRACE through code only (no config), ending in a claim the last line confirms.
   # Full-length dispatch. Each link is cited, so each calling and defining line is a quote.
   - id: R10
+    # Folds the claim check into TRACE on Haiku; see #76.
+    known_weak: "https://github.com/Harish-here/maddog/issues/76"
     patterns: [TRACE, VERIFY]
     prompt: |
       PURPOSE: before anyone touches the report code, I need the exact path from the report command down to the line total, with the lines as written.

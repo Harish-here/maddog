@@ -167,6 +167,14 @@ or when either side has fewer than `--runs` valid runs.
 The command exits 1 after writing a recording that failed the rule; the gate
 rejects it.
 
+A case in `patterns.yaml` may carry `known_weak: "<issue URL>"` (a non-empty
+string; the loader rejects anything else). It excuses that case from the zero
+rule only: it may sit at 0 branch passes, and the one-run gap to `main` still
+applies, as do the void limit and the valid-run count. Its runs still count
+toward the file's 75%. The recording shows the URL in the manifest and as a
+`known weak (<URL>)` flag in the case table. The marker must link an issue
+that tracks the weakness; a case without one fails the zero rule as before.
+
 `tests/releases/<version>/` holds, all committed:
 
 - `manifest.json`: version, tested and base commits, changed files, attempt,

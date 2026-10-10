@@ -112,6 +112,8 @@ LABELS = ("CONFIRMED", "CONTRADICTED", "NO EVIDENCE")
 CHECK_KEYS = ("edits_include", "edits_exclude", "no_edits", "before", "then",
               "command_runs", "return_quotes", "return_lacks", "label")
 CASE_KEYS = ("id", "prompt", "patterns", "first_call")
+# Optional case keys. known_weak: "<issue URL>" excuses a case from the release gate's zero rule (release.py).
+OPTIONAL_CASE_KEYS = ("known_weak",)
 # Check keys that read the agent's returned words. Only Fast-Read's quotes and labels are waived.
 WORDS_KEYS = ("return_quotes", "return_lacks", "label")
 
@@ -125,6 +127,7 @@ class AgentCase:
     patterns: tuple    # the pattern names the work holds: check 2 wants all of them declared
     first_call: dict   # {"kind": [..], "target": regex}: check 3
     checks: dict       # check 4: only keys from CHECK_KEYS
+    known_weak: str | None = None  # an issue URL: the case may sit at zero branch passes (release gate only)
 
 
 def _regex(where: str, text) -> str:
@@ -166,7 +169,11 @@ def load_agent_cases(path: Path) -> list[AgentCase]:
             raise ValueError(f"{path}: case {cid}: first_call.kind must be from {CALL_KINDS}, got {first_call.get('kind')!r}")
         first_call = {"kind": kinds, "target": _regex(f"{path}: case {cid}: first_call.target", first_call.get("target"))}
 
-        checks = {k: v for k, v in raw.items() if k not in CASE_KEYS}
+        known_weak = raw.get("known_weak")
+        if "known_weak" in raw and (not isinstance(known_weak, str) or not known_weak.strip()):
+            raise ValueError(f"{path}: case {cid}: known_weak must be a non-empty issue URL string, got {known_weak!r}")
+
+        checks = {k: v for k, v in raw.items() if k not in CASE_KEYS + OPTIONAL_CASE_KEYS}
         unknown = sorted(set(checks) - set(CHECK_KEYS))
         if unknown:
             raise ValueError(f"{path}: case {cid}: unknown check key(s) {', '.join(unknown)}; known: {', '.join(CHECK_KEYS)}")
@@ -185,7 +192,8 @@ def load_agent_cases(path: Path) -> list[AgentCase]:
         if "label" in checks and checks["label"] not in LABELS:
             raise ValueError(f"{path}: case {cid}: label must be one of {LABELS}")
 
-        cases.append(AgentCase(cid, raw["prompt"], expect, fixture, tuple(raw["patterns"]), first_call, checks))
+        cases.append(AgentCase(cid, raw["prompt"], expect, fixture, tuple(raw["patterns"]), first_call, checks,
+                               known_weak.strip() if known_weak else None))
     if not cases:
         raise ValueError(f"{path}: no cases")
     return cases

@@ -182,3 +182,17 @@ def test_a_duplicate_id_is_an_error(tmp_path):
     two = AGENT_FILE + AGENT_FILE.split("cases:\n")[1]
     with pytest.raises(ValueError, match="duplicate case id"):
         load_agent_cases(write_patterns(tmp_path, two))
+
+
+def test_known_weak_is_an_optional_issue_url_and_not_a_check(tmp_path):
+    url = "https://github.com/Harish-here/maddog/issues/76"
+    (case,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE + f'    known_weak: "{url}"\n'))
+    assert case.known_weak == url and "known_weak" not in case.checks
+    (plain,) = load_agent_cases(write_patterns(tmp_path, AGENT_FILE))
+    assert plain.known_weak is None
+
+
+@pytest.mark.parametrize("line", ['known_weak: ""', 'known_weak: "   "', "known_weak: 76", "known_weak: [x]", "known_weak:"])
+def test_known_weak_must_be_a_non_empty_string(tmp_path, line):
+    with pytest.raises(ValueError, match="known_weak must be a non-empty issue URL"):
+        load_agent_cases(write_patterns(tmp_path, AGENT_FILE + f"    {line}\n"))
