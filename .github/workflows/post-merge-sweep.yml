@@ -1,0 +1,34 @@
+name: Post-merge sweep
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: sweep
+        run: python3 scripts/post-merge-sweep.py | tee sweep.txt
+      - name: Open or update the sweep issue
+        if: failure() && steps.sweep.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body="Sweep failed on ${GITHUB_SHA}.
+
+          \`\`\`
+          $(cat sweep.txt)
+          \`\`\`"
+          existing=$(gh issue list --label post-merge-sweep --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh label create post-merge-sweep --color BFD4F2 2>/dev/null || true
+            gh issue create --title "Post-merge sweep findings" --label post-merge-sweep --body "$body"
+          fi
