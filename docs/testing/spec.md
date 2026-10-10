@@ -331,7 +331,7 @@ layout section gains `tests/`.
 
 ## Executor-family adoption (second build)
 
-Each executor gets `tests/agents/executor-<name>/handoff.yaml`, with tasks
+Each executor gets `tests/agents/executor-<name>/patterns.yaml`, with tasks
 that agent should win in a plain session — no skill loaded, so only the
 agents' descriptions guide Claude Code's choice. `run.py agents` runs
 all five together, because the descriptions compete with each other for
