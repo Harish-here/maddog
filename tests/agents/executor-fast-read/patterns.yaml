@@ -32,7 +32,7 @@ cases:
     prompt: |
       GOAL: trace the call to `fetch_stock` made in `cmd_sync` (src/stockroom/cli.py) to its definition, and from there to the config key it reads.
       BOUNDARY: read-only. Start at `cmd_sync`. Follow only that path.
-      DONE-WHEN: you have cited, in order, the calling line, the definition line, and the config line that sets the key, each quoted exactly.
+      DONE-WHEN: you have cited, in order, the calling line, the line that starts `def fetch_stock`, and the config line that sets the key, each quoted exactly.
     first_call: {kind: [read], target: 'cli\.py|cmd_sync'}
     before:
       - ['^read:.*(cli\.py|cmd_sync)', '^read:.*(remote\.py|fetch_stock)']

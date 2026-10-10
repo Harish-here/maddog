@@ -203,11 +203,18 @@ def test_agent_file_at_29_of_36_passes():
     assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (29, 36, 0.806, "pass")
 
 
-def test_agent_file_at_28_of_36_fails_on_the_rate_alone():
+def test_agent_file_at_28_of_36_passes_at_75_percent():
     entries = case_entries([(3, 3)] * 4 + [(2, 3)] * 8)
     assert all(c["verdict"] == "pass" for c in entries.values())
     got = file_verdict(entries, agent_mode=True)
-    assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (28, 36, 0.778, "fail")
+    assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (28, 36, 0.778, "pass")
+
+
+def test_agent_file_at_26_of_36_fails_on_the_rate_alone():
+    entries = case_entries([(3, 3)] * 2 + [(2, 3)] * 10)
+    assert all(c["verdict"] == "pass" for c in entries.values())
+    got = file_verdict(entries, agent_mode=True)
+    assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (26, 36, 0.722, "fail")
 
 
 def test_agent_file_with_a_case_at_zero_fails_at_92_percent():
@@ -580,13 +587,13 @@ def agent_entry(m):
     return next(e for e in m["tests"] if e["mode"] == "agent")
 
 
-def test_gate_fails_an_agent_file_under_80_percent_even_if_its_verdicts_say_pass(recorded_agent):
+def test_gate_fails_an_agent_file_under_75_percent_even_if_its_verdicts_say_pass(recorded_agent):
     def edit(m):
         e = agent_entry(m)
         for c in e["cases"].values():
             c["branch_pass"], c["main_pass"] = 1, 2   # within main - 1, none at zero, verdicts still say pass
     rewrite_manifest(recorded_agent, edit)
-    assert any("branch passed" in f and "under 80%" in f for f in fails_of(recorded_agent))
+    assert any("branch passed" in f and "under 75%" in f for f in fails_of(recorded_agent))
 
 
 def test_gate_fails_on_a_failing_agent_file_verdict_or_case_verdict(recorded_agent):

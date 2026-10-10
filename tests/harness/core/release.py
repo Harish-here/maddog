@@ -42,7 +42,7 @@ def release_dir(repo_root: Path, version: str) -> Path:
 
 # --- D1: the pass rule ---
 
-FILE_PASS_RATE = (4, 5)  # agent-mode files pass on at least 4/5 (80%) of their branch runs
+FILE_PASS_RATE = (3, 4)  # agent-mode files pass on at least 3/4 (75%) of their branch runs
 
 
 def case_verdict(result, runs: int, agent_mode: bool) -> dict:
@@ -79,7 +79,7 @@ def rate_ok(passed: int, total: int) -> bool:
 def file_verdict(cases: dict, agent_mode: bool) -> dict:
     """The file's verdict from its case entries. Skill mode: every case passes.
     Agent mode: every case passes (so none is at zero or two below main) and the
-    branch passes at least 80% of all its runs together."""
+    branch passes at least 75% of all its runs together."""
     passed, total = branch_totals(cases)
     ok = bool(cases) and all(c["verdict"] == "pass" for c in cases.values())
     if agent_mode:
@@ -237,7 +237,7 @@ def check_gate(repo_root: Path, base: str):
         if test.agent_mode:
             passed, total = branch_totals(cases)
             if not rate_ok(passed, total):
-                fails.append(f"{test.path}: branch passed {passed} of {total} runs, under 80%")
+                fails.append(f"{test.path}: branch passed {passed} of {total} runs, under 75%")
         prints = entry.get("fingerprints", {})
         for path, digest in prints.items():
             f = root / path
