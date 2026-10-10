@@ -35,19 +35,19 @@ that branch's committed tree, never against uncommitted edits.
 
 Run checks 1 to 4 against the branch's committed tree and record each result.
 
-1. **CI, locally.** Extract the Python script between `<< 'VALIDATE'` and
-   `VALIDATE` in `.github/workflows/validate.yml`, and run it verbatim with
-   `python3` and `pyyaml` installed. If those markers are gone, stop and
-   report it. Never substitute a remembered copy of the checks.
-2. **Shell.** Run `bash -n` on every `.sh` file in `scripts/`. Parse
-   `hooks/hooks.json` and confirm every command path in it exists. Run
-   `scripts/executor-guard.sh` twice, piping it a PreToolUse JSON payload on
-   stdin with `agent_type` set to `executor-fast`, `cwd` set to the repo root,
-   and `tool_input.command` set to the command under test. Send `ls` on the
-   first run and `git reset --hard` on the second. It exits 0 either way, so
-   read its output, not its status: `ls` must print nothing, and
-   `git reset --hard` must print a `hookSpecificOutput` block carrying a deny
-   decision.
+1. **Tests.** Run `git branch -f main origin/main`, then run
+   `tests/.venv/bin/python tests/run.py --changed --runtime claude-code --record`.
+   It runs the offline tests, then the model tests covering every changed
+   file. When it writes `tests/releases/<version>/`, commit that folder.
+   Any failed case is a failed check: fix the cause, then record again; the
+   attempt count it prints goes in the pull request. When it refuses because
+   the version is unchanged, the change needs a version: return to step 4 of
+   section 1.
+2. **CI, locally.** Run `PYTHON=tests/.venv/bin/python .github/validate.sh`,
+   the script the `validate` job runs on every pull request. It must exit 0.
+   Its last step is the release gate: it fails when the recording from
+   check 1 is missing, failed, or does not match a covered file's current
+   content.
 3. **Manifests.** List `agents/`, `skills/` and `workflows/` from disk and
    diff them against `.claude-plugin/plugin.json` and
    `.claude-plugin/marketplace.json`. Grep the repo for by-name references to
@@ -55,7 +55,8 @@ Run checks 1 to 4 against the branch's committed tree and record each result.
 4. **Changelog.** Skip this when the change carries no version. Otherwise
    the new entry is present and follows the style of the entries above it.
 5. If `origin/main` moved while you were working, rebase onto it and run
-   these checks and the review again against the new head commit.
+   these checks and the review again against the new head commit. Check 1
+   records again only when check 2's gate fails.
 
 ## 3. Get it cleared
 
@@ -71,7 +72,10 @@ so a change to it needs a reviewer.
 
 When the table says a reviewer is required, dispatch one independent
 reviewer holding the diff, the check results from section 2, and the table
-above. The reviewer must have no ability to edit the repository, and whoever
+above. When check 1 wrote `tests/releases/<version>/`, the reviewer also
+confirms its `manifest.json` matches the run report at the `tests/results/`
+path the manifest names.
+The reviewer must have no ability to edit the repository, and whoever
 authored the release never clears it.
 
 Ask for one verdict: CLEAR or BLOCKED, with findings, naming the exact head
@@ -86,8 +90,8 @@ commit.
 
 1. Push the branch to origin.
 2. Open or update the pull request against main. The body carries the
-   verdict and the commit it names, and every check from section 2 with its
-   result.
+   verdict and the commit it names, every check from section 2 with its
+   result, and the path to `tests/releases/<version>/` when check 1 wrote one.
 3. Stop there. Never merge — the user merges, always.
 4. Tell the user, when handing over: merge only while the verdict names the
    pull request's current head commit. A force-push replaces that commit and
@@ -104,7 +108,11 @@ tag, and nothing new for anyone to install.
    confirm that commit is on it. Tag that SHA. Never tag local HEAD.
 2. Tag it `vX.Y.Z` and push the tag.
 3. Publish to every target in the table below.
-4. Confirm CI is green on main for that commit.
+4. Confirm the pull request's `validate` check passed on the head commit
+   that was merged, and that main's branch protection requires branches to
+   be up to date (`required_status_checks.strict` is true). If it is not,
+   the merged tree is untested: run `.github/validate.sh` on the merge
+   commit and report the result.
 5. Comment on the merged pull request with the tag, each target's proof, and
    the CI result.
 
