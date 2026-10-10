@@ -10,7 +10,7 @@ Model-driven tests for this repo. Design: `docs/testing/spec.md`.
 ## Run
 
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code
-    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake
+    tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --case ci-flake-pressure
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier mid --pressure decision
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --tier low --case rename-add-item --case list-flags
     tests/.venv/bin/python tests/run.py skills/advisor-mode --runtime claude-code --ladder
@@ -28,6 +28,8 @@ else the `pressure` mapping in `harness/runtimes/ladders.yaml`.
 next tier whenever fewer than half of a case's branch runs pass, up to `max_tier` in
 `ladders.yaml` (currently `mid`). `--ladder` and `--tier` cannot be used
 together.
+
+`--runs N` sets how many times each case runs on each side (default 3). `--pressure <name>` keeps only the cases tagged with that pressure.
 
 `main`'s runs are reused across invocations: once a case/tier has enough
 valid `main` runs on disk, later runs skip calling the model for `main`
@@ -83,7 +85,7 @@ or a sibling run's — is always left alone.
 
 Harness unit tests (no model):
 
-    tests/.venv/bin/python -m pytest tests/harness -q
+    tests/.venv/bin/python -m pytest tests/harness tests/guard -q
 
 ## Read a report
 
