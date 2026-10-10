@@ -267,7 +267,8 @@ A run passes only if all four checks pass:
    so an `ls` or a Glob before the grep fails it. Setup steps are not scored
    and are skipped when choosing the first call: a step that only changes
    directory or sets up the shell (`cd`, `pushd`, `popd`, `pwd`, `export X=1`, `X=1`,
-   `set -e`, `unset X`). `cd /w && grep -rn x .` is scored as the grep; a lone
+   `set -e`, `unset X`), a bare `echo` with no `>`, `>>` or pipe, or exactly
+   `git rev-parse --show-toplevel`. `cd /w && grep -rn x .` is scored as the grep; a lone
    `cd` followed by an edit still fails
 4. the law check for that case: files changed or left alone (read from git
    after the session, committed edits included), the order of calls, the
@@ -291,8 +292,8 @@ and whether it diagnoses a bug it was told only to reproduce (F4); both would
 need a model's words in a place the waiver does not reach. F6's order check
 measures obeying the capture-first order its prompt dictates, not RECOVER's law
 independently, and F2 and F9 do not measure "never improvise a recovery step".
-Each agent has nine cases. F7, F8, R7 and R8 use the shapes real dispatches use,
-numbered steps (Fast) and numbered questions (Fast-Read); F9 and R9 are prose.
+Each agent has nine cases. F7, F8, F9, R7 and R8 use the shapes real dispatches use,
+numbered steps (Fast) and numbered questions (Fast-Read); R9 is prose.
 F7 commits in the fresh practice repo, and a committed edit still counts as
 changed. F8 sends steps 2 to 4 to one pattern (VERIFY), so its law is scored as
 the order edit, prepare, test and the exact test command. The case loader rejects `return_quotes`, `return_lacks`, and `label` in any case

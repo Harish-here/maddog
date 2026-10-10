@@ -128,6 +128,38 @@ def test_a_setup_step_does_not_count_as_a_call_for_before_or_command_runs():
     assert score_agent(other, case).checks["3"] is False
 
 
+def test_a_bare_echo_before_the_real_first_call_is_setup():
+    case = make_case(first_call={"kind": ["read", "command"], "target": "app\\.lock"})
+    events = run_with(DECLARE, Event("command", 'echo "--- ls var ---"'), Event("command", "cat var/app.lock"))
+    assert score_agent(events, case).checks["3"] is True
+
+
+def test_an_echo_with_a_redirect_is_not_setup():
+    case = make_case(first_call={"kind": ["command"], "target": "f\\.txt"})
+    v = score_agent(run_with(DECLARE, Event("command", "echo x > f.txt"), SEARCH), case)
+    assert v.checks["3"] is True  # the echo is the first call, so it is the one checked
+
+
+def test_an_echo_piped_into_a_shell_is_not_setup():
+    case = make_case(first_call={"kind": ["command"], "target": "sh"})
+    v = score_agent(run_with(DECLARE, Event("command", "echo 'sh bin/x.sh' | sh")), case)
+    assert v.checks["3"] is True
+
+
+def test_git_rev_parse_show_toplevel_before_the_test_run_is_setup():
+    case = make_case(command_runs="python3 -m unittest tests.test_pricing",
+                     first_call={"kind": ["command"], "target": "unittest"})
+    events = run_with(DECLARE, Event("command", "git rev-parse --show-toplevel"),
+                      Event("command", "python3 -m unittest tests.test_pricing"))
+    assert score_agent(events, case).result == "PASS"
+
+
+def test_git_rev_parse_with_other_arguments_is_not_setup():
+    case = make_case(first_call={"kind": ["command"], "target": "unittest"})
+    v = score_agent(run_with(DECLARE, Event("command", "git rev-parse HEAD"), Event("command", "python3 -m unittest t")), case)
+    assert v.checks["3"] is False
+
+
 def test_a_leading_assignment_does_not_change_the_command():
     case = make_case(command_runs="python3 -m unittest tests.test_pricing", first_call={"kind": ["command"], "target": "."})
     events = run_with(DECLARE, Event("command", "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_pricing"))

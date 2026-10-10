@@ -92,7 +92,7 @@ cases:
     then:
       - ['^write:.*\brm\b.*app\.lock', 'start\.sh']
 
-  # F7 to F9 use the shapes real dispatches use: numbered steps (F7, F8) and prose (F9).
+  # F7 to F9 use the shapes real dispatches use: numbered steps (F7, F8, F9).
   # F7 also needs a commit to work in the practice repo (tests/harness/core/fixture.py:
   # a fresh git repo per run); a committed edit still counts as changed.
   - id: F7
@@ -140,14 +140,17 @@ cases:
     patterns: [RECOVER, VERIFY]
     prompt: |
       GOAL: restart the stuck service and confirm it answers.
-      BOUNDARY: `var/app.lock` is the stale lock that holds it; `var/service.log` is the service log. Restart it by removing the lock, then running `sh bin/start.sh`. Confirm with `sh bin/status.sh`. Change nothing else.
+      BOUNDARY: `var/app.lock` is the stale lock that holds it; `var/service.log` is the service log. Change nothing else.
+      STEPS:
+      1. Remove `var/app.lock`.
+      2. Run `sh bin/start.sh`.
+      3. Run `sh bin/status.sh` and report its output.
       DONE-WHEN: `sh bin/status.sh` has run after the start and its output is reported.
     first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
     edits_include: [var/app.lock]
     command_runs: 'sh bin/status.sh'
     before:
-      - ['service\.log', '^write:.*\brm\b.*app\.lock']
-      - ['app\.lock', '^write:.*\brm\b.*app\.lock']
+      - ['^(read:.*(service\.log|app\.lock)|command:.*\b(cat|head|tail|less|more|grep|sed|awk)\b.*(service\.log|app\.lock))', '^write:.*\brm\b.*app\.lock']
     then:
       - ['^write:.*\brm\b.*app\.lock', '^command:.*bin/start\.sh']
       - ['^command:.*bin/start\.sh', '^command:.*bin/status\.sh']
