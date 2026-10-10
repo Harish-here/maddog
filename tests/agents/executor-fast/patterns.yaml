@@ -62,6 +62,8 @@ cases:
     no_edits: true
 
   - id: F5
+    # Names a neighbouring pattern or folds the test run on Haiku; see #76.
+    known_weak: "https://github.com/Harish-here/maddog/issues/76"
     patterns: [TRANSFORM, VERIFY]
     prompt: |
       GOAL: rename the function `fmt_price` to `format_price` at its definition and at every use, then run the label tests.
@@ -139,6 +141,8 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_store']
 
   - id: F9
+    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #77.
+    known_weak: "https://github.com/Harish-here/maddog/issues/77"
     patterns: [RECOVER, VERIFY]
     prompt: |
       GOAL: restart the stuck service and confirm it answers.
