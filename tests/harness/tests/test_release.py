@@ -9,7 +9,7 @@ import pytest
 import run
 from harness.core.cases import Case, load_agent_cases, load_cases, load_ladders
 from harness.core.changed import select_for_base, selecting_files
-from harness.core.release import (case_verdict, check_gate, dirty_covered, fingerprint_paths, needed_passes,
+from harness.core.release import (case_verdict, check_gate, dirty_covered, entry_for, file_verdict, fingerprint_paths,
                                   plugin_version, slug_of)
 from harness.core.runner import CaseResult, RunRecord
 from harness.core.score import Verdict
@@ -149,49 +149,101 @@ def test_an_unknown_base_raises(repo):
 CASE = Case("c1", "p", "Fast", "none", "s1", "todo-app")
 
 
-def fake_case_result(branch_pass, branch_fail, main_pass, main_fail, voids=0, void_limited=False, tier="low"):
+def fake_case_result(branch_pass, branch_fail, main_pass, main_fail, voids=0, void_limited=False, tier="low", case=CASE):
     records = []
     for version, p, f in (("branch", branch_pass, branch_fail), ("main", main_pass, main_fail)):
         verdicts = ["PASS"] * p + ["FAIL"] * f + ["VOID"] * voids
-        records += [RunRecord(CASE.id, version, tier, i, [], Verdict(v, "r")) for i, v in enumerate(verdicts, 1)]
-    return CaseResult(CASE, records, void_limited=void_limited, only_tier=tier)
-
-
-@pytest.mark.parametrize("runs, need", [(3, 2), (4, 3), (5, 4), (6, 4)])
-def test_needed_passes_is_two_thirds_rounded_up(runs, need):
-    assert needed_passes(runs) == need
+        records += [RunRecord(case.id, version, tier, i, [], Verdict(v, "r")) for i, v in enumerate(verdicts, 1)]
+    return CaseResult(case, records, void_limited=void_limited, only_tier=tier)
 
 
 @pytest.mark.parametrize("bp, bf, mp, mf, expected", [
     (3, 0, 3, 0, "pass"),
     (3, 0, 0, 3, "pass"),
-    (2, 1, 2, 1, "pass"),      # 2 of 3 and not below main
+    (2, 1, 2, 1, "pass"),
     (2, 1, 1, 2, "pass"),
     (2, 1, 3, 0, "pass"),      # one run below main: the allowed gap
-    (1, 2, 0, 3, "fail"),      # not 2 of 3, even though main is worse
-    (0, 3, 0, 3, "fail"),      # agent mode: not 2 of 3
+    (1, 2, 2, 1, "pass"),      # 1 of 3 is fine: no per-case 2-of-3 floor
+    (1, 2, 0, 3, "pass"),
+    (1, 2, 3, 0, "fail"),      # two runs below main
+    (0, 3, 1, 2, "fail"),      # a case at zero fails, even one run below main
+    (0, 3, 0, 3, "fail"),      # ...and even when main is also at zero
 ])
-def test_case_verdict_applies_d1_with_three_runs(bp, bf, mp, mf, expected):
+def test_agent_case_verdict_is_within_one_of_main_and_never_zero(bp, bf, mp, mf, expected):
     got = case_verdict(fake_case_result(bp, bf, mp, mf), 3, agent_mode=True)
     assert got["verdict"] == expected
     assert (got["branch_pass"], got["main_pass"]) == (bp, mp)
     assert got["valid_runs"] == {"branch": bp + bf, "main": mp + mf}
 
 
-def test_case_verdict_needs_two_thirds_of_a_larger_run_count():
-    assert case_verdict(fake_case_result(3, 3, 0, 6), 6, agent_mode=True)["verdict"] == "fail"
-    assert case_verdict(fake_case_result(4, 2, 4, 2), 6, agent_mode=True)["verdict"] == "pass"
-
-
-@pytest.mark.parametrize("bp, bf, mp, mf, agent, expected", [
-    (0, 3, 0, 3, False, "pass"),   # skill 0/3 vs 0/3
-    (1, 2, 2, 1, False, "pass"),   # skill 1/3 vs 2/3: one run below main
-    (1, 2, 3, 0, False, "fail"),   # skill 1/3 vs 3/3: two runs below main
-    (1, 2, 0, 3, True, "fail"),    # agent 1/3 vs 0/3: under 2 of 3
-    (2, 1, 3, 0, True, "pass"),    # agent 2/3 vs 3/3: one run below main, 2 of 3
+@pytest.mark.parametrize("bp, bf, mp, mf, expected", [
+    (0, 3, 0, 3, "pass"),   # skill 0/3 vs 0/3
+    (0, 3, 1, 2, "pass"),   # skill 0/3 vs 1/3: one run below main, no floor
+    (1, 2, 2, 1, "pass"),   # skill 1/3 vs 2/3: one run below main
+    (1, 2, 3, 0, "fail"),   # skill 1/3 vs 3/3: two runs below main
+    (3, 0, 3, 0, "pass"),
 ])
-def test_the_two_thirds_floor_applies_to_agent_cases_only(bp, bf, mp, mf, agent, expected):
-    assert case_verdict(fake_case_result(bp, bf, mp, mf), 3, agent_mode=agent)["verdict"] == expected
+def test_skill_case_verdict_is_within_one_of_main_with_no_floor(bp, bf, mp, mf, expected):
+    assert case_verdict(fake_case_result(bp, bf, mp, mf), 3, agent_mode=False)["verdict"] == expected
+
+
+# --- the file verdict ---
+
+def case_entries(rows, agent_mode=True, runs=3):
+    """rows: [(branch_pass, main_pass)] -> {case id: case_verdict dict}, one case per row."""
+    out = {}
+    for i, (bp, mp) in enumerate(rows):
+        case = Case(f"c{i}", "p", "Fast", "none", "s1", "todo-app")
+        out[case.id] = case_verdict(fake_case_result(bp, runs - bp, mp, runs - mp, case=case), runs, agent_mode=agent_mode)
+    return out
+
+
+def test_agent_file_at_29_of_36_passes():
+    got = file_verdict(case_entries([(3, 3)] * 5 + [(2, 3)] * 7), agent_mode=True)
+    assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (29, 36, 0.806, "pass")
+
+
+def test_agent_file_at_28_of_36_fails_on_the_rate_alone():
+    entries = case_entries([(3, 3)] * 4 + [(2, 3)] * 8)
+    assert all(c["verdict"] == "pass" for c in entries.values())
+    got = file_verdict(entries, agent_mode=True)
+    assert (got["branch_pass"], got["branch_runs"], got["pass_rate"], got["verdict"]) == (28, 36, 0.778, "fail")
+
+
+def test_agent_file_with_a_case_at_zero_fails_at_92_percent():
+    entries = case_entries([(0, 0)] + [(3, 3)] * 11)
+    assert entries["c0"]["verdict"] == "fail"
+    got = file_verdict(entries, agent_mode=True)
+    assert got["pass_rate"] == 0.917 and got["verdict"] == "fail"
+
+
+def test_agent_file_with_a_case_two_below_main_fails_at_97_percent():
+    entries = case_entries([(1, 3)] + [(3, 3)] * 11)
+    assert entries["c0"]["verdict"] == "fail"
+    assert file_verdict(entries, agent_mode=True)["verdict"] == "fail"
+
+
+def test_skill_file_keeps_the_per_case_rule_with_no_rate():
+    entries = case_entries([(0, 0), (1, 2), (3, 3)], agent_mode=False)
+    got = file_verdict(entries, agent_mode=False)
+    assert (got["branch_pass"], got["branch_runs"], got["verdict"]) == (4, 9, "pass")  # 44% still passes
+    entries["c1"]["verdict"] = "fail"
+    assert file_verdict(entries, agent_mode=False)["verdict"] == "fail"
+
+
+def test_entry_for_stores_the_file_verdict_and_pass_rate(repo):
+    write(repo, "scripts/g.sh", "echo h")
+    commit(repo)
+    (test,) = select(repo).selected
+    assert test.agent_mode
+    cases = [Case(f"c{i}", "p", "Fast", "none", "s1", "todo-app") for i in range(12)]
+    results = [fake_case_result(bp, 3 - bp, 3, 0, case=c) for c, bp in zip(cases, [3] * 5 + [2] * 7)]
+    entry = entry_for(repo, test, results, 3, "tests/results/x")
+    assert (entry["branch_pass"], entry["branch_runs"], entry["pass_rate"], entry["verdict"]) == (29, 36, 0.806, "pass")
+    assert entry["cases"]["c11"]["branch_pass"] == 2 and entry["cases"]["c11"]["verdict"] == "pass"
+    results[0] = fake_case_result(0, 3, 0, 3, case=cases[0])
+    bad = entry_for(repo, test, results, 3, "tests/results/x")
+    assert bad["cases"]["c0"]["verdict"] == "fail" and bad["verdict"] == "fail"
 
 
 @pytest.mark.parametrize("agent", [True, False])
@@ -512,6 +564,37 @@ def test_gate_fails_when_a_case_in_the_head_yaml_is_not_in_the_manifest(recorded
 def test_gate_fails_on_any_failing_verdict(recorded, edit):
     rewrite_manifest(recorded, edit)
     assert any("verdict is 'fail'" in f for f in fails_of(recorded))
+
+
+@pytest.fixture
+def recorded_agent(fake, repo):
+    bump(repo)
+    write(repo, "scripts/g.sh", "echo h")
+    commit(repo)
+    assert go() == 0
+    assert check_gate(repo, "main")[0] == []
+    return repo
+
+
+def agent_entry(m):
+    return next(e for e in m["tests"] if e["mode"] == "agent")
+
+
+def test_gate_fails_an_agent_file_under_80_percent_even_if_its_verdicts_say_pass(recorded_agent):
+    def edit(m):
+        e = agent_entry(m)
+        for c in e["cases"].values():
+            c["branch_pass"], c["main_pass"] = 1, 2   # within main - 1, none at zero, verdicts still say pass
+    rewrite_manifest(recorded_agent, edit)
+    assert any("branch passed" in f and "under 80%" in f for f in fails_of(recorded_agent))
+
+
+def test_gate_fails_on_a_failing_agent_file_verdict_or_case_verdict(recorded_agent):
+    rewrite_manifest(recorded_agent, lambda m: agent_entry(m).update(verdict="fail"))
+    assert any("tests/agents/a1/patterns.yaml: verdict is 'fail'" in f for f in fails_of(recorded_agent))
+    rewrite_manifest(recorded_agent, lambda m: agent_entry(m).update(verdict="pass"))
+    rewrite_manifest(recorded_agent, lambda m: next(iter(agent_entry(m)["cases"].values())).update(verdict="fail"))
+    assert any("tests/agents/a1/patterns.yaml: case" in f and "'fail'" in f for f in fails_of(recorded_agent))
 
 
 def test_gate_fails_when_a_fingerprinted_file_changed_after_testing(recorded):

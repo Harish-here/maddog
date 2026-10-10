@@ -2,7 +2,7 @@
 
 `run.py --changed --record` writes `tests/releases/<version>/` from a finished
 model run; `gate.py` re-checks that folder offline against the branch's files.
-The pass rule (D1) and the fingerprints live here so the two agree.
+The pass rules (D1) and the fingerprints live here so the two agree.
 """
 import hashlib
 import json
@@ -42,17 +42,15 @@ def release_dir(repo_root: Path, version: str) -> Path:
 
 # --- D1: the pass rule ---
 
-def needed_passes(runs: int) -> int:
-    """ceil(2/3 * runs): 2 of 3."""
-    return -(-2 * runs // 3)
+FILE_PASS_RATE = (4, 5)  # agent-mode files pass on at least 4/5 (80%) of their branch runs
 
 
 def case_verdict(result, runs: int, agent_mode: bool) -> dict:
-    """D1: the branch passes at least `main`'s passes minus one (a one-run gap is
-    allowed). Agent-mode cases also need at least 2/3 of `runs` on the branch;
-    skill-mode cases have no such floor. Always a fail when the case hit its void
-    limit or either side has fewer than `runs` valid (non-VOID) runs, or no single
-    expected tier is known."""
+    """D1, per case: the branch passes at least `main`'s passes minus one (a
+    one-run gap is allowed). An agent-mode case also needs at least one branch
+    pass (no case at zero); the file-level rate is `file_verdict`'s. Always a
+    fail when the case hit its void limit or either side has fewer than `runs`
+    valid (non-VOID) runs, or no single expected tier is known."""
     tier = result.only_tier
 
     def valid(version):
@@ -60,12 +58,34 @@ def case_verdict(result, runs: int, agent_mode: bool) -> dict:
 
     branch_pass, main_pass = passes(result.records, "branch", tier), passes(result.records, "main", tier)
     branch_valid, main_valid = valid("branch"), valid("main")
-    floor_ok = branch_pass >= needed_passes(runs) if agent_mode else True
+    floor_ok = branch_pass >= 1 if agent_mode else True
     ok = (tier is not None and not result.void_limited and branch_valid >= runs and main_valid >= runs
           and branch_pass >= main_pass - 1 and floor_ok)
     return {"tier": tier, "branch_pass": branch_pass, "main_pass": main_pass,
             "valid_runs": {"branch": branch_valid, "main": main_valid},
             "void_limited": result.void_limited, "verdict": "pass" if ok else "fail"}
+
+
+def branch_totals(cases: dict) -> tuple[int, int]:
+    """(branch passes, valid branch runs) summed over a file's case entries."""
+    return (sum(c.get("branch_pass", 0) for c in cases.values()),
+            sum(c.get("valid_runs", {}).get("branch", 0) for c in cases.values()))
+
+
+def rate_ok(passed: int, total: int) -> bool:
+    return total > 0 and passed * FILE_PASS_RATE[1] >= total * FILE_PASS_RATE[0]
+
+
+def file_verdict(cases: dict, agent_mode: bool) -> dict:
+    """The file's verdict from its case entries. Skill mode: every case passes.
+    Agent mode: every case passes (so none is at zero or two below main) and the
+    branch passes at least 80% of all its runs together."""
+    passed, total = branch_totals(cases)
+    ok = bool(cases) and all(c["verdict"] == "pass" for c in cases.values())
+    if agent_mode:
+        ok = ok and rate_ok(passed, total)
+    return {"branch_pass": passed, "branch_runs": total, "pass_rate": round(passed / total, 3) if total else 0.0,
+            "verdict": "pass" if ok else "fail"}
 
 
 # --- fingerprints ---
@@ -102,15 +122,17 @@ def slug_of(test_path: str) -> str:
 
 def entry_for(repo_root: Path, test: SelectedTest, results, runs: int, results_path: str) -> dict:
     cases = {r.case.id: case_verdict(r, runs, test.agent_mode) for r in results}
-    ok = bool(cases) and all(c["verdict"] == "pass" for c in cases.values())
+    f = file_verdict(cases, test.agent_mode)
     return {"path": test.path, "mode": "agent" if test.agent_mode else "skill", "results": results_path,
-            "cases": cases, "verdict": "pass" if ok else "fail", "fingerprints": fingerprints(repo_root, test)}
+            "cases": cases, "branch_pass": f["branch_pass"], "branch_runs": f["branch_runs"],
+            "pass_rate": f["pass_rate"], "verdict": f["verdict"], "fingerprints": fingerprints(repo_root, test)}
 
 
 def case_table(entry: dict, results) -> str:
     """One test file's case table as markdown. No runtime column, no runtime name."""
     roles = {r.case.id: r.case.expect for r in results}
-    lines = [f"# {entry['path']}", "", f"Verdict: **{entry['verdict']}** ({entry['mode']} mode, results {entry['results']})", "",
+    rate = f"; branch passes {entry['branch_pass']}/{entry['branch_runs']} ({entry['pass_rate']:.1%})"
+    lines = [f"# {entry['path']}", "", f"Verdict: **{entry['verdict']}** ({entry['mode']} mode{rate}, results {entry['results']})", "",
              "| Case | Expected role | Tier | Branch | Main | Verdict |", "|---|---|---|---|---|---|"]
     for cid, c in entry["cases"].items():
         v = c["valid_runs"]
@@ -190,6 +212,10 @@ def check_gate(repo_root: Path, base: str):
         fails += [f"{test.path}: case {cid} verdict is {c.get('verdict')!r}" for cid, c in cases.items() if c.get("verdict") != "pass"]
         if entry.get("verdict") != "pass":
             fails.append(f"{test.path}: verdict is {entry.get('verdict')!r}")
+        if test.agent_mode:
+            passed, total = branch_totals(cases)
+            if not rate_ok(passed, total):
+                fails.append(f"{test.path}: branch passed {passed} of {total} runs, under 80%")
         prints = entry.get("fingerprints", {})
         for path, digest in prints.items():
             f = root / path

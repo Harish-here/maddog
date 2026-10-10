@@ -143,19 +143,27 @@ same commit). Then, in order:
    same version, and prints the attempt number (kept in the manifest as
    `attempt`, so re-recording until a lucky pass shows in review).
 
-The pass rule per case: the branch passes at least `main`'s passes minus one (a
-one-run gap is allowed). Agent-mode cases also need the branch to pass in at
-least 2 of 3 runs (generally `ceil(2/3 * runs)`); skill-mode cases have no such
-floor. A case fails whenever it hit the void limit or either side has fewer than
-`--runs` valid runs. A test
-file passes when all of its cases pass. The command exits 1 after writing a
-recording that failed the rule; the gate rejects it.
+The pass rule differs by mode. Both modes fail a case that hit the void limit,
+or when either side has fewer than `--runs` valid runs.
+
+- Skill mode, per case: the branch passes at least `main`'s passes minus one (a
+  one-run gap is allowed); no floor. A file passes when all its cases pass.
+- Agent mode, per file. The file passes when all three hold: (a) the branch
+  passes at least 80% of its runs summed over every case; (b) no case has 0
+  branch passes; (c) every case has branch passes at least `main`'s minus one.
+  A case's own verdict covers (b) and (c); the file verdict adds (a). So 29 of
+  36 (81%) passes, 28 of 36 (77.8%) fails, and a case at 0 of 3 fails the file
+  however high the rest.
+
+The command exits 1 after writing a recording that failed the rule; the gate
+rejects it.
 
 `tests/releases/<version>/` holds, all committed:
 
 - `manifest.json`: version, tested and base commits, changed files, attempt,
   runs, per test file its mode, results path (`tests/results/<time>/`), cases
-  `{branch_pass, main_pass, valid_runs, void_limited, verdict}`, verdict and
+  `{branch_pass, main_pass, valid_runs, void_limited, verdict}`, the file's
+  `branch_pass`, `branch_runs` and `pass_rate`, its verdict and
   fingerprints, plus the offline summary line, total cost in USD and the time.
   No runtime or model name appears anywhere under `tests/releases/`.
 - `offline.txt`: the pytest summary line.
@@ -178,7 +186,8 @@ It prints "no covered changes" and exits 0 when no changed file selects a test
 file. Otherwise it fails when any of these holds: the version equals the
 base's; `tests/releases/<version>/manifest.json` is missing, or its `version`
 differs from the folder name; the manifest lacks a selected test file or any
-case id in that file's current yaml; any verdict is fail; a selected test file
+case id in that file's current yaml; any case or file verdict is fail; an
+agent-mode file's case numbers sum to under 80% branch passes; a selected test file
 was deleted; a fingerprinted file is missing or its hash changed; or a file
 now matched by the base-or-head `covers:` has no fingerprint.
 
