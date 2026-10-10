@@ -500,25 +500,42 @@ strip_command_wrappers() {
   done
 }
 
-# --- heredoc bodies fed to a non-shell program ---------------------------
+# --- heredoc bodies fed to a harmless reader -----------------------------
 # split_command treats every newline as a segment boundary, so the body of
 # `python3 - <<'EOF'` / `cat > f.json <<'EOF'` would be judged line by line as
 # if each line were a command ((1+2) -> "unquoted '(' starts a subshell").
 # skip_heredoc_bodies runs BEFORE the split and deletes a body (and its
-# terminator line) only when every command on the heredoc's line is positively
-# identified as a non-shell. A shell consumer, or any command the guard cannot
-# identify, keeps its body in the text so it is still checked as commands
-# (fail toward checking). A body whose terminator never appears is kept too.
+# terminator line) ONLY when the reader is positively a harmless non-shell
+# program. Every condition must hold; anything else keeps the body in the text
+# so it is checked as commands, as if this skip did not exist (unknown ->
+# check):
+#   1. the command that owns the `<<` (the last command on its line, wrappers
+#      peeled) is a plain literal word, no quotes, `$` or backtick, whose
+#      basename is in HEREDOC_SAFE_READERS. A shell, a launcher (setsid, flock,
+#      busybox, at, parallel, xargs, env as a command), an interpreter that
+#      runs its input as commands (awk, sed, perl, ruby) and anything
+#      unidentified are not in the list, so their bodies are checked.
+#   2. nothing consumes the reader's output or runs after it on that line: no
+#      later command, no `>(` or `<(`, and the line does not end in `|`, `&&`,
+#      `||` or `\` (a pipeline continued past the body).
+#   3. no earlier line holds a construct that could pipe the reader's output
+#      on (while, for, until, if, case, do, then, done, fi, esac, a bracket or
+#      a backtick), and no command before the reader on its own line does.
+#   4. the line after the terminator does not start with `|`, `&`, `;`, `)`,
+#      `}`, `<` or `>` (a closer or operator that takes the output on).
+# The list is deliberately short; add a reader only if it never executes its
+# input as commands.
 # Not handled: a heredoc nested inside a body that is kept (its lines are
 # checked as before), and a body written to a file and run later
 # (`cat > s.sh <<EOF` ... `bash s.sh`). `$(...)` inside an unquoted body is
 # not examined, as it was not before.
-HEREDOC_SHELLS=" bash sh zsh dash ksh ash fish csh tcsh eval source . sudo doas su ssh xargs "
+HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail grep diff "
 
 # Prints the real command of one segment (wrappers peeled, basename), or "?"
-# when it cannot be identified (leading redirect, wrapper form the stripper
-# rejects). Runs in a subshell at the call site, so the deny() override and
-# the tokens mutation stay local.
+# when it cannot be identified or is not a plain literal word (leading
+# redirect, quotes, `$`, backtick, wrapper form the stripper rejects). Runs in
+# a subshell at the call site, so the deny() override and the tokens mutation
+# stay local.
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
   local tok_lit tok_masked
@@ -536,7 +553,30 @@ heredoc_consumer() {
   case "${tokens_masked[0]}" in
     [0-9]*[\<\>]*|[\<\>]*) printf '?'; return 0 ;;
   esac
+  case "${tokens[0]}" in
+    *[!A-Za-z0-9_./+-]*) printf '?'; return 0 ;;
+  esac
+  if [ "${tokens[0]}" != "${tokens_masked[0]}" ]; then
+    printf '?'
+    return 0
+  fi
   printf '%s' "${tokens[0]##*/}"
+}
+
+# Succeeds when the text holds a bracket, a backtick or a shell construct
+# keyword anywhere (quoted or not: fail toward checking).
+heredoc_opens_construct() {
+  local w=" $1 "
+  case "$w" in
+    *'('*|*'{'*|*'`'*|*')'*|*'}'*) return 0 ;;
+  esac
+  w="${w//[;|&]/ }"
+  w="${w//$'\t'/ }"
+  case "$w" in
+    *" while "*|*" for "*|*" until "*|*" select "*|*" if "*|*" case "*) return 0 ;;
+    *" do "*|*" then "*|*" else "*|*" elif "*|*" done "*|*" fi "*|*" esac "*) return 0 ;;
+  esac
+  return 1
 }
 
 skip_heredoc_bodies() {
@@ -545,18 +585,35 @@ skip_heredoc_bodies() {
     *'<<'*) : ;;
     *) printf '%s' "$text"; return 0 ;;
   esac
-  local line seg segs consumer check cmp l m rest dash i j n k
-  local active=0 active_delim="" active_dash=0 active_skip=0
+  local line seg segs consumer check cmp l m rest dash i j n k t tl pre has_here owner_seen
+  local active=0 active_delim="" active_dash=0 active_skip=0 pend=0
   local qn=0 qi=0 q_skip=1
   local -a out=() held=() lits=() mks=() q_delim=() q_dash=()
   while IFS= read -r line; do
+    if [ "$pend" -eq 1 ]; then
+      # the line right after a skipped body's last terminator: if it carries
+      # the reader's output onward, put the body and terminator back
+      pend=0
+      t="${line#"${line%%[![:space:]]*}"}"
+      case "$t" in
+        '|'*|'&'*|';'*|')'*|'}'*|'<'*|'>'*)
+          if [ "${#held[@]}" -gt 0 ]; then
+            for k in "${held[@]}"; do out+=("$k"); done
+          fi
+          ;;
+      esac
+      held=()
+    fi
     if [ "$active" -eq 1 ]; then
       cmp="$line"
       [ "$active_dash" -eq 1 ] && cmp="${line#"${line%%[!$'\t']*}"}"
       if [ "$cmp" = "$active_delim" ]; then
-        # terminator: dropped with a skipped body, kept with a checked one
-        [ "$active_skip" -eq 0 ] && out+=("$line")
-        held=()
+        # terminator: held with a skipped body, kept with a checked one
+        if [ "$active_skip" -eq 1 ]; then
+          held+=("$line")
+        else
+          out+=("$line")
+        fi
         active=0
         if [ "$qi" -lt "$qn" ]; then
           active=1
@@ -564,6 +621,8 @@ skip_heredoc_bodies() {
           active_dash="${q_dash[$qi]}"
           active_skip="$q_skip"
           qi=$((qi + 1))
+        elif [ "$active_skip" -eq 1 ]; then
+          pend=1
         fi
       elif [ "$active_skip" -eq 1 ]; then
         held+=("$line")
@@ -574,22 +633,28 @@ skip_heredoc_bodies() {
     fi
     out+=("$line")
     case "$line" in *'<<'*) : ;; *) continue ;; esac
-    # header line: find every heredoc operator and every command on the line
+    # header line: find every heredoc operator and the command that owns it
     check=0
     qn=0
     qi=0
     q_delim=()
     q_dash=()
+    pre=""
+    owner_seen=0
+    tl="${line%"${line##*[![:space:]]}"}"
+    case "$tl" in
+      *'|'|*'&&'|*'\') check=1 ;; # pipeline or command continued past the body
+    esac
+    case "$line" in
+      *'>('*|*'<('*) check=1 ;; # process substitution can hand the output to a shell
+    esac
     segs="$(split_command "$line")"
     while IFS= read -r seg; do
       seg="${seg#"${seg%%[![:space:]]*}"}"
       seg="${seg%"${seg##*[![:space:]]}"}"
       [ -z "$seg" ] && continue
-      consumer="$(heredoc_consumer "$seg")"
-      case "$consumer" in
-        '?') check=1 ;;
-        *) case "$HEREDOC_SHELLS" in *" $consumer "*) check=1 ;; esac ;;
-      esac
+      # a command after the one owning a heredoc may consume its output
+      [ "$owner_seen" -eq 1 ] && check=1
       lits=()
       mks=()
       while IFS=$'\x1f' read -r l m; do
@@ -597,6 +662,7 @@ skip_heredoc_bodies() {
         mks+=("$m")
       done < <(quote_walk word "$seg")
       n=${#lits[@]}
+      has_here=0
       j=0
       while [ "$j" -lt "$n" ]; do
         m="${mks[$j]}"
@@ -608,6 +674,7 @@ skip_heredoc_bodies() {
               i=$((i + 3))
               continue
             fi
+            has_here=1
             rest="${l:i+2}"
             dash=0
             if [ "${rest:0:1}" = "-" ]; then
@@ -633,9 +700,33 @@ skip_heredoc_bodies() {
         done
         j=$((j + 1))
       done
+      if [ "$has_here" -eq 1 ]; then
+        owner_seen=1
+        consumer="$(heredoc_consumer "$seg")"
+        case "$HEREDOC_SAFE_READERS" in
+          *" $consumer "*) : ;;
+          *) check=1 ;;
+        esac
+      else
+        pre="$pre $seg"
+      fi
     done <<< "$segs"
-    # every queued body shares the line's verdict: skip only when no command
-    # on the line is a shell or unidentified
+    # a construct opened before the reader (earlier line, or earlier on this
+    # one) may pipe its output on
+    if [ "$check" -eq 0 ] && [ "$qn" -gt 0 ]; then
+      if heredoc_opens_construct "$pre"; then
+        check=1
+      fi
+      k=0
+      n=$((${#out[@]} - 1)) # the last entry is this header line
+      while [ "$check" -eq 0 ] && [ "$k" -lt "$n" ]; do
+        if heredoc_opens_construct "${out[$k]}"; then
+          check=1
+        fi
+        k=$((k + 1))
+      done
+    fi
+    # every queued body shares the line's verdict
     q_skip=1
     [ "$check" -eq 1 ] && q_skip=0
     if [ "$qn" -gt 0 ]; then

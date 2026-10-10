@@ -266,6 +266,59 @@ def test_fast_denies_heredoc_piped_into_shell(ws):
     assert_deny("cat <<'EOF' | bash\ngit reset --hard\nEOF", FAST, ws)
 
 
+PUSH = "git push --force origin main"
+
+
+def test_fast_allows_python_dash_heredoc(ws):
+    assert_allow("python3 - <<'EOF'\nprint((1+2))\nEOF", FAST, ws)
+
+
+def test_fast_allows_jq_heredoc(ws):
+    assert_allow("jq . <<'EOF'\n{\"a\":(1)}\nEOF", FAST, ws)
+
+
+def test_fast_allows_heredoc_after_a_chained_command(ws):
+    assert_allow("cd . && python3 - <<'EOF'\n(1+2)\nEOF", FAST, ws)
+
+
+# Each command is a shell-fed or unidentified reader the guard once skipped
+# (or could): the body is a push, so it must be checked and denied.
+@pytest.mark.parametrize("header", [
+    "cat <<'EOF' | \"bash\"",
+    "cat <<'EOF' | $SHELL",
+    "setsid bash <<'EOF'",
+    "flock f bash <<'EOF'",
+    "busybox sh <<'EOF'",
+    "at now <<'EOF'",
+    "parallel <<'EOF'",
+    "cat <<'EOF' > >(bash)",
+    "while read l; do $l; done <<'EOF'",
+    "awk -f /dev/stdin <<'EOF'",
+    "\"python3\" - <<'EOF'",
+    "$PY - <<'EOF'",
+    "cat <<'EOF' && bash",
+    "cat <<'EOF'; bash",
+])
+def test_fast_denies_push_body_unless_reader_is_allowlisted(header, ws):
+    assert_deny(f"{header}\n{PUSH}\nEOF", FAST, ws)
+
+
+def test_fast_denies_body_of_heredoc_header_ending_in_a_pipe(ws):
+    assert_deny(f"cat <<'EOF' |\n{PUSH}\nEOF\nbash", FAST, ws)
+
+
+def test_fast_denies_body_when_next_line_continues_the_pipeline(ws):
+    assert_deny(f"cat <<'EOF'\n{PUSH}\nEOF\n| bash", FAST, ws)
+
+
+def test_fast_denies_body_inside_a_loop_piped_to_a_shell(ws):
+    assert_deny(f"for x in 1\ndo\ncat <<'EOF'\n{PUSH}\nEOF\ndone | bash", FAST, ws)
+
+
+def test_fast_denies_body_when_header_ends_in_a_backslash(ws):
+    assert_deny(f"cat <<'EOF' \\\n| bash\n{PUSH}\nEOF", FAST, ws)
+
+
 def test_fast_denies_body_when_consumer_cannot_be_identified(ws):
     assert_deny("<<EOF\ngit reset --hard\nEOF", FAST, ws)
 

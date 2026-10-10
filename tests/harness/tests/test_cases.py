@@ -192,7 +192,12 @@ def test_known_weak_is_an_optional_issue_url_and_not_a_check(tmp_path):
     assert plain.known_weak is None
 
 
-@pytest.mark.parametrize("line", ['known_weak: ""', 'known_weak: "   "', "known_weak: 76", "known_weak: [x]", "known_weak:"])
-def test_known_weak_must_be_a_non_empty_string(tmp_path, line):
+@pytest.mark.parametrize("line", [
+    'known_weak: ""', 'known_weak: "   "', "known_weak: 76", "known_weak: [x]", "known_weak:",
+    'known_weak: "see the tracker"', 'known_weak: "https://example.com/issues/76"',
+    'known_weak: "https://github.com/Harish-here/maddog/pull/76"',
+    'known_weak: "https://github.com/Harish-here/maddog/issues/76 extra"',
+])
+def test_known_weak_must_be_an_issue_url(tmp_path, line):
     with pytest.raises(ValueError, match="known_weak must be a non-empty issue URL"):
         load_agent_cases(write_patterns(tmp_path, AGENT_FILE + f"    {line}\n"))

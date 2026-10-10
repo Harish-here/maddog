@@ -108,6 +108,7 @@ AGENT_ROLES = ("Fast", "Fast-Read")  # the executors whose declared patterns the
 PATTERN_NAMES = ("CHANGE", "OPERATE", "TRANSFORM", "RECOVER", "VERIFY", "REPRODUCE", "SWEEP", "TRACE", "EXTRACT")
 CALL_KINDS = ("read", "write", "command")
 LABELS = ("CONFIRMED", "CONTRADICTED", "NO EVIDENCE")
+KNOWN_WEAK_URL = re.compile(r"https://github\.com/[^/]+/[^/]+/issues/\d+")
 # Keys a case may use for check 4 (the law check). Anything else is a typo.
 CHECK_KEYS = ("edits_include", "edits_exclude", "no_edits", "before", "then",
               "command_runs", "return_quotes", "return_lacks", "label")
@@ -170,8 +171,9 @@ def load_agent_cases(path: Path) -> list[AgentCase]:
         first_call = {"kind": kinds, "target": _regex(f"{path}: case {cid}: first_call.target", first_call.get("target"))}
 
         known_weak = raw.get("known_weak")
-        if "known_weak" in raw and (not isinstance(known_weak, str) or not known_weak.strip()):
-            raise ValueError(f"{path}: case {cid}: known_weak must be a non-empty issue URL string, got {known_weak!r}")
+        if "known_weak" in raw and (not isinstance(known_weak, str) or not KNOWN_WEAK_URL.fullmatch(known_weak)):
+            raise ValueError(f"{path}: case {cid}: known_weak must be a non-empty issue URL string "
+                             f"(https://github.com/<owner>/<repo>/issues/<n>), got {known_weak!r}")
 
         checks = {k: v for k, v in raw.items() if k not in CASE_KEYS + OPTIONAL_CASE_KEYS}
         unknown = sorted(set(checks) - set(CHECK_KEYS))
