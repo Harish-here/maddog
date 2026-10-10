@@ -206,6 +206,7 @@ def test_lead_denies_every_interpreter_form(command, ws):
 
 def test_fast_allows_ls(ws):
     assert_allow("ls", FAST, ws)
+    assert run_guard("ls", FAST, ws).stdout == ""  # an allow is silent, not a JSON decision
 
 
 def test_fast_denies_git_reset_hard(ws):

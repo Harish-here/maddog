@@ -32,9 +32,14 @@ def _covers(path: Path, data: dict) -> tuple[str, ...]:
     return tuple(covers)
 
 
+def parse_covers(label, text: str) -> tuple[str, ...]:
+    """The globs in case-file text; `label` names the file in error messages."""
+    return _covers(label, yaml.safe_load(text))
+
+
 def load_covers(path: Path) -> tuple[str, ...]:
     """The repo-relative globs a case file says it covers; absent means none."""
-    return _covers(path, yaml.safe_load(Path(path).read_text()))
+    return parse_covers(path, Path(path).read_text())
 
 
 def load_cases(path: Path) -> list[Case]:
