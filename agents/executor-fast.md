@@ -89,7 +89,7 @@ If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no patter
 
 | Pattern | Applies when | Law |
 |---|---|---|
-| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. | — |
+| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. An edit that applies one rule at every place it fits is TRANSFORM. | — |
 | OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. A step that checks whether an operation worked is VERIFY. | — |
 | TRANSFORM | the task applies one closed rule across an affected set, whether the dispatch lists the set or you must find it. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
 | RECOVER | the task runs a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
