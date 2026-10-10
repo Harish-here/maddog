@@ -4,24 +4,33 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [4.3.0] - 2026-10-08
+## [4.3.0] - 2026-10-10
 
 ### Added
 - `agents/executor-fast.md`, `agents/executor-fast-read.md` — before the first tool call the agent writes a `PATTERNS:` line naming every pattern the work holds and, per law, what it acts on first and where the evidence will show; work that fits no pattern returns `blocked` with no tool call (8e0f223)
 - `scripts/pattern-declare-guard.sh`, wired in `hooks/hooks.json` — refuses an executor-fast or executor-fast-read subagent's first tool call once, until `PATTERNS:` appears in its own text; it reads that agent's session transcript and leaves one empty marker file per run under `$TMPDIR/maddog-pattern-declare/` (9fdb5f1)
-- `tests/` — agent mode: `tests/run.py <agent dir> --patterns` runs an agent file as the main session against the new `fast-tier` fixture; 12 cases (F1–F6, R1–R6) scored by four checks from recorded calls (8951f92, 6f1b2f3, 03bfc6d, 37bc22b)
+- `tests/` — agent mode: `tests/run.py <agent dir> --patterns` runs an agent file as the main session against the `fast-tier` fixture, scored by four checks from recorded calls (8951f92, 6f1b2f3, 03bfc6d, 37bc22b); 24 cases (F1–F12, R1–R12), including numbered-step, numbered-question and full-length dispatches shaped on 496 real dispatches (a458248, ce2b2f8)
+- Release test gate — `tests/run.py --changed [--dry-run] --record` runs the model tests whose `covers:` (or, for `covers_frontmatter:`, a file's frontmatter) matches a changed file and writes `tests/releases/<version>/`; `tests/gate.py` fails a pull request whose recording is missing, failed, or older than a covered file's content (e237bb6, 26cb301, a7352d0)
+- `.github/validate.sh` — every non-model check in one script, run locally and by CI's single `validate` job on pull requests (7da7450)
 
 ### Changed
-- `agents/executor-fast.md` — the agent splits the work into steps before naming patterns; when a step fits a pattern with a law and one without, it names the one with the law; TRANSFORM covers a set the agent must find; a run to learn whether a specified failure happens is REPRODUCE; OPERATE's repeated door sentence is dropped (c3f8ebb)
-- `agents/executor-fast-read.md` — Core Law 1: every quote is copied exactly under Diplomatic Transcription; EXTRACT applies when the answer is a source's own words; TRACE says "link" for each hop; the `PATTERNS:` template names a source, not a command (c3f8ebb)
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — each declared pattern claims its range of steps (the dispatch's numbered steps or questions, else one phrase per action) and its law binds the whole range; every named pattern gets a bullet (90b54f5); a step that checks a result is VERIFY (01227bc)
+- `agents/executor-fast.md` — an edit that applies one rule at every place it fits is TRANSFORM (73b89fd); earlier in this release: the agent splits the work into steps before naming patterns, a step fitting a pattern with a law and one without names the one with the law, a run to learn whether a specified failure happens is REPRODUCE (c3f8ebb)
+- `agents/executor-fast-read.md` — Core Law 1: every quote is copied exactly under Diplomatic Transcription; EXTRACT applies when the answer is a source's own words; TRACE says "link" for each hop (c3f8ebb)
+- `scripts/executor-guard.sh` — a heredoc body fed to a non-shell program is no longer checked as commands (bodies fed to a shell still are); the denial text mentions file writes only to executor-lead and executor-judge, which are the only executors denied them (9f4a513)
+- Model-test pass rules — agent-mode files pass when at least 75% of their runs pass, no case scores zero (unless marked `known_weak` with a linked issue), and every case stays within one run of `main`; skill-mode cases stay within one run of `main` (2eafe7d, 9099396, 3afbfd5, ea4f57e)
 - `PRIVACY.md` — names the new hook, the transcript it reads, and the marker files it leaves (9fdb5f1)
 - `CLAUDE.md` — the model-driven-test invariant records the user waiver for exact matches on the `PATTERNS:` line and on Fast-Read's quotes and labels (692c10e)
 
+### Known weak
+- Fast-Read case R10 (a trace closed by a claim check) and Fast case F5 (a rename closed by a test run) are marked `known_weak`: on Haiku the agent folds the closing check into the step before it, or names a neighbouring pattern (#76)
+- Fast case F9 is marked `known_weak`: given numbered steps that start with "remove the lock", the agent on Haiku can skip RECOVER's capture step and delete first (#77)
+
 ### Notes for users
-- Run `/reload-plugins` or restart after updating; the agent edits and the new hook do not take effect until then.
+- Run `/reload-plugins` or restart after updating; the agent edits and the hook changes do not take effect until then.
 
 ### Docs
-- `tests/README.md` "Agent patterns" section; `docs/testing/spec.md` agent-mode event kinds (692c10e)
+- `tests/README.md` — agent patterns, release gate, `covers_frontmatter:`, `known_weak`, setup and run commands (692c10e, d5295b0, e237bb6); `CONTRIBUTING.md` — agent cases replace manual probes (d5295b0); `docs/testing/spec.md` agent-mode event kinds (692c10e)
 - `.claude-plugin/plugin.json` version 4.2.0 → 4.3.0
 
 ## [4.2.0] - 2026-10-05
