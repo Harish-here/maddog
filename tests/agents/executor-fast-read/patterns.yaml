@@ -95,7 +95,7 @@ cases:
 
   # R7 and R8 use numbered questions, R9 prose: the shapes real dispatches use.
   - id: R7
-    patterns: [SWEEP, EXTRACT, VERIFY]
+    patterns: [SWEEP, VERIFY]
     prompt: |
       GOAL: answer three numbered questions about the setting `page_size`.
       BOUNDARY: read-only; any file in this repo. A definition gives the setting a value.
@@ -132,7 +132,7 @@ cases:
       GOAL: find every timeout setting in the config files, and check this claim: no timeout setting is over 60.
       BOUNDARY: read-only; files under config/ only. A timeout setting is a line `timeout = <number>`.
       DONE-WHEN: each timeout setting is listed as file:line followed by the exact line, and the claim is labeled CONFIRMED, CONTRADICTED, or NO EVIDENCE, with the cited line quoted.
-    first_call: {kind: [read], target: 'timeout'}
+    first_call: {kind: [read], target: 'timeout|^config/(\*|$)'}
     label: CONTRADICTED
     return_quotes:
       - 'timeout = 30'

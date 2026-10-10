@@ -27,6 +27,10 @@ def grep(pattern, path=None):
     return ("Grep", {"pattern": pattern, **({"path": path} if path else {})})
 
 
+def glob(pattern, path=None):
+    return ("Glob", {"pattern": pattern, **({"path": path} if path else {})})
+
+
 def read(rel):
     return ("Read", {"file_path": W + rel})
 
@@ -116,6 +120,7 @@ NATURAL = [
     ("R8", [grep("cmd_retries src"), grep("retry_limit src"), read("src/stockroom/uploads.py"), grep("max_retries config")], []),
     ("R9", [grep("timeout config")], []),
     ("R9", [grep("timeout", W + "config"), read("config/dev.toml")], []),
+    ("R9", [glob("config/**", W), read("config/settings.toml"), read("config/dev.toml")], []),
 ]
 
 
