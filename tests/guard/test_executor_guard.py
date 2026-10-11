@@ -536,6 +536,44 @@ def test_git_message_heredoc_with_editor_or_prefix_keeps_the_body_checked(agent,
     assert_deny(f"{header}\nsubject\n{PUSH}\nEOF", agent, ws)
 
 
+# A quoted, escaped or variable spelling of `-e` / `--edit` hides the flag from
+# the literal token text, and `export GIT_EDITOR=sh` earlier makes git run the
+# message through sh. The skip needs every token to be a plain literal word, so
+# any such spelling keeps the body checked.
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("header", [
+    "git commit \"-e\" -F - <<'EOF'",
+    "git commit '-e' -F - <<'EOF'",
+    "git commit \\-e -F - <<'EOF'",
+    "git commit \"--edit\" -F - <<'EOF'",
+    "git commit --\"edit\" -F - <<'EOF'",
+    "git commit $E -F - <<'EOF'",
+    "git commit -F - \"$@\" <<'EOF'",
+    "git tag -a v1 \"-e\" -F - <<'EOF'",
+    "git commit --e -F - <<'EOF'",
+    "git commit --ed -F - <<'EOF'",
+    "git commit -F - `echo -e` <<'EOF'",
+    "git commit -F - --ed* <<'EOF'",
+    "git commit -F - {-e,-q} <<'EOF'",
+    "git commit -F - -q\"e\" <<'EOF'",
+    "git commit -m 'x' -F - <<'EOF'",
+])
+def test_git_message_heredoc_with_a_non_literal_word_keeps_the_body_checked(agent, header, ws):
+    assert_deny(f"{header}\nsubject\n{PUSH}\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("header", [
+    "git commit --no-edit -F - <<'EOF'",
+    "git commit -F - --no-verify <<'EOF'",
+    "git commit --file=- --author=a@b.c <<'EOF'",
+    "git commit -F - << EOF",
+])
+def test_git_message_heredoc_with_only_plain_words_is_still_skipped(agent, header, ws):
+    assert_allow(f"{header}\n{GIT_BODY}", agent, ws)
+
+
 # --- git tag: lead and judge may list and verify, not create or move -------
 
 TAG_WRITE_FORMS = [

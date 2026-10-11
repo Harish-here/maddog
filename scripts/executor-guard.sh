@@ -543,10 +543,16 @@ strip_command_wrappers() {
 #      does not run it as commands), when ALL of these hold: `git` is the
 #      segment's first literal word (no `VAR=val`, `env`, `nice`, `timeout`,
 #      `command`, `exec` or other wrapper before it), NOTHING sits between
-#      `git` and the subcommand, and no `-e` / `--edit` is among the arguments
-#      (also inside a short-flag cluster such as `-qe`). `-e` makes git open
-#      the message in an editor, and `GIT_EDITOR=sh git commit -e -F -` runs
-#      the message as a shell script, so those forms keep the body checked.
+#      `git` and the subcommand, EVERY token of the command (git, subcommand,
+#      each argument, up to the heredoc operator) is a plain literal word
+#      (letters, digits and `_ . / + = : @ , -` only: no quote, backslash,
+#      `$`, backtick, glob character or brace), and none of them is `-e`,
+#      `--e...` (an abbreviation of `--edit`) or a single-dash cluster
+#      holding an `e` (`-qe`). `-e` makes git open the message in an editor,
+#      and `GIT_EDITOR=sh git commit -e -F -` runs the message as a shell
+#      script; a quoted, escaped or variable spelling (`"-e"`, `\-e`,
+#      `--"edit"`, `$E`, `"$@"`) hides the flag from the literal text, so
+#      every such form keeps the body checked.
 #      heredoc_consumer names the form `git:stdin`, which no real basename can
 #      equal. Bare `git` stays off the list: `git -c k=v ...` and `!` aliases
 #      can run commands, so `git -C x commit -F -` and `git -c k=v commit -F -`
@@ -576,7 +582,7 @@ HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail gre
 # stay local.
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
-  local tok_lit tok_masked k first_word git_first=0
+  local tok_lit tok_masked k first_word skip_next git_first=0
   tokens=()
   tokens_masked=()
   while IFS=$'\x1f' read -r tok_lit tok_masked; do
@@ -604,16 +610,37 @@ heredoc_consumer() {
   if [ "$git_first" -eq 1 ] && [ "${tokens[0]##*/}" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
     case "${tokens[1]}" in
       commit|tag)
-        # -e / --edit (or an abbreviation of --edit) in any argument, or an
-        # `e` inside any short-flag token: git may run an editor on the
-        # message, so the body is not plain text. Fail toward checking.
-        k=2
+        # Fail-closed allowlist: EVERY token of the command (git, subcommand,
+        # each argument; the heredoc operator and its delimiter word are
+        # exempt) must be a plain literal word. A quote, backslash, `$`,
+        # backtick, glob character, brace or any other character outside
+        # the set below can spell `-e` / `--edit` in a way the literal text
+        # does not show ("-e", \-e, --"edit", $E, "$@"), so the body stays
+        # checked. Also: no `-e`, no `--e...` (an abbreviation of --edit)
+        # and no single-dash cluster holding an `e`, since git then opens an
+        # editor on the message.
+        k=0
+        skip_next=0
         while [ "$k" -lt "${#tokens[@]}" ]; do
+          if [ "$skip_next" -eq 1 ]; then
+            skip_next=0
+            k=$((k + 1))
+            continue
+          fi
           case "${tokens[$k]}" in
-            --e|--ed|--edi|--edit) printf 'git'; return 0 ;;
-            --*) : ;;
-            -*e*) printf 'git'; return 0 ;;
+            "<<"|"<<-") skip_next=1; k=$((k + 1)); continue ;;
+            "<<"*) k=$((k + 1)); continue ;;
           esac
+          case "${tokens[$k]}" in
+            *[!A-Za-z0-9_./+=:@,-]*) printf 'git'; return 0 ;;
+          esac
+          if [ "$k" -ge 2 ]; then
+            case "${tokens[$k]}" in
+              --e*) printf 'git'; return 0 ;;
+              --*) : ;;
+              -*e*) printf 'git'; return 0 ;;
+            esac
+          fi
           k=$((k + 1))
         done
         k=2
@@ -1158,13 +1185,13 @@ while IFS= read -r segment; do
               --sort=*|--format=*) : ;;
               --sort|--format) tag_skip=1 ;;
               -*)
-                deny "git tag with '$tok' can create, delete or move a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --points-at, --merged, --no-merged, --sort, -v/--verify) is allowed."
+                deny "git tag with '$tok' can create, delete or move a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --no-contains, --points-at, --merged, --no-merged, --sort, --format, -v/--verify) is allowed."
                 ;;
               *) tag_pos=1 ;;
             esac
           done
           if [ "$tag_pos" -eq 1 ] && [ "$tag_mode" -eq 0 ]; then
-            deny "git tag with a tag name creates a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --points-at, --merged, --no-merged, --sort, -v/--verify) is allowed."
+            deny "git tag with a tag name creates a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --no-contains, --points-at, --merged, --no-merged, --sort, --format, -v/--verify) is allowed."
           fi
           ;;
         checkout)
