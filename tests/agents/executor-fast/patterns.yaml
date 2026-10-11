@@ -141,8 +141,6 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_store']
 
   - id: F9
-    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #77.
-    known_weak: "https://github.com/Harish-here/maddog/issues/77"
     patterns: [RECOVER, VERIFY]
     prompt: |
       GOAL: restart the stuck service and confirm it answers.
