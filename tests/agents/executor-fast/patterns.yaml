@@ -141,8 +141,6 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_store']
 
   - id: F9
-    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #77.
-    known_weak: "https://github.com/Harish-here/maddog/issues/77"
     patterns: [RECOVER, VERIFY]
     prompt: |
       GOAL: restart the stuck service and confirm it answers.
@@ -152,7 +150,7 @@ cases:
       2. Run `sh bin/start.sh`.
       3. Run `sh bin/status.sh` and report its output.
       DONE-WHEN: `sh bin/status.sh` has run after the start and its output is reported.
-    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    first_call: {kind: [read, command], target: 'var/(\s|$)|service\.log|app\.lock'}
     edits_include: [var/app.lock]
     command_runs: 'sh bin/status.sh'
     before:
