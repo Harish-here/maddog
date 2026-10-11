@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.2] - 2026-10-11
+
+### Fixed
+- `scripts/executor-guard.sh`, `scripts/judge-dispatch-guard.sh`, `scripts/pattern-declare-guard.sh` — when `jq` is not installed, each guard denies a call from an agent type it guards, matched in the raw input without jq, and tells the caller to install jq; before, every guard allowed every call. Calls with no guarded agent type, such as the main session's, are still allowed (#93) (6fa9063)
+
 ## [4.3.1] - 2026-10-11
 
 ### Fixed
