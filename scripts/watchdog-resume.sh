@@ -6,7 +6,7 @@
 # attach later with:  tmux attach -t <session>   (from Ghostty, SSH, phone).
 # State is written by the agent at pause time; deleted by it on in-session resume.
 # Runs as a LaunchAgent (NOT cron): launchd gui/ sessions reach the keychain, cron cannot
-# (live-tested 2026-08-08: cron -> Not logged in; LaunchAgent -> Claude Max, prompt answered).
+# (a cron-launched claude reports "Not logged in").
 #
 # State file fields (one `key=value` per line):
 #   mode=standing|<anything else>   'standing' persists across relaunches; anything

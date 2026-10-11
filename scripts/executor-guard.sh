@@ -22,68 +22,39 @@
 #     invariant ("cannot fix/apply by construction") is enforced here, not by
 #     instruction. executor-smart is deliberately NOT covered by this layer:
 #     it holds Write/Edit and editing files is its job. This layer also
-#     blanket-denies inline interpreters/scripting tools (python*, node*,
-#     deno, bun, perl, ed, xargs) for BOTH lead and judge outright, regardless
-#     of args or form — neither agent's read-only toolset needs any of them,
-#     so a denial by binary name costs neither agent anything real.
+#     blanket-denies inline interpreters/scripting tools (the interpreter case
+#     in the file-write block below) for BOTH lead and judge outright,
+#     regardless of args or form — neither agent's read-only toolset needs any
+#     of them, so a denial by binary name costs neither agent anything real.
+#     Known, accepted limitation: judge cannot re-run a gate itself via Bash. A
+#     positive allowlist of interpreter forms kept leaking (a stripped
+#     `VAR=val` prefix, wrapper flags only partly parsed), so none is kept.
 #
-#     History: executor-judge briefly carried a narrower carve-out
-#     (maintainer decision 2026-09-26, option A; tightened to a strict
-#     ALLOWLIST 2026-09-27) so it could re-run gates itself
-#     (agents/executor-judge.md:104, Core Law 3) through a small set of
-#     positively-enumerated python/node/bun/deno forms. A second independent
-#     release review (round 2, on commit 1e3ecec) found the allowlist still
-#     leaking on two axes — `VAR=val` prefixes were stripped and discarded
-#     before classification (so e.g. `PYTEST_ADDOPTS=--junitxml=README.md
-#     python3 -m pytest tests -q` reached the allowlist looking like a bare
-#     `python3 -m pytest tests -q`), and several wrapper forms (`env -S`,
-#     `env -P`, `nice -n5`, `nice --adjustment=5`, `exec -a`) were only
-#     partially parsed by the stripper and then fell through unclassified.
-#     Maintainer decision (option B, 2026-09-27): remove the allowlist
-#     rather than keep patching it. Judge now denies every interpreter in
-#     every form, exactly like lead — including python/python2/python3/
-#     node/nodejs/deno/bun/perl/ed/xargs. Known, accepted limitation, not
-#     solved here: judge can no longer re-run a gate itself via Bash; that
-#     capability is deferred to a future dedicated gate-runner script (not
-#     yet written) rather than reopening an inline-interpreter allowlist.
+#     Wrapper/prefix stripping (both lead and judge): the classification above
+#     (and the write-form denials just below it) runs against the command with
+#     leading `VAR=val` assignments and the wrappers handled in
+#     strip_command_wrappers peeled off first, so `env python3 -c 1` and
+#     `timeout 5 python3 -c 1` are classified as the `python3 -c 1` they are. A
+#     shell binary (`sh`, `bash`, `zsh`, `ksh`, `dash`, `ash`) found as the real
+#     command after that stripping denies outright, with or without `-c`: this
+#     guard does not parse a shell's own `-c` argument as a nested command line,
+#     so `sh -c "echo x > f"` could not be reliably caught by the write-form
+#     checks and the only safe answer is to deny the shell itself.
 #
-#     Wrapper/prefix stripping (both lead and judge): the classification
-#     above (and the write-form denials just below it) runs against the
-#     command with leading `VAR=val` assignments and any of `env`,
-#     `command`, `exec`, `nice`, `nohup`, `time`, `timeout <duration>`, and
-#     `stdbuf` peeled off first — `env python3 -c 1`, `timeout 5 python3 -c
-#     1`, `FOO=1 python3 -c 1`, etc. are classified as the `python3 -c 1`
-#     they really are, not as `env`/`timeout`/an assignment falling through
-#     unclassified. A shell binary (`sh`, `bash`, `zsh`, `ksh`, `dash`,
-#     `ash`) found as the real command after that stripping denies outright
-#     for lead and judge, with or without `-c` — this guard does not parse a
-#     shell's own `-c` argument as a nested command line, so the only safe
-#     answer is to deny the shell invocation itself; `sh -c "echo x > f"`
-#     and similar never reach (and could not be reliably caught by) the
-#     write-form checks below.
+#     Not a shell parser, but not silently permissive either: each wrapper
+#     fully understands only an enumerated set of its own flags (see
+#     strip_command_wrappers). A flag or argument form outside that set —
+#     `env -S '...'`, `nice --adjustment=5 ...`, `exec -a foo ...` — DENIES
+#     immediately, inside the stripper, instead of falling through with that
+#     flag misread as the real command and matching no denial case. When
+#     unsure, deny.
 #
-#     Not a shell parser, but not silently permissive either (release
-#     review round 2, F2): each wrapper only fully understands a specific,
-#     enumerated set of its own flags (`nice`: `-n N` or a glued `-N` only;
-#     `env`: `VAR=val` assignments only, no flag at all; `exec`/`nohup`: no
-#     flag at all; `time`: `-p` only; `timeout`/`stdbuf`: a fixed enumerated
-#     flag set). A flag or argument form outside what a given wrapper's
-#     branch enumerates — `env -S '...'`, `env -P /usr/bin ...`, `nice -n5 ...`,
-#     `nice --adjustment=5 ...`, `exec -a foo ...`, an unrecognized `time`
-#     flag, etc. — DENIES immediately, inside the stripper, instead of
-#     falling through with that flag misread as the real command (which is
-#     how `env -S 'sh -c "echo x > f"'`, `nice --adjustment=5 python3 -c 1`,
-#     and `exec -a foo python3 -c 1` previously reached ALLOW: the stripper
-#     dropped some tokens, stopped, and left an unrecognized leftover flag
-#     as `tokens[0]`, matching no denial case). When unsure, deny.
-#
-#     Rationale correction: an `rm -r` from lead/judge is NOT denied "before
-#     any path is examined" — the recursive-delete check below (which calls
-#     normalize_path/is_temp_path) runs for all four agents and DOES examine
-#     the path first. lead/judge's file-write denial is unconditional and
-#     simply never depends on that check's outcome: a temp-confined `rm -r`
-#     passes the recursive-delete check, then falls through to this layer's
-#     unconditional "rm deletes a file" denial regardless.
+#     An `rm -r` from lead/judge is not denied "before any path is examined":
+#     the recursive-delete check below (normalize_path/is_temp_path) runs for
+#     all four agents and does examine the path. lead/judge's file-write denial
+#     is unconditional and never depends on that outcome: a temp-confined
+#     `rm -r` passes the recursive-delete check, then hits this layer's
+#     "rm deletes a file" denial regardless.
 #
 #     Known limit (chained `cd`, not solved here): the recursive-delete
 #     check resolves a relative path against the PreToolUse payload's .cwd,
@@ -123,18 +94,16 @@
 
 set -uo pipefail
 
-# path-guard-lib.sh provides normalize_path/is_temp_path, shared with any
-# future caller (e.g. a Write-scoping hook) instead of reimplementing path
-# logic here. Loaded via a path relative to this script's own location so
-# it resolves regardless of the hook's invocation cwd (hooks/hooks.json
-# invokes this script via ${CLAUDE_PLUGIN_ROOT}/scripts/executor-guard.sh;
-# cwd at hook time is the user's project, not this repo). This script sets
-# only `set -uo pipefail` (no -e), so a failed source (file missing,
-# unreadable, or a syntax error) does not itself abort the script — instead
-# normalize_path/is_temp_path are left undefined, and the recursive-delete
-# call site below fails with bash's "command not found" (exit 127, falsy),
-# tripping all_temp=0 and denying the delete: a broken source denies every
-# recursive delete — noisy, never weaker.
+# path-guard-lib.sh provides normalize_path/is_temp_path. Loaded via a path
+# relative to this script's own location so it resolves regardless of the
+# hook's invocation cwd (hooks/hooks.json invokes this script via
+# ${CLAUDE_PLUGIN_ROOT}/scripts/executor-guard.sh; cwd at hook time is the
+# user's project). This script sets only `set -uo pipefail` (no -e), so a failed
+# source (file missing, unreadable, or a syntax error) does not abort it:
+# normalize_path/is_temp_path are left undefined, and the recursive-delete call
+# site below fails with "command not found" (exit 127, falsy), tripping
+# all_temp=0 and denying the delete: a broken source denies every recursive
+# delete — noisy, never weaker.
 source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
 
 # Denial context depends on the refusal kind and, for the irreversible kind,
@@ -173,10 +142,8 @@ deny() {
 }
 
 # --- quote-aware walk -------------------------------------------------
-# One shared character-by-character quote-tracking walk (mode-selected),
-# reused everywhere in this file that needs to know whether a character
-# sits inside single/double quotes — a single implementation, not one per
-# call site that can drift out of sync.
+# One shared character-by-character quote-tracking walk (mode-selected), so
+# every caller agrees on whether a character sits inside single/double quotes.
 #   mode="chain": splits a full command into pipeline/chain segments on
 #     unquoted, unescaped &&, ||, ;, |, and a bare & (background operator;
 #     excluded when it forms &> / &>> / an fd-duplication or -close form
@@ -345,13 +312,11 @@ quote_walk() {
         mbuf+="$c"
         ;;
     esac
-    # Bookkeeping for the '&' lookbehind exclusion below: every non-continue
-    # path above (quote literal-appends, the &/|/; literal-append
-    # fallthroughs, and the default *) case) reaches this single point after
-    # writing $c onto buf — record whether THIS just-written character was
-    # itself escaped, so a later lookbehind can tell an escaped trailing '>'
-    # (a literal argument character) from a genuine redirect '>' (reuses the
-    # existing esc/esc_next parity, not a second parser).
+    # Bookkeeping for the '&' lookbehind exclusion above: every non-continue
+    # path reaches this point after writing $c onto buf. Record whether THIS
+    # character was itself escaped, so a later lookbehind can tell an escaped
+    # trailing '>' (a literal argument character) from a genuine redirect '>'
+    # (reuses the esc/esc_next parity, not a second parser).
     buf_last_esc="$esc"
     i=$((i + 1))
   done
@@ -372,13 +337,10 @@ split_command() {
 # (Bash 3.2: no nameref) so a wrapper cannot launder a write-form or
 # interpreter invocation past the classification that follows. Peels, in a
 # loop (wrappers can chain, e.g. `nice nohup timeout 5 env FOO=1 python3
-# -c 1`): any number of leading `VAR=val` assignments, then one of
-# env/command/exec/nice/nohup/time/timeout/stdbuf with its own flags/args.
-# Not a shell parser: each wrapper branch only fully understands a specific,
-# enumerated flag set for that wrapper (see the header comment); a flag or
-# argument form outside that set calls deny() directly and exits the whole
-# script from inside this function, rather than leaving an unrecognized
-# leftover token to fall through and be misread as the real command.
+# -c 1`), leading `VAR=val` assignments and then one wrapper from the case
+# below. A flag or argument form outside a wrapper's enumerated set calls
+# deny() directly and exits the whole script from inside this function (see
+# the header comment).
 strip_command_wrappers() {
   local progressed=1 t
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
@@ -541,19 +503,14 @@ strip_command_wrappers() {
 #      unidentified are not in the list, so their bodies are checked.
 #      One git form is a reader too: `git commit` or `git tag` with `-F -`,
 #      `-F-`, `--file=-` or `--file -` (the message comes from stdin, and git
-#      does not run it as commands), when ALL of these hold: `git` is the
-#      segment's first literal word (no `VAR=val`, `env`, `nice`, `timeout`,
-#      `command`, `exec` or other wrapper before it), NOTHING sits between
-#      `git` and the subcommand, EVERY token of the command (git, subcommand,
-#      each argument, up to the heredoc operator) is a plain literal word
-#      (letters, digits and `_ . / + = : @ , -` only: no quote, backslash,
-#      `$`, backtick, glob character or brace), and none of them is `-e`,
-#      `--e...` (an abbreviation of `--edit`) or a single-dash cluster
-#      holding an `e` (`-qe`). `-e` makes git open the message in an editor,
-#      and `GIT_EDITOR=sh git commit -e -F -` runs the message as a shell
-#      script; a quoted, escaped or variable spelling (`"-e"`, `\-e`,
-#      `--"edit"`, `$E`, `"$@"`) hides the flag from the literal text, so
-#      every such form keeps the body checked.
+#      does not run it as commands), when `git` is the segment's first literal
+#      word (no `VAR=val` or wrapper before it), nothing sits between `git` and
+#      the subcommand, and the literal-word and no-`-e` checks in
+#      heredoc_consumer pass. `-e` makes git open the message in an editor, and
+#      `GIT_EDITOR=sh git commit -e -F -` runs the message as a shell script; a
+#      quoted, escaped or variable spelling (`"-e"`, `\-e`, `--"edit"`, `$E`,
+#      `"$@"`) hides the flag from the literal text, so every such form keeps
+#      the body checked.
 #      heredoc_consumer names the form `git:stdin`, which no real basename can
 #      equal. Bare `git` stays off the list: `git -c k=v ...` and `!` aliases
 #      can run commands, so `git -C x commit -F -` and `git -c k=v commit -F -`
@@ -571,16 +528,15 @@ strip_command_wrappers() {
 # Not handled: a heredoc nested inside a body that is kept (its lines are
 # checked as before), and a body written to a file and run later
 # (`cat > s.sh <<EOF` ... `bash s.sh`). `$(...)` inside an unquoted body is
-# not examined, as it was not before.
+# not examined.
 HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail grep diff git:stdin "
 
 # Prints the real command of one segment (wrappers peeled, basename), or "?"
 # when it cannot be identified or is not a plain literal word (leading
 # redirect, quotes, `$`, backtick, wrapper form the stripper rejects). Prints
 # `git:stdin` for git commit / git tag reading its message from stdin (see the
-# list of conditions above). Runs in
-# a subshell at the call site, so the deny() override and the tokens mutation
-# stay local.
+# list of conditions above). Runs in a subshell at the call site, so the
+# deny() override and the tokens mutation stay local.
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
   local tok_lit tok_masked k first_word skip_next git_first=0
@@ -965,14 +921,12 @@ while IFS= read -r segment; do
         all_temp=0
       else
         for p in "${paths[@]}"; do
-          # Decision 7's fail-closed contract: normalize_path's non-zero
-          # return (metacharacter, nonexistent component, cycle/hop-budget,
-          # readlink failure) is treated as NOT-temporary directly — never
-          # call is_temp_path on a partial or absent result. A broken
-          # `source` above (path-guard-lib.sh missing/unreadable/syntax
-          # error) leaves normalize_path undefined, which fails the same
-          # way here (bash "command not found", exit 127, falsy) — denies
-          # closed, per the header note above.
+          # normalize_path's non-zero return (metacharacter, nonexistent
+          # component, cycle/hop-budget, readlink failure) is treated as
+          # NOT-temporary directly — never call is_temp_path on a partial or
+          # absent result. A broken `source` above leaves normalize_path
+          # undefined, which fails the same way here (bash "command not
+          # found", exit 127, falsy) — denies closed, per the note above.
           resolved_p="$(normalize_path "$p" "$cwd" parent)" || { all_temp=0; continue; }
           is_temp_path "$resolved_p" || all_temp=0
         done
@@ -1128,11 +1082,8 @@ while IFS= read -r segment; do
         deny "$cmd0 creates, overwrites, or moves a file — this executor may not write files via Bash (Bash is read-only here); route the change through an executor that holds Write/Edit."
         ;;
       python|python2|python3|node|nodejs|deno|bun|perl|ed|xargs)
-        # Option B (maintainer decision, 2026-09-27, release review round 2
-        # on commit 1e3ecec): both lead and judge blanket-deny every
-        # interpreter/scripting tool outright, regardless of args or form —
-        # see the header comment for why the judge allowlist this replaced
-        # was removed rather than patched further.
+        # Both lead and judge deny every interpreter/scripting tool outright,
+        # regardless of args or form (see the header comment).
         deny "$cmd0 is an inline interpreter or scripting tool this executor may not run via Bash — Bash is read-only here (grep/sed -n/git log/git diff/jq/wc/find/cat/head/tail/ls/diff/shellcheck cover inspection); route scripted or destructive work through an executor that holds Write/Edit."
         ;;
       sed)
@@ -1219,18 +1170,14 @@ while IFS= read -r segment; do
     # space) is caught the same as a standalone `>out.txt` token. Tested
     # against tokens_masked, not tokens: a '>' that only exists inside
     # quotes (`grep '>' f`, `awk '$1 > 5'`, `git log --grep='fix > bug'`)
-    # is masked to 'Q' and can never trip this check — only a '>' the shell
-    # itself would treat as a redirect operator survives into the masked
-    # form.
-    # (fd duplication/close forms like 2>&1, &>&2, 2>&- are not file writes;
-    # a target of /dev/null, decision 22, discards output rather than
-    # persisting it to a file — exempted the same way, alongside them. The
-    # target is read from the RAW token, not the masked one, and re-derived
-    # from the next token when a space separates the operator from its
-    # target (`2> /dev/null`), so both a glued and a spaced /dev/null are
-    # recognized; one layer of surrounding quotes is stripped before the
-    # comparison so `'/dev/null'` and `"/dev/null"` match too. Widened no
-    # further than /dev/null.)
+    # is masked to 'Q' and can never trip this check.
+    # Exempt, as not file writes: fd duplication/close forms (2>&1, &>&2,
+    # 2>&-) and a target of /dev/null, which discards output rather than
+    # persisting it. The target is read from the RAW token, not the masked
+    # one, and re-derived from the next token when a space separates the
+    # operator from its target (`2> /dev/null`); one layer of surrounding
+    # quotes is stripped before the comparison so `'/dev/null'` and
+    # `"/dev/null"` match too. Widened no further than /dev/null.
     redirect_i=0
     # strip_command_wrappers above can leave tokens/tokens_masked EMPTY (a
     # segment that was only `FOO=bar`, `env`, `timeout 5`, ...). Bash 3.2

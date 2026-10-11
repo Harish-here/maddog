@@ -6,9 +6,9 @@
 # happen every time, so this hook refuses a first call that has no such line.
 #
 # Rule, first tool call only:
-#   - `PATTERNS:` in the subagent's own assistant text -> allow. This is the user-locked
-#     rule: the text anywhere in the agent's own text, with any markup around it. The
-#     scorer's check 1 (tests/harness/core/agent_score.py) applies the same one.
+#   - `PATTERNS:` in the subagent's own assistant text -> allow. The text counts
+#     anywhere in the agent's own text, with any markup around it. The
+#     scorer's check 1 (tests/harness/core/agent_score.py) applies the same rule.
 #   - absent -> deny once, per agent_id, with a reason telling it to write the
 #     line and repeat the call.
 #   - anything we cannot read or inspect -> allow. This guard never denies twice
@@ -18,8 +18,7 @@
 #
 # Where the evidence is: the subagent's transcript is
 #   dirname(transcript_path)/<session_id>/subagents/agent-<agent_id>.jsonl
-# and at the first PreToolUse its text entry is already on disk (live probe,
-# 3 of 3 short Haiku runs, 2026-10-08).
+# and at the first PreToolUse its text entry is already on disk.
 #
 # Wiring: plugin-level hooks/hooks.json, matcher on the read/write/search/shell
 # tools. That wiring is session-wide, so scope is enforced here: only calls

@@ -5,11 +5,11 @@
 # Purpose: executor-judge's own file already says it may rent only
 # executor-fast-read or researcher as hands, and never a hand that can make a
 # change (it is fix-less by design — findings route back to the caller, it
-# never repairs). That limit lives only as a sentence in the agent's own
-# description today. This hook is the first attempt at making it structural.
+# never repairs). That limit would otherwise live only as a sentence in the
+# agent's own description; this hook makes it structural.
 #
-# STATUS OF THE PAYLOAD SHAPE — CONFIRMED as of 2026-08-27 against captured
-# payloads. A subagent dispatch always has .tool_name == "Agent". The target
+# PAYLOAD SHAPE (confirmed against captured payloads). A subagent dispatch
+# always has .tool_name == "Agent". The target
 # subagent is at .tool_input.subagent_type (plugin-namespaced, e.g.
 # "maddog:executor-fast-read"). The calling subagent is at .agent_type, populated
 # whenever a subagent makes the call (e.g. "general-purpose"), alongside
@@ -30,7 +30,7 @@
 # executor-fast-read nor researcher (bare or namespaced).
 #
 # Scope: executor-judge and executor-smart. executor-lead is deliberately left
-# unrestricted here — a separate, already-decided design choice, not an oversight.
+# unrestricted here.
 #
 # Diagnostic logging: OFF by default. The full payload of every dispatch
 # includes the complete prompt text handed to the subagent — a shipped hook
