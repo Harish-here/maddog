@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.1] - 2026-10-11
+
+### Fixed
+- `scripts/executor-guard.sh` — a refusal because the guard could not parse the command (a leading `(` or `{`, a `nice`, `timeout` or `stdbuf` missing its argument, or the guard's internal-error backstop) now tells every executor to rewrite it as simpler, separate commands and retry, in place of STOP. Irreversible-action refusals keep STOP; only executor-judge's text names a verdict (#64) (c81268c)
+- `scripts/executor-guard.sh` — the body of a `git commit` or `git tag` heredoc read with `-F -` or `--file=-` is skipped like other allowlisted readers, so a commit-message line starting with `(` is no longer refused; any option between `git` and the subcommand keeps the body checked (#87) (c81268c)
+
 ## [4.3.0] - 2026-10-10
 
 ### Added
