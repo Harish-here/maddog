@@ -509,3 +509,108 @@ def test_guard_script_has_valid_bash_syntax():
         ["bash", "-n", str(GUARD)], capture_output=True, text=True, timeout=10
     )
     assert proc.returncode == 0, proc.stderr
+
+
+# --- git message heredoc: editor forms keep the body checked ---------------
+# `-e` makes git open the message in an editor, and a leading `VAR=val`
+# (GIT_EDITOR=sh) or any wrapper before `git` can turn that editor into a
+# shell, so the body is then commands. The skip needs `git` as the segment's
+# first word and no `-e` / `--edit`.
+
+@pytest.mark.parametrize("agent", ALL_AGENTS)
+@pytest.mark.parametrize("header", [
+    "GIT_EDITOR=sh git commit -e -F - <<'EOF'",
+    "GIT_EDITOR=sh git commit -F - <<'EOF'",
+    "env GIT_EDITOR=sh git commit -e -F - <<'EOF'",
+    "nice git commit -F - <<'EOF'",
+    "timeout 5 git commit -F - <<'EOF'",
+    "command git commit -F - <<'EOF'",
+    "exec git commit -F - <<'EOF'",
+    "git commit -e -F - <<'EOF'",
+    "git commit --edit -F - <<'EOF'",
+    "git commit -qe -F - <<'EOF'",
+    "git commit -F - -e <<'EOF'",
+    "git tag -a v1 -e -F - <<'EOF'",
+])
+def test_git_message_heredoc_with_editor_or_prefix_keeps_the_body_checked(agent, header, ws):
+    assert_deny(f"{header}\nsubject\n{PUSH}\nEOF", agent, ws)
+
+
+# --- git tag: lead and judge may list and verify, not create or move -------
+
+TAG_WRITE_FORMS = [
+    "git tag v1",
+    "git tag v1 HEAD",
+    "git tag -a v1 -m x",
+    "git tag -d v1",
+    "git tag -f v1",
+    "git tag --force v1",
+    "git tag --delete v1",
+    "git tag -s v1",
+    "git tag -u key v1",
+    "git tag --sort=-creatordate v1",
+    "git tag -m x",
+    "git tag --unknown-flag",
+    "git tag -ln",
+    "git tag -l -d v1",
+]
+
+TAG_READ_FORMS = [
+    "git tag",
+    "git tag -l",
+    "git tag --list",
+    "git tag -l 'v*'",
+    "git tag --list 'v1.*'",
+    "git tag -n",
+    "git tag -n5",
+    "git tag -n5 -l 'v*'",
+    "git tag --contains HEAD",
+    "git tag --contains",
+    "git tag --points-at HEAD",
+    "git tag --points-at=HEAD",
+    "git tag --merged main",
+    "git tag --no-merged main",
+    "git tag --sort=-creatordate",
+    "git tag --sort -creatordate",
+    "git tag -l --sort=-creatordate 'v*'",
+    "git tag -v v1",
+    "git tag --verify v1",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", TAG_WRITE_FORMS)
+def test_lead_and_judge_deny_git_tag_write_forms(agent, command, ws):
+    ctx = _deny_context(command, agent, ws)
+    assert "STOP and return blocked" in ctx
+    assert "not a ban" not in ctx
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", TAG_READ_FORMS)
+def test_lead_and_judge_allow_git_tag_read_forms(agent, command, ws):
+    assert_allow(command, agent, ws)
+    assert run_guard(command, agent, ws).stdout == ""
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", TAG_WRITE_FORMS + TAG_READ_FORMS)
+def test_fast_and_smart_allow_every_git_tag_form(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+def test_internal_error_backstop_reason_does_not_say_return_blocked(ws, tmp_path):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "executor-guard.sh").write_text(GUARD.read_text())
+    (scripts / "path-guard-lib.sh").write_text(
+        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
+    )
+    payload = {"agent_type": LEAD, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
+    proc = subprocess.run(
+        ["bash", str(scripts / "executor-guard.sh")],
+        input=json.dumps(payload), capture_output=True, text=True, timeout=10,
+    )
+    reason = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "return blocked" not in reason
+    assert "retry" in reason

@@ -539,12 +539,18 @@ strip_command_wrappers() {
 #      runs its input as commands (awk, sed, perl, ruby) and anything
 #      unidentified are not in the list, so their bodies are checked.
 #      One git form is a reader too: `git commit` or `git tag` with `-F -`,
-#      `-F-`, `--file=-` or `--file -` (the message comes from stdin and is never
-#      executed), with NOTHING between `git` and the subcommand.
-#      heredoc_consumer names it `git:stdin`, which no real basename can equal.
-#      Bare `git` stays off the list: `git -c k=v ...` and `!` aliases can run
-#      commands, so `git -C x commit -F -` and `git -c k=v commit -F -` are
-#      checked.
+#      `-F-`, `--file=-` or `--file -` (the message comes from stdin, and git
+#      does not run it as commands), when ALL of these hold: `git` is the
+#      segment's first literal word (no `VAR=val`, `env`, `nice`, `timeout`,
+#      `command`, `exec` or other wrapper before it), NOTHING sits between
+#      `git` and the subcommand, and no `-e` / `--edit` is among the arguments
+#      (also inside a short-flag cluster such as `-qe`). `-e` makes git open
+#      the message in an editor, and `GIT_EDITOR=sh git commit -e -F -` runs
+#      the message as a shell script, so those forms keep the body checked.
+#      heredoc_consumer names the form `git:stdin`, which no real basename can
+#      equal. Bare `git` stays off the list: `git -c k=v ...` and `!` aliases
+#      can run commands, so `git -C x commit -F -` and `git -c k=v commit -F -`
+#      are checked.
 #   2. nothing consumes the reader's output or runs after it on that line: no
 #      later command, no `>(` or `<(`, and the line does not end in `|`, `&&`,
 #      `||` or `\` (a pipeline continued past the body).
@@ -570,13 +576,16 @@ HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail gre
 # stay local.
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
-  local tok_lit tok_masked k
+  local tok_lit tok_masked k first_word git_first=0
   tokens=()
   tokens_masked=()
   while IFS=$'\x1f' read -r tok_lit tok_masked; do
     tokens+=("$tok_lit")
     tokens_masked+=("$tok_masked")
   done < <(quote_walk word "$1")
+  # git counts as the reader only when it is the segment's first word, read
+  # BEFORE the wrapper stripper drops any `VAR=val` / env / nice / timeout
+  [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]##*/}" = "git" ] && git_first=1
   strip_command_wrappers
   if [ "${#tokens[@]}" -eq 0 ]; then
     printf '?'
@@ -592,9 +601,21 @@ heredoc_consumer() {
     printf '?'
     return 0
   fi
-  if [ "${tokens[0]##*/}" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
+  if [ "$git_first" -eq 1 ] && [ "${tokens[0]##*/}" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
     case "${tokens[1]}" in
       commit|tag)
+        # -e / --edit (or an abbreviation of --edit) in any argument, or an
+        # `e` inside any short-flag token: git may run an editor on the
+        # message, so the body is not plain text. Fail toward checking.
+        k=2
+        while [ "$k" -lt "${#tokens[@]}" ]; do
+          case "${tokens[$k]}" in
+            --e|--ed|--edi|--edit) printf 'git'; return 0 ;;
+            --*) : ;;
+            -*e*) printf 'git'; return 0 ;;
+          esac
+          k=$((k + 1))
+        done
         k=2
         while [ "$k" -lt "${#tokens[@]}" ]; do
           case "${tokens[$k]}" in
@@ -828,7 +849,7 @@ if [ "$deny_writes" -eq 1 ]; then
   fail_closed() {
     local rc=$?
     [ "$rc" -eq 0 ] && return 0
-    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"executor-guard.sh hit an internal error while inspecting this command, so it was denied rather than allowed unchecked. Simplify the command, or return blocked to your caller.","additionalContext":"'"$SHAPE_CONTEXT"'"}}'
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"executor-guard.sh hit an internal error while inspecting this command, so it was denied rather than allowed unchecked. Rewrite it as simpler, separate commands and retry.","additionalContext":"'"$SHAPE_CONTEXT"'"}}'
     exit 0
   }
   trap fail_closed EXIT
@@ -1112,6 +1133,39 @@ while IFS= read -r segment; do
           ;;
         restore)
           deny "git restore overwrites working-tree/staged files from another version — this executor may not write files via Bash."
+          ;;
+        tag)
+          # Only the read-only forms pass: a listing (-l/--list, -n, or a
+          # filter such as --contains/--points-at/--merged/--no-merged) or
+          # -v/--verify. A positional argument names a NEW tag unless a
+          # list/verify mode makes it a pattern or a tag to check
+          # (`--sort` alone does not: `git tag --sort=x v1` creates v1).
+          # Any other flag (-a -s -u -m -F -f -d -e --force --delete ...,
+          # or one this guard does not know) denies: fail closed.
+          tag_mode=0
+          tag_pos=0
+          tag_skip=0
+          for tok in "${tokens[@]:2}"; do
+            if [ "$tag_skip" -eq 1 ]; then
+              tag_skip=0
+              continue
+            fi
+            case "$tok" in
+              -l|--list|-v|--verify|-n|-n[0-9]*) tag_mode=1 ;;
+              --contains=*|--no-contains=*|--merged=*|--no-merged=*|--points-at=*) tag_mode=1 ;;
+              --contains|--no-contains|--merged|--no-merged) tag_mode=1 ;;
+              --points-at) tag_mode=1; tag_skip=1 ;;
+              --sort=*|--format=*) : ;;
+              --sort|--format) tag_skip=1 ;;
+              -*)
+                deny "git tag with '$tok' can create, delete or move a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --points-at, --merged, --no-merged, --sort, -v/--verify) is allowed."
+                ;;
+              *) tag_pos=1 ;;
+            esac
+          done
+          if [ "$tag_pos" -eq 1 ] && [ "$tag_mode" -eq 0 ]; then
+            deny "git tag with a tag name creates a tag — this executor may not write via Bash; only listing and verifying tags (git tag, -l/--list, -n, --contains, --points-at, --merged, --no-merged, --sort, -v/--verify) is allowed."
+          fi
           ;;
         checkout)
           for tok in "${tokens[@]:2}"; do
