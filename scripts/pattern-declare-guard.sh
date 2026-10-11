@@ -29,8 +29,9 @@
 #
 # Protocol: read the PreToolUse JSON payload on stdin; print nothing and exit 0
 # to ALLOW, or print a hookSpecificOutput deny JSON and exit 0 to DENY (the JSON
-# form gives the model the reason; exit 2 would not). Hooks fail open: a missing
-# jq or an unreadable payload ALLOWS.
+# form gives the model the reason; exit 2 would not). Hooks fail open: an unreadable
+# payload ALLOWS. A missing jq denies only a payload whose raw text names one of the
+# two agent types; every other caller ALLOWS.
 #
 # State: one empty marker file per agent_id under ${TMPDIR:-/tmp}/maddog-pattern-declare/.
 # The marker is created on the agent's first call, whatever the decision, so a
@@ -45,7 +46,15 @@ deny() {
 
 input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
-command -v jq >/dev/null 2>&1 || exit 0
+if ! command -v jq >/dev/null 2>&1; then
+  # Without jq the payload cannot be parsed. Deny a call whose raw input names a guarded
+  # agent type (static JSON, no jq); allow every other caller, e.g. the main session.
+  jq_missing_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?(executor-fast|executor-fast-read)"'
+  if [[ "$input" =~ $jq_missing_re ]]; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"The maddog guards require jq and it is not installed, so this call was denied rather than allowed unchecked. Install jq, then retry.","additionalContext":"Blocked by pattern-declare-guard.sh: jq is missing. STOP and return blocked to your caller, asking them to install jq - do not attempt the call."}}'
+  fi
+  exit 0
+fi
 
 field() { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
 
