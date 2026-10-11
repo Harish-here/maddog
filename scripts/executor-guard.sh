@@ -114,8 +114,9 @@
 #   - print nothing and exit 0 (ALLOW), or
 #   - print a hookSpecificOutput deny JSON and exit 0 (DENY, exit 2 would
 #     also block but gives the model no reason — always use the JSON form).
-# Any failure to parse input, or absence of jq, ALLOWS the call — never
-# block on our own inability to inspect the command. Exception: once the
+# Any failure to parse input ALLOWS the call — never block on our own
+# inability to inspect the command. Missing jq denies only a payload whose raw
+# text names a guarded agent_type; every other caller still ALLOWS. Exception: once the
 # caller is known to be executor-lead or executor-judge, an unexpected
 # non-zero exit (an internal guard bug) DENIES instead — see the
 # fail-closed backstop below the scope check.
@@ -847,7 +848,15 @@ skip_heredoc_bodies() {
 input="$(cat 2>/dev/null)"
 [ -z "$input" ] && exit 0
 
-command -v jq >/dev/null 2>&1 || exit 0
+if ! command -v jq >/dev/null 2>&1; then
+  # Without jq the payload cannot be parsed. Deny a call whose raw input names a guarded
+  # agent type (static JSON, no jq); allow every other caller, e.g. the main session.
+  jq_missing_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?(executor-fast|executor-smart|executor-lead|executor-judge)"'
+  if [[ "$input" =~ $jq_missing_re ]]; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"The maddog guards require jq and it is not installed, so this call was denied rather than allowed unchecked. Install jq, then retry.","additionalContext":"Blocked by executor-guard.sh: jq is missing. STOP and return blocked to your caller, asking them to install jq - do not attempt the call."}}'
+  fi
+  exit 0
+fi
 
 # --- scope: only run for executor-fast/executor-smart/executor-lead/executor-judge
 #     (or plugin-namespaced forms). deny_writes=1 layers the file-write denial

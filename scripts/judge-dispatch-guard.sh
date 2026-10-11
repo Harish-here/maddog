@@ -17,7 +17,7 @@
 # dispatches, and that case must always allow.
 #
 # Like scripts/executor-guard.sh, this hook FAILS OPEN on genuine inability
-# to inspect the payload: missing jq, empty stdin, malformed JSON, a
+# to inspect the payload: empty stdin, malformed JSON, a
 # tool_name other than "Agent", or a caller other than executor-judge all
 # mean ALLOW. But once the caller IS executor-judge dispatching an "Agent"
 # call, an ABSENT, empty, or null .tool_input.subagent_type is not the same
@@ -44,8 +44,9 @@
 #   - print nothing and exit 0 (ALLOW), or
 #   - print a hookSpecificOutput deny JSON and exit 0 (DENY, exit 2 would
 #     also block but gives the model no reason — always use the JSON form).
-# Any failure to parse input, or absence of jq, ALLOWS the call — never
-# block on our own inability to inspect the payload. A logging failure must
+# Any failure to parse input ALLOWS the call — never block on our own
+# inability to inspect the payload. Missing jq denies only a payload whose raw
+# text names a guarded agent_type; every other caller still ALLOWS. A logging failure must
 # never change the allow/deny outcome either.
 
 set -uo pipefail
@@ -99,7 +100,15 @@ input="$(cat 2>/dev/null)"
 
 [ -z "$input" ] && exit 0
 
-command -v jq >/dev/null 2>&1 || exit 0
+if ! command -v jq >/dev/null 2>&1; then
+  # Without jq the payload cannot be parsed. Deny a call whose raw input names a guarded
+  # agent type (static JSON, no jq); allow every other caller, e.g. the main session.
+  jq_missing_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?(executor-judge|executor-smart)"'
+  if [[ "$input" =~ $jq_missing_re ]]; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"The maddog guards require jq and it is not installed, so this call was denied rather than allowed unchecked. Install jq, then retry.","additionalContext":"Blocked by judge-dispatch-guard.sh: jq is missing. STOP and return blocked to your caller, asking them to install jq - do not attempt the call."}}'
+  fi
+  exit 0
+fi
 
 # --- defensive: only ever act on a subagent dispatch tool call ---
 tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
