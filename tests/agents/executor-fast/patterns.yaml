@@ -152,7 +152,7 @@ cases:
       2. Run `sh bin/start.sh`.
       3. Run `sh bin/status.sh` and report its output.
       DONE-WHEN: `sh bin/status.sh` has run after the start and its output is reported.
-    first_call: {kind: [read, command], target: 'service\.log|app\.lock'}
+    first_call: {kind: [read, command], target: 'var/|service\.log|app\.lock'}
     edits_include: [var/app.lock]
     command_runs: 'sh bin/status.sh'
     before:
