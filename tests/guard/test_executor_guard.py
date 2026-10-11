@@ -20,6 +20,7 @@ GUARD = REPO_ROOT / "scripts" / "executor-guard.sh"
 JUDGE = "maddog:executor-judge"
 LEAD = "executor-lead"
 FAST = "executor-fast"
+SMART = "executor-smart"
 
 
 def run_guard(command: str, agent_type: str, cwd: Path):
@@ -354,22 +355,151 @@ def _deny_context(command: str, agent_type: str, cwd: Path) -> str:
     return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
 
 
+IRREVERSIBLE = "git reset --hard"
+ALL_AGENTS = [FAST, SMART, LEAD, JUDGE]
+# the wrapper stripper (timeout, stdbuf) runs for lead and judge only
+SHAPE_COMMANDS = {
+    "leading paren": ("(cd x && ls)", ALL_AGENTS),
+    "leading brace": ("{ ls; }", ALL_AGENTS),
+    "nice missing arg": ("nice -n", [LEAD, JUDGE]),
+    "timeout missing arg": ("timeout -s", [LEAD, JUDGE]),
+    "timeout missing duration": ("timeout", [LEAD, JUDGE]),
+    "stdbuf missing arg": ("stdbuf -o", [LEAD, JUDGE]),
+}
+
+
 def test_fast_denial_does_not_claim_a_file_write_ban(ws):
-    ctx = _deny_context("git reset --hard", FAST, ws)
+    ctx = _deny_context(IRREVERSIBLE, FAST, ws)
     assert "write files" not in ctx
     assert "irreversible actions" in ctx
     assert "STOP and return blocked" in ctx
 
 
 def test_smart_denial_does_not_claim_a_file_write_ban(ws):
-    assert "write files" not in _deny_context("git reset --hard", "executor-smart", ws)
+    assert "write files" not in _deny_context(IRREVERSIBLE, SMART, ws)
 
 
 @pytest.mark.parametrize("agent", [LEAD, JUDGE])
 def test_lead_and_judge_denial_names_the_file_write_ban(agent, ws):
-    ctx = _deny_context("git reset --hard", agent, ws)
+    ctx = _deny_context(IRREVERSIBLE, agent, ws)
     assert "write files" in ctx
     assert "STOP and return blocked" in ctx
+
+
+# an irreversible-action denial keeps STOP for every agent; only the judge's
+# text names its own verdict
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD])
+def test_irreversible_denial_has_no_judge_wording_outside_the_judge(agent, ws):
+    ctx = _deny_context(IRREVERSIBLE, agent, ws)
+    assert "STOP and return blocked" in ctx
+    assert "executor-judge" not in ctx
+    assert "VERDICT" not in ctx
+
+
+def test_judge_irreversible_denial_names_its_verdict(ws):
+    ctx = _deny_context(IRREVERSIBLE, JUDGE, ws)
+    assert "STOP and return blocked (VERDICT: STOP)" in ctx
+
+
+# a shape refusal (the guard could not parse the command) is not a ban: every
+# agent is told to rewrite and retry, never to STOP
+@pytest.mark.parametrize("name", sorted(SHAPE_COMMANDS))
+def test_shape_refusal_tells_every_agent_to_rewrite_and_retry(name, ws):
+    command, agents = SHAPE_COMMANDS[name]
+    for agent in agents:
+        ctx = _deny_context(command, agent, ws)
+        assert "not a ban" in ctx, agent
+        assert "Rewrite it as simpler, separate commands" in ctx, agent
+        assert "retry" in ctx, agent
+        assert "STOP" not in ctx, agent
+        assert "return blocked" not in ctx, agent
+        assert "executor-judge" not in ctx, agent
+        assert "VERDICT" not in ctx, agent
+
+
+def test_issue_64_repro_fast_gets_the_rewrite_hint(ws):
+    # the case from #64: a parse-shape refusal whose context said STOP
+    ctx = _deny_context("(git add -A && git status)", FAST, ws)
+    assert "Rewrite it as simpler, separate commands" in ctx
+    assert "STOP" not in ctx
+
+
+def test_shape_refusal_reason_is_kept(ws):
+    proc = run_guard("(ls)", FAST, ws)
+    reason = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "Cannot confidently identify the leading command" in reason
+
+
+def test_internal_error_backstop_carries_the_shape_context(ws, tmp_path):
+    # a library whose is_temp_path exits non-zero stands in for an internal
+    # guard bug: the recursive-delete check reaches it after the trap is set
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "executor-guard.sh").write_text(GUARD.read_text())
+    (scripts / "path-guard-lib.sh").write_text(
+        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
+    )
+    for agent in (LEAD, JUDGE):
+        payload = {"agent_type": agent, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
+        proc = subprocess.run(
+            ["bash", str(scripts / "executor-guard.sh")],
+            input=json.dumps(payload), capture_output=True, text=True, timeout=10,
+        )
+        data = json.loads(proc.stdout)["hookSpecificOutput"]
+        assert data["permissionDecision"] == "deny"
+        assert "internal error" in data["permissionDecisionReason"]
+        assert "Rewrite it as simpler, separate commands" in data["additionalContext"]
+        assert "STOP" not in data["additionalContext"]
+        assert "VERDICT" not in data["additionalContext"]
+        assert "executor-judge" not in data["additionalContext"]
+
+
+# --- git message heredocs --------------------------------------------------
+# `git commit -F -` / `git tag -F -` read their message from stdin and never
+# execute it, so a body line starting with `(` is text, not a subshell. Any
+# other git form (an option between `git` and the subcommand, a header that
+# pipes or chains onward) keeps its body checked.
+
+GIT_BODY = "subject\n\n(core/fixture.py) is the cause\nEOF"
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("header", [
+    "git commit -F - <<'EOF'",
+    "git commit -q -F - <<'EOF'",
+    "git commit -F- <<'EOF'",
+    "git commit --file=- <<'EOF'",
+    "git commit --file - <<'EOF'",
+    "git commit -q --amend -F - <<'EOF'",
+    "git tag -a v1 -F - <<'EOF'",
+    "git add f && git commit -F - <<'EOF'",
+])
+def test_git_message_heredoc_body_is_not_checked_as_commands(agent, header, ws):
+    assert_allow(f"{header}\n{GIT_BODY}", agent, ws)
+
+
+@pytest.mark.parametrize("header", [
+    "git -C x commit -F - <<'EOF'",
+    "git -c core.editor=true commit -F - <<'EOF'",
+    "git --no-pager commit -F - <<'EOF'",
+    "git commit -F - <<'EOF' && echo done",
+    "git commit -F - <<'EOF' | cat",
+    "git commit -F - <<'EOF'; echo done",
+    "git commit -m x <<'EOF'",
+    "git commit -F msg.txt <<'EOF'",
+    "git log -F - <<'EOF'",
+    "git <<'EOF'",
+])
+def test_other_git_heredoc_bodies_are_still_checked(header, ws):
+    assert_deny(f"{header}\n{GIT_BODY}", FAST, ws)
+
+
+def test_git_message_heredoc_in_an_open_construct_is_still_checked(ws):
+    assert_deny(f"if true; then\ngit commit -F - <<'EOF'\n{GIT_BODY}\nfi", FAST, ws)
+
+
+def test_command_after_a_skipped_git_message_heredoc_is_checked(ws):
+    assert_deny(f"git commit -F - <<'EOF'\n{GIT_BODY}\n(ls)", FAST, ws)
 
 
 # --- shell script syntax --------------------------------------------------

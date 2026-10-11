@@ -10,7 +10,10 @@
 #     irreversible/destructive Bash commands (force-delete, force-push, hard
 #     reset, mass discard of uncommitted work, etc.) back to the caller,
 #     forcing the executor to STOP and return blocked rather than attempt the
-#     command.
+#     command. A SHAPE refusal (a command the guard cannot parse: a leading
+#     `(` or `{`, a wrapper missing its argument, an internal error) is not an
+#     irreversible-action denial: its context says so and tells the caller to
+#     rewrite as simpler commands and retry instead of stopping (see deny()).
 #
 #  2. FILE-WRITE DENIAL (executor-lead and executor-judge only). Both agents
 #     hold Bash for read-only inspection (grep, sed -n, git log/diff, jq, wc,
@@ -133,14 +136,34 @@ set -uo pipefail
 # recursive delete — noisy, never weaker.
 source "$(dirname "${BASH_SOURCE[0]}")/path-guard-lib.sh"
 
+# Denial context depends on the refusal kind and, for the irreversible kind,
+# on the agent:
+#   shape (second argument "shape"): the guard could not parse the command, so
+#     it refused it unread. That is not a ban, and a caller who obeys STOP loses
+#     the whole command over a parse limit. The context tells every agent to
+#     rewrite as simpler separate commands and retry. SHAPE_CONTEXT is also the
+#     fail-closed backstop's context, which is static JSON, so it must hold no
+#     double quote and no backslash.
+#   anything else (irreversible action, file write): STOP and return blocked.
+#     Only executor-judge's text names its own verdict (VERDICT: STOP); only
+#     lead and judge are barred from writing files, so only their text says so.
+SHAPE_CONTEXT="Blocked by executor-guard.sh: the guard could not parse this command, so it did not run. This is not a ban on what the command does. Rewrite it as simpler, separate commands (no leading '(' or '{' wrapper, full arguments for any wrapper such as timeout or stdbuf) and retry."
+
 deny() {
-  local reason="$1"
-  # deny_writes is set further down (scope check), after this function is
-  # defined; it is read at call time. Only lead/judge are barred from writing
-  # files, so only their denials say so — fast/smart may write files.
-  local what="irreversible actions"
-  [ "${deny_writes:-0}" -eq 1 ] && what="irreversible actions or write files via Bash"
-  local ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh ${what}. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the command."
+  local reason="$1" kind="${2:-}" ctx what
+  if [ "$kind" = "shape" ]; then
+    ctx="$SHAPE_CONTEXT"
+  else
+    # deny_writes and is_judge are set further down (scope check), after this
+    # function is defined; they are read at call time.
+    what="irreversible actions"
+    [ "${deny_writes:-0}" -eq 1 ] && what="irreversible actions or write files via Bash"
+    if [ "${is_judge:-0}" -eq 1 ]; then
+      ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh ${what}. STOP and return blocked (VERDICT: STOP) to your caller with this reason — do not attempt the command."
+    else
+      ctx="Blocked by executor-guard.sh: this executor is not permitted to weigh ${what}. STOP and return blocked to your caller with this reason — do not attempt the command."
+    fi
+  fi
   local reason_json ctx_json
   reason_json="$(printf '%s' "$reason" | jq -Rs .)"
   ctx_json="$(printf '%s' "$ctx" | jq -Rs .)"
@@ -419,7 +442,7 @@ strip_command_wrappers() {
               if [ "${#tokens[@]}" -gt 0 ]; then
                 tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
               else
-                deny "nice -n is missing its adjustment argument — this guard's wrapper stripper cannot classify what runs next."
+                deny "nice -n is missing its adjustment argument — this guard's wrapper stripper cannot classify what runs next." shape
               fi
               ;;
             -[0-9]*)
@@ -452,7 +475,7 @@ strip_command_wrappers() {
               if [ "${#tokens[@]}" -gt 0 ]; then
                 tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
               else
-                deny "timeout $t is missing its argument — this guard's wrapper stripper cannot classify what runs next."
+                deny "timeout $t is missing its argument — this guard's wrapper stripper cannot classify what runs next." shape
               fi
               ;;
             --signal=*|--kill-after=*|--preserve-status|--foreground|-v|--verbose)
@@ -468,7 +491,7 @@ strip_command_wrappers() {
         if [ "${#tokens[@]}" -gt 0 ]; then
           tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         else
-          deny "timeout is missing its DURATION argument — this guard's wrapper stripper cannot classify what runs next."
+          deny "timeout is missing its DURATION argument — this guard's wrapper stripper cannot classify what runs next." shape
         fi
         progressed=1
         ;;
@@ -482,7 +505,7 @@ strip_command_wrappers() {
               if [ "${#tokens[@]}" -gt 0 ]; then
                 tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
               else
-                deny "stdbuf $t is missing its argument — this guard's wrapper stripper cannot classify what runs next."
+                deny "stdbuf $t is missing its argument — this guard's wrapper stripper cannot classify what runs next." shape
               fi
               ;;
             -i*|-o*|-e*)
@@ -515,6 +538,13 @@ strip_command_wrappers() {
 #      busybox, at, parallel, xargs, env as a command), an interpreter that
 #      runs its input as commands (awk, sed, perl, ruby) and anything
 #      unidentified are not in the list, so their bodies are checked.
+#      One git form is a reader too: `git commit` or `git tag` with `-F -`,
+#      `-F-`, `--file=-` or `--file -` (the message comes from stdin and is never
+#      executed), with NOTHING between `git` and the subcommand.
+#      heredoc_consumer names it `git:stdin`, which no real basename can equal.
+#      Bare `git` stays off the list: `git -c k=v ...` and `!` aliases can run
+#      commands, so `git -C x commit -F -` and `git -c k=v commit -F -` are
+#      checked.
 #   2. nothing consumes the reader's output or runs after it on that line: no
 #      later command, no `>(` or `<(`, and the line does not end in `|`, `&&`,
 #      `||` or `\` (a pipeline continued past the body).
@@ -529,16 +559,18 @@ strip_command_wrappers() {
 # checked as before), and a body written to a file and run later
 # (`cat > s.sh <<EOF` ... `bash s.sh`). `$(...)` inside an unquoted body is
 # not examined, as it was not before.
-HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail grep diff "
+HEREDOC_SAFE_READERS=" python python3 node cat jq tee wc sort uniq head tail grep diff git:stdin "
 
 # Prints the real command of one segment (wrappers peeled, basename), or "?"
 # when it cannot be identified or is not a plain literal word (leading
-# redirect, quotes, `$`, backtick, wrapper form the stripper rejects). Runs in
+# redirect, quotes, `$`, backtick, wrapper form the stripper rejects). Prints
+# `git:stdin` for git commit / git tag reading its message from stdin (see the
+# list of conditions above). Runs in
 # a subshell at the call site, so the deny() override and the tokens mutation
 # stay local.
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
-  local tok_lit tok_masked
+  local tok_lit tok_masked k
   tokens=()
   tokens_masked=()
   while IFS=$'\x1f' read -r tok_lit tok_masked; do
@@ -559,6 +591,25 @@ heredoc_consumer() {
   if [ "${tokens[0]}" != "${tokens_masked[0]}" ]; then
     printf '?'
     return 0
+  fi
+  if [ "${tokens[0]##*/}" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
+    case "${tokens[1]}" in
+      commit|tag)
+        k=2
+        while [ "$k" -lt "${#tokens[@]}" ]; do
+          case "${tokens[$k]}" in
+            -F-|--file=-) printf 'git:stdin'; return 0 ;;
+            -F|--file)
+              if [ "${tokens[$((k + 1))]:-}" = "-" ]; then
+                printf 'git:stdin'
+                return 0
+              fi
+              ;;
+          esac
+          k=$((k + 1))
+        done
+        ;;
+    esac
   fi
   printf '%s' "${tokens[0]##*/}"
 }
@@ -755,11 +806,12 @@ command -v jq >/dev/null 2>&1 || exit 0
 #     on top of the shared irreversible-command checks for lead and judge only. ---
 agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 deny_writes=0
+is_judge=0
 case "$agent_type" in
   executor-fast|*:executor-fast) : ;;
   executor-smart|*:executor-smart) : ;;
   executor-lead|*:executor-lead) deny_writes=1 ;;
-  executor-judge|*:executor-judge) deny_writes=1 ;;
+  executor-judge|*:executor-judge) deny_writes=1; is_judge=1 ;;
   *) exit 0 ;;
 esac
 
@@ -769,12 +821,14 @@ esac
 # "non-blocking" hook error and the Bash call would run UNCHECKED. For the
 # two read-only executors, turn that into a deny instead. Every intended path
 # exits 0 (allow, or deny() which exits 0 after printing), so a non-zero
-# status here can only be an internal failure. The JSON is static: no jq.
+# status here can only be an internal failure. The JSON is built without jq
+# (jq itself may be what failed); it carries the shape-refusal context, as the
+# command is unreadable to the guard, not banned.
 if [ "$deny_writes" -eq 1 ]; then
   fail_closed() {
     local rc=$?
     [ "$rc" -eq 0 ] && return 0
-    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"executor-guard.sh hit an internal error while inspecting this command, so it was denied rather than allowed unchecked. Simplify the command, or return blocked to your caller.","additionalContext":"Blocked by executor-guard.sh (fail-closed backstop). STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason - do not attempt the command."}}'
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"executor-guard.sh hit an internal error while inspecting this command, so it was denied rather than allowed unchecked. Simplify the command, or return blocked to your caller.","additionalContext":"'"$SHAPE_CONTEXT"'"}}'
     exit 0
   }
   trap fail_closed EXIT
@@ -821,10 +875,10 @@ while IFS= read -r segment; do
   # attempt to parse inside a group, only to never silently skip past one.
   case "${tokens_masked[0]}" in
     '('*)
-      deny "Cannot confidently identify the leading command — an unquoted '(' starts a subshell, arithmetic command, or command substitution used as the entire leading word, none of which this guard parses into. Rewrite without the wrapper."
+      deny "Cannot confidently identify the leading command — an unquoted '(' starts a subshell, arithmetic command, or command substitution used as the entire leading word, none of which this guard parses into. Rewrite without the wrapper." shape
       ;;
     '{')
-      deny "Cannot confidently identify the leading command — an unquoted '{' brace group is not parsed into by this guard. Rewrite without the wrapper."
+      deny "Cannot confidently identify the leading command — an unquoted '{' brace group is not parsed into by this guard. Rewrite without the wrapper." shape
       ;;
   esac
 
