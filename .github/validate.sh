@@ -14,7 +14,7 @@ if [[ "$PYTHON" == */* && "$PYTHON" != /* ]]; then
 fi
 cd "$(dirname "$0")/.."
 
-echo "== frontmatter, JSON, version consistency"
+echo "== frontmatter, JSON, version consistency, description length, README catalog"
 "$PYTHON" - << 'VALIDATE'
 import json
 import yaml
@@ -56,6 +56,31 @@ try:
         errors.append(f'Version mismatch: plugin.json={plugin_version}, CHANGELOG={changelog_version}')
 except Exception as e:
     errors.append(f'Version check: {e}')
+
+# Description length: the runtime truncates a description past 1024 characters
+for pattern in ['skills/*/SKILL.md', '.claude/skills/*/SKILL.md', 'agents/*.md']:
+    for md_file in Path('.').glob(pattern):
+        content = md_file.read_text()
+        if not content.startswith('---'):
+            continue
+        end = content.find('---', 3)
+        if end <= 0:
+            continue
+        try:
+            frontmatter = yaml.safe_load(content[3:end].strip())
+        except Exception:
+            continue  # the frontmatter loop above already reports unparseable YAML
+        description = frontmatter.get('description') if isinstance(frontmatter, dict) else None
+        if isinstance(description, str) and len(description) > 1024:
+            errors.append(f'{md_file}: description is {len(description)} chars (max 1024)')
+
+# Every agent and skill is listed in the README catalog, or nothing routes to it
+readme = Path('README.md').read_text()
+catalog_names = [p.stem for p in Path('agents').glob('*.md')]
+catalog_names += [p.parent.name for p in Path('skills').glob('*/SKILL.md')]
+for name in catalog_names:
+    if name not in readme:
+        errors.append(f'{name}: not listed in README.md')
 
 if errors:
     for err in errors:
