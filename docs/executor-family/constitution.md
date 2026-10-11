@@ -1,7 +1,7 @@
 # Shared constitution
 
 Thirteen fragments carried byte-identically by every file that holds them.
-`scripts/fragment-check.py` verifies each target contains its fragments
+`scripts/dev/fragment-check.py` verifies each target contains its fragments
 verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 
 | Fragment | Carried by |

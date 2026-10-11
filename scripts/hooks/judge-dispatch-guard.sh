@@ -16,7 +16,7 @@
 # .agent_id; .agent_type is absent entirely when the MAIN conversation
 # dispatches, and that case must always allow.
 #
-# Like scripts/executor-guard.sh, this hook FAILS OPEN on genuine inability
+# Like executor-guard.sh, this hook FAILS OPEN on genuine inability
 # to inspect the payload: empty stdin, malformed JSON, a
 # tool_name other than "Agent", or a caller other than executor-judge all
 # mean ALLOW. But once the caller IS executor-judge dispatching an "Agent"
@@ -45,12 +45,29 @@
 #   - print a hookSpecificOutput deny JSON and exit 0 (DENY, exit 2 would
 #     also block but gives the model no reason — always use the JSON form).
 # Any failure to parse input ALLOWS the call — never block on our own
-# inability to inspect the payload. Missing jq denies only a payload whose raw
-# text names a guarded agent_type; every other caller still ALLOWS. A logging failure must
-# never change the allow/deny outcome either.
+# inability to inspect the payload. Missing jq, or a lib that fails to load, denies only a
+# payload whose raw text names a guarded agent_type; every other caller still ALLOWS. A
+# logging failure must never change the allow/deny outcome either.
 
 set -uo pipefail
+
+HOOK_NAME="${BASH_SOURCE[0]##*/}"
+GUARDED_AGENTS='executor-judge|executor-smart'
+LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
+
+# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
+if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; }; then
+  fallback_input="$(cat 2>/dev/null)"
+  fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
+  if [[ "$fallback_input" =~ $fallback_re ]]; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"A maddog guard library failed to load, so this call was denied rather than allowed unchecked. Repair or reinstall the plugin, then retry.","additionalContext":"Blocked by '"$HOOK_NAME"': a guard library failed to load. STOP and return blocked to your caller - do not attempt the call."}}'
+  fi
+  exit 0
+fi
+
 caller=""; allowed_desc=""; why=""
+allowed=()
 
 PROBE_LOG="${TMPDIR:-/tmp}/maddog-dispatch-probe.log"
 
@@ -68,15 +85,7 @@ log_probe() {
 }
 
 deny() {
-  local target="$1"
-  local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted to dispatch '${target}'. ${caller} may only rent ${allowed_desc} as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: ${why}. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the dispatch."
-  reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
-  ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
-  if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
-    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":%s,"additionalContext":%s}}\n' "$reason_json" "$ctx_json"
-  fi
+  emit_deny escaped "$(msg_dispatch_reason "$caller" "$1" "$allowed_desc")" "$(msg_dispatch_context "$why")"
   exit 0
 }
 
@@ -84,64 +93,44 @@ deny() {
 #     still runs an agent — the default general-purpose one, with every
 #     tool including Write/Edit. Deny it as what it is, not as a gap. ---
 deny_no_target() {
-  local reason ctx reason_json ctx_json
-  reason="Blocked by judge-dispatch-guard.sh: ${caller} attempted an Agent dispatch with no subagent_type named. Per the Agent tool contract, an absent, empty, or null subagent_type runs the default general-purpose agent, which holds every tool including Write and Edit. ${caller} may only rent ${allowed_desc} as hands."
-  ctx="Blocked by judge-dispatch-guard.sh: ${why}. Naming no subagent_type is not an exemption — it dispatches the unrestricted default agent. STOP and return blocked (VERDICT: STOP for executor-judge) to your caller with this reason — do not attempt the dispatch."
-  reason_json="$(printf '%s' "$reason" | jq -Rs . 2>/dev/null)"
-  ctx_json="$(printf '%s' "$ctx" | jq -Rs . 2>/dev/null)"
-  if [ -n "$reason_json" ] && [ -n "$ctx_json" ]; then
-    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":%s,"additionalContext":%s}}\n' "$reason_json" "$ctx_json"
-  fi
+  emit_deny escaped "$(msg_no_target_reason "$caller" "$allowed_desc")" "$(msg_no_target_context "$why")"
   exit 0
 }
 
-# --- read stdin once ---
-input="$(cat 2>/dev/null)"
-
-[ -z "$input" ] && exit 0
-
-if ! command -v jq >/dev/null 2>&1; then
-  # Without jq the payload cannot be parsed. Deny a call whose raw input names a guarded
-  # agent type (static JSON, no jq); allow every other caller, e.g. the main session.
-  jq_missing_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?(executor-judge|executor-smart)"'
-  if [[ "$input" =~ $jq_missing_re ]]; then
-    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"The maddog guards require jq and it is not installed, so this call was denied rather than allowed unchecked. Install jq, then retry.","additionalContext":"Blocked by judge-dispatch-guard.sh: jq is missing. STOP and return blocked to your caller, asking them to install jq - do not attempt the call."}}'
-  fi
-  exit 0
-fi
+hook_start "$HOOK_NAME" "$GUARDED_AGENTS"
 
 # --- defensive: only ever act on a subagent dispatch tool call ---
-tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
+tool_name="$(field .tool_name)"
 [ "$tool_name" = "Agent" ] || exit 0
 
 # --- scope: act for executor-judge and executor-smart (bare or namespaced);
-#     every other caller, and the main conversation (no agent_type), ALLOWS ---
-agent_type="$(printf '%s' "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
-case "$agent_type" in
-  executor-judge|*:executor-judge)
-    caller="executor-judge"
-    allow_re='^([^:]+:)?(executor-fast-read|researcher)$'
-    allowed_desc="executor-fast-read or researcher"
-    why="this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything — renting any hand to make a change is not permitted for executor-judge at all" ;;
-  executor-smart|*:executor-smart)
-    caller="executor-smart"
-    allow_re='^([^:]+:)?(executor-fast|executor-fast-read)$'
-    allowed_desc="executor-fast or executor-fast-read"
-    why="this executor may rent only the two cheap hands for work whose decisions it has closed; judgment, review, and research stay home or return to the caller" ;;
-  *) exit 0 ;;
-esac
+#     every other caller, and the main conversation (no agent_type), ALLOWS.
+#     `allowed` is the caller's hands, printed in the denial and used for the match. ---
+agent_type="$(field .agent_type)"
+if agent_is "$agent_type" executor-judge; then
+  caller="executor-judge"
+  allowed=(executor-fast-read researcher)
+  why="$WHY_EXECUTOR_JUDGE"
+elif agent_is "$agent_type" executor-smart; then
+  caller="executor-smart"
+  allowed=(executor-fast executor-fast-read)
+  why="$WHY_EXECUTOR_SMART"
+else
+  exit 0
+fi
+allowed_desc="$(list_join ' or ' "${allowed[@]}")"
 
 # --- the target subagent. An absent key, an empty string, and JSON null
 #     all collapse to "" via `// empty` — and for executor-judge dispatching
 #     "Agent", all three mean the same thing: the default general-purpose
 #     agent, holding every tool. That is a DENY below, not a fail-open. ---
-target="$(printf '%s' "$input" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)"
+target="$(field .tool_input.subagent_type)"
 
 log_probe "tool_name=${tool_name} agent_type=${agent_type} target=${target:-none} raw_payload=$(printf '%s' "$input" | tr '\n' ' ')"
 
 [ -z "$target" ] && deny_no_target
 
-if printf '%s' "$target" | grep -Eq "$allow_re"; then
+if agent_target_in "$target" "${allowed[@]}"; then
   exit 0
 fi
 deny "$target"

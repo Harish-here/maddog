@@ -31,11 +31,11 @@ link "$REPO_DIR/.claude/scripts/tg-notify.sh" "$CLAUDE_DIR/channels/telegram/not
 # watchdog-resume: LaunchAgent that relaunches a paused unattended run once its
 # resume time passes. Symlink the script, then generate the plist from the
 # template (its __HOME__ placeholder is substituted here, not committed).
-link "$REPO_DIR/scripts/watchdog-resume.sh" "$CLAUDE_DIR/watchdogs/watchdog-resume.sh"
+link "$REPO_DIR/scripts/dev/watchdog-resume.sh" "$CLAUDE_DIR/watchdogs/watchdog-resume.sh"
 
 WATCHDOG_PLIST="$HOME/Library/LaunchAgents/com.maddog.watchdog-resume.plist"
 mkdir -p "$HOME/Library/LaunchAgents"
-WATCHDOG_PLIST_NEW="$(sed "s|__HOME__|$HOME|g" "$REPO_DIR/scripts/com.maddog.watchdog-resume.plist")"
+WATCHDOG_PLIST_NEW="$(sed "s|__HOME__|$HOME|g" "$REPO_DIR/scripts/dev/com.maddog.watchdog-resume.plist")"
 if [ ! -f "$WATCHDOG_PLIST" ] || [ "$(cat "$WATCHDOG_PLIST")" != "$WATCHDOG_PLIST_NEW" ]; then
   printf '%s\n' "$WATCHDOG_PLIST_NEW" > "$WATCHDOG_PLIST"
   echo "wrote: $WATCHDOG_PLIST"

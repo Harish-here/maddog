@@ -1,4 +1,4 @@
-"""Regression tests for scripts/pattern-declare-guard.sh.
+"""Regression tests for scripts/hooks/pattern-declare-guard.sh.
 
 Runs the real script with a crafted PreToolUse payload on stdin and a fake
 transcript tree under tmp_path, laid out the way Claude Code lays it out:
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-GUARD = REPO_ROOT / "scripts" / "pattern-declare-guard.sh"
+GUARD = REPO_ROOT / "scripts" / "hooks" / "pattern-declare-guard.sh"
 HOOKS = REPO_ROOT / "hooks" / "hooks.json"
 PATH = "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"
 
@@ -168,5 +168,5 @@ def test_hooks_json_wires_the_guard_to_every_tool_the_two_agents_hold():
     matched = set(entries[0]["matcher"].split("|"))
     assert {"Read", "Grep", "Glob", "Edit", "Write", "Bash", "WebFetch", "WebSearch"} <= matched
     command = entries[0]["hooks"][0]["command"]
-    assert command == "${CLAUDE_PLUGIN_ROOT}/scripts/pattern-declare-guard.sh"
+    assert command == "${CLAUDE_PLUGIN_ROOT}/scripts/hooks/pattern-declare-guard.sh"
     assert (REPO_ROOT / command.replace("${CLAUDE_PLUGIN_ROOT}/", "")).exists()

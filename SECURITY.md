@@ -14,7 +14,7 @@ a best-effort basis.
 This project ships prompt/Markdown artifacts (agent and skill definitions)
 plus a handful of small shell scripts under `scripts/`. There is no
 application code, server, or network service, though
-`scripts/watchdog-resume.sh` launches detached `tmux` sessions once wired
+`scripts/dev/watchdog-resume.sh` launches detached `tmux` sessions once wired
 up.
 
 Two maintainer-run helpers live in `.claude/scripts/`, not `scripts/`. They
@@ -24,5 +24,5 @@ reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from the environment or
 `~/.claude/channels/telegram/.env` and makes an outbound call to the Telegram
 API. `.claude/scripts/setup-watchdog.sh` is the only script you run to
 install anything on your machine (if you choose to) — it symlinks the notify
-script and `scripts/watchdog-resume.sh` into `~/.claude/` and writes a
+script and `scripts/dev/watchdog-resume.sh` into `~/.claude/` and writes a
 LaunchAgent plist; its header comments document what it links and writes.

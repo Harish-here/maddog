@@ -1,6 +1,6 @@
-"""Regression tests for scripts/executor-guard.sh.
+"""Regression tests for scripts/hooks/executor-guard.sh.
 
-Invokes the real guard script (`bash scripts/executor-guard.sh`) with a
+Invokes the real guard script (`bash scripts/hooks/executor-guard.sh`) with a
 crafted PreToolUse JSON payload on stdin, exactly the shape the hook itself
 receives (agent_type, tool_input.command, cwd). `cwd` always points at a
 `tmp_path` workspace holding real files — some checks below no longer need
@@ -9,13 +9,15 @@ but the workspace is kept so a command can reference a real path where one
 is written into the command string.
 """
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-GUARD = REPO_ROOT / "scripts" / "executor-guard.sh"
+SCRIPTS = REPO_ROOT / "scripts"
+GUARD = SCRIPTS / "hooks" / "executor-guard.sh"
 
 JUDGE = "maddog:executor-judge"
 LEAD = "executor-lead"
@@ -45,6 +47,16 @@ def _is_deny(proc: subprocess.CompletedProcess) -> bool:
         return False
     data = json.loads(out)
     return data.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
+
+
+def copy_scripts_with_stub_path_guard(tmp_path: Path) -> Path:
+    """A copy of scripts/ whose path-guard library has is_temp_path exiting non-zero."""
+    scripts = tmp_path / "scripts"
+    shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+    (scripts / "lib" / "path-guard.sh").write_text(
+        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
+    )
+    return scripts
 
 
 def assert_deny(command: str, agent_type: str, cwd: Path):
@@ -433,16 +445,11 @@ def test_shape_refusal_reason_is_kept(ws):
 def test_internal_error_backstop_carries_the_shape_context(ws, tmp_path):
     # a library whose is_temp_path exits non-zero stands in for an internal
     # guard bug: the recursive-delete check reaches it after the trap is set
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "executor-guard.sh").write_text(GUARD.read_text())
-    (scripts / "path-guard-lib.sh").write_text(
-        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
-    )
+    scripts = copy_scripts_with_stub_path_guard(tmp_path)
     for agent in (LEAD, JUDGE):
         payload = {"agent_type": agent, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
         proc = subprocess.run(
-            ["bash", str(scripts / "executor-guard.sh")],
+            ["bash", str(scripts / "hooks" / "executor-guard.sh")],
             input=json.dumps(payload), capture_output=True, text=True, timeout=10,
         )
         data = json.loads(proc.stdout)["hookSpecificOutput"]
@@ -638,15 +645,10 @@ def test_fast_and_smart_allow_every_git_tag_form(agent, command, ws):
 
 
 def test_internal_error_backstop_reason_does_not_say_return_blocked(ws, tmp_path):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "executor-guard.sh").write_text(GUARD.read_text())
-    (scripts / "path-guard-lib.sh").write_text(
-        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
-    )
+    scripts = copy_scripts_with_stub_path_guard(tmp_path)
     payload = {"agent_type": LEAD, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
     proc = subprocess.run(
-        ["bash", str(scripts / "executor-guard.sh")],
+        ["bash", str(scripts / "hooks" / "executor-guard.sh")],
         input=json.dumps(payload), capture_output=True, text=True, timeout=10,
     )
     reason = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"]

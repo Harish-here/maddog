@@ -12,7 +12,7 @@ it. Exit 0 iff every check passes. Prints one line per (file, fragment).
 import argparse, re, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 CARRIER_PATH = {
     "advisor-mode": "skills/advisor-mode/SKILL.md",

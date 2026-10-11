@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# path-guard-lib.sh — sourceable path-normalization/confinement helpers,
-# used by scripts/executor-guard.sh's recursive-delete check and any other
+# path-guard.sh — sourceable path-normalization/confinement helpers,
+# used by the executor guard's recursive-delete check (rules-irreversible.sh) and any other
 # guard that needs path confinement.
 #
 # Bash 3.2 target (this platform's /bin/bash is 3.2.57):

@@ -50,7 +50,8 @@ def test_the_shipped_case_files_declare_their_covers():
     assert load_covers_frontmatter(advisor) == ("agents/executor-*.md",)
     for agent in ("executor-fast", "executor-fast-read"):
         assert load_covers(TESTS_DIR / "agents" / agent / "patterns.yaml") == (
-            f"agents/{agent}.md", "scripts/pattern-declare-guard.sh", "hooks/hooks.json")
+            f"agents/{agent}.md", "scripts/hooks/pattern-declare-guard.sh", "scripts/lib/hook-io.sh",
+            "scripts/lib/agents.sh", "scripts/lib/messages.sh", "hooks/hooks.json")
 
 
 # --- glob matching ---
