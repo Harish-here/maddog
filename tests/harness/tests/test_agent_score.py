@@ -240,6 +240,23 @@ def test_command_runs_accepts_a_stderr_redirect_and_a_pipeline_head_only():
     assert score_agent(run_with(DECLARE, changed_cmd), case).checks["4"] is False
 
 
+def test_command_runs_accepts_the_workspace_root_written_absolute():
+    case = make_case(command_runs="sh bin/status.sh", first_call={"kind": ["command"], "target": "."})
+    slot = "maddog-run-0/fast-tier"  # the case's fixture is fast-tier
+    relative = Event("command", "sh bin/status.sh")
+    absolute = Event("command", f"sh /private/var/folders/2s/xt29/T/{slot}/bin/status.sh")
+    symlink_form = Event("command", f"sh /var/folders/2s/xt29/T/{slot}/bin/status.sh 2>&1 | tail -5")
+    elsewhere = Event("command", "sh /elsewhere/bin/status.sh")
+    other_fixture = Event("command", "sh /private/var/folders/2s/xt29/T/maddog-run-0/other-fixture/bin/status.sh")
+    other_script = Event("command", f"sh /private/var/folders/2s/xt29/T/{slot}/bin/start.sh")
+    assert score_agent(run_with(DECLARE, relative), case).checks["4"] is True
+    assert score_agent(run_with(DECLARE, absolute), case).checks["4"] is True
+    assert score_agent(run_with(DECLARE, symlink_form), case).checks["4"] is True
+    assert score_agent(run_with(DECLARE, elsewhere), case).checks["4"] is False
+    assert score_agent(run_with(DECLARE, other_fixture), case).checks["4"] is False
+    assert score_agent(run_with(DECLARE, other_script), case).checks["4"] is False
+
+
 def test_normalize_command():
     assert normalize_command("  ls -l 2>&1 | head ") == "ls -l"
 

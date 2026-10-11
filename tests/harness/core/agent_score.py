@@ -41,6 +41,7 @@ from harness.core.cases import CALL_KINDS, AgentCase
 from harness.core.events import Event
 from harness.core.score import Verdict
 from harness.core.shell import first_in_pipeline
+from harness.core.sweep import RUN_SLOT_PREFIX
 
 CHECK_NAMES = {"1": "PATTERNS line before the first call", "2": "declared patterns",
                "3": "first call", "4": "law check"}
@@ -73,7 +74,7 @@ def score_agent(events: list[Event], case: AgentCase) -> Verdict:
     why = first_call_problem(calls, case.first_call)
     if why:
         problems["3"] = why
-    law = law_problems(events, calls, case.checks)
+    law = law_problems(events, calls, case.checks, case.fixture)
     if law:
         problems["4"] = "; ".join(law)
 
@@ -121,11 +122,22 @@ def last_index(rendered: list[str], pattern: str) -> int | None:
     return next((i for i in range(len(rendered) - 1, -1, -1) if re.search(pattern, rendered[i])), None)
 
 
-def normalize_command(command: str) -> str:
-    """A step as run: leading `VAR=value` assignments and a trailing `2>&1` are dropped, and a
-    pipeline counts as its head command."""
+def normalize_command(command: str, fixture: str | None = None) -> str:
+    """A step as run: leading `VAR=value` assignments and a trailing `2>&1` are dropped, a
+    pipeline counts as its head command, and a path argument written as the run's workspace
+    root plus `/` becomes workspace-relative (see `strip_workspace_root`)."""
     head = re.sub(r"^(\w+=\S*\s+)+", "", first_in_pipeline(command.strip()))
-    return re.sub(r"\s*2>&1$", "", head).strip()
+    head = re.sub(r"\s*2>&1$", "", head).strip()
+    return strip_workspace_root(head, fixture) if fixture else head
+
+
+def strip_workspace_root(command: str, fixture: str) -> str:
+    """Drop the run's workspace root from the start of any path token. A run's workspace is
+    `<temp dir>/maddog-run-<n>/<fixture>` (core/fixture.py), so the case's fixture and the slot
+    prefix name it up to the temp dir, which differs by host and by `/var` against `/private/var`
+    on macOS: any absolute base is accepted. A path under another folder is left as written."""
+    root = rf"(?<!\S)/\S*?/{re.escape(RUN_SLOT_PREFIX)}\d+/{re.escape(fixture)}/"
+    return re.sub(root, "", command)
 
 
 def final_text(events: list[Event]) -> str:
@@ -137,7 +149,7 @@ def result_field(text: str) -> str:
     return match.group(1) if match else ""
 
 
-def law_problems(events: list[Event], calls: list[Event], checks: dict) -> list[str]:
+def law_problems(events: list[Event], calls: list[Event], checks: dict, fixture: str) -> list[str]:
     problems = []
     changed = [e.detail for e in events if e.kind == "changed"]
     rendered = [f"{e.kind}:{e.detail}" for e in calls]  # what `before` and `then` patterns match
@@ -167,7 +179,7 @@ def law_problems(events: list[Event], calls: list[Event], checks: dict) -> list[
             problems.append(f"the last /{earlier}/ did not come before the last /{later}/")
 
     command = checks.get("command_runs")
-    if command and not any(normalize_command(e.detail) == command for e in calls if e.kind in ("command", "write")):
+    if command and not any(normalize_command(e.detail, fixture) == command for e in calls if e.kind in ("command", "write")):
         problems.append(f"command not run exactly as given: {command}")
 
     for quote in checks.get("return_quotes", []):
