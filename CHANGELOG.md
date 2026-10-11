@@ -8,7 +8,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 - `scripts/executor-guard.sh` — a refusal because the guard could not parse the command (a leading `(` or `{`, a `nice`, `timeout` or `stdbuf` missing its argument, or the guard's internal-error backstop) now tells every executor to rewrite it as simpler, separate commands and retry, in place of STOP. Irreversible-action refusals keep STOP; only executor-judge's text names a verdict (#64) (c81268c)
-- `scripts/executor-guard.sh` — the body of a `git commit` or `git tag` heredoc read with `-F -` or `--file=-` is skipped like other allowlisted readers, so a commit-message line starting with `(` is no longer refused; any option between `git` and the subcommand keeps the body checked (#87) (c81268c)
+- `scripts/executor-guard.sh` — the body of a `git commit` or `git tag` heredoc read with `-F -`, `-F-`, `--file=-` or `--file -` is skipped like other allowlisted readers, so a commit-message line starting with `(` is no longer refused. The body stays checked unless `git` is the segment's first word (no `VAR=val`, `env`, `nice`, `timeout`, `command` or `exec` before it), nothing sits between `git` and the subcommand, and no `-e` or `--edit` appears, alone or in a cluster such as `-qe`, since `GIT_EDITOR=sh git commit -e -F -` runs the body as a script (#87) (c81268c, a21f817)
+- `scripts/executor-guard.sh` — executor-lead and executor-judge are denied `git tag` forms that create, delete or move a tag (`git tag v1`, `-a`, `-d`, `-f`, and any flag the guard does not know); bare `git tag`, `-l`/`--list`, `-n`, `--contains`, `--points-at`, `--merged`, `--no-merged`, `--sort` and `-v`/`--verify` stay allowed, and executor-fast and executor-smart are unchanged (a21f817)
+- `scripts/executor-guard.sh` — the internal-error backstop's reason no longer says to return blocked; it says to rewrite as simpler, separate commands and retry (a21f817)
 
 ## [4.3.0] - 2026-10-10
 
