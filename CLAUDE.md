@@ -8,9 +8,9 @@ compiles; model-driven tests live in `tests/`: `CONTRIBUTING.md` §Validation.
 
 Merging to main publishes: the marketplace installs from main HEAD. Run the
 `release` skill before merging anything to main — the table in its section 3
-says which changes need an independent reviewer. Load-bearing instruction
-text goes through `.claude/skills/author-agent`, which gates via
-`review-agent`.
+says which changes need an independent reviewer. Load-bearing instruction text goes through the `section-by-section` skill.
+The release reviewer is its only independent check, and only for paths its
+section 3 table marks required.
 
 ## Invariants
 

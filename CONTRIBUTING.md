@@ -32,12 +32,18 @@ See `CLAUDE.md` for the repo layout and distribution mechanics; the validation m
 
 ## Authoring agent/skill instruction text
 
-Load-bearing instruction text — a new agent, or an overhaul of an existing
-agent, skill, or reference contract — goes through the gated authoring loop
-in `.claude/skills/author-agent`, which routes to `review-agent` as an
-independent gate before the text ships. Small, low-stakes edits to existing
-text don't need the loop; use judgment, and prefer it when the defect would
-be silent in production.
+Load-bearing instruction text (a new agent, or an overhaul of an agent,
+skill, or reference contract) goes through the `section-by-section` skill.
+Small, low-stakes edits don't need it.
+
+Two rules hold for every agent and skill, and `.github/validate.sh` checks both:
+
+- A frontmatter `description` stays within 1,024 characters; past that the
+  runtime truncates it and routing degrades silently.
+- A new agent or skill is listed in `README.md`, the routing catalog;
+  without it nothing routes to it.
+
+Then run the tests in §Validation for the surface you changed.
 
 ## Shipping a change to the agent/skill set
 

@@ -345,7 +345,7 @@ own description.
 After this build lands, any edit to an executor description or to
 advisor-mode's Classify table must run both case sets before release. That
 rule gets written into `docs/executor-family/constitution.md` and into the
-release skill's reviewer table, through the `author-agent` loop, in a
+release skill's reviewer table, through the `section-by-section` skill, in a
 later change.
 
 Out of scope: checking that a helper stays inside its limits while it
