@@ -212,46 +212,57 @@ split_command() {
 # that names a command compares this form, never the raw token. Text the shell would still expand
 # (`$G`, a backtick) stays visible in it.
 unquote_word() {
-  local w="$1" out="" pre body dec i n c ap="\$'"
+  local w="$1" out="" body dec i n c nx sq=0 dq=0 ap="\$'"
   case "$w" in
     *"$ap"*)
-      # $'...' (ANSI-C quoting): the body is decoded the way the shell reads it, `\x67` and
-      # all, so $'git' and $'\x67it' are git; the text around it loses its quotes as below
-      while :; do
-        case "$w" in
-          *"$ap"*) : ;;
-          *) break ;;
-        esac
-        pre="${w%%"$ap"*}"
-        w="${w#*"$ap"}"
-        pre="${pre//\'/}"
-        pre="${pre//\"/}"
-        pre="${pre//\\/}"
-        out+="$pre"
-        body=""
-        i=0
-        n=${#w}
-        while [ "$i" -lt "$n" ]; do
-          c="${w:i:1}"
-          if [ "$c" = "\\" ]; then
-            body+="${w:i:2}"
-            i=$((i + 2))
-            continue
-          fi
-          [ "$c" = "'" ] && break
-          body+="$c"
-          i=$((i + 1))
-        done
-        printf -v dec '%b' "$body"
-        out+="$dec"
-        w="${w:i+1}"
+      # a word with $'...' (ANSI-C quoting) outside quotes is read one character at a time,
+      # tracking quotes, so the body is decoded the way the shell reads it (`\x67` and all):
+      # $'git' and $'\x67it' are git, while a `$'` inside single or double quotes is plain text
+      i=0
+      n=${#w}
+      while [ "$i" -lt "$n" ]; do
+        c="${w:i:1}"
+        nx="${w:i+1:1}"
+        if [ "$sq" -eq 1 ]; then
+          [ "$c" = "'" ] && sq=0 || out+="$c"
+        elif [ "$c" = "\\" ]; then
+          out+="$nx"
+          i=$((i + 2))
+          continue
+        elif [ "$c" = "'" ]; then
+          sq=1
+        elif [ "$c" = '"' ]; then
+          dq=$((1 - dq))
+        elif [ "$c" = '$' ] && [ "$nx" = "'" ] && [ "$dq" -eq 0 ]; then
+          i=$((i + 2))
+          body=""
+          while [ "$i" -lt "$n" ]; do
+            c="${w:i:1}"
+            if [ "$c" = "\\" ]; then
+              body+="${w:i:2}"
+              i=$((i + 2))
+              continue
+            fi
+            [ "$c" = "'" ] && break
+            body+="$c"
+            i=$((i + 1))
+          done
+          dec=""
+          printf -v dec '%b' "$body"
+          out+="$dec"
+        else
+          out+="$c"
+        fi
+        i=$((i + 1))
       done
+      UNQUOTED="$out"
+      return 0
       ;;
   esac
   w="${w//\'/}"
   w="${w//\"/}"
   w="${w//\\/}"
-  UNQUOTED="$out$w"
+  UNQUOTED="$w"
 }
 
 # unquote_tokens
@@ -272,14 +283,16 @@ unquote_tokens() {
 # subcommand and sets, in the caller's globals:
 #   GIT_SUB          the subcommand, unquoted; empty when none follows
 #   GIT_SUB_I        its index in tokens
+#   GIT_ALIAS_OPT    1 when a `-c` or `--config-env` sets an `alias.*` key
 #   GIT_OPT_UNKNOWN  the first option in none of the lists, empty when there is none. It is
 #                    stepped over as a valueless flag; a caller that must fail closed (lead and
 #                    judge) refuses it, the rest accept the guess.
 find_git_subcommand() {
-  local i=1 n=${#tokens[@]} t name
+  local i=1 n=${#tokens[@]} t name val
   GIT_SUB=""
   GIT_SUB_I=0
   GIT_OPT_UNKNOWN=""
+  GIT_ALIAS_OPT=0
   while [ "$i" -lt "$n" ]; do
     unquote_word "${tokens[$i]}"
     t="$UNQUOTED"
@@ -292,6 +305,19 @@ find_git_subcommand() {
         ;;
     esac
     name="${t%%=*}"
+    # `-c alias.x=!cmd` / `--config-env=alias.x=VAR` define a command git then runs for `x`
+    val=""
+    case "$t" in
+      -c) val="${tokens[$((i + 1))]:-}" ;;
+      --config-env=*) val="${t#--config-env=}" ;;
+      --config-env) val="${tokens[$((i + 1))]:-}" ;;
+    esac
+    if [ -n "$val" ]; then
+      unquote_word "$val"
+      case "$UNQUOTED" in
+        [aA][lL][iI][aA][sS].*) GIT_ALIAS_OPT=1 ;;
+      esac
+    fi
     if in_set "$t" "${GIT_OPTS_SHORT_VALUE[@]}"; then
       i=$((i + 2))
     elif [ "$name" != "$t" ] && { in_set "$name" "${GIT_OPTS_VALUE[@]}" || in_set "$name" "${GIT_OPTS_FLAG[@]}"; }; then
@@ -392,11 +418,13 @@ find_substitution_end() {
 #   SUBST_LIST        one entry per substitution, outermost only (the recursion finds nested
 #                     ones): `C:<inner text>` for a command, `A:<inner text>` for arithmetic
 #   SUBST_UNBALANCED  1 when an opener has no closer; the rest of the text is then left as is
+#   SUBST_UNREADABLE  1 when the text holds $'...' or $"..." quoting outside any quotes
 extract_substitutions() {
   local text="$1" arith="${2:-0}" len=${#1} i=0 c nx out="" in_single=0 in_double=0 prev=" "
   local inner body rest line outer_end
   SUBST_LIST=()
   SUBST_UNBALANCED=0
+  SUBST_UNREADABLE=0
   while [ "$i" -lt "$len" ]; do
     c="${text:i:1}"
     nx="${text:i+1:1}"
@@ -445,6 +473,11 @@ extract_substitutions() {
           continue
           ;;
       esac
+    fi
+    # `$'...'` (ANSI-C) and `$"..."` (locale) quoting, outside any quotes: SUBST_UNREADABLE=1
+    # makes lead and judge refuse the command (in double quotes `$"` is a `$` and a closing quote)
+    if [ "$c" = '$' ] && [ "$in_double" -eq 0 ] && { [ "$nx" = "'" ] || [ "$nx" = '"' ]; }; then
+      SUBST_UNREADABLE=1
     fi
     if [ "$c" = '$' ] && [ "$nx" = "(" ]; then
       if ! find_substitution_end "$text" $((i + 2)) "("; then
@@ -704,6 +737,9 @@ strip_rtk() {
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         ;;
       run)
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          deny "$(msg_unreadable "rtk run")" shape
+        fi
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         if [ "${#tokens[@]}" -eq 1 ]; then
           t="${tokens[0]}"
@@ -749,6 +785,19 @@ strip_leading_keywords() {
       KW_STRIPPED=1
       continue
     fi
+    if [ "${deny_writes:-0}" -eq 1 ] && [ "$m" = "${tokens[0]}" ]; then
+      # constructs lead and judge are refused: the guard cannot read them with certainty
+      case "$m" in
+        case|select|coproc) deny "$(msg_unreadable "$m")" shape ;;
+        for)
+          for k in "${tokens_masked[@]}"; do
+            case "$k" in
+              '(('*) deny "$(msg_unreadable "a (( )) arithmetic loop header")" shape ;;
+            esac
+          done
+          ;;
+      esac
+    fi
     if [ "$m" = "${tokens[0]}" ] && { [ "$m" = "for" ] || [ "$m" = "select" ]; }; then
       KW_STRIPPED=1
       found=-1
@@ -791,7 +840,6 @@ strip_leading_keywords() {
     if [ "$CASE_OPEN" -gt 0 ]; then
       if [ "$m" = "in" ] && [ "${tokens[0]}" = "in" ]; then
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        KW_STRIPPED=1
         certain=1
         [ "${#tokens[@]}" -eq 0 ] && CASE_EXPECT=1
         continue
@@ -815,7 +863,6 @@ strip_leading_keywords() {
             else
               tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
             fi
-            KW_STRIPPED=1
             done_pat=1
             continue
           fi

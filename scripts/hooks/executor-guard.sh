@@ -55,15 +55,15 @@ REQUIRED_FUNCS=(
   hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
   msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
   msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
-  msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
-  _msg_tag_allowed msg_tag_flag msg_tag_name quote_walk split_command unquote_word
-  unquote_tokens find_git_subcommand find_substitution_end extract_substitutions
-  strip_command_wrappers strip_rtk strip_leading_keywords env_split_string strip_env
-  strip_wrapper_lenient strip_leading_prefixes tokenize_segment check_segment_shape
-  heredoc_consumer heredoc_opens_construct skip_heredoc_bodies check_irreversible
-  check_function_definition check_readonly_writes _path_guard_strip_quotes
-  _path_guard_split _path_guard_has_glob _path_guard_join normalize_path is_temp_path
-  check_segment check_command_text
+  msg_git_option msg_unreadable msg_publish msg_shell msg_write_cmd msg_interpreter
+  msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name quote_walk split_command
+  unquote_word unquote_tokens find_git_subcommand find_substitution_end
+  extract_substitutions strip_command_wrappers strip_rtk strip_leading_keywords
+  env_split_string strip_env strip_wrapper_lenient strip_leading_prefixes tokenize_segment
+  check_segment_shape heredoc_consumer heredoc_opens_construct skip_heredoc_bodies
+  check_irreversible check_function_definition check_unreadable_words
+  check_readonly_writes _path_guard_strip_quotes _path_guard_split _path_guard_has_glob
+  _path_guard_join normalize_path is_temp_path check_segment check_command_text
 )
 REQUIRED_VARS=(
   MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE
@@ -73,10 +73,10 @@ REQUIRED_VARS=(
   MSG_PUSH_PLUS MSG_CLEAN MSG_RESET_HARD MSG_CHECKOUT_DOT MSG_RESTORE_DOT MSG_BRANCH_D
   MSG_BRANCH_DELETE_FORCE MSG_MERGE MSG_WORKTREE_REMOVE MSG_WORKTREE_PRUNE MSG_RM_FILE
   MSG_SED_INPLACE MSG_DD_OUTPUT MSG_AWK_REDIRECT MSG_GIT_RESTORE MSG_GIT_CHECKOUT_PATH
-  MSG_REDIRECT SHELLS INTERPRETERS WRAPPERS SHELL_KEYWORDS SHELL_HEADERS WRITE_CMDS
-  READONLY_CMDS HEREDOC_READERS GIT_OPTS_SHORT_VALUE GIT_OPTS_VALUE GIT_OPTS_FLAG
-  GIT_STDIN_MESSAGE_SUBS GIT_WRITE_SUBS GIT_TAG_READ_FORMS PUBLISH_CMDS SUBST_MAX_DEPTH
-  CASE_OPEN CASE_EXPECT
+  MSG_REDIRECT SHELLS INTERPRETERS WRAPPERS SHELL_KEYWORDS SHELL_HEADERS ZSH_PRECOMMANDS
+  WRITE_CMDS READONLY_CMDS HEREDOC_READERS GIT_OPTS_SHORT_VALUE GIT_OPTS_VALUE
+  GIT_OPTS_FLAG GIT_STDIN_MESSAGE_SUBS GIT_WRITE_SUBS GIT_TAG_READ_FORMS PUBLISH_CMDS
+  SUBST_MAX_DEPTH CASE_OPEN CASE_EXPECT
 )
 libs_complete() {
   local f

@@ -20,6 +20,10 @@ WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk)
 SHELL_KEYWORDS=(if then elif else fi do done while until '!' esac)
 SHELL_HEADERS=(for select case)
 
+# zsh precommand modifiers: they run the next word as a command with different rules (no
+# globbing, no spelling correction, builtins only). Lead and judge are denied them.
+ZSH_PRECOMMANDS=(noglob nocorrect builtin)
+
 # Commands that create, overwrite or move a file; denied for lead and judge.
 WRITE_CMDS=(cp mv install touch mkdir truncate tee patch)
 

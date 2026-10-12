@@ -76,6 +76,11 @@ msg_wrapper_missing() {
 msg_git_option() {
   printf '%s' "git with an option (${1}) before the subcommand is not understood by this guard, so it cannot tell which subcommand follows — denying rather than risk misclassifying a git write. Known global options: $(list_join ' ' "${GIT_OPTS_SHORT_VALUE[@]}" "${GIT_OPTS_VALUE[@]}" "${GIT_OPTS_FLAG[@]}")."
 }
+# msg_unreadable <construct>
+# Lead and judge are refused what the guard cannot read with certainty; the text says to rewrite.
+msg_unreadable() {
+  printf '%s' "${1} is a construct this guard cannot read with certainty, so it cannot tell what would run. Rewrite the command without it and retry."
+}
 MSG_DYNAMIC_COMMAND="The command word is built from a variable or a command substitution, so this guard cannot tell which program runs and cannot classify it. Write the command name literally."
 MSG_SUBST_UNBALANCED="A command substitution, backtick pair or process substitution is opened here but this guard cannot find where it ends, so it cannot read the command inside it. Close it, or run the inner command on its own."
 MSG_SUBST_TOO_DEEP="Command substitutions are nested deeper than this guard reads, so it cannot classify the innermost command. Run the inner commands separately."

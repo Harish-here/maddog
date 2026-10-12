@@ -2,8 +2,31 @@
 # Sourced, never run. Needs deny() and the deny_writes flag from the calling hook, parse.sh,
 # rules-irreversible.sh, rules-readonly.sh, messages.sh. Bash 3.2.
 
-# Command substitutions nest (`$(a $(b $(c)))`); past this depth lead and judge are denied and
-# the rest stop looking, rather than recursing without bound.
+# What the guard does and does not promise, in one place.
+#
+# Threat model: for executor-lead and executor-judge (deny_writes=1) the guard is fail-closed: a
+# construct it cannot read with certainty is refused (msg_unreadable in messages.sh: case,
+# select, coproc, $'...' and $"..." quoting, # inside $(( )), brace expansion, a glob character
+# in the command word, rtk run, a git alias set with -c, the zsh modifiers noglob, nocorrect and
+# builtin, and everything the rules above already refuse). For executor-fast and executor-smart
+# the irreversible-command rules catch honest mistakes, not an agent working to evade them.
+#
+# Known adversarial bypasses of those rules for fast and smart, left open by design:
+#   - $"..." locale quoting (`$"git" push -f`, `git push $"-f"`)
+#   - `rtk run -c '...'`, and partially quoted `rtk run` or `env -S` strings
+#   - a # inside $(( )), which this walk reads as part of the arithmetic
+#   - a `)` inside a comment, or ending a case pattern, within $(...): the substitution then
+#     closes early
+#   - a `(` or `{` after a reserved word or prefix, which hides the command after it
+#   - brace expansion (`{git,push}` builds words that are not in the text) and globbed command
+#     paths (`/usr/bin/g*t`)
+#   - coproc, and git aliases defined with `git -c alias.x=!cmd`
+#   - zsh-only syntax (modifiers, glob qualifiers, `=(...)`)
+#   - walk time grows faster than the length of a very long command
+
+# Command substitutions nest (`$(a $(b $(c)))`); past this depth lead and judge are denied, and
+# the rest read what is left of the line flat (no more cutting out) rather than recursing without
+# bound.
 SUBST_MAX_DEPTH=8
 
 # State the walk keeps across the segments of one command line (check_command_text saves and
@@ -30,6 +53,9 @@ check_segment() {
   tokenize_segment "$segment"
   [ "${#tokens[@]}" -eq 0 ] && return 0
 
+  if [ "$deny_writes" -eq 1 ]; then
+    check_unreadable_words
+  fi
   strip_leading_keywords
   [ "${#tokens[@]}" -eq 0 ] && return 0
   strip_leading_prefixes
@@ -71,6 +97,17 @@ check_command_text() {
   if [ "$SUBST_UNBALANCED" -eq 1 ] && [ "$deny_writes" -eq 1 ]; then
     deny "$MSG_SUBST_UNBALANCED" shape
   fi
+  if [ "$deny_writes" -eq 1 ]; then
+    if [ "$SUBST_UNREADABLE" -eq 1 ]; then
+      deny "$(msg_unreadable "\$'...' or \$\"...\" quoting")" shape
+    fi
+    # a # inside $(( )) is a base prefix (16#ff) or the start of text the guard cannot place
+    if [ "$mode" = "arith" ]; then
+      case "$text" in
+        *'#'*) deny "$(msg_unreadable "a # inside \$(( ))")" shape ;;
+      esac
+    fi
+  fi
 
   if [ "$mode" = "cmd" ]; then
     segments_raw="$(split_command "$top")"
@@ -91,6 +128,14 @@ check_command_text() {
     if [ "$depth" -ge "$SUBST_MAX_DEPTH" ]; then
       if [ "$deny_writes" -eq 1 ]; then
         deny "$MSG_SUBST_TOO_DEEP" shape
+      fi
+      # fast and smart: read what is left flat, substitutions and all, as the guard did before it
+      # looked inside them, so the irreversible rules still see a command nested this deep
+      if [ "$mode" = "cmd" ]; then
+        segments_raw="$(split_command "$text")"
+        while IFS= read -r segment; do
+          check_segment "$segment" "$depth"
+        done <<< "$segments_raw"
       fi
       return 0
     fi

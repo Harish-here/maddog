@@ -37,6 +37,19 @@ check_function_definition() {
   done
 }
 
+# check_unreadable_words
+# Lead and judge. Denies a segment holding unquoted brace expansion, `{a,b}` or `{1..3}`, in any
+# word: the words it makes are not in the text. The masked tokens are tested, so braces inside
+# quotes never match, and a `${` is a parameter expansion, not a brace expansion.
+check_unreadable_words() {
+  local m re='(^|[^$])\{[^{}]*(,|\.\.)[^{}]*\}'
+  for m in "${tokens_masked[@]}"; do
+    if [[ "$m" =~ $re ]]; then
+      deny "$(msg_unreadable "brace expansion")" shape
+    fi
+  done
+}
+
 # check_readonly_writes
 # Runs on the current segment for lead and judge only and calls deny() on a file write via Bash.
 check_readonly_writes() {
@@ -59,7 +72,19 @@ check_readonly_writes() {
     case "$UNQUOTED" in
       *'$'*|*'`'*) deny "$MSG_DYNAMIC_COMMAND" shape ;;
     esac
+    # a glob character in the command word picks the program at run time; `[` and `[[` are the
+    # test commands
+    case "$UNQUOTED" in
+      '['|'[[') : ;;
+      *'*'*|*'?'*|*'['*) deny "$(msg_unreadable "a glob character in the command word")" shape ;;
+    esac
     cmd0="${UNQUOTED##*/}"
+    case "$cmd0" in
+      case|select|coproc) deny "$(msg_unreadable "$cmd0")" shape ;;
+    esac
+    if in_set "$cmd0" "${ZSH_PRECOMMANDS[@]}"; then
+      deny "$(msg_unreadable "the zsh modifier $cmd0")" shape
+    fi
   else
     cmd0=""
   fi
@@ -118,6 +143,9 @@ check_readonly_writes() {
     find_git_subcommand
     if [ -n "$GIT_OPT_UNKNOWN" ]; then
       deny "$(msg_git_option "$GIT_OPT_UNKNOWN")"
+    fi
+    if [ "$GIT_ALIAS_OPT" -eq 1 ]; then
+      deny "$(msg_unreadable "a git alias set with -c or --config-env")" shape
     fi
     case "$GIT_SUB" in
       *'$'*|*'`'*) deny "$MSG_DYNAMIC_COMMAND" shape ;;

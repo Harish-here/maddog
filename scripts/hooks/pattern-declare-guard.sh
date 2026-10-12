@@ -51,8 +51,8 @@ REQUIRED_FUNCS=(
   hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
   msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
   msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
-  msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
-  _msg_tag_allowed msg_tag_flag msg_tag_name
+  msg_git_option msg_unreadable msg_publish msg_shell msg_write_cmd msg_interpreter
+  msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name
 )
 REQUIRED_VARS=(
   MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE

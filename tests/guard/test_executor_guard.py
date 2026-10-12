@@ -895,7 +895,6 @@ SAFE_WITH_SUBSTITUTION = [
     'cd "$(git rev-parse --show-toplevel)" && ls',
     'echo "it\'s $(ls)"',
     'echo "$(echo ")")"',
-    "echo \"$(case x in a) echo y;; esac)\"",
     "git log --since=\"$(date)\" -1",
     "echo $(date +%s) | wc -c",
     "FOO=$(pwd) ls",
@@ -950,6 +949,12 @@ def test_substitutions_nested_past_the_depth_limit_are_denied_for_lead_and_judge
     for agent in (LEAD, JUDGE):
         assert_deny(deep, agent, ws)
     assert_allow(deep, FAST, ws)
+    # fast and smart read what is left flat past the limit, so a command nested that deep is seen
+    hidden = "true; git push -f "
+    for _ in range(10):
+        hidden = f"echo $({hidden})"
+    for agent in (FAST, SMART, LEAD, JUDGE):
+        assert_deny(hidden, agent, ws)
     shallow = "echo hi"
     for _ in range(4):
         shallow = f"echo $({shallow})"
@@ -979,7 +984,6 @@ KEYWORD_SAFE = [
     "for f in a b; do cat $f; done",
     "for f in $(ls); do cat $f; done",
     "for i in 1 2 3; do echo $i; done | wc -l",
-    "case x in a) ls;; esac",
     "if git diff --quiet; then echo clean; else echo dirty; fi",
     "while read l; do echo \"$l\"; done < f",
     "until false; do ls; done",
@@ -1263,7 +1267,7 @@ def test_every_agent_is_denied_an_irreversible_command_an_rtk_subcommand_runs(ag
 
 
 @pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
-@pytest.mark.parametrize("command", ["rtk run ls", "rtk run", "rtk test pytest", "rtk err ls", "rtk summary git status", "rtk run 'git status'"])
+@pytest.mark.parametrize("command", ["rtk test pytest", "rtk err ls", "rtk summary git status", "rtk git status", "rtk proxy git log"])
 def test_an_rtk_subcommand_running_a_harmless_command_stays_allowed(agent, command, ws):
     assert_allow(command, agent, ws)
 
@@ -1329,7 +1333,7 @@ def test_lead_and_judge_see_a_shell_after_an_ansi_c_quoted_quote(agent, ws):
     assert_deny("echo $'\\'' $(bash -c x) $'\\''", agent, ws)
 
 
-@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("agent", [FAST, SMART])
 def test_ansi_c_quotes_that_hide_a_substitution_keep_it_hidden(agent, ws):
     assert_allow("echo $'$(git push -f)'", agent, ws)
     assert_allow("echo $'a\\'$(git push -f)'", agent, ws)
@@ -1371,7 +1375,7 @@ def test_lead_and_judge_read_an_ansi_c_quoted_command_word(agent, command, ws):
     assert_deny(command, agent, ws)
 
 
-@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("agent", [FAST, SMART])
 def test_an_ansi_c_quoted_word_that_is_harmless_stays_allowed(agent, ws):
     assert_allow("$'git' status", agent, ws)
     assert_allow("echo $'it\\'s'", agent, ws)
@@ -1442,6 +1446,150 @@ def test_quoted_words_that_are_harmless_stay_allowed(agent, command, ws):
 def test_fast_and_smart_keep_recursive_delete_inside_temp_with_quoted_flags(agent, ws):
     assert_allow('rm "-rf" /tmp/x', agent, ws)
     assert_allow('rm -rf "/tmp/a b"', agent, ws)
+
+
+# --- what lead and judge refuse because the guard cannot read it with certainty ---------
+
+UNREADABLE = [
+    # case, select, coproc in command position
+    "case x in a) ls;; esac",
+    "case $x in a) echo y;; esac",
+    "case x in (*) ls;; esac",
+    "select x in a b; do ls; done",
+    "coproc ls",
+    "FOO=1 coproc ls",
+    "time case x in a) ls;; esac",
+    "ls && case x in a) ls;; esac",
+    "echo $(case x in a) ls;; esac)",
+    'echo "$(case x in a) echo y;; esac)"',
+    # $'...' and $"..." quoting, outside quotes
+    "echo $'x'",
+    'echo $"x"',
+    "echo a$'\\n'b",
+    "ls $'a'",
+    "echo \"$(echo $'x')\"",
+    # a # inside $(( )) or (( ))
+    "echo $(( 1 #$(cat >f) ))",
+    "echo $((16#ff))",
+    "echo $(( 1 + 2 # c ))",
+    "((1 #$(cat >f)))",
+    "for ((i=0;i<3;i++)); do echo $i; done",
+    # unquoted brace expansion
+    "echo {a,b}",
+    "echo {1..3}",
+    "cat file{1,2}",
+    "ls /tmp/{x,y}/z",
+    "echo a{b,{c,d}}",
+    "for f in {a,b}; do echo $f; done",
+    # a glob character in the command word
+    "/bin/ba*h x",
+    "/bin/ba?h x",
+    "/bin/[b]ash x",
+    "/usr/bin/g*t status",
+    "FOO=1 /bin/ba*h x",
+    # rtk run, in any form
+    "rtk run ls",
+    "rtk run 'ls'",
+    "rtk run",
+    "rtk run -c 'ls'",
+    "nice rtk run ls",
+    # a git alias set on the command line
+    "git -c alias.x=!bash x",
+    "git -c ALIAS.x=!bash x",
+    "git -c 'alias.x=!bash' x",
+    "git --config-env=alias.x=V x",
+    "git --config-env alias.x=V x",
+    "git -C /repo -c alias.l=log l",
+    # zsh precommand modifiers
+    "noglob ls",
+    "nocorrect ls",
+    "builtin cd /tmp",
+    "FOO=1 noglob ls",
+    "nice noglob ls",
+]
+STILL_ALLOWED = [
+    "git diff $(git merge-base main HEAD)",
+    "for f in a b; do echo $f; done",
+    "rtk git status",
+    "rtk proxy git log",
+    "git -C /repo log",
+    "git -c core.pager=cat log",
+    "git --config-env=core.pager=P log",
+    "ls | grep a | wc -l",
+    "echo 'a b' \"c d\"",
+    "echo \"cost $\"",
+    'grep -E "^a$" f',
+    "echo 'a$'",
+    "echo '$'\"x\"",
+    "echo '{a,b}' \"{1..3}\"",
+    "echo ${x:-a,b}",
+    "find . -name x -exec ls {} \\;",
+    "git show stash@{0}",
+    "[ -f x ] && ls",
+    "[[ -f x ]] && ls",
+    "if [ -f x ]; then ls; fi",
+    "ls *.sh",
+    "echo $((1+2))",
+    "echo $(( (1+2)*3 ))",
+    "cat <<'EOF'\n$'x' {a,b} case\nEOF",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", UNREADABLE)
+def test_lead_and_judge_refuse_what_the_guard_cannot_read_with_certainty(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [c for c in UNREADABLE if not c.startswith("((")])
+def test_the_unreadable_refusals_tell_lead_and_judge_to_rewrite_and_retry(agent, command, ws):
+    # these are shape refusals: rewrite and retry, never STOP (a few are also refused by an older
+    # rule that does say STOP, e.g. a redirect in the same command)
+    proc = run_guard(command, agent, ws)
+    out = json.loads(proc.stdout)["hookSpecificOutput"]
+    if "cannot read with certainty" in out["permissionDecisionReason"]:
+        assert "not a ban" in out["additionalContext"]
+        assert "STOP" not in out["additionalContext"]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", STILL_ALLOWED)
+def test_lead_and_judge_still_allow_what_is_readable(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "case $x in a) echo y;; esac",
+    "case x in a) ls;; esac",
+    "time (cd /tmp && ls)",
+    "echo $'x' $'a\\'b'",
+    "echo {a,b} {1..3}",
+    "echo $(( 16#ff ))",
+    "rtk run ls",
+    "git -c alias.x=log x",
+    "noglob ls",
+    "/bin/ba*h x",
+    "select x in a b; do ls; done",
+])
+def test_fast_and_smart_are_not_refused_what_only_lead_and_judge_cannot_read(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "case x in y) ;; (x) (git push -f);; esac",
+    "case x in y) ;; (x) { git push -f; };; esac",
+])
+def test_a_case_pattern_dropped_after_a_double_semicolon_does_not_switch_the_shape_check_off(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+def test_fast_and_smart_shape_refusal_after_a_case_pattern_says_rewrite(ws):
+    for agent in (FAST, SMART):
+        ctx = _deny_context("case x in y) ;; (x) (git push -f);; esac", agent, ws)
+        assert "Rewrite it as simpler, separate commands" in ctx
 
 
 # --- shell script syntax --------------------------------------------------
