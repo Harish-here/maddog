@@ -37,6 +37,53 @@ check_function_definition() {
   done
 }
 
+# check_git_config <index of the first word after `config`>
+# Lead and judge. Reads the words of a `git config` (unquoted) and denies one that changes
+# settings: a write flag (GIT_CONFIG_WRITE_FLAGS), a write subcommand (GIT_CONFIG_WRITE_SUBS), or,
+# with no mode flag (--get, --list, ...), two or more words (`git config alias.x '!cmd'` sets).
+# One key, a mode flag, `get` and `list` read. An option in none of the lists is denied.
+check_git_config() {
+  local i="$1" n=${#tokens[@]} w name mode=0 npos=0 first="" skip=0
+  while [ "$i" -lt "$n" ]; do
+    unquote_word "${tokens[$i]}"
+    w="$UNQUOTED"
+    i=$((i + 1))
+    if [ "$skip" -eq 1 ]; then
+      skip=0
+      continue
+    fi
+    case "$w" in
+      -*)
+        name="${w%%=*}"
+        if in_set "$w" "${GIT_CONFIG_WRITE_FLAGS[@]}"; then
+          deny "$(msg_git_config "$w")"
+        elif in_set "$w" "${GIT_CONFIG_MODE_FLAGS[@]}"; then
+          mode=1
+        elif in_set "$w" "${GIT_CONFIG_READ_FLAGS[@]}"; then
+          :
+        elif in_set "$w" "${GIT_CONFIG_VALUE_FLAGS[@]}"; then
+          skip=1
+        elif [ "$name" != "$w" ] && in_set "$name" "${GIT_CONFIG_VALUE_FLAGS[@]}"; then
+          :
+        else
+          deny "$(msg_git_config_option "$w")"
+        fi
+        ;;
+      *)
+        [ "$npos" -eq 0 ] && first="$w"
+        npos=$((npos + 1))
+        ;;
+    esac
+  done
+  if in_set "$first" "${GIT_CONFIG_WRITE_SUBS[@]}"; then
+    deny "$(msg_git_config "$first")"
+  fi
+  # `get` and `list` are the newer read subcommands: any number of words after them
+  if [ "$mode" -eq 0 ] && [ "$first" != "get" ] && [ "$first" != "list" ] && [ "$npos" -ge 2 ]; then
+    deny "$(msg_git_config "with a key and a value")"
+  fi
+}
+
 # check_unreadable_words
 # Lead and judge. Denies a segment holding unquoted brace expansion, `{a,b}` or `{1..3}`, in any
 # word: the words it makes are not in the text. The masked tokens are tested, so braces inside
@@ -201,6 +248,9 @@ check_readonly_writes() {
             deny "$MSG_GIT_CHECKOUT_PATH"
           fi
         done
+        ;;
+      config)
+        check_git_config "$after"
         ;;
     esac
   fi

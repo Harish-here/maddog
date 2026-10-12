@@ -56,5 +56,17 @@ GIT_WRITE_SUBS=(add commit apply stash rm mv)
 # enforces them is the tag case in rules-readonly.sh; keep the two together.
 GIT_TAG_READ_FORMS=("git tag" "-l/--list" "-n" "--contains" "--no-contains" "--points-at" "--merged" "--no-merged" "--sort" "--format" "-v/--verify")
 
+# git config for lead and judge (see check_git_config in rules-readonly.sh). A write flag, or a
+# subcommand that writes, is denied; a mode flag reads; a flag in READ_FLAGS or VALUE_FLAGS
+# (VALUE_FLAGS take a value, next word or `=value`) changes nothing; any other option is
+# unrecognized and denied. Without a mode flag, one key reads and two or more words set.
+GIT_CONFIG_WRITE_FLAGS=(--add --unset --unset-all --replace-all --rename-section --remove-section -e --edit)
+GIT_CONFIG_WRITE_SUBS=(set unset edit rename-section remove-section)
+GIT_CONFIG_MODE_FLAGS=(--get --get-all --get-regexp --get-urlmatch --list -l)
+GIT_CONFIG_READ_FLAGS=(--global --local --system --worktree --show-origin --show-scope --name-only -z --null --includes --no-includes --bool --int --bool-or-int --path --expiry-date --all --regexp --show-names --fixed-value --)
+GIT_CONFIG_VALUE_FLAGS=(--file -f --blob --default --type --value --url)
+# The read forms printed in the git config denials.
+GIT_CONFIG_READ_FORMS=("git config <key>" "--get" "--get-all" "--get-regexp" "--list/-l" "get" "list")
+
 # Package managers whose publish is denied.
 PUBLISH_CMDS=(npm yarn pnpm)

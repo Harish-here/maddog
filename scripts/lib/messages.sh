@@ -70,6 +70,15 @@ msg_wrapper_missing() {
   printf '%s' "${1} — this guard's wrapper stripper cannot classify what runs next."
 }
 
+# msg_git_config <what>
+msg_git_config() {
+  printf '%s' "git config ${1} changes git settings — this executor may not write via Bash; only reading settings ($(list_join ', ' "${GIT_CONFIG_READ_FORMS[@]}")) is allowed."
+}
+# msg_git_config_option <option>
+msg_git_config_option() {
+  printf '%s' "git config with '${1}' is not understood by this guard, so it cannot tell whether it changes settings — denying; only reading settings ($(list_join ', ' "${GIT_CONFIG_READ_FORMS[@]}")) is allowed."
+}
+
 # --- executor-guard.sh: commands lead and judge cannot be shown to be read-only ---
 # (rules-readonly.sh, and heredoc.sh for the heredoc one)
 # msg_git_option <option>

@@ -1592,6 +1592,105 @@ def test_fast_and_smart_shape_refusal_after_a_case_pattern_says_rewrite(ws):
         assert "Rewrite it as simpler, separate commands" in ctx
 
 
+# --- git config: lead and judge may read settings, never change them -----------------
+
+CONFIG_WRITES = [
+    "git config alias.x '!touch f'",
+    "git config core.hooksPath /tmp/h",
+    "git config --global user.name x",
+    "git config --local core.editor vim",
+    "git config --system a.b c",
+    "git config --add remote.origin.fetch x",
+    "git config --unset user.name",
+    "git config --unset-all user.name",
+    "git config --replace-all a.b c",
+    "git config --rename-section a b",
+    "git config --remove-section a",
+    "git config -e",
+    "git config --edit",
+    "git config --global -e",
+    "git config --file x.cfg a.b c",
+    "git config -f x.cfg a.b c",
+    "git config --file=x.cfg a.b c",
+    "git config --type=bool a.b true",
+    "git config set a.b c",
+    "git config unset a.b",
+    "git config edit",
+    "git config rename-section a b",
+    "git config remove-section a",
+    "git config --global set a.b c",
+    "git config --foo a.b",
+    "git config -x a.b",
+    "git config --comment x a.b c",
+    "git -C /repo config core.hooksPath /tmp/h",
+    "git --no-pager config a.b c",
+    "git -c core.pager=cat config a.b c",
+    'git "config" "a.b" "c"',
+    'git config "--add" a.b c',
+    "git config alias.x '!touch f' ; ls",
+    "echo $(git config a.b c)",
+]
+CONFIG_READS = [
+    "git config",
+    "git config user.name",
+    "git config --get core.editor",
+    "git config --get-all remote.origin.fetch",
+    "git config --get-regexp 'remote\\..*'",
+    "git config --list",
+    "git config -l",
+    "git config --global --get user.name",
+    "git config --global user.name",
+    "git config --local --list --show-origin",
+    "git config --list --name-only",
+    "git config --list -z",
+    "git config --show-scope --list",
+    "git config --file x.cfg --get a.b",
+    "git config -f x.cfg --list",
+    "git config --file x.cfg a.b",
+    "git config --file=x.cfg --list",
+    "git config get user.name",
+    "git config list",
+    "git config list --global --show-origin",
+    "git config get --all remote.origin.fetch",
+    "git config --type=bool --get a.b",
+    "git config --bool a.b",
+    "git config --get --default x a.b",
+    "git config --get a.b c",
+    "git -C /repo config --get core.editor",
+    "git -c core.pager=cat config --list",
+    "git --no-pager config --list",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", CONFIG_WRITES)
+def test_lead_and_judge_deny_a_git_config_that_changes_settings(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", CONFIG_READS)
+def test_lead_and_judge_allow_a_git_config_that_only_reads(agent, command, ws):
+    assert_allow(command, agent, ws)
+    assert run_guard(command, agent, ws).stdout == ""
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_the_git_config_denial_says_stop_and_names_the_read_forms(agent, ws):
+    ctx = _deny_context("git config alias.x '!touch f'", agent, ws)
+    assert "STOP and return blocked" in ctx
+    assert "not a ban" not in ctx
+    reason = json.loads(run_guard("git config core.hooksPath /tmp/h", agent, ws).stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "--get" in reason and "--list/-l" in reason
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", CONFIG_WRITES[:-1] + CONFIG_READS)
+def test_fast_and_smart_are_unchanged_for_git_config(agent, command, ws):
+    # echo $(git config a.b c) and the like are allowed too: only the irreversible rules apply
+    assert_allow(command, agent, ws)
+
+
 # --- shell script syntax --------------------------------------------------
 
 def test_guard_script_has_valid_bash_syntax():
