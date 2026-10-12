@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Draws assets/wordmark.txt as SVG: assets/wordmark-dark.svg, assets/wordmark-light.svg, assets/icon.svg.
 # Colours are the DESIGN.md section 4 and 6 tokens. Standard library only.
-# Run from anywhere: python3 scripts/gen-wordmark.py
+# Run from anywhere: python3 scripts/dev/gen-wordmark.py
 
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 ASSETS = ROOT / "assets"
 
 # One text cell is drawn 32 wide and 64 tall (a terminal cell is about 1:2).

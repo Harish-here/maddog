@@ -211,7 +211,7 @@ now matched by the base-or-head `covers:` has no fingerprint.
 
 `.github/validate.sh` holds every pull-request check and is the single thing
 CI runs. It stops at the first failure, in this order: frontmatter, JSON and
-version consistency; `scripts/fragment-check.py`; `bash -n` on `scripts/*.sh`;
+version consistency; `scripts/dev/fragment-check.py`; `bash -n` on every `.sh` under `scripts/`;
 every command path in `hooks/hooks.json` exists; `jq` is installed; the offline
 tests; the gate (`--base ${BASE:-origin/main}`). Run it locally with the test
 venv's python, from a clone that has a local `main`:
@@ -286,7 +286,7 @@ A run passes only if all four checks pass:
 
 1. the text `PATTERNS:` is in the agent's own text before its first tool
    call, in any position and with any markup around it (the user-locked rule;
-   `scripts/pattern-declare-guard.sh` applies the same one)
+   `scripts/hooks/pattern-declare-guard.sh` applies the same one)
 2. the line holding it names every pattern the case expects; naming more is fine, so
    declaring every pattern passes this check and checks 3 and 4 catch a wrong
    classification

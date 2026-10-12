@@ -5,7 +5,10 @@
 # Matchers (first_call.target, before) are regexes over "<kind>:<detail>" of each call.
 covers:
   - "agents/executor-fast-read.md"
-  - "scripts/pattern-declare-guard.sh"
+  - "scripts/hooks/pattern-declare-guard.sh"
+  - "scripts/lib/hook-io.sh"
+  - "scripts/lib/agents.sh"
+  - "scripts/lib/messages.sh"
   - "hooks/hooks.json"
 expect: Fast-Read
 fixture: fast-tier

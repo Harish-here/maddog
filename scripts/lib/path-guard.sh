@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# path-guard-lib.sh — sourceable path-normalization/confinement helpers,
-# shared by scripts/executor-guard.sh's recursive-delete check and other guards
-# requiring path confinement and normalization across multiple tool-use scopes.
+# path-guard.sh — sourceable path-normalization/confinement helpers,
+# used by the executor guard's recursive-delete check (rules-irreversible.sh) and any other
+# guard that needs path confinement.
 #
-# Bash 3.2 target (this platform's /bin/bash: `bash --version` -> 3.2.57):
+# Bash 3.2 target (this platform's /bin/bash is 3.2.57):
 # no mapfile/readarray, no associative arrays, no ${var,,}/${var^^}, no &>>,
 # no negative-offset substring expansion (${var: -1}), no nameref
 # (declare -n) — array "pass by reference" is done via "${arr[@]}" expanded
@@ -34,24 +34,23 @@
 #   absent result — a hop-budget-exhausted partial prefix that happens to
 #   sit under a temp directory is not a successful resolution.
 #
-#   Decision 7 amendment (post-release regression fix, commit 186b1ba):
-#   a nonexistent-or-glob-bearing FINAL component (a glob metacharacter is
+#   A nonexistent-or-glob-bearing FINAL component (a glob metacharacter is
 #   `*`, `?`, or `[`) does NOT fail closed when ALL of: every intermediate
 #   component already resolved (structural — the walk returns above
 #   otherwise); the resolved PARENT prefix, joined with a trailing `/`,
 #   passes is_temp_path's anchored test; and the raw input path carries no
-#   trailing slash (a trailing slash keeps the pre-amendment strict
-#   behavior — see the mode note below). When all hold, the parent plus
-#   the LITERAL final component (never dereferenced, never glob-expanded)
-#   is returned and the caller's own is_temp_path call on that string
-#   decides — this is what allows `rm -rf /tmp/already-gone` (idempotent
-#   cleanup) and `rm -rf <scratchpad>/*` (glob cleanup) while an
-#   already-absent path OUTSIDE a temp location still denies. A glob
-#   metacharacter in ANY INTERMEDIATE component still denies outright,
-#   independent of that component's existence — an intermediate `*` that
-#   happened to literally exist would otherwise walk through it as an
-#   ordinary directory, and that is exactly the shape (P10) that lets a
-#   later `..` climb out once the shell actually expands it.
+#   trailing slash (a trailing slash keeps the strict behavior — see the mode
+#   note below). When all hold, the parent plus the LITERAL final component
+#   (never dereferenced, never glob-expanded) is returned and the caller's
+#   own is_temp_path call on that string decides — this is what allows
+#   `rm -rf /tmp/already-gone` (idempotent cleanup) and
+#   `rm -rf <scratchpad>/*` (glob cleanup) while an already-absent path
+#   OUTSIDE a temp location still denies. A glob metacharacter in ANY
+#   INTERMEDIATE component still denies outright, independent of that
+#   component's existence — an intermediate `*` that happened to literally
+#   exist would otherwise be walked through as an ordinary directory, and
+#   that is exactly the shape that lets a later `..` climb out once the
+#   shell actually expands it.
 #
 #   Quote-stripping runs FIRST: a single matching pair of surrounding
 #   quotes (both leading+trailing ', or both leading+trailing ") is
@@ -134,21 +133,12 @@ _path_guard_split() {
   # has no mapfile/readarray; callers collect this with a `while read`
   # loop over process substitution instead.
   #
-  # PRE-EXISTING DEFECT FIX (found while implementing decision 7's
-  # amendment): the prior body did `local IFS='/'; for part in $s; do`
-  # on an UNQUOTED $s — bash's list-expansion of an unquoted parameter
-  # performs word-splitting AND pathname (glob) expansion on each
-  # resulting word. A component split out as a bare '*' (or '?'/'[...]')
-  # was therefore silently expanded against the CALLER'S CURRENT
-  # WORKING DIRECTORY, splicing real filenames from disk into the
-  # component queue instead of preserving the literal character. This
-  # was masked before decision 7's amendment (any resulting path still
-  # failed the existence check one way or another, so the end result
-  # was DENY regardless), but decision 7's amendment must resolve a
-  # glob-bearing FINAL component literally — under the old body it would
-  # NOT be resolved literally, defeating the amendment's own "let the
-  # anchored test decide on the literal final component" contract. Pure
-  # parameter-expansion slicing below never word-splits or glob-expands.
+  # The body slices with parameter expansion on purpose. Looping
+  # `for part in $s` over an UNQUOTED $s under `local IFS='/'` also performs
+  # pathname (glob) expansion, so a component that is a bare '*' (or '?'/'[...]')
+  # would be replaced by filenames from the CALLER'S CURRENT WORKING DIRECTORY
+  # instead of staying literal. Resolving a glob-bearing FINAL component
+  # literally depends on this never happening.
   local s="$1"
   local part
   while [ -n "$s" ]; do
@@ -167,11 +157,11 @@ _path_guard_split() {
 }
 
 _path_guard_has_glob() {
-  # True if $1 contains a shell glob metacharacter (*, ?, or [). Used by
-  # decision 7's amendment: an intermediate component with any of these
-  # denies outright regardless of existence, and a FINAL component with
-  # any of these is treated the same as a nonexistent final component
-  # (never dereferenced, never expanded — resolved literally).
+  # True if $1 contains a shell glob metacharacter (*, ?, or [). An
+  # intermediate component with any of these denies outright regardless of
+  # existence; a FINAL component with any of these is treated the same as a
+  # nonexistent final component (never dereferenced, never expanded —
+  # resolved literally).
   case "$1" in
     *'*'*|*'?'*|*'['*) return 0 ;;
     *) return 1 ;;
@@ -191,11 +181,11 @@ normalize_path() {
   local raw="$1" cwd="$2" mode="$3"
   local path
 
-  # Decision 12: quote-stripping runs first.
+  # Quote-stripping runs first.
   path="$(_path_guard_strip_quotes "$raw")"
 
-  # Decision 8: unexpanded shell metacharacters deny outright, scanned on
-  # the quote-stripped (still unexpanded) token, before any component walk.
+  # Unexpanded shell metacharacters deny outright, scanned on the
+  # quote-stripped (still unexpanded) token, before any component walk.
   case "$path" in
     *'$'*|*'`'*|*'{'*) return 1 ;;
   esac
@@ -203,16 +193,16 @@ normalize_path() {
     '~'*) return 1 ;;
   esac
 
-  # Decision 3: trailing-slash override, checked before any splitting (a
-  # trailing '/' is otherwise invisible once the path is split into
-  # components). had_trailing_slash also gates decision 7's amendment
-  # below: a trailing slash keeps the pre-amendment strict behavior.
+  # Trailing-slash override, checked before any splitting (a trailing '/' is
+  # otherwise invisible once the path is split into components).
+  # had_trailing_slash also gates the final-component leniency below: a
+  # trailing slash keeps the strict behavior.
   local had_trailing_slash=0
   case "$path" in
     */) mode="full"; had_trailing_slash=1 ;;
   esac
 
-  # Decision 4: resolve a relative path against .cwd before the walk.
+  # Resolve a relative path against .cwd before the walk.
   case "$path" in
     /*) : ;;
     *) path="${cwd%/}/$path" ;;
@@ -241,9 +231,8 @@ normalize_path() {
       continue
     fi
     if [ "$comp" = ".." ]; then
-      # Decision 1: `.`/`..` collapse against the already-resolved prefix
-      # only — applies at EVERY component, including the final one,
-      # regardless of mode (decision 1's "final-position collapse" note).
+      # `.`/`..` collapse against the already-resolved prefix only, at EVERY
+      # component including the final one, regardless of mode.
       if [ "${#resolved[@]}" -gt 0 ]; then
         resolved=("${resolved[@]:0:$((${#resolved[@]} - 1))}")
       fi
@@ -257,12 +246,12 @@ normalize_path() {
       is_last=0
     fi
 
-    # Decision 7 amendment: a glob metacharacter in an INTERMEDIATE
-    # component denies outright, independent of whether that literal
-    # component happens to exist — an intermediate "*" that DID exist as
-    # a real directory would otherwise walk through it normally, and a
-    # glob character there is exactly the shape (P10) that lets a later
-    # ".." climb out once the shell actually expands it.
+    # A glob metacharacter in an INTERMEDIATE component denies outright,
+    # independent of whether that literal component happens to exist — an
+    # intermediate "*" that DID exist as a real directory would otherwise be
+    # walked through normally, and a glob character there is exactly the
+    # shape that lets a later ".." climb out once the shell actually expands
+    # it.
     if [ "$is_last" -eq 0 ] && _path_guard_has_glob "$comp"; then
       return 1
     fi
@@ -273,19 +262,17 @@ normalize_path() {
       candidate="/$(_path_guard_join "${resolved[@]}" "$comp")"
     fi
 
-    # Decision 7 (existence, every component, both modes; EACCES is
-    # best-effort per the header note above).
+    # Existence, every component, both modes; EACCES is best-effort per the
+    # header note above.
     if [ ! -e "$candidate" ] || { [ "$is_last" -eq 1 ] && _path_guard_has_glob "$comp"; }; then
-      # Decision 7 amendment (post-release regression fix, commit
-      # 186b1ba): a nonexistent-or-glob-bearing FINAL component is
-      # acceptable ONLY when every intermediate component already
-      # resolved (structural — we would have returned above otherwise),
-      # the resolved parent prefix is itself confined per is_temp_path's
-      # anchored test, and the raw path carries no trailing slash. When
-      # all hold, resolve as the parent plus the LITERAL final component
-      # (no dereference, no glob expansion) and let the caller's
-      # is_temp_path decide. Otherwise fall through to decision 7's
-      # original fail-closed return.
+      # A nonexistent-or-glob-bearing FINAL component is acceptable ONLY when
+      # every intermediate component already resolved (structural — we would
+      # have returned above otherwise), the resolved parent prefix is itself
+      # confined per is_temp_path's anchored test, and the raw path carries
+      # no trailing slash. When all hold, resolve as the parent plus the
+      # LITERAL final component (no dereference, no glob expansion) and let
+      # the caller's is_temp_path decide. Otherwise fall through to the
+      # fail-closed return.
       if [ "$is_last" -eq 1 ] && [ "$had_trailing_slash" -eq 0 ]; then
         local parent_str final_full
         if [ "${#resolved[@]}" -eq 0 ]; then
@@ -309,9 +296,9 @@ normalize_path() {
     fi
 
     if [ "$is_symlink" -eq 1 ] && ! { [ "$is_last" -eq 1 ] && [ "$mode" = "parent" ]; }; then
-      # Decision 3: dereference — every component up through the
-      # second-to-last always; the final component only in `full` mode
-      # (or when the trailing-slash override above already forced it).
+      # Dereference — every component up through the second-to-last always;
+      # the final component only in `full` mode (or when the trailing-slash
+      # override above already forced it).
       hops=$((hops + 1))
       if [ "$hops" -gt "$max_hops" ]; then
         return 1
@@ -337,15 +324,14 @@ normalize_path() {
 
       case "$target" in
         /*)
-          # Decision 1: absolute target replaces the ENTIRE resolved-so-far
-          # prefix — restart the walk from root.
+          # Absolute target replaces the ENTIRE resolved-so-far prefix —
+          # restart the walk from root.
           resolved=()
           ;;
         *)
-          # Decision 1: relative target resolves against the symlink's OWN
-          # PARENT directory — `resolved` as it stood BEFORE this
-          # component — so it is left unchanged here (never root, never
-          # .cwd).
+          # Relative target resolves against the symlink's OWN PARENT
+          # directory — `resolved` as it stood BEFORE this component — so it
+          # is left unchanged here (never root, never .cwd).
           : ;;
       esac
       idx=0

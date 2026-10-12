@@ -6,9 +6,9 @@
 # happen every time, so this hook refuses a first call that has no such line.
 #
 # Rule, first tool call only:
-#   - `PATTERNS:` in the subagent's own assistant text -> allow. This is the user-locked
-#     rule: the text anywhere in the agent's own text, with any markup around it. The
-#     scorer's check 1 (tests/harness/core/agent_score.py) applies the same one.
+#   - `PATTERNS:` in the subagent's own assistant text -> allow. The text counts
+#     anywhere in the agent's own text, with any markup around it. The
+#     scorer's check 1 (tests/harness/core/agent_score.py) applies the same rule.
 #   - absent -> deny once, per agent_id, with a reason telling it to write the
 #     line and repeat the call.
 #   - anything we cannot read or inspect -> allow. This guard never denies twice
@@ -18,8 +18,7 @@
 #
 # Where the evidence is: the subagent's transcript is
 #   dirname(transcript_path)/<session_id>/subagents/agent-<agent_id>.jsonl
-# and at the first PreToolUse its text entry is already on disk (live probe,
-# 3 of 3 short Haiku runs, 2026-10-08).
+# and at the first PreToolUse its text entry is already on disk.
 #
 # Wiring: plugin-level hooks/hooks.json, matcher on the read/write/search/shell
 # tools. That wiring is session-wide, so scope is enforced here: only calls
@@ -30,8 +29,8 @@
 # Protocol: read the PreToolUse JSON payload on stdin; print nothing and exit 0
 # to ALLOW, or print a hookSpecificOutput deny JSON and exit 0 to DENY (the JSON
 # form gives the model the reason; exit 2 would not). Hooks fail open: an unreadable
-# payload ALLOWS. A missing jq denies only a payload whose raw text names one of the
-# two agent types; every other caller ALLOWS.
+# payload ALLOWS. A missing jq, or a lib that fails to load, denies only a payload whose
+# raw text names one of the two agent types; every other caller ALLOWS.
 #
 # State: one empty marker file per agent_id under ${TMPDIR:-/tmp}/maddog-pattern-declare/.
 # The marker is created on the agent's first call, whatever the decision, so a
@@ -39,29 +38,29 @@
 
 set -uo pipefail
 
-deny() {
-  printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"write PATTERNS first, then repeat the call","additionalContext":"Blocked by pattern-declare-guard.sh: your first message must hold a PATTERNS: line before your first tool call. Write it now (PATTERNS: <NAME>[, <NAME>], then one line per pattern that has a law), then repeat this call."}}'
-  exit 0
-}
+HOOK_NAME="${BASH_SOURCE[0]##*/}"
+GUARDED_AGENTS='executor-fast|executor-fast-read'
+LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
-input="$(cat 2>/dev/null)"
-[ -z "$input" ] && exit 0
-if ! command -v jq >/dev/null 2>&1; then
-  # Without jq the payload cannot be parsed. Deny a call whose raw input names a guarded
-  # agent type (static JSON, no jq); allow every other caller, e.g. the main session.
-  jq_missing_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?(executor-fast|executor-fast-read)"'
-  if [[ "$input" =~ $jq_missing_re ]]; then
-    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"The maddog guards require jq and it is not installed, so this call was denied rather than allowed unchecked. Install jq, then retry.","additionalContext":"Blocked by pattern-declare-guard.sh: jq is missing. STOP and return blocked to your caller, asking them to install jq - do not attempt the call."}}'
+# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
+if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; }; then
+  fallback_input="$(cat 2>/dev/null)"
+  fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
+  if [[ "$fallback_input" =~ $fallback_re ]]; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"A maddog guard library failed to load, so this call was denied rather than allowed unchecked. Repair or reinstall the plugin, then retry.","additionalContext":"Blocked by '"$HOOK_NAME"': a guard library failed to load. STOP and return blocked to your caller - do not attempt the call."}}'
   fi
   exit 0
 fi
 
-field() { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
+deny() {
+  emit_deny static "$MSG_PATTERN_REASON" "$MSG_PATTERN_CONTEXT"
+  exit 0
+}
 
-case "$(field .agent_type)" in
-  executor-fast|*:executor-fast|executor-fast-read|*:executor-fast-read) : ;;
-  *) exit 0 ;;
-esac
+hook_start "$HOOK_NAME" "$GUARDED_AGENTS"
+
+agent_is "$(field .agent_type)" executor-fast executor-fast-read || exit 0
 
 agent_id="$(field .agent_id)"
 session_id="$(field .session_id)"

@@ -9,7 +9,10 @@
 # "<kind>:<detail>" of each tool call, e.g. "read:add_item src" or "write:rm var/app.lock".
 covers:
   - "agents/executor-fast.md"
-  - "scripts/pattern-declare-guard.sh"
+  - "scripts/hooks/pattern-declare-guard.sh"
+  - "scripts/lib/hook-io.sh"
+  - "scripts/lib/agents.sh"
+  - "scripts/lib/messages.sh"
   - "hooks/hooks.json"
 expect: Fast
 fixture: fast-tier

@@ -15,7 +15,7 @@ a first call that is not the case's kind on its target (a directory listing, or
 a search by file name, before the search the case expects) fails it, as the
 design locks.
 
-The check 1 rule is the user-locked hook rule, and scripts/pattern-declare-guard.sh
+The check 1 rule is the user-locked hook rule, and scripts/hooks/pattern-declare-guard.sh
 applies the same one: the text `PATTERNS:` appears in the agent's own text, in any
 position, with any markup around it. Check 2 then reads the pattern names from the
 line that holds it.

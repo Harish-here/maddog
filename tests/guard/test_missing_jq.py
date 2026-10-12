@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = REPO_ROOT / "scripts"
+SCRIPTS = REPO_ROOT / "scripts" / "hooks"
 
 # hook script -> (agent types it guards, agent types it must let through)
 HOOKS = {

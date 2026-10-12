@@ -89,10 +89,10 @@ if errors:
 VALIDATE
 
 echo "== fragment check"
-"$PYTHON" scripts/fragment-check.py
+"$PYTHON" scripts/dev/fragment-check.py
 
 echo "== shell syntax"
-for script in scripts/*.sh; do
+for script in scripts/*/*.sh; do
   bash -n "$script"
 done
 

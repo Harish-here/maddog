@@ -7,8 +7,8 @@ steps listed below.
 
 ## What runs, and what it touches
 
-- **Hooks.** `scripts/executor-guard.sh`, `scripts/judge-dispatch-guard.sh`
-  and `scripts/pattern-declare-guard.sh` read the pending tool call that
+- **Hooks.** `scripts/hooks/executor-guard.sh`, `scripts/hooks/judge-dispatch-guard.sh`
+  and `scripts/hooks/pattern-declare-guard.sh` read the pending tool call that
   Claude Code passes them, and answer allow or deny. The first two keep
   nothing. The third also reads the calling agent's own session transcript on
   your machine, and leaves one empty file per executor-fast or

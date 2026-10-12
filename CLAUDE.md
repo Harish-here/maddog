@@ -15,7 +15,7 @@ section 3 table marks required.
 ## Invariants
 
 - `executor-lead` and `executor-judge` hold no Write/Edit, and
-  `scripts/executor-guard.sh` denies their Bash write-forms too. Granting
+  `scripts/hooks/executor-guard.sh` denies their Bash write-forms too. Granting
   either tool dissolves the invariant.
 - Adapter set — the only paths where runtime mechanics may live: agent and
   skill frontmatter, `hooks/`, `scripts/`, `workflows/`, `tests/`, `.github/`,

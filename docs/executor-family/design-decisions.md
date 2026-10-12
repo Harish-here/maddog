@@ -6,7 +6,7 @@ the shared Fast/Fast-Read Return updated 2026-09-25.
 Supersedes the 2026-09-11 record and the locked schemas in mechanical-work.md
 and local-work.md. The production bodies under agents/ and
 skills/advisor-mode/ carry thirteen shared fragments, canonical in
-docs/executor-family/constitution.md and checked by scripts/fragment-check.py.
+docs/executor-family/constitution.md and checked by scripts/dev/fragment-check.py.
 
 ## Purpose
 
@@ -115,7 +115,7 @@ Decisions that fix the mechanism:
 - A fragment is edited in constitution.md and propagated; a copy is never
   edited in place. advisor-mode is the master text: a change found while
   reviewing another carrier is made in advisor-mode and constitution.md, then
-  propagated. `scripts/fragment-check.py` byte-compares every (carrier,
+  propagated. `scripts/dev/fragment-check.py` byte-compares every (carrier,
   fragment) pair and is the conformance gate. `scripts/conformance-check.py`
   and the Part II schemas it reads are superseded history, not a gate.
 - A shared reference file was rejected: Smart may not load a skill the
