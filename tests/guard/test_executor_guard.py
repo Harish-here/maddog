@@ -1173,6 +1173,277 @@ def test_lead_and_judge_keep_their_wrapper_flag_refusals(agent, command, ws):
     assert_deny(command, agent, ws)
 
 
+# --- release-review findings: constructs the walk must still read -----------------
+
+# a for/select/case header segment is not a command, but the body after `do` or after a
+# pattern's `)` is, with or without a space and with or without a `(` before the pattern
+BODY_WRITES = [
+    "for x do echo hi >f; done",
+    "select x do echo hi >f; done",
+    "case x in (*) echo hi >f;; esac",
+    "case x in *)echo hi>f;; esac",
+    "case x in a) echo hi >f;; esac",
+    "case x in\n  a) ls ;;\n  b) echo hi >f ;;\nesac",
+]
+BODY_SHELLS = [
+    "for x do bash -c y; done",
+    "case x in (*) bash -c y;; esac",
+    "case x in *)bash -c y;; esac",
+    "case x in a|b) bash -c y;; esac",
+    "case $x in a) echo $(bash y);; esac",
+    "case x in\n  a) ls ;;\n\n  b) bash x ;;\nesac",
+]
+BODY_IRREVERSIBLE = [
+    "for x do git push -f; done",
+    "select x do git push -f; done",
+    "case x in (*) git push -f;; esac",
+    "case x in *)git push -f;; esac",
+    "case x in a|b) git push -f;; esac",
+    "case x in\n  a) ls ;;\n  (b) git push -f ;;\nesac",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", BODY_WRITES + BODY_SHELLS)
+def test_lead_and_judge_check_the_body_of_a_for_or_case(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", BODY_IRREVERSIBLE)
+def test_every_agent_is_denied_an_irreversible_command_in_the_body_of_a_for_or_case(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_may_still_write_and_run_shells_in_a_loop_body(agent, ws):
+    assert_allow("for x do echo hi >f; done", agent, ws)
+    assert_allow("case x in (*) bash -c y;; esac", agent, ws)
+    assert_allow("case x in a) (cd x);; esac", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_a_subshell_in_a_case_body_is_not_taken_for_a_pattern(agent, ws):
+    assert_deny("case x in a) (bash);; esac", agent, ws)
+    assert_deny("case x in\n  a) ls\n(bash)\n  ;;\nesac", agent, ws)
+
+
+# rtk subcommands that run the rest as a command, and `run`, which runs a string with sh -c
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "rtk run 'echo hi > f'",
+    'rtk run "echo hi > f"',
+    "rtk run 'ls; bash x'",
+    "rtk run bash x",
+    "rtk err bash -c x",
+    "rtk test bash x",
+    "rtk summary python3 -c 1",
+    "rtk err touch f",
+    "rtk -v run ls",
+    "nice rtk run 'bash x'",
+])
+def test_lead_and_judge_classify_what_an_rtk_subcommand_runs(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "rtk test git push -f",
+    "rtk summary git push -f",
+    "rtk err git reset --hard",
+    "rtk run 'git push -f'",
+    "rtk run git push -f",
+    'rtk run "git reset --hard"',
+    "rtk -v run 'git push -f'",
+    "rtk -v err git push -f",
+    "rtk run 'ls && git push -f'",
+])
+def test_every_agent_is_denied_an_irreversible_command_an_rtk_subcommand_runs(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["rtk run ls", "rtk run", "rtk test pytest", "rtk err ls", "rtk summary git status", "rtk run 'git status'"])
+def test_an_rtk_subcommand_running_a_harmless_command_stays_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# `''#` is two quotes and a `#` inside a word, not a comment
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_see_a_substitution_after_empty_quotes_and_a_hash(agent, ws):
+    assert_deny("echo ''#$(bash -c x)", agent, ws)
+    assert_deny('echo ""#$(bash -c x)', agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_every_agent_sees_an_irreversible_substitution_after_empty_quotes_and_a_hash(agent, ws):
+    assert_deny("echo ''#$(git push -f)", agent, ws)
+    assert_deny("echo '#' $(git push -f)", agent, ws)
+    assert_allow("echo a '' #$(git push -f)", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    'f ( ) { bash -c "$X"; }; f',
+    'f( ) { bash -c "$X"; }; f',
+    "f\t(\t)\t{ ls; }",
+    "function f ( ) { ls; }",
+])
+def test_lead_and_judge_deny_a_function_definition_with_spaced_parens(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_a_body_line_ending_in_a_backslash_joins_the_next_line(agent, ws):
+    assert_deny("cat <<EOF\n$\\\n(bash -c x)\nEOF", agent, ws)
+    assert_deny("cat <<EOF\nabc $\\\n(touch f)\nEOF", agent, ws)
+    assert_deny("cat <<EOF\n`\\\ntouch f`\nEOF", agent, ws)
+    assert_allow("cat <<EOF\n$\\\\\n(not a substitution)\nEOF", agent, ws)
+    assert_allow("cat <<'EOF'\n$\\\n(bash -c x)\nEOF", agent, ws)
+
+
+# inside $(( )) a single quote is an ordinary character, so a substitution after it runs
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_every_agent_sees_an_irreversible_substitution_inside_arithmetic_quotes(agent, ws):
+    assert_deny("echo $(( '$(git push -f)' ))", agent, ws)
+    assert_deny("echo $(( 1 + '$(git push -f)' ))", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_see_a_shell_inside_arithmetic_quotes(agent, ws):
+    assert_deny("echo $(( '$(bash -c x)' ))", agent, ws)
+
+
+# $'...' is ANSI-C quoting: a backslash escapes, so `$'\''` is one quote character
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_every_agent_reads_past_an_ansi_c_quoted_quote(agent, ws):
+    assert_deny("echo $'\\'' $(git push -f) $'\\''", agent, ws)
+    assert_deny("echo $'a\\'b' $(git push -f)", agent, ws)
+    assert_deny("echo $'\\\\' $(git push -f)", agent, ws)
+    assert_deny("x=$(echo $'\\'' $(git push -f))", agent, ws)
+    assert_deny("echo \"$(echo $'\\'' $(git push -f))\"", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_see_a_shell_after_an_ansi_c_quoted_quote(agent, ws):
+    assert_deny("echo $'\\'' $(bash -c x) $'\\''", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_ansi_c_quotes_that_hide_a_substitution_keep_it_hidden(agent, ws):
+    assert_allow("echo $'$(git push -f)'", agent, ws)
+    assert_allow("echo $'a\\'$(git push -f)'", agent, ws)
+    assert_allow("echo $'x' $(git status)", agent, ws)
+
+
+# a paren group after a prefix keeps its old reading for fast and smart
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["time (cd /tmp && ls)", "time { make; }", "nice (ls)", "FOO=1 (ls)", "env (ls)", "timeout 5 (ls)"])
+def test_fast_and_smart_are_not_refused_a_paren_group_after_a_prefix(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["time (cd /tmp && ls)", "time { make; }", "nice (ls)"])
+def test_lead_and_judge_are_refused_a_paren_group_after_a_prefix(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# --- ANSI-C quoted command words, clustered env flags, quoted arguments ------------
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "$'git' push -f",
+    "$'\\x67it' push -f",
+    "$'g'it push -f",
+    "$'git' reset --hard",
+    "$'rm' -rf /etc",
+    "FOO=1 $'git' push -f",
+    "env $'git' push -f",
+])
+def test_every_agent_reads_an_ansi_c_quoted_command_word(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["$'bash' x", "$'\\x62ash' x", "$'python3' -c 1", "$'git' tag v1", "$'$G' x"])
+def test_lead_and_judge_read_an_ansi_c_quoted_command_word(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_an_ansi_c_quoted_word_that_is_harmless_stays_allowed(agent, ws):
+    assert_allow("$'git' status", agent, ws)
+    assert_allow("echo $'it\\'s'", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "env -iS 'git push -f'",
+    "env -iS'git push -f'",
+    "env -Sgit\\ push\\ -f",
+    "env -i -S 'git push -f'",
+    "env -0iS 'git reset --hard'",
+    "env -iu NAME git push -f",
+    "env -iC /tmp git push -f",
+    "env -S 'env -iS \"git push -f\"'",
+])
+def test_fast_and_smart_read_the_string_of_a_clustered_env_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["env -iS 'git status'", "env -0iu NAME git status", "env -iu NAME ls"])
+def test_fast_and_smart_clustered_env_flags_in_front_of_harmless_commands_stay_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["env -iS 'git status'", "env -iu NAME ls", "env -0 ls"])
+def test_lead_and_judge_are_denied_a_clustered_env_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    'git push "-f"',
+    "git push '--force'",
+    'git push "--force-with-lease=x"',
+    "git push 'origin' '+main'",
+    'git worktree "remove" x',
+    'git worktree "prune"',
+    'git reset "--hard"',
+    'git clean "-fd"',
+    'git clean "-f" "-d"',
+    'git branch "-D" b',
+    'git checkout "."',
+    'git checkout "--" "."',
+    'git restore "."',
+    'git "push" "--force"',
+    'git -C x push "-f"',
+    'git push \\-f',
+    'rm "-rf" /etc',
+    'rm "-r" "/etc"',
+    'find . "-delete"',
+    'npm "publish"',
+    'git merge "x"',
+])
+def test_every_agent_unquotes_every_word_before_the_irreversible_checks(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", ['git status "-s"', 'git log "--oneline"', 'git push "origin"', 'git clean "-n"', "git push origin 'main'"])
+def test_quoted_words_that_are_harmless_stay_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_keep_recursive_delete_inside_temp_with_quoted_flags(agent, ws):
+    assert_allow('rm "-rf" /tmp/x', agent, ws)
+    assert_allow('rm -rf "/tmp/a b"', agent, ws)
+
+
 # --- shell script syntax --------------------------------------------------
 
 def test_guard_script_has_valid_bash_syntax():

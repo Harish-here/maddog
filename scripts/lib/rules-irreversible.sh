@@ -1,6 +1,6 @@
 # rules-irreversible.sh - the checks every guarded agent gets: commands that cannot be undone.
 # Sourced, never run. Needs deny() from the calling hook, hook-io.sh, messages.sh,
-# command-lists.sh, parse.sh (unquote_word, find_git_subcommand) and path-guard.sh. Bash 3.2.
+# command-lists.sh, parse.sh (unquote_tokens, find_git_subcommand) and path-guard.sh. Bash 3.2.
 
 # These executors run at reasoning effort levels or with permission modes where they cannot
 # reliably weigh one-way doors. This layer bounces a short list of irreversible commands
@@ -24,10 +24,11 @@
 # find -delete, destructive git, package publish.
 check_irreversible() {
   local cmd0 flag_r paths tok all_temp p resolved_p sub cflag_f cflag_dx rest bflag_delete bflag_force
-  local merge_abort_continue wt_sub after
-  # The command word as the shell reads it: `\git`, `"git"` and `g""it` are git.
-  unquote_word "${tokens[0]}"
-  cmd0="${UNQUOTED##*/}"
+  local merge_abort_continue wt_sub after ti
+  # The command word, and every other word, as the shell reads it: `\git`, `"git"` and
+  # `g""it` are git, `"-f"` is -f. UTOKENS is tokens unquoted, index for index.
+  unquote_tokens
+  cmd0="${UTOKENS[0]##*/}"
   # --- 1. recursive delete (rm -r / -R / -rf / -fr / --recursive[, --force]) ---
   # -f is NOT required to deny: `rm -r` alone deletes every matched file with
   # no confirmation in a non-interactive shell, so it is treated the same as
@@ -35,7 +36,10 @@ check_irreversible() {
   if [ "$cmd0" = "rm" ]; then
     flag_r=0
     paths=()
-    for tok in "${tokens[@]:1}"; do
+    # flags are read unquoted; a path keeps its raw spelling, which normalize_path unquotes itself
+    ti=1
+    while [ "$ti" -lt "${#tokens[@]}" ]; do
+      tok="${UTOKENS[$ti]}"
       case "$tok" in
         --recursive*) flag_r=1 ;;
         --force*) : ;;
@@ -43,8 +47,9 @@ check_irreversible() {
         -*)
           case "$tok" in *r*|*R*) flag_r=1 ;; esac
           ;;
-        *) paths+=("$tok") ;;
+        *) paths+=("${tokens[$ti]}") ;;
       esac
+      ti=$((ti + 1))
     done
     if [ "$flag_r" -eq 1 ]; then
       all_temp=1
@@ -68,7 +73,7 @@ check_irreversible() {
 
   # --- find -delete (permanently removes every matched file) ---
   if [ "$cmd0" = "find" ]; then
-    for tok in "${tokens[@]:1}"; do
+    for tok in "${UTOKENS[@]:1}"; do
       if [ "$tok" = "-delete" ]; then
         deny "$MSG_FIND_DELETE"
       fi
@@ -88,7 +93,7 @@ check_irreversible() {
     after=$((GIT_SUB_I + 1))
     case "$sub" in
       push)
-        for tok in "${tokens[@]:$after}"; do
+        for tok in "${UTOKENS[@]:$after}"; do
           case "$tok" in
             -f|--force|--force-with-lease*)
               deny "$MSG_PUSH_FORCE"
@@ -102,7 +107,7 @@ check_irreversible() {
       clean)
         cflag_f=0
         cflag_dx=0
-        for tok in "${tokens[@]:$after}"; do
+        for tok in "${UTOKENS[@]:$after}"; do
           case "$tok" in
             --force) cflag_f=1 ;;
             --*) : ;;
@@ -117,20 +122,20 @@ check_irreversible() {
         fi
         ;;
       reset)
-        for tok in "${tokens[@]:$after}"; do
+        for tok in "${UTOKENS[@]:$after}"; do
           if [ "$tok" = "--hard" ]; then
             deny "$MSG_RESET_HARD"
           fi
         done
         ;;
       checkout)
-        rest="${tokens[*]:$after}"
+        rest="${UTOKENS[*]:$after}"
         if [ "$rest" = "-- ." ] || [ "$rest" = "." ]; then
           deny "$MSG_CHECKOUT_DOT"
         fi
         ;;
       restore)
-        rest="${tokens[*]:$after}"
+        rest="${UTOKENS[*]:$after}"
         case "$rest" in
           "."|"--staged --worktree ."|"--worktree --staged .")
             deny "$MSG_RESTORE_DOT"
@@ -140,7 +145,7 @@ check_irreversible() {
       branch)
         bflag_delete=0
         bflag_force=0
-        for tok in "${tokens[@]:$after}"; do
+        for tok in "${UTOKENS[@]:$after}"; do
           case "$tok" in
             -D) deny "$MSG_BRANCH_D" ;;
             --delete) bflag_delete=1 ;;
@@ -158,7 +163,7 @@ check_irreversible() {
         ;;
       merge)
         merge_abort_continue=0
-        for tok in "${tokens[@]:$after}"; do
+        for tok in "${UTOKENS[@]:$after}"; do
           case "$tok" in
             --abort|--continue) merge_abort_continue=1 ;;
           esac
@@ -168,7 +173,7 @@ check_irreversible() {
         fi
         ;;
       worktree)
-        wt_sub="${tokens[$after]:-}"
+        wt_sub="${UTOKENS[$after]:-}"
         case "$wt_sub" in
           remove)
             deny "$MSG_WORKTREE_REMOVE"
@@ -182,7 +187,7 @@ check_irreversible() {
   fi
 
   # --- package publish ---
-  if [ "${tokens[1]:-}" = "publish" ]; then
+  if [ "${UTOKENS[1]:-}" = "publish" ]; then
     if in_set "$cmd0" "${PUBLISH_CMDS[@]}"; then
       deny "$(msg_publish "$cmd0")"
     fi

@@ -35,13 +35,15 @@
 #     text (rm/git/sed flag matching, path checks) keep using the literal
 #     copy. Prints "literal<US>masked" per token, US = \x1f (0x1f, unlikely
 #     to appear in a shell command), one per line.
+# Single quotes are literal, except $'...' (ANSI-C quoting), where a backslash escapes the next
+# character and so a `\'` does not close the quote.
 # Best-effort: does not handle backslash-escaped metacharacters outside
 # quotes, or backslash-escaped quotes inside double quotes, beyond a simple
 # lookback — adequate for a guard, not a shell parser.
 quote_walk() {
   local mode="$1" cmd="$2"
   local -a out=()
-  local buf="" mbuf="" c in_single=0 in_double=0
+  local buf="" mbuf="" c in_single=0 in_double=0 ansi=0
   local esc=0 esc_next=0 buf_last_esc=0 split_amp=0
   local i=0 len=${#cmd}
   local US=$'\x1f'
@@ -62,7 +64,11 @@ quote_walk() {
     if [ "$in_single" -eq 1 ]; then
       buf+="$c"
       mbuf+="Q"
-      [ "$c" = "'" ] && in_single=0
+      # inside $'...' (ansi=1) a backslash escapes the next character, `\'` included
+      if [ "$c" = "'" ] && { [ "$ansi" -eq 0 ] || [ "$esc" -eq 0 ]; }; then
+        in_single=0
+        ansi=0
+      fi
       i=$((i + 1))
       continue
     fi
@@ -90,6 +96,10 @@ quote_walk() {
       "'")
         if [ "$esc" -eq 0 ]; then
           in_single=1
+          # an unescaped `$` right before the quote makes it ANSI-C quoting, $'...'
+          case "$buf" in
+            *'$') [ "$buf_last_esc" -eq 0 ] && ansi=1 ;;
+          esac
           buf+="$c"
           mbuf+="Q"
         else
@@ -202,9 +212,59 @@ split_command() {
 # that names a command compares this form, never the raw token. Text the shell would still expand
 # (`$G`, a backtick) stays visible in it.
 unquote_word() {
-  UNQUOTED="${1//\'/}"
-  UNQUOTED="${UNQUOTED//\"/}"
-  UNQUOTED="${UNQUOTED//\\/}"
+  local w="$1" out="" pre body dec i n c ap="\$'"
+  case "$w" in
+    *"$ap"*)
+      # $'...' (ANSI-C quoting): the body is decoded the way the shell reads it, `\x67` and
+      # all, so $'git' and $'\x67it' are git; the text around it loses its quotes as below
+      while :; do
+        case "$w" in
+          *"$ap"*) : ;;
+          *) break ;;
+        esac
+        pre="${w%%"$ap"*}"
+        w="${w#*"$ap"}"
+        pre="${pre//\'/}"
+        pre="${pre//\"/}"
+        pre="${pre//\\/}"
+        out+="$pre"
+        body=""
+        i=0
+        n=${#w}
+        while [ "$i" -lt "$n" ]; do
+          c="${w:i:1}"
+          if [ "$c" = "\\" ]; then
+            body+="${w:i:2}"
+            i=$((i + 2))
+            continue
+          fi
+          [ "$c" = "'" ] && break
+          body+="$c"
+          i=$((i + 1))
+        done
+        printf -v dec '%b' "$body"
+        out+="$dec"
+        w="${w:i+1}"
+      done
+      ;;
+  esac
+  w="${w//\'/}"
+  w="${w//\"/}"
+  w="${w//\\/}"
+  UNQUOTED="$out$w"
+}
+
+# unquote_tokens
+# Sets the global array UTOKENS to unquote_word of every token, in step with tokens. The
+# irreversible-command checks compare these, so `git push "-f"` and `git reset "--hard"` read
+# like the unquoted spelling.
+unquote_tokens() {
+  local t
+  UTOKENS=()
+  for t in "${tokens[@]}"; do
+    unquote_word "$t"
+    UTOKENS+=("$UNQUOTED")
+  done
 }
 
 # find_git_subcommand
@@ -258,11 +318,11 @@ find_git_subcommand() {
 
 # find_substitution_end <text> <index> <opener>
 # <index> is the first character after an opener, <opener> is `(` or a backtick. Walks forward
-# with a stack of what is open (parentheses, double quotes, single quotes, backticks) and sets
+# with a stack of what is open (parentheses, double quotes, single quotes, $'...', backticks) and sets
 # SUBST_END to the index of the character that closes the opener, or -1 when none does.
 # Not a shell parser: a `)` that ends a case pattern inside a substitution closes it early.
 find_substitution_end() {
-  local text="$1" j="$2" st="$3" len=${#1} c top
+  local text="$1" j="$2" st="$3" len=${#1} c top dj=-1
   SUBST_END=-1
   while [ "$j" -lt "$len" ]; do
     c="${text:j:1}"
@@ -274,6 +334,20 @@ find_substitution_end() {
     fi
     if [ "$c" = "\\" ]; then
       j=$((j + 2))
+      continue
+    fi
+    # $'...' (ANSI-C): a backslash escapes inside it (skipped just above), so only a bare quote
+    # closes it
+    if [ "$top" = "A" ]; then
+      [ "$c" = "'" ] && st="${st%?}"
+      j=$((j + 1))
+      continue
+    fi
+    if [ "$c" = '$' ]; then
+      dj=$((j + 1))
+    elif [ "$c" = "'" ] && [ "$top" != '"' ] && [ "$dj" -eq "$j" ]; then
+      st="${st}A"
+      j=$((j + 1))
       continue
     fi
     case "$top" in
@@ -311,23 +385,30 @@ find_substitution_end() {
   return 1
 }
 
-# extract_substitutions <text>
+# extract_substitutions <text> [arith]
+# <arith> is 1 for the inside of `$((...))`, where a single quote is not a quote.
 # Sets, in the caller's globals:
 #   SUBST_TOP         the text with each substitution's inside replaced by a placeholder
 #   SUBST_LIST        one entry per substitution, outermost only (the recursion finds nested
 #                     ones): `C:<inner text>` for a command, `A:<inner text>` for arithmetic
 #   SUBST_UNBALANCED  1 when an opener has no closer; the rest of the text is then left as is
 extract_substitutions() {
-  local text="$1" len=${#1} i=0 c nx out="" in_single=0 in_double=0 prev=" "
+  local text="$1" arith="${2:-0}" len=${#1} i=0 c nx out="" in_single=0 in_double=0 prev=" "
   local inner body rest line outer_end
   SUBST_LIST=()
   SUBST_UNBALANCED=0
   while [ "$i" -lt "$len" ]; do
     c="${text:i:1}"
     nx="${text:i+1:1}"
-    if [ "$in_single" -eq 1 ]; then
+    if [ "$in_single" -ne 0 ]; then
+      if [ "$in_single" -eq 2 ] && [ "$c" = "\\" ]; then
+        out+="${text:i:2}"
+        i=$((i + 2))
+        continue
+      fi
       out+="$c"
       [ "$c" = "'" ] && in_single=0
+      prev="'"
       i=$((i + 1))
       continue
     fi
@@ -337,9 +418,12 @@ extract_substitutions() {
       i=$((i + 2))
       continue
     fi
-    if [ "$c" = "'" ] && [ "$in_double" -eq 0 ]; then
+    # inside $((...)) a single quote is an ordinary character: bash still expands what follows
+    if [ "$c" = "'" ] && [ "$in_double" -eq 0 ] && [ "$arith" -eq 0 ]; then
       in_single=1
+      [ "$prev" = '$' ] && in_single=2 # $'...': a backslash escapes the next character
       out+="$c"
+      prev="'"
       i=$((i + 1))
       continue
     fi
@@ -592,59 +676,90 @@ strip_command_wrappers() {
 }
 
 # strip_rtk
-# tokens[0] is rtk. Drops it, then `proxy` when that follows, so `rtk proxy bash x` and `rtk git
-# push -f` leave `bash x` and `git push -f`. An option before the command (`rtk -v git ...`) is not
-# understood: lead and judge (deny_writes=1) are refused it, the others have it skipped as a
-# valueless flag. Mutates the global tokens/tokens_masked.
+# tokens[0] is rtk. Drops it and, when it names a subcommand that runs the rest as a command
+# (proxy, err, test, summary), that too, so `rtk proxy bash x`, `rtk err bash -c x` and `rtk git
+# push -f` leave `bash x`, `bash -c x` and `git push -f`. `rtk run <string>` runs the string with
+# sh -c: it is left in RTK_RUN_TEXT for check_segment to check as a command line, and the tokens
+# are emptied. An option before the command (`rtk -v git ...`) is not understood: lead and judge
+# (deny_writes=1) are refused it, the others have it skipped as a valueless flag. Mutates the
+# global tokens/tokens_masked.
 strip_rtk() {
+  local pass t
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-  if [ "${#tokens[@]}" -gt 0 ]; then
-    unquote_word "${tokens[0]}"
-    if [ "$UNQUOTED" = "proxy" ]; then
+  pass=0
+  while [ "$pass" -lt 2 ]; do
+    pass=$((pass + 1))
+    while [ "${#tokens[@]}" -gt 0 ]; do
+      unquote_word "${tokens[0]}"
+      [ "${UNQUOTED:0:1}" = "-" ] || break
+      if [ "${deny_writes:-0}" -eq 1 ]; then
+        deny "$(msg_wrapper_flag rtk "${tokens[0]}")"
+      fi
       tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-    fi
-  fi
-  while [ "${#tokens[@]}" -gt 0 ]; do
+    done
+    [ "${#tokens[@]}" -gt 0 ] || return 0
     unquote_word "${tokens[0]}"
-    [ "${UNQUOTED:0:1}" = "-" ] || break
-    if [ "${deny_writes:-0}" -eq 1 ]; then
-      deny "$(msg_wrapper_flag rtk "${tokens[0]}")"
-    fi
-    tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+    case "$UNQUOTED" in
+      proxy|err|test|summary)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        ;;
+      run)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        if [ "${#tokens[@]}" -eq 1 ]; then
+          t="${tokens[0]}"
+          if [ "${#t}" -ge 2 ] && { [ "${t:0:1}" = "'" ] || [ "${t:0:1}" = '"' ]; } && [ "${t: -1}" = "${t:0:1}" ]; then
+            t="${t:1:${#t}-2}"
+          fi
+          RTK_RUN_TEXT="$t"
+        else
+          RTK_RUN_TEXT="${tokens[*]+${tokens[*]}}"
+        fi
+        tokens=(); tokens_masked=()
+        return 0
+        ;;
+      *) return 0 ;;
+    esac
   done
 }
 
 # strip_leading_keywords
 # Every agent. Drops the reserved words that open or close a compound command from the front of
-# the segment (SHELL_KEYWORDS), so `then bash x` and `! bash x` are judged as `bash x`. A segment
-# that starts a `for` or `select` header holds words, not commands, and is emptied; a `case`
-# header is dropped up to its first pattern's `)`, since the command after it is a command. A
-# leading word ending in `)` with no `(` in it is a case pattern (`b) bash x`) and is dropped
-# the same way. Only unquoted words count: `"if" x` runs a program called if. Sets KW_STRIPPED=1
-# when it dropped anything. Mutates the global tokens/tokens_masked.
+# the segment (SHELL_KEYWORDS), so `then bash x` and `! bash x` are judged as `bash x`. Only
+# unquoted words count: `"if" x` runs a program called if. Mutates the global tokens/tokens_masked.
+#   for, select  the header runs up to its `do`; what follows `do` in the same segment
+#                (`for x do echo hi >f`) is a command and is kept. A header with no `do` is words,
+#                not commands, and the segment is emptied.
+#   case         CASE_OPEN counts the open cases, so a pattern is recognised only inside one. The
+#                header is dropped up to its first pattern's `)`, and a later segment's leading
+#                pattern is too (`b) cmd`, `*)cmd`: a space after the `)` is optional); the
+#                command after the pattern is kept. A pattern that starts with `(` is dropped
+#                only where it is certain to be one: right after `in`, or, for fast and smart,
+#                at CASE_EXPECT (the segment after `in` or after a `;;`). For lead and judge any
+#                other `(` stays, and the shape check refuses it.
+# Sets KW_STRIPPED=1 when it dropped anything.
 strip_leading_keywords() {
-  local m k found
+  local m k found head pat tail pat_ok="$CASE_EXPECT" certain=0 done_pat=0
   KW_STRIPPED=0
+  CASE_EXPECT=0
   while [ "${#tokens[@]}" -gt 0 ]; do
     m="${tokens_masked[0]}"
     if [ "$m" = "${tokens[0]}" ] && in_set "$m" "${SHELL_KEYWORDS[@]}"; then
+      [ "$m" = "esac" ] && [ "$CASE_OPEN" -gt 0 ] && CASE_OPEN=$((CASE_OPEN - 1))
       tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
       KW_STRIPPED=1
       continue
     fi
-    if [ "$m" = "${tokens[0]}" ] && in_set "$m" "${SHELL_HEADERS[@]}"; then
+    if [ "$m" = "${tokens[0]}" ] && { [ "$m" = "for" ] || [ "$m" = "select" ]; }; then
       KW_STRIPPED=1
       found=-1
-      if [ "$m" = "case" ]; then
-        k=1
-        while [ "$k" -lt "${#tokens_masked[@]}" ]; do
-          case "${tokens_masked[$k]}" in
-            *'('*) : ;;
-            *')') found=$k; break ;;
-          esac
-          k=$((k + 1))
-        done
-      fi
+      k=1
+      while [ "$k" -lt "${#tokens_masked[@]}" ]; do
+        if [ "${tokens_masked[$k]}" = "do" ] && [ "${tokens[$k]}" = "do" ]; then
+          found=$k
+          break
+        fi
+        k=$((k + 1))
+      done
       if [ "$found" -ge 0 ]; then
         tokens=("${tokens[@]:$((found + 1))}"); tokens_masked=("${tokens_masked[@]:$((found + 1))}")
         continue
@@ -652,16 +767,61 @@ strip_leading_keywords() {
       tokens=(); tokens_masked=()
       break
     fi
-    case "$m" in
-      *')')
-        case "$m" in
-          *'('*) break ;;
-        esac
+    if [ "$m" = "${tokens[0]}" ] && [ "$m" = "case" ]; then
+      KW_STRIPPED=1
+      CASE_OPEN=$((CASE_OPEN + 1))
+      found=-1
+      k=1
+      while [ "$k" -lt "${#tokens_masked[@]}" ]; do
+        if [ "${tokens_masked[$k]}" = "in" ] && [ "${tokens[$k]}" = "in" ]; then
+          found=$k
+          break
+        fi
+        k=$((k + 1))
+      done
+      if [ "$found" -ge 0 ]; then
+        tokens=("${tokens[@]:$((found + 1))}"); tokens_masked=("${tokens_masked[@]:$((found + 1))}")
+        certain=1
+        [ "${#tokens[@]}" -eq 0 ] && CASE_EXPECT=1
+        continue
+      fi
+      tokens=(); tokens_masked=()
+      break
+    fi
+    if [ "$CASE_OPEN" -gt 0 ]; then
+      if [ "$m" = "in" ] && [ "${tokens[0]}" = "in" ]; then
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         KW_STRIPPED=1
+        certain=1
+        [ "${#tokens[@]}" -eq 0 ] && CASE_EXPECT=1
         continue
-        ;;
-    esac
+      fi
+      case "$m" in
+        *')'*)
+          if [ "$done_pat" -eq 0 ]; then
+            head="${m%%')'*}"
+            pat="${head#'('}"
+            # a substitution (`$(_)`) or a nested paren is not a pattern
+            case "$pat" in
+              *'('*|*'$'*|*'`'*) break ;;
+            esac
+            if [ "$pat" != "$head" ] && [ "$certain" -eq 0 ] && { [ "${deny_writes:-0}" -eq 1 ] || [ "$pat_ok" -eq 0 ]; }; then
+              break
+            fi
+            tail="${tokens[0]:$((${#head} + 1))}"
+            if [ -n "$tail" ]; then
+              tokens[0]="$tail"
+              tokens_masked[0]="${m:$((${#head} + 1))}"
+            else
+              tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+            fi
+            KW_STRIPPED=1
+            done_pat=1
+            continue
+          fi
+          ;;
+      esac
+    fi
     break
   done
 }
@@ -689,9 +849,10 @@ env_split_string() {
 # command it runs is what follows (`env -i FOO=1 git push -f` leaves `git push -f`). env's flag
 # surface is wide: lead and judge (deny_writes=1) are denied ANY flag, as in strip_command_wrappers.
 # The others skip a flag, taking the next word as its value for -u -C -P -a (and the long
-# --unset --chdir --argv0), and read the string of -S / --split-string as a command line.
+# --unset --chdir --argv0), and read the string of -S / --split-string as a command line; short
+# flags may be clustered (`-iS 'git push -f'`).
 strip_env() {
-  local t val
+  local t val rest ch
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
     t="${tokens[0]}"
@@ -704,21 +865,45 @@ strip_env() {
       deny "$(msg_wrapper_flag env "$t")"
     fi
     case "$t" in
-      -S|--split-string)
+      --split-string)
         val="${tokens[1]:-}"
         tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
         env_split_string "$val"
         ;;
-      -S*|--split-string=*)
-        case "$t" in
-          --split-string=*) val="${t#--split-string=}" ;;
-          *) val="${t#-S}" ;;
-        esac
+      --split-string=*)
+        val="${t#--split-string=}"
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         env_split_string "$val"
         ;;
-      -u|-C|-P|-a|--unset|--chdir|--argv0)
+      --unset|--chdir|--argv0)
         tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
+        ;;
+      -[!-]*)
+        # a cluster of short flags (`-i`, `-0u NAME`, `-iS 'cmd'`): the first letter that takes
+        # a value (S u C P a) takes the rest of the word, or the next word when nothing is left
+        rest="${t:1}"
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        while [ -n "$rest" ]; do
+          ch="${rest:0:1}"
+          rest="${rest:1}"
+          case "$ch" in
+            S)
+              val="$rest"
+              if [ -z "$val" ] && [ "${#tokens[@]}" -gt 0 ]; then
+                val="${tokens[0]}"
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              fi
+              env_split_string "$val"
+              break
+              ;;
+            u|C|P|a)
+              if [ -z "$rest" ] && [ "${#tokens[@]}" -gt 0 ]; then
+                tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+              fi
+              break
+              ;;
+          esac
+        done
         ;;
       --)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
@@ -765,13 +950,15 @@ strip_wrapper_lenient() {
 # `nohup` and `stdbuf`, in any order, so the irreversible-command checks see the command that
 # runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
 # the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
-# smart with strip_wrapper_lenient, which only peels. Mutates the global tokens/tokens_masked.
+# smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
+# assignment, env or a wrapper (not rtk). Mutates the global tokens/tokens_masked.
 strip_leading_prefixes() {
   local progressed=1 w
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
       tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+      PEELED_OTHER=1
       progressed=1
       continue
     fi
@@ -779,8 +966,9 @@ strip_leading_prefixes() {
     w="${UNQUOTED##*/}"
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
-      env) strip_env; progressed=1 ;;
+      env) PEELED_OTHER=1; strip_env; progressed=1 ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
+        PEELED_OTHER=1
         # lead and judge: the strict stripper, which denies a form it does not understand;
         # the others: a lenient peel that never refuses, it only exposes the command
         if [ "${deny_writes:-0}" -eq 1 ]; then

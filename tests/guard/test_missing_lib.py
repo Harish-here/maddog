@@ -45,21 +45,29 @@ def libs_sourced_by(script):
 
 
 FUNCTION_DEF = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\(\) *\{", re.M)
+VARIABLE_DEF = re.compile(r"^([A-Z][A-Za-z0-9_]*)=", re.M)
 
 
-def required_functions(script):
-    """The names in a hook's REQUIRED_FUNCS array, read from the hook itself."""
+def required_names(script, array):
+    """The names in one of a hook's REQUIRED_FUNCS / REQUIRED_VARS arrays, read from the hook."""
     text = (SCRIPTS / "hooks" / script).read_text()
-    body = re.search(r"^REQUIRED_FUNCS=\(\n(.*?)^\)", text, re.M | re.S)
-    assert body, f"{script} has no REQUIRED_FUNCS array"
+    body = re.search(r"^" + array + r"=\(\n(.*?)^\)", text, re.M | re.S)
+    assert body, f"{script} has no {array} array"
     return body.group(1).split()
 
 
-def defining_lib(script, name):
-    """The lib, among those the hook sources, that defines the function."""
-    found = [lib for lib in libs_sourced_by(script)
-             if name in FUNCTION_DEF.findall((SCRIPTS / "lib" / lib).read_text())]
-    return found
+def required_functions(script):
+    return required_names(script, "REQUIRED_FUNCS")
+
+
+def required_variables(script):
+    return required_names(script, "REQUIRED_VARS")
+
+
+def defining_lib(script, name, pattern=FUNCTION_DEF):
+    """The libs, among those the hook sources, that define the function or variable."""
+    return [lib for lib in libs_sourced_by(script)
+            if name in pattern.findall((SCRIPTS / "lib" / lib).read_text())]
 
 
 # one case per (hook, lib it sources, way the lib fails)
@@ -149,17 +157,22 @@ def test_lookalike_agent_names_are_not_matched_when_a_lib_fails_to_load(script, 
 
 # --- a lib cut off at a function boundary ---------------------------------------------------
 
-TRUNCATIONS = [(s, name) for s in HOOKS for name in required_functions(s)]
+TRUNCATIONS = [(s, name, FUNCTION_DEF) for s in HOOKS for name in required_functions(s)]
+TRUNCATIONS += [(s, name, VARIABLE_DEF) for s in HOOKS for name in required_variables(s)]
 
 
-def truncated_copy(tmp_path, script, name):
-    """A copy of scripts/ in which the lib defining `name` ends just before that function."""
-    (lib,) = defining_lib(script, name)  # exactly one lib defines it (see the sync test)
+def truncated_copy(tmp_path, script, name, pattern=FUNCTION_DEF):
+    """A copy of scripts/ in which the lib defining `name` (a function or a variable) ends just
+    before that definition."""
+    (lib,) = defining_lib(script, name, pattern)  # exactly one lib defines it (see the sync test)
     scripts = tmp_path / "scripts"
     shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
     target = scripts / "lib" / lib
     text = target.read_text()
-    start = re.search(r"^" + re.escape(name) + r"\(\) *\{", text, re.M).start()
+    if pattern is FUNCTION_DEF:
+        start = re.search(r"^" + re.escape(name) + r"\(\) *\{", text, re.M).start()
+    else:
+        start = re.search(r"^" + re.escape(name) + r"=", text, re.M).start()
     target.write_text(text[:start])
     return scripts
 
@@ -171,9 +184,17 @@ def test_required_functions_are_exactly_what_the_sourced_libs_define(script):
     assert sorted(required_functions(script)) == defined
 
 
-@pytest.mark.parametrize("script,name", TRUNCATIONS)
-def test_guarded_agent_is_denied_when_a_lib_is_cut_before_a_required_function(script, name, tmp_path):
-    scripts = truncated_copy(tmp_path, script, name)
+@pytest.mark.parametrize("script", list(HOOKS))
+def test_required_variables_are_exactly_what_the_sourced_libs_assign(script):
+    # command-lists.sh is sourced by the executor guard only: the other hooks need none of it
+    assigned = sorted(n for lib in libs_sourced_by(script)
+                      for n in VARIABLE_DEF.findall((SCRIPTS / "lib" / lib).read_text()))
+    assert sorted(required_variables(script)) == assigned
+
+
+@pytest.mark.parametrize("script,name,pattern", TRUNCATIONS, ids=[f"{s}-{n}" for s, n, _ in TRUNCATIONS])
+def test_guarded_agent_is_denied_when_a_lib_is_cut_before_a_required_name(script, name, pattern, tmp_path):
+    scripts = truncated_copy(tmp_path, script, name, pattern)
     tool = "Agent" if script == "judge-dispatch-guard.sh" else "Bash"
     for agent in HOOKS[script][0]:
         proc = run_hook(scripts, script, raw_payload(agent, tool), tmp_path)
@@ -181,12 +202,12 @@ def test_guarded_agent_is_denied_when_a_lib_is_cut_before_a_required_function(sc
 
 
 @pytest.mark.parametrize("script", list(HOOKS))
-def test_other_callers_are_allowed_when_a_lib_is_cut_before_a_required_function(script, tmp_path):
-    names = required_functions(script)
-    for i, name in enumerate((names[0], names[len(names) // 2], names[-1])):
+def test_other_callers_are_allowed_when_a_lib_is_cut_before_a_required_name(script, tmp_path):
+    cuts = [(n, FUNCTION_DEF) for n in required_functions(script)] + [(n, VARIABLE_DEF) for n in required_variables(script)]
+    for i, (name, pattern) in enumerate((cuts[0], cuts[len(cuts) // 2], cuts[-1])):
         work = tmp_path / str(i)
         work.mkdir()
-        scripts = truncated_copy(work, script, name)
+        scripts = truncated_copy(work, script, name, pattern)
         assert run_hook(scripts, script, raw_payload(None, "Agent"), tmp_path).stdout == ""
         assert run_hook(scripts, script, "", tmp_path).stdout == ""
         for agent in HOOKS[script][1]:

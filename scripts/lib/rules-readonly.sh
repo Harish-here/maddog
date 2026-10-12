@@ -12,16 +12,21 @@
 
 # check_function_definition
 # Denies a segment that defines a shell function, in any spelling: `name() ...`, `name () ...`
-# (an unquoted `()` in any token) and `function name ...` (the keyword at the start of a command,
+# (an unquoted `()` in any token, or a `(` token followed by a `)` token) and `function name ...` (the keyword at the start of a command,
 # after the keywords that open one). The guard does not read inside a function body, so `f() {
 # bash -c "$X"; }` would run a shell it never saw. The masked tokens are tested, so a `()` or
 # `function` inside quotes (`grep -n "function f"`) never matches.
 check_function_definition() {
-  local m k=0
+  local m k=0 prev=""
   for m in "${tokens_masked[@]}"; do
     case "$m" in
       *'()'*) deny "$MSG_FUNCTION_DEF" shape ;;
     esac
+    # `f ( ) {` and `f( ) {`: a token ending in `(` followed by one starting with `)`
+    case "$prev" in
+      *'(') case "$m" in ')'*) deny "$MSG_FUNCTION_DEF" shape ;; esac ;;
+    esac
+    prev="$m"
   done
   while [ "$k" -lt "${#tokens_masked[@]}" ]; do
     case "${tokens_masked[$k]}" in
@@ -36,16 +41,15 @@ check_function_definition() {
 # Runs on the current segment for lead and judge only and calls deny() on a file write via Bash.
 check_readonly_writes() {
   local cmd0 tok mtok sub tag_mode tag_pos tag_skip redirect_i rest raw_tok target after
-  # A function definition hides its body from every check below: refused whole. Read from the
-  # segment as tokenized, before any wrapper is peeled.
+  # check_segment (command-check.sh) has already peeled the reserved words, NAME=value words, env,
+  # rtk and every wrapper off the front of tokens/tokens_masked, with the strict stripper for
+  # lead and judge, so these checks and check_irreversible both read the command that runs.
+  # A function definition hides its body from every check below: refused whole.
   check_function_definition
-  # Wrapper/prefix stripping runs FIRST, mutating tokens/tokens_masked in
-  # place, so every check below (this block only — the shared
-  # irreversible-command checks stay on the tokens as the hook left them)
-  # classifies the command a wrapper would otherwise launder past it.
-  # cmd0 is recomputed from the now-possibly-shorter tokens[0]; an empty
-  # tokens (e.g. the whole segment was just `FOO=bar`, or `env` with
-  # nothing after it) sets cmd0 to empty, matching no case below.
+  # strip_command_wrappers runs again here as a backstop: it finds nothing left to peel after
+  # check_segment, but a wrapper form it still leaves is peeled or denied before the checks
+  # below. cmd0 is computed from the resulting tokens[0]; an empty tokens (the whole segment was
+  # just `FOO=bar`, or `env` with nothing after it) sets cmd0 to empty, matching no case below.
   strip_command_wrappers
   if [ "${#tokens[@]}" -gt 0 ]; then
     # The command word as the shell reads it (quotes and backslashes gone, so `\git` is git).

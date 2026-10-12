@@ -158,7 +158,7 @@ skip_heredoc_bodies() {
   esac
   local line seg segs consumer check cmp l m rest dash i j n k t tl pre has_here owner_seen
   local active=0 active_delim="" active_dash=0 active_skip=0 active_quoted=1 pend=0
-  local qn=0 qi=0 q_skip=1 unquoted_subst=0 raw_rest
+  local qn=0 qi=0 q_skip=1 unquoted_subst=0 raw_rest body_acc="" trail
   local -a out=() held=() lits=() mks=() q_delim=() q_dash=() q_quoted=()
   while IFS= read -r line; do
     if [ "$pend" -eq 1 ]; then
@@ -179,6 +179,10 @@ skip_heredoc_bodies() {
       cmp="$line"
       [ "$active_dash" -eq 1 ] && cmp="${line#"${line%%[!$'\t']*}"}"
       if [ "$cmp" = "$active_delim" ]; then
+        case "$body_acc" in
+          *'$('*|*'`'*) unquoted_subst=1 ;;
+        esac
+        body_acc=""
         # terminator: held with a skipped body, kept with a checked one
         if [ "$active_skip" -eq 1 ]; then
           held+=("$line")
@@ -198,9 +202,18 @@ skip_heredoc_bodies() {
         fi
       elif [ "$active_skip" -eq 1 ]; then
         if [ "$active_quoted" -eq 0 ] && [ "${deny_writes:-0}" -eq 1 ]; then
-          case "$line" in
-            *'$('*|*'`'*) unquoted_subst=1 ;;
-          esac
+          # a backslash-newline is removed from an unquoted body, so `$\` + `(cmd)` is `$(cmd)`:
+          # lines are joined before they are scanned
+          trail="${line%"${line##*[!\\]}"}"
+          if [ $((${#trail} % 2)) -eq 1 ]; then
+            body_acc+="${line%\\}"
+          else
+            body_acc+="$line"
+            case "$body_acc" in
+              *'$('*|*'`'*) unquoted_subst=1 ;;
+            esac
+            body_acc=""
+          fi
         fi
         held+=("$line")
       else
