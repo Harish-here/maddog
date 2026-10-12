@@ -57,11 +57,11 @@ REQUIRED_FUNCS=(
   msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
   _msg_tag_allowed msg_tag_flag msg_tag_name quote_walk split_command unquote_word
   find_git_subcommand find_substitution_end extract_substitutions strip_command_wrappers
-  strip_rtk strip_leading_keywords env_split_string strip_env strip_leading_prefixes
-  tokenize_segment check_segment_shape heredoc_consumer heredoc_opens_construct
-  skip_heredoc_bodies check_irreversible check_function_definition check_readonly_writes
-  _path_guard_strip_quotes _path_guard_split _path_guard_has_glob _path_guard_join
-  normalize_path is_temp_path check_segment check_command_text
+  strip_rtk strip_leading_keywords env_split_string strip_env strip_wrapper_lenient
+  strip_leading_prefixes tokenize_segment check_segment_shape heredoc_consumer
+  heredoc_opens_construct skip_heredoc_bodies check_irreversible check_function_definition
+  check_readonly_writes _path_guard_strip_quotes _path_guard_split _path_guard_has_glob
+  _path_guard_join normalize_path is_temp_path check_segment check_command_text
 )
 libs_complete() {
   local f

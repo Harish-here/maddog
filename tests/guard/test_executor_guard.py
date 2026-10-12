@@ -1063,7 +1063,6 @@ def test_every_agent_is_denied_an_irreversible_command_behind_env_or_assignments
     "env",
     "FOO=1",
     "FOO=1 BAR=2 ls",
-    "env nice git push -f",
 ])
 def test_fast_and_smart_are_unchanged_for_env_and_assignments_in_front_of_harmless_commands(agent, command, ws):
     assert_allow(command, agent, ws)
@@ -1078,6 +1077,99 @@ def test_lead_and_judge_allow_env_assignments_in_front_of_a_read_only_command(ag
 @pytest.mark.parametrize("agent", [LEAD, JUDGE])
 @pytest.mark.parametrize("command", ["env -i git status", "env -S 'git status'", "env -- ls", "env -u HOME ls"])
 def test_lead_and_judge_are_denied_every_env_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# --- wrappers in front of an irreversible command ------------------------------------
+# nice, timeout, time, command, exec, nohup and stdbuf (with their options and values), env,
+# NAME=value and rtk are peeled for every agent before the irreversible-command checks.
+# For fast and smart that adds no other refusal: only the irreversible rule firing.
+
+WRAPPED_IRREVERSIBLE = [
+    "nice git push -f",
+    "nice -n 5 git push -f",
+    "nice -5 git push -f",
+    "nice --adjustment=5 git push -f",
+    "timeout 5 git push -f",
+    "timeout -s KILL 5 git push -f",
+    "timeout -k 3 -s TERM 10 git reset --hard",
+    "timeout --signal=KILL 5 git reset --hard",
+    "time git push -f",
+    "time -p git push -f",
+    "command git push -f",
+    "command -p git push -f",
+    "exec git push -f",
+    "nohup git branch -D b",
+    "stdbuf -oL git clean -fd",
+    "stdbuf -o L git clean -fd",
+    "stdbuf -i0 -oL -eL git push --force",
+    "nice env git push -f",
+    "env nice git push -f",
+    "nohup rtk git reset --hard",
+    "rtk nice git push -f",
+    "FOO=1 nice timeout 5 env -i rtk git push -f",
+    "nice -n 5 timeout -s KILL 5 stdbuf -oL git push -f",
+    "\\nice git push -f",
+    '"timeout" 5 git push -f',
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [c for c in WRAPPED_IRREVERSIBLE if "env -i" not in c])
+def test_every_agent_is_denied_an_irreversible_command_behind_wrappers(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+def test_the_env_flag_form_is_denied_for_every_agent(ws):
+    for agent in (FAST, SMART, LEAD, JUDGE):
+        assert_deny("FOO=1 nice timeout 5 env -i rtk git push -f", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "timeout 5 git status",
+    "nice -n 5 ls",
+    "nice ls",
+    "time -p ls",
+    "command -v git",
+    "nohup ls",
+    "stdbuf -oL cat f",
+    "exec ls",
+    "timeout -s KILL 5 git log",
+    "nice -x ls",
+    "timeout --foo 5 ls",
+    "stdbuf -x ls",
+    "nice -n",
+    "timeout -s",
+    "timeout",
+    "timeout 5",
+    "nohup",
+    "exec -a",
+])
+def test_fast_and_smart_wrapper_forms_the_guard_does_not_know_add_no_refusal(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "nice rtk proxy bash x",
+    "timeout 5 rtk proxy bash x",
+    "nohup rtk bash x",
+    "nice env FOO=1 python3 -c 1",
+])
+def test_lead_and_judge_classify_the_command_behind_wrappers_and_rtk(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["timeout 5 git status", "nice -n 5 ls", "nice git log"])
+def test_lead_and_judge_still_allow_read_only_commands_behind_wrappers(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["nice --adjustment=5 ls", "exec -a x ls", "timeout --foo 5 ls", "nice -x ls", "timeout -s"])
+def test_lead_and_judge_keep_their_wrapper_flag_refusals(agent, command, ws):
     assert_deny(command, agent, ws)
 
 

@@ -731,11 +731,41 @@ strip_env() {
   done
 }
 
+# strip_wrapper_lenient <wrapper>
+# tokens[0] is one of command exec nohup nice time timeout stdbuf. Drops it, its options (and the
+# value of the ones that take one) and, for timeout, the DURATION, so the irreversible-command
+# checks see the command it runs (`timeout -s KILL 5 git push -f` leaves `git push -f`). Unlike
+# strip_command_wrappers it never denies: a form it misreads only means the check sees a
+# different word, as it did before the peel. Used for fast and smart. Mutates tokens/tokens_masked.
+strip_wrapper_lenient() {
+  local w="$1" t
+  tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+  while [ "${#tokens[@]}" -gt 0 ]; do
+    t="${tokens[0]}"
+    [ "${t:0:1}" = "-" ] || break
+    case "$w:$t" in
+      nice:-n|nice:--adjustment|exec:-a|time:-f|time:-o|time:--format|time:--output|\
+      timeout:-s|timeout:-k|timeout:--signal|timeout:--kill-after|\
+      stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error)
+        tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
+        ;;
+      *)
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        ;;
+    esac
+  done
+  if [ "$w" = "timeout" ] && [ "${#tokens[@]}" -gt 0 ]; then
+    tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+  fi
+}
+
 # strip_leading_prefixes
 # Every agent. Peels what runs another command without being it: leading `NAME=value`
-# assignments, `env` and `rtk`, in any order, so the irreversible-command checks see the command
-# that runs (`FOO=1 git push -f`, `env -i git push -f`, `rtk git push -f`). The other wrappers
-# stay lead and judge's, in strip_command_wrappers. Mutates the global tokens/tokens_masked.
+# assignments and the wrappers `env`, `rtk`, `nice`, `timeout`, `time`, `command`, `exec`,
+# `nohup` and `stdbuf`, in any order, so the irreversible-command checks see the command that
+# runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
+# the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
+# smart with strip_wrapper_lenient, which only peels. Mutates the global tokens/tokens_masked.
 strip_leading_prefixes() {
   local progressed=1 w
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
@@ -750,6 +780,16 @@ strip_leading_prefixes() {
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
       env) strip_env; progressed=1 ;;
+      command|exec|nohup|nice|time|timeout|stdbuf)
+        # lead and judge: the strict stripper, which denies a form it does not understand;
+        # the others: a lenient peel that never refuses, it only exposes the command
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          strip_command_wrappers
+        else
+          strip_wrapper_lenient "$w"
+        fi
+        progressed=1
+        ;;
     esac
   done
 }
