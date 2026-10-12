@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.3] - 2026-10-12
+
+### Changed
+- `scripts/` — split into `scripts/hooks/` (the three hooks `hooks/hooks.json` calls), `scripts/lib/` (sourced modules: hook input and deny output, agent names, refusal texts, command lists, parsing, heredocs, irreversible and read-only rules, path checks) and `scripts/dev/` (fragment check, wordmark generator, watchdog). Every command list and refusal text is defined once. No allow or deny decision and no refusal text changes. If a library fails to load, a hook denies the agents it guards and allows other calls (#88) (200a06d)
+- `scripts/` — history comments removed; comments that explain why a check exists or what it does not catch are kept (#88) (feabbe9)
+- `CLAUDE.md` — the executor-guard invariant names `scripts/hooks/executor-guard.sh`
+
 ## [4.3.2] - 2026-10-11
 
 ### Fixed
