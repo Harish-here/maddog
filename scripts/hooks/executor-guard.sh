@@ -17,7 +17,8 @@
 #
 # Layout: this file is the hook; everything it consults is sourced from ../lib (hook-io.sh
 # input and deny JSON, agents.sh name rules, messages.sh every text, command-lists.sh every
-# command-name set, parse.sh and heredoc.sh the command reader, path-guard.sh path confinement).
+# command-name set, parse.sh and heredoc.sh the command reader, path-guard.sh path confinement,
+# command-check.sh the walk over segments and over the commands inside substitutions).
 #
 # Wiring: plugin-level hooks/hooks.json (session-wide, matcher "Bash") fires this script for every
 # agent and the main conversation. Because that wiring is not agent-scoped, scoping is enforced
@@ -55,11 +56,12 @@ REQUIRED_FUNCS=(
   msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
   msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
   _msg_tag_allowed msg_tag_flag msg_tag_name quote_walk split_command unquote_word
-  find_git_subcommand strip_command_wrappers strip_rtk strip_leading_rtk tokenize_segment
-  check_segment_shape heredoc_consumer heredoc_opens_construct skip_heredoc_bodies
-  check_irreversible check_function_definition check_readonly_writes
+  find_git_subcommand find_substitution_end extract_substitutions strip_command_wrappers
+  strip_rtk strip_leading_keywords env_split_string strip_env strip_leading_prefixes
+  tokenize_segment check_segment_shape heredoc_consumer heredoc_opens_construct
+  skip_heredoc_bodies check_irreversible check_function_definition check_readonly_writes
   _path_guard_strip_quotes _path_guard_split _path_guard_has_glob _path_guard_join
-  normalize_path is_temp_path
+  normalize_path is_temp_path check_segment check_command_text
 )
 libs_complete() {
   local f
@@ -74,7 +76,7 @@ libs_complete() {
 if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh" \
   && source "$LIB/command-lists.sh" && source "$LIB/parse.sh" && source "$LIB/heredoc.sh" \
   && source "$LIB/rules-irreversible.sh" && source "$LIB/rules-readonly.sh" \
-  && source "$LIB/path-guard.sh"; } || ! libs_complete; then
+  && source "$LIB/path-guard.sh" && source "$LIB/command-check.sh"; } || ! libs_complete; then
   fallback_input="$(cat 2>/dev/null)"
   fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
   if [[ "$fallback_input" =~ $fallback_re ]]; then
@@ -146,26 +148,8 @@ if [ $? -eq 3 ]; then
   deny "$MSG_HEREDOC_SUBST" shape
 fi
 
-# --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
-segments_raw="$(split_command "$cmd")"
-
-while IFS= read -r segment; do
-  segment="${segment#"${segment%%[![:space:]]*}"}"
-  segment="${segment%"${segment##*[![:space:]]}"}"
-  [ -z "$segment" ] && continue
-
-  tokenize_segment "$segment"
-  [ "${#tokens[@]}" -eq 0 ] && continue
-
-  # rtk is a wrapper for every agent: the checks below see the command it runs
-  strip_leading_rtk
-  [ "${#tokens[@]}" -eq 0 ] && continue
-
-  check_segment_shape
-  check_irreversible
-  if [ "$deny_writes" -eq 1 ]; then
-    check_readonly_writes
-  fi
-done <<< "$segments_raw"
+# --- check the command line: each pipeline/chain segment, and the command lines inside every
+#     command substitution, backtick pair and process substitution (lib/command-check.sh) ---
+check_command_text "$cmd"
 
 exit 0

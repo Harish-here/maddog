@@ -77,6 +77,8 @@ msg_git_option() {
   printf '%s' "git with an option (${1}) before the subcommand is not understood by this guard, so it cannot tell which subcommand follows — denying rather than risk misclassifying a git write. Known global options: $(list_join ' ' "${GIT_OPTS_SHORT_VALUE[@]}" "${GIT_OPTS_VALUE[@]}" "${GIT_OPTS_FLAG[@]}")."
 }
 MSG_DYNAMIC_COMMAND="The command word is built from a variable or a command substitution, so this guard cannot tell which program runs and cannot classify it. Write the command name literally."
+MSG_SUBST_UNBALANCED="A command substitution, backtick pair or process substitution is opened here but this guard cannot find where it ends, so it cannot read the command inside it. Close it, or run the inner command on its own."
+MSG_SUBST_TOO_DEEP="Command substitutions are nested deeper than this guard reads, so it cannot classify the innermost command. Run the inner commands separately."
 MSG_FUNCTION_DEF="A shell function definition (name() ..., name () ..., function name ...) hides what its body runs: this guard does not parse into a function body, so a shell or interpreter call inside it would go unchecked. This executor may not define shell functions via Bash; run each command directly."
 MSG_HEREDOC_SUBST="A heredoc with an unquoted delimiter expands \$(...) and backticks in its body before the reader sees it, so a command placed there would run unchecked. Quote the delimiter (<<'EOF') or take the command substitution out of the body."
 

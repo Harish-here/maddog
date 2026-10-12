@@ -384,6 +384,7 @@ SHAPE_COMMANDS = {
     "function definition": ("f() { :; }", [LEAD, JUDGE]),
     "dynamic command word": ("$G tag v1", [LEAD, JUDGE]),
     "unquoted heredoc substitution": ("cat <<EOF\n$(date)\nEOF", [LEAD, JUDGE]),
+    "unclosed substitution": ("echo $(ls", [LEAD, JUDGE]),
 }
 
 
@@ -835,6 +836,249 @@ def test_fast_and_smart_skip_an_option_before_the_command_rtk_runs(agent, ws):
     assert_deny("rtk -v git push -f", agent, ws)
     assert_allow("rtk git status", agent, ws)
     assert_allow("rtk proxy bash x", agent, ws)
+
+
+# --- command substitution: the command inside is checked like any other ----------
+# The text inside $(...), a backtick pair and <(...)/>(...) is a command line of its
+# own, checked with the same rules as the top level; single-quoted text is not
+# expanded, so it is not checked; $((...)) is arithmetic, not a command.
+
+SHELL_IN_SUBSTITUTION = [
+    "echo $(bash -c x)",
+    'echo "$(bash -c x)"',
+    "echo `bash -c x`",
+    'echo "`bash -c x`"',
+    "echo $(echo $(bash -c x))",
+    'echo "a $(echo "b $(bash x)")"',
+    "echo `echo \\`bash x\\``",
+    "echo $(echo `bash x`)",
+    "cat <(bash x)",
+    "echo $((1+$(bash x)))",
+    "echo $(( $(bash x) + 1 ))",
+    "echo $((1+2)) $(bash x)",
+    "x=$(bash y)",
+    "FOO=$(bash y) ls",
+    "echo ${x:-$(bash y)}",
+    "echo $(ls; bash x)",
+    "echo $(ls | bash)",
+    "echo $(\nbash x\n)",
+    "echo $(ls)$(bash x)",
+    "for f in $(bash x); do cat $f; done",
+    "case $(bash x) in a) ls;; esac",
+    "echo $(python3 -c 1)",
+    "echo $(touch f)",
+    "echo $(git -C x tag v1)",
+    "echo $(echo bash) $(rm f)",
+]
+IRREVERSIBLE_IN_SUBSTITUTION = [
+    "echo $(git push -f)",
+    "echo `git reset --hard`",
+    'echo "$(git clean -fd)"',
+    "cat <(git push --force origin main)",
+    "echo $(echo $(git reset --hard))",
+    "echo $((1+$(git reset --hard)))",
+    "x=$(git branch -D b)",
+    "echo $(rm -rf /etc)",
+    "echo $(env git push -f)",
+]
+SAFE_WITH_SUBSTITUTION = [
+    "git diff $(git merge-base main HEAD)",
+    "git diff `git merge-base main HEAD`",
+    "echo '$(bash x)'",
+    "echo '`bash x`'",
+    "echo \\$(bash x)",
+    "echo $((1+2))",
+    'echo "$((1+2))"',
+    "echo $(( (1+2)*3 ))",
+    "echo $(( $(wc -l < f) + 1 ))",
+    "diff <(git show a:f) <(git show b:f)",
+    'cd "$(git rev-parse --show-toplevel)" && ls',
+    'echo "it\'s $(ls)"',
+    'echo "$(echo ")")"',
+    "echo \"$(case x in a) echo y;; esac)\"",
+    "git log --since=\"$(date)\" -1",
+    "echo $(date +%s) | wc -c",
+    "FOO=$(pwd) ls",
+    "echo # a comment holding $(bash x)",
+    "awk '{print $1}' f",
+    "grep -E '(a|b)' f",
+    "echo ${#HOME} $#",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", SHELL_IN_SUBSTITUTION)
+def test_lead_and_judge_check_the_command_inside_a_substitution(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", SHELL_IN_SUBSTITUTION[:12])
+def test_fast_and_smart_may_run_a_shell_inside_a_substitution(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", IRREVERSIBLE_IN_SUBSTITUTION)
+def test_every_agent_is_denied_an_irreversible_command_inside_a_substitution(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", SAFE_WITH_SUBSTITUTION)
+def test_substitutions_that_run_nothing_unsafe_stay_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+    assert run_guard(command, agent, ws).stdout == ""
+
+
+UNBALANCED = ["echo $(ls", "echo `ls", 'echo "$(ls', "cat <(ls", "echo $(echo $(ls)"]
+
+
+@pytest.mark.parametrize("command", UNBALANCED)
+def test_lead_and_judge_are_denied_a_substitution_the_guard_cannot_close(command, ws):
+    for agent in (LEAD, JUDGE):
+        ctx = _deny_context(command, agent, ws)
+        assert "Rewrite it as simpler, separate commands" in ctx
+    for agent in (FAST, SMART):
+        assert_allow(command, agent, ws)
+
+
+def test_substitutions_nested_past_the_depth_limit_are_denied_for_lead_and_judge(ws):
+    deep = "echo hi"
+    for _ in range(10):
+        deep = f"echo $({deep})"
+    for agent in (LEAD, JUDGE):
+        assert_deny(deep, agent, ws)
+    assert_allow(deep, FAST, ws)
+    shallow = "echo hi"
+    for _ in range(4):
+        shallow = f"echo $({shallow})"
+    for agent in (LEAD, JUDGE):
+        assert_allow(shallow, agent, ws)
+
+
+# --- shell keywords: the command after them is the command ---------------------
+
+KEYWORD_SHELLS = [
+    "if true; then bash -c x; fi",
+    "if true; then ls; else bash; fi",
+    "if true\nthen\n  bash x\nfi",
+    "while true; do bash x; done",
+    "until bash x; do ls; done",
+    "! bash x",
+    "for f in a b; do bash x; done",
+    "select x in a b; do bash; done",
+    "case x in a) bash -c y;; esac",
+    "case x in a) ls;; b) bash;; esac",
+    "case $x in a) ls ;;\nb) bash x ;;\nesac",
+    "if true; then python3 -c 1; fi",
+    "if true; then (cd x); fi",
+    "if (cd x); then ls; fi",
+]
+KEYWORD_SAFE = [
+    "for f in a b; do cat $f; done",
+    "for f in $(ls); do cat $f; done",
+    "for i in 1 2 3; do echo $i; done | wc -l",
+    "case x in a) ls;; esac",
+    "if git diff --quiet; then echo clean; else echo dirty; fi",
+    "while read l; do echo \"$l\"; done < f",
+    "until false; do ls; done",
+    '"if" x',
+    'echo "if then else"',
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", KEYWORD_SHELLS)
+def test_lead_and_judge_read_the_command_after_a_reserved_word(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", KEYWORD_SAFE)
+def test_reserved_words_with_harmless_bodies_stay_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "if true; then git reset --hard; fi",
+    "while true; do git push -f; done",
+    "! git push -f",
+    "for f in a; do git clean -fd; done",
+    "case x in a) git push -f;; esac",
+    "until false; do git branch -D b; done",
+])
+def test_every_agent_is_denied_an_irreversible_command_after_a_reserved_word(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_keep_the_old_reading_of_a_paren_after_a_reserved_word(agent, ws):
+    assert_allow("if true; then (cd x); fi", agent, ws)
+    assert_allow("bash -c x; if true; then ls; fi", agent, ws)
+
+
+# --- env and NAME=value prefixes ----------------------------------------------------
+
+ENV_IRREVERSIBLE = [
+    "env git push -f",
+    "FOO=1 git push -f",
+    "env -i FOO=1 git push -f",
+    "env -u NAME git push -f",
+    "env -ux git push -f",
+    "env -C /tmp git reset --hard",
+    "env --chdir=/tmp git reset --hard",
+    "env --unset=FOO git push -f",
+    "env -0 git push -f",
+    "env - git push -f",
+    "env -S 'git push -f'",
+    'env -S"git push -f"',
+    "env --split-string='git push -f'",
+    "env -S 'FOO=1 git reset --hard'",
+    "FOO=1 BAR=2 git reset --hard",
+    'FOO="a b" git push -f',
+    "FOO=$(date) git push -f",
+    "rtk env git push -f",
+    "env rtk git push -f",
+    "\\env git push -f",
+    '"env" git push -f',
+    "env FOO=1 rm -rf /etc",
+    "FOO=1 \\git push -f",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", ENV_IRREVERSIBLE)
+def test_every_agent_is_denied_an_irreversible_command_behind_env_or_assignments(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "env -i git status",
+    "env FOO=bar BAZ=qux ls",
+    "env -u HOME ls",
+    "env -S 'git status'",
+    "env",
+    "FOO=1",
+    "FOO=1 BAR=2 ls",
+    "env nice git push -f",
+])
+def test_fast_and_smart_are_unchanged_for_env_and_assignments_in_front_of_harmless_commands(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["env FOO=bar BAZ=qux ls", "env", "FOO=1", "FOO=1 BAR=2 ls", "env FOO=1 git log"])
+def test_lead_and_judge_allow_env_assignments_in_front_of_a_read_only_command(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["env -i git status", "env -S 'git status'", "env -- ls", "env -u HOME ls"])
+def test_lead_and_judge_are_denied_every_env_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
 
 
 # --- shell script syntax --------------------------------------------------

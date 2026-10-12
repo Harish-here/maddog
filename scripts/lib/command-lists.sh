@@ -14,6 +14,12 @@ INTERPRETERS=(python python2 python3 node nodejs deno bun perl ed xargs)
 # runs <cmd> unfiltered, bare `rtk <cmd>` filters it): either way <cmd> is what runs.
 WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk)
 
+# Reserved words that open or close a compound command. strip_leading_keywords (parse.sh) drops
+# them from the front of a segment so the command after them is the one classified:
+# `then bash x` is `bash x`. A `for`, `select` or `case` header holds words, not commands.
+SHELL_KEYWORDS=(if then elif else fi do done while until '!' esac)
+SHELL_HEADERS=(for select case)
+
 # Commands that create, overwrite or move a file; denied for lead and judge.
 WRITE_CMDS=(cp mv install touch mkdir truncate tee patch)
 
