@@ -421,6 +421,7 @@ find_substitution_end() {
 #   SUBST_UNREADABLE  1 when the text holds $'...' or $"..." quoting outside any quotes
 extract_substitutions() {
   local text="$1" arith="${2:-0}" len=${#1} i=0 c nx out="" in_single=0 in_double=0 prev=" "
+  local brace_depth=0 bracket_depth=0
   local inner body rest line outer_end
   SUBST_LIST=()
   SUBST_UNBALANCED=0
@@ -462,8 +463,19 @@ extract_substitutions() {
       i=$((i + 1))
       continue
     fi
-    # a comment (`#` starting a word) runs to the end of the line and expands nothing
-    if [ "$c" = "#" ] && [ "$in_double" -eq 0 ]; then
+    # depth inside `${...}` and `$[...]`, where a `#` is not a comment and a substitution still
+    # runs; only counted outside double quotes, where the text is read as a whole anyway
+    if [ "$in_double" -eq 0 ]; then
+      case "$c" in
+        '{') if [ "$prev" = '$' ] || [ "$brace_depth" -gt 0 ]; then brace_depth=$((brace_depth + 1)); fi ;;
+        '}') if [ "$brace_depth" -gt 0 ]; then brace_depth=$((brace_depth - 1)); fi ;;
+        '[') if [ "$prev" = '$' ] || [ "$bracket_depth" -gt 0 ]; then bracket_depth=$((bracket_depth + 1)); fi ;;
+        ']') if [ "$bracket_depth" -gt 0 ]; then bracket_depth=$((bracket_depth - 1)); fi ;;
+      esac
+    fi
+    # a comment (`#` starting a word) runs to the end of the line and expands nothing, except
+    # inside `${...}` and `$[...]`, where it is an ordinary character
+    if [ "$c" = "#" ] && [ "$in_double" -eq 0 ] && [ "$brace_depth" -eq 0 ] && [ "$bracket_depth" -eq 0 ]; then
       case "$prev" in
         ' '|$'\t'|$'\n'|';'|'&'|'|'|'(')
           rest="${text:i}"

@@ -1691,6 +1691,47 @@ def test_fast_and_smart_are_unchanged_for_git_config(agent, command, ws):
     assert_allow(command, agent, ws)
 
 
+# --- a # inside ${...} or $[...] is not a comment ---------------------------------------
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "echo ${x:-a #$(bash -c y)}",
+    "echo ${x:-a #$(cat >f)}",
+    "echo $[ 1 #$(bash -c y) ]",
+    "echo ${x:-{a} #$(bash -c y)}",
+    'echo ${x:-"}" #$(bash -c y)}',
+    'echo ${y:-"${x}" #$(bash -c y)}',
+    'echo "${x:-a #$(bash -c y)}"',
+])
+def test_lead_and_judge_see_a_substitution_after_a_hash_inside_a_parameter_expansion(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "echo ${x:-a #$(git push -f)}",
+    "echo $[ 1 #$(git push -f) ]",
+    "echo ${x:-{a} #$(git reset --hard)}",
+])
+def test_every_agent_sees_an_irreversible_substitution_after_a_hash_inside_a_parameter_expansion(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "echo ${x#prefix}",
+    "echo ${#x}",
+    "echo ${x%%#*}",
+    "echo ${x:-a # not a command}",
+    "echo $[ 1 + 2 ]",
+    "echo a # $(bash -c y)",
+    "echo ${x:-a}  # $(bash -c y)",
+    "echo ${x:-a}\n# $(bash -c y)",
+])
+def test_a_hash_that_starts_a_real_comment_or_is_part_of_an_expansion_stays_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
 # --- shell script syntax --------------------------------------------------
 
 def test_guard_script_has_valid_bash_syntax():
