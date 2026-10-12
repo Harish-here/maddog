@@ -1,6 +1,6 @@
 # rules-readonly.sh - the checks only executor-lead and executor-judge get: no file writes via Bash.
-# Sourced, never run. Needs deny() from the calling hook, parse.sh (strip_command_wrappers),
-# hook-io.sh, messages.sh and command-lists.sh. Bash 3.2.
+# Sourced, never run. Needs deny() from the calling hook, parse.sh (strip_command_wrappers,
+# unquote_word, find_git_subcommand), hook-io.sh, messages.sh and command-lists.sh. Bash 3.2.
 
 # executor-lead and executor-judge hold Bash for read-only inspection (READONLY_CMDS) but must
 # never write, create, truncate, append to, move or delete a file via Bash: the invariant
@@ -9,26 +9,58 @@
 # limitation: judge cannot re-run a gate itself via Bash, because a positive allowlist of
 # interpreter forms kept leaking (a stripped `VAR=val` prefix, wrapper flags only partly
 # parsed), so none is kept.
-#
+
+# check_function_definition
+# Denies a segment that defines a shell function, in any spelling: `name() ...`, `name () ...`
+# (an unquoted `()` in any token) and `function name ...` (the keyword at the start of a command,
+# after the keywords that open one). The guard does not read inside a function body, so `f() {
+# bash -c "$X"; }` would run a shell it never saw. The masked tokens are tested, so a `()` or
+# `function` inside quotes (`grep -n "function f"`) never matches.
+check_function_definition() {
+  local m k=0
+  for m in "${tokens_masked[@]}"; do
+    case "$m" in
+      *'()'*) deny "$MSG_FUNCTION_DEF" shape ;;
+    esac
+  done
+  while [ "$k" -lt "${#tokens_masked[@]}" ]; do
+    case "${tokens_masked[$k]}" in
+      then|else|elif|do|if|while|until|'!'|time) k=$((k + 1)) ;;
+      function) deny "$MSG_FUNCTION_DEF" shape ;;
+      *) break ;;
+    esac
+  done
+}
+
 # check_readonly_writes
 # Runs on the current segment for lead and judge only and calls deny() on a file write via Bash.
 check_readonly_writes() {
-  local cmd0 tok mtok sub tag_mode tag_pos tag_skip redirect_i rest raw_tok target
+  local cmd0 tok mtok sub tag_mode tag_pos tag_skip redirect_i rest raw_tok target after
+  # A function definition hides its body from every check below: refused whole. Read from the
+  # segment as tokenized, before any wrapper is peeled.
+  check_function_definition
   # Wrapper/prefix stripping runs FIRST, mutating tokens/tokens_masked in
   # place, so every check below (this block only — the shared
-  # irreversible-command checks above stay on the original tokens/cmd0)
+  # irreversible-command checks stay on the tokens as the hook left them)
   # classifies the command a wrapper would otherwise launder past it.
   # cmd0 is recomputed from the now-possibly-shorter tokens[0]; an empty
   # tokens (e.g. the whole segment was just `FOO=bar`, or `env` with
   # nothing after it) sets cmd0 to empty, matching no case below.
   strip_command_wrappers
   if [ "${#tokens[@]}" -gt 0 ]; then
-    cmd0="${tokens[0]##*/}"
+    # The command word as the shell reads it (quotes and backslashes gone, so `\git` is git).
+    # A `$` or backtick left in it means the program is chosen at run time, which this guard
+    # cannot classify: refused, so `$G tag v1` and `$(echo bash) x` do not pass as an unknown name.
+    unquote_word "${tokens[0]}"
+    case "$UNQUOTED" in
+      *'$'*|*'`'*) deny "$MSG_DYNAMIC_COMMAND" shape ;;
+    esac
+    cmd0="${UNQUOTED##*/}"
   else
     cmd0=""
   fi
 
-  # any rm (not just recursive-force, already covered above) deletes a file
+  # any rm (not just recursive-force, covered by rules-irreversible.sh) deletes a file
   if [ "$cmd0" = "rm" ]; then
     deny "$MSG_RM_FILE"
   fi
@@ -76,8 +108,20 @@ check_readonly_writes() {
       ;;
   esac
 
-  if [ "$cmd0" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
-    sub="${tokens[1]}"
+  if [ "$cmd0" = "git" ]; then
+    # The subcommand is found past git's global options. One this guard does not know is
+    # refused: it could hide a write subcommand behind a value the guard took for the name.
+    find_git_subcommand
+    if [ -n "$GIT_OPT_UNKNOWN" ]; then
+      deny "$(msg_git_option "$GIT_OPT_UNKNOWN")"
+    fi
+    case "$GIT_SUB" in
+      *'$'*|*'`'*) deny "$MSG_DYNAMIC_COMMAND" shape ;;
+    esac
+  fi
+  if [ "$cmd0" = "git" ] && [ -n "$GIT_SUB" ]; then
+    sub="$GIT_SUB"
+    after=$((GIT_SUB_I + 1))
     if in_set "$sub" "${GIT_WRITE_SUBS[@]}"; then
       deny "$(msg_git_write "$sub")"
     fi
@@ -97,7 +141,7 @@ check_readonly_writes() {
         tag_mode=0
         tag_pos=0
         tag_skip=0
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           if [ "$tag_skip" -eq 1 ]; then
             tag_skip=0
             continue
@@ -120,7 +164,7 @@ check_readonly_writes() {
         fi
         ;;
       checkout)
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           if [ "$tok" = "--" ]; then
             deny "$MSG_GIT_CHECKOUT_PATH"
           fi
@@ -144,7 +188,7 @@ check_readonly_writes() {
   # quotes is stripped before the comparison so `'/dev/null'` and
   # `"/dev/null"` match too. Widened no further than /dev/null.
   redirect_i=0
-  # strip_command_wrappers above can leave tokens/tokens_masked EMPTY (a
+  # strip_command_wrappers can leave tokens/tokens_masked EMPTY (a
   # segment that was only `FOO=bar`, `env`, `timeout 5`, ...). Bash 3.2
   # (macOS /bin/bash) raises "unbound variable" under `set -u` when a bare
   # "${arr[@]}" expands an empty array — the ${arr[@]+...} form expands to

@@ -70,6 +70,16 @@ msg_wrapper_missing() {
   printf '%s' "${1} — this guard's wrapper stripper cannot classify what runs next."
 }
 
+# --- executor-guard.sh: commands lead and judge cannot be shown to be read-only ---
+# (rules-readonly.sh, and heredoc.sh for the heredoc one)
+# msg_git_option <option>
+msg_git_option() {
+  printf '%s' "git with an option (${1}) before the subcommand is not understood by this guard, so it cannot tell which subcommand follows — denying rather than risk misclassifying a git write. Known global options: $(list_join ' ' "${GIT_OPTS_SHORT_VALUE[@]}" "${GIT_OPTS_VALUE[@]}" "${GIT_OPTS_FLAG[@]}")."
+}
+MSG_DYNAMIC_COMMAND="The command word is built from a variable or a command substitution, so this guard cannot tell which program runs and cannot classify it. Write the command name literally."
+MSG_FUNCTION_DEF="A shell function definition (name() ..., name () ..., function name ...) hides what its body runs: this guard does not parse into a function body, so a shell or interpreter call inside it would go unchecked. This executor may not define shell functions via Bash; run each command directly."
+MSG_HEREDOC_SUBST="A heredoc with an unquoted delimiter expands \$(...) and backticks in its body before the reader sees it, so a command placed there would run unchecked. Quote the delimiter (<<'EOF') or take the command substitution out of the body."
+
 # --- executor-guard.sh: irreversible actions (rules-irreversible.sh) ---
 MSG_RM_RECURSIVE="Recursive delete (rm -r/-R, with or without -f) targets a path outside a temp location — this can permanently destroy files with no undo."
 MSG_FIND_DELETE="find with -delete permanently removes every matched file — irreversible."

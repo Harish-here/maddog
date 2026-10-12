@@ -50,11 +50,15 @@ def _is_deny(proc: subprocess.CompletedProcess) -> bool:
 
 
 def copy_scripts_with_stub_path_guard(tmp_path: Path) -> Path:
-    """A copy of scripts/ whose path-guard library has is_temp_path exiting non-zero."""
+    """A copy of scripts/ whose path-guard library has is_temp_path exiting non-zero.
+
+    The stub is appended to the real library, so every function the hook requires still exists.
+    """
     scripts = tmp_path / "scripts"
     shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
-    (scripts / "lib" / "path-guard.sh").write_text(
-        "normalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
+    lib = scripts / "lib" / "path-guard.sh"
+    lib.write_text(
+        lib.read_text() + "\nnormalize_path() { printf '/tmp'; }\nis_temp_path() { exit 7; }\n"
     )
     return scripts
 
@@ -377,6 +381,9 @@ SHAPE_COMMANDS = {
     "timeout missing arg": ("timeout -s", [LEAD, JUDGE]),
     "timeout missing duration": ("timeout", [LEAD, JUDGE]),
     "stdbuf missing arg": ("stdbuf -o", [LEAD, JUDGE]),
+    "function definition": ("f() { :; }", [LEAD, JUDGE]),
+    "dynamic command word": ("$G tag v1", [LEAD, JUDGE]),
+    "unquoted heredoc substitution": ("cat <<EOF\n$(date)\nEOF", [LEAD, JUDGE]),
 }
 
 
@@ -507,6 +514,327 @@ def test_git_message_heredoc_in_an_open_construct_is_still_checked(ws):
 
 def test_command_after_a_skipped_git_message_heredoc_is_checked(ws):
     assert_deny(f"git commit -F - <<'EOF'\n{GIT_BODY}\n(ls)", FAST, ws)
+
+
+# --- #89: function definitions and command substitution in a heredoc ------
+# The guard does not read inside a function body, so lead and judge are refused
+# any function definition; fast and smart are not (they may define functions).
+
+FUNCTION_DEFINITIONS = [
+    "f() { echo hi; }",
+    "f () { echo hi; }",
+    "function f { echo hi; }",
+    "function f() { echo hi; }",
+    "f(){ echo hi; }",
+    'f() { bash -c "$MAIN"; }',
+    'f() { x=$(bash -c "$MAIN"); }; f',
+    'ls && f() { echo hi; }',
+    "if true; then f() { echo hi; }; fi",
+    "! function f { echo hi; }",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", FUNCTION_DEFINITIONS)
+def test_lead_and_judge_deny_every_function_definition(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_may_define_a_function(agent, ws):
+    assert_allow("f() { echo hi; }", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "grep function foo.sh",
+    'grep -n "function f" foo.sh',
+    "grep 'f()' foo.sh",
+    'echo "f() {"',
+    "git log --grep='function'",
+    "find . -name '*.sh'",
+    "echo $(pwd)",
+])
+def test_lead_and_judge_allow_text_that_only_looks_like_a_definition(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+UNQUOTED_HEREDOC_BODIES = [
+    "cat <<EOF\n$(touch /tmp/zz)\nEOF",
+    "cat <<EOF\n`touch /tmp/zz`\nEOF",
+    "cat << EOF\n$(touch /tmp/zz)\nEOF",
+    "cat <<-EOF\n\t$(touch /tmp/zz)\n\tEOF",
+    "jq . <<EOF\n{\"a\":\"$(touch /tmp/zz)\"}\nEOF",
+    "cat <<'A' <<B\nplain\nA\n$(touch /tmp/zz)\nB",
+]
+QUOTED_HEREDOC_BODIES = [
+    "cat <<'EOF'\n$(touch /tmp/zz)\nEOF",
+    'cat <<"EOF"\n$(touch /tmp/zz)\nEOF',
+    "cat <<\\EOF\n$(touch /tmp/zz)\nEOF",
+    "cat << 'EOF'\n`touch /tmp/zz`\nEOF",
+    "cat <<-'EOF'\n\t$(touch /tmp/zz)\n\tEOF",
+    "cat <<E\"\"OF\n$(touch /tmp/zz)\nEOF",
+    "cat <<EOF\nhello $HOME and ${USER}\nEOF",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", UNQUOTED_HEREDOC_BODIES)
+def test_lead_and_judge_deny_substitution_in_an_unquoted_heredoc(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", QUOTED_HEREDOC_BODIES)
+def test_lead_and_judge_allow_a_quoted_heredoc_and_a_plain_unquoted_one(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", UNQUOTED_HEREDOC_BODIES)
+def test_fast_and_smart_keep_unquoted_heredoc_bodies_with_substitution(agent, command, ws):
+    # the heredoc gap stays accepted for the two executors that may run commands
+    assert_allow(command, agent, ws)
+
+
+# --- #90: git global options, quoted and dynamic command words ---------------
+
+GIT_WRITES_BEHIND_OPTIONS = [
+    "git -C x tag v1",
+    "git -C x commit -m m",
+    "git -C x add f",
+    "git -c k=v tag v1",
+    "git -c k=v commit -m m",
+    "git --git-dir=.git tag v1",
+    "git --git-dir .git tag v1",
+    "git --work-tree=. add f",
+    "git --work-tree . add f",
+    "git --namespace=n commit -m m",
+    "git --no-pager tag v1",
+    "git --no-pager -C x -c k=v tag v1",
+    "git -P tag v1",
+    "git --bare tag v1",
+    "git -C x restore f",
+    "git -C x checkout -- f",
+    "git --no-optional-locks tag v1",
+    "git --foo tag v1",
+    "git --foo log",
+    "git -x log",
+]
+GIT_READS_BEHIND_OPTIONS = [
+    "git -C /repo log",
+    "git -C /repo log --oneline -5",
+    "git -C 'my dir' status",
+    "git -c k=v diff",
+    "git --git-dir=.git status",
+    "git --git-dir .git log",
+    "git --no-pager log",
+    "git --no-pager -C /repo -c k=v diff",
+    "git -P log",
+    "git -C /repo tag -l",
+    "git --version",
+    "git --exec-path",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", GIT_WRITES_BEHIND_OPTIONS)
+def test_lead_and_judge_deny_a_git_write_behind_global_options(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", GIT_READS_BEHIND_OPTIONS)
+def test_lead_and_judge_allow_a_git_read_behind_global_options(agent, command, ws):
+    assert_allow(command, agent, ws)
+    assert run_guard(command, agent, ws).stdout == ""
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "git -C x push --force origin main",
+    "git -C x push -f",
+    "git -c k=v push origin +main",
+    "git --git-dir=.git --work-tree=. reset --hard",
+    "git --no-pager -C x clean -fd",
+    "git -C x checkout .",
+    "git -C x branch -D b",
+    "git -C x merge b",
+    "git -C x worktree remove w",
+    "git --foo push --force",
+])
+def test_every_agent_is_denied_an_irreversible_git_command_behind_options(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "git -C x tag v1",
+    "git -C x commit -m m",
+    "git -C x push origin main",
+    "git --no-pager log",
+    "git --foo log",
+])
+def test_fast_and_smart_are_unchanged_for_git_options_that_do_nothing_irreversible(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "\\git push --force origin main",
+    '"git" push -f',
+    'g""it reset --hard',
+    "'git' clean -fd",
+    '\\rm -rf /etc',
+    '"rm" -rf /etc',
+    "\\npm publish",
+    '"npm" publish',
+    "\\find . -delete",
+])
+def test_every_agent_is_denied_a_quoted_spelling_of_an_irreversible_command(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "\\git tag v1",
+    '"git" tag v1',
+    'g""it tag v1',
+    "g'i't tag v1",
+    "git 'tag' v1",
+    'git t""ag v1',
+    "git ta\\g v1",
+    "\\git -C x tag v1",
+    "\\bash x",
+    '"bash" -c x',
+    'b""ash x',
+    "\\sh -c x",
+    "\\python3 -c 1",
+    '"python3" -c 1',
+    '"cp" a b',
+    "\\touch f",
+    "\\rm f",
+    'env "bash" x',
+    "nice \\bash x",
+    "\\env bash x",
+    '"timeout" 5 bash x',
+])
+def test_lead_and_judge_deny_a_quoted_spelling_of_a_guarded_command(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "$G tag v1",
+    '"$G" tag v1',
+    "${G} tag v1",
+    "`echo git` tag v1",
+    "$(echo bash) x",
+    "$HOME/bin/tool x",
+    '"$HOME/bin/tool" x',
+    "FOO=1 $G x",
+    "env $G x",
+    "git $SUB v1",
+    'git "$SUB" v1',
+])
+def test_lead_and_judge_deny_a_command_word_built_at_run_time(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    'git log "$REF"',
+    'cat "$F"',
+    'FOO=$(pwd) ls',
+    'cd "$(git rev-parse --show-toplevel)" && ls',
+    'for f in a b; do cat "$f"; done',
+    'echo "$HOME"',
+])
+def test_lead_and_judge_allow_variables_that_are_arguments(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_may_run_a_command_word_built_at_run_time(agent, ws):
+    assert_allow("$G tag v1", agent, ws)
+
+
+# --- #92: rtk is a wrapper --------------------------------------------------
+
+RTK_LAUNDERED = [
+    "rtk proxy bash x",
+    "rtk proxy sh -c x",
+    "rtk proxy python3 -c 1",
+    "rtk bash x",
+    "rtk proxy env bash x",
+    "env rtk proxy bash x",
+    "nice rtk proxy bash x",
+    "rtk env python3 -c 1",
+    "rtk proxy cp a b",
+    "rtk proxy rm f",
+    "\\rtk proxy bash x",
+    '"rtk" proxy bash x',
+    'r""tk proxy bash x',
+    "rtk proxy git add f",
+    "rtk git tag v1",
+    "rtk proxy git -C x commit -m m",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", RTK_LAUNDERED)
+def test_lead_and_judge_classify_the_command_rtk_runs(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "rtk git push -f",
+    "rtk proxy git push --force",
+    "rtk proxy git -C x push --force",
+    "rtk git reset --hard",
+    "rtk proxy rm -rf /etc",
+    "rtk rm -rf /etc",
+    "\\rtk git push -f",
+    '"rtk" git push -f',
+    "rtk proxy git push origin +main",
+])
+def test_every_agent_is_denied_an_irreversible_command_run_through_rtk(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "rtk git status",
+    "rtk git log --oneline",
+    "rtk proxy git status",
+    "rtk proxy git -C /repo log",
+    "rtk ls",
+    "rtk grep foo f",
+    "rtk read f",
+    "rtk proxy cat f",
+    "rtk",
+    "rtk proxy",
+    "echo rtk",
+    "grep rtk f",
+])
+def test_lead_and_judge_allow_a_read_only_command_run_through_rtk(agent, command, ws):
+    assert_allow(command, agent, ws)
+    assert run_guard(command, agent, ws).stdout == ""
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["rtk -v git status", "rtk proxy -x git status", "rtk -v bash x", "rtk --foo ls"])
+def test_lead_and_judge_deny_an_option_before_the_command_rtk_runs(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_skip_an_option_before_the_command_rtk_runs(agent, ws):
+    assert_allow("rtk -v git status", agent, ws)
+    assert_deny("rtk -v git push -f", agent, ws)
+    assert_allow("rtk git status", agent, ws)
+    assert_allow("rtk proxy bash x", agent, ws)
 
 
 # --- shell script syntax --------------------------------------------------

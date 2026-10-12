@@ -1,6 +1,6 @@
 # rules-irreversible.sh - the checks every guarded agent gets: commands that cannot be undone.
 # Sourced, never run. Needs deny() from the calling hook, hook-io.sh, messages.sh,
-# command-lists.sh and path-guard.sh. Bash 3.2.
+# command-lists.sh, parse.sh (unquote_word, find_git_subcommand) and path-guard.sh. Bash 3.2.
 
 # These executors run at reasoning effort levels or with permission modes where they cannot
 # reliably weigh one-way doors. This layer bounces a short list of irreversible commands
@@ -23,9 +23,11 @@
 # calls deny() on the first irreversible command: recursive delete outside a temp location,
 # find -delete, destructive git, package publish.
 check_irreversible() {
-  local cmd0="${tokens[0]##*/}"
-  local flag_r paths tok all_temp p resolved_p sub cflag_f cflag_dx rest bflag_delete bflag_force
-  local merge_abort_continue wt_sub
+  local cmd0 flag_r paths tok all_temp p resolved_p sub cflag_f cflag_dx rest bflag_delete bflag_force
+  local merge_abort_continue wt_sub after
+  # The command word as the shell reads it: `\git`, `"git"` and `g""it` are git.
+  unquote_word "${tokens[0]}"
+  cmd0="${UNQUOTED##*/}"
   # --- 1. recursive delete (rm -r / -R / -rf / -fr / --recursive[, --force]) ---
   # -f is NOT required to deny: `rm -r` alone deletes every matched file with
   # no confirmation in a non-interactive shell, so it is treated the same as
@@ -74,11 +76,19 @@ check_irreversible() {
   fi
 
   # --- git subcommands (shared irreversible-command rules — fast/smart/lead/judge) ---
-  if [ "$cmd0" = "git" ] && [ "${#tokens[@]}" -ge 2 ]; then
-    sub="${tokens[1]}"
+  # The subcommand is found past git's global options (`git -C x push --force`); everything
+  # after it is the subcommand's own arguments, from index $after.
+  if [ "$cmd0" = "git" ]; then
+    find_git_subcommand
+  else
+    GIT_SUB=""
+  fi
+  if [ -n "$GIT_SUB" ]; then
+    sub="$GIT_SUB"
+    after=$((GIT_SUB_I + 1))
     case "$sub" in
       push)
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           case "$tok" in
             -f|--force|--force-with-lease*)
               deny "$MSG_PUSH_FORCE"
@@ -92,7 +102,7 @@ check_irreversible() {
       clean)
         cflag_f=0
         cflag_dx=0
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           case "$tok" in
             --force) cflag_f=1 ;;
             --*) : ;;
@@ -107,20 +117,20 @@ check_irreversible() {
         fi
         ;;
       reset)
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           if [ "$tok" = "--hard" ]; then
             deny "$MSG_RESET_HARD"
           fi
         done
         ;;
       checkout)
-        rest="${tokens[*]:2}"
+        rest="${tokens[*]:$after}"
         if [ "$rest" = "-- ." ] || [ "$rest" = "." ]; then
           deny "$MSG_CHECKOUT_DOT"
         fi
         ;;
       restore)
-        rest="${tokens[*]:2}"
+        rest="${tokens[*]:$after}"
         case "$rest" in
           "."|"--staged --worktree ."|"--worktree --staged .")
             deny "$MSG_RESTORE_DOT"
@@ -130,7 +140,7 @@ check_irreversible() {
       branch)
         bflag_delete=0
         bflag_force=0
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           case "$tok" in
             -D) deny "$MSG_BRANCH_D" ;;
             --delete) bflag_delete=1 ;;
@@ -148,7 +158,7 @@ check_irreversible() {
         ;;
       merge)
         merge_abort_continue=0
-        for tok in "${tokens[@]:2}"; do
+        for tok in "${tokens[@]:$after}"; do
           case "$tok" in
             --abort|--continue) merge_abort_continue=1 ;;
           esac
@@ -158,7 +168,7 @@ check_irreversible() {
         fi
         ;;
       worktree)
-        wt_sub="${tokens[2]:-}"
+        wt_sub="${tokens[$after]:-}"
         case "$wt_sub" in
           remove)
             deny "$MSG_WORKTREE_REMOVE"

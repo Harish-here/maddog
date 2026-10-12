@@ -4,6 +4,10 @@ Each hook sources scripts/lib/*.sh. If any of them is missing, unreadable or has
 error, the hook must not let a guarded agent through: it falls back to a raw-input match on its
 guarded agent types and prints a static deny. Every other payload (no agent type, an unguarded
 one, empty input) is still allowed, so the user's own main session is never blocked.
+
+A lib cut off at a function boundary sources without error but leaves every later function
+undefined. Each hook lists the functions it needs in REQUIRED_FUNCS and takes the same path when
+one is missing; the tests at the end cut each lib before each required function in turn.
 """
 import json
 import os
@@ -38,6 +42,24 @@ def libs_sourced_by(script):
     """The lib file names a hook sources, read from the hook itself."""
     text = (SCRIPTS / "hooks" / script).read_text()
     return sorted(set(re.findall(r'source "\$LIB/([a-z-]+\.sh)"', text)))
+
+
+FUNCTION_DEF = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\(\) *\{", re.M)
+
+
+def required_functions(script):
+    """The names in a hook's REQUIRED_FUNCS array, read from the hook itself."""
+    text = (SCRIPTS / "hooks" / script).read_text()
+    body = re.search(r"^REQUIRED_FUNCS=\(\n(.*?)^\)", text, re.M | re.S)
+    assert body, f"{script} has no REQUIRED_FUNCS array"
+    return body.group(1).split()
+
+
+def defining_lib(script, name):
+    """The lib, among those the hook sources, that defines the function."""
+    found = [lib for lib in libs_sourced_by(script)
+             if name in FUNCTION_DEF.findall((SCRIPTS / "lib" / lib).read_text())]
+    return found
 
 
 # one case per (hook, lib it sources, way the lib fails)
@@ -123,3 +145,57 @@ def test_lookalike_agent_names_are_not_matched_when_a_lib_fails_to_load(script, 
     scripts = broken_copy(tmp_path, "hook-io.sh", "missing")
     for lookalike in ("executor-fast-readx", "xexecutor-fast", "executor-fasts", "executor-fast:"):
         assert run_hook(scripts, script, raw_payload(lookalike, "Agent"), tmp_path).stdout == "", lookalike
+
+
+# --- a lib cut off at a function boundary ---------------------------------------------------
+
+TRUNCATIONS = [(s, name) for s in HOOKS for name in required_functions(s)]
+
+
+def truncated_copy(tmp_path, script, name):
+    """A copy of scripts/ in which the lib defining `name` ends just before that function."""
+    (lib,) = defining_lib(script, name)  # exactly one lib defines it (see the sync test)
+    scripts = tmp_path / "scripts"
+    shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+    target = scripts / "lib" / lib
+    text = target.read_text()
+    start = re.search(r"^" + re.escape(name) + r"\(\) *\{", text, re.M).start()
+    target.write_text(text[:start])
+    return scripts
+
+
+@pytest.mark.parametrize("script", list(HOOKS))
+def test_required_functions_are_exactly_what_the_sourced_libs_define(script):
+    defined = sorted(n for lib in libs_sourced_by(script)
+                     for n in FUNCTION_DEF.findall((SCRIPTS / "lib" / lib).read_text()))
+    assert sorted(required_functions(script)) == defined
+
+
+@pytest.mark.parametrize("script,name", TRUNCATIONS)
+def test_guarded_agent_is_denied_when_a_lib_is_cut_before_a_required_function(script, name, tmp_path):
+    scripts = truncated_copy(tmp_path, script, name)
+    tool = "Agent" if script == "judge-dispatch-guard.sh" else "Bash"
+    for agent in HOOKS[script][0]:
+        proc = run_hook(scripts, script, raw_payload(agent, tool), tmp_path)
+        assert_lib_failure_deny(proc, script)
+
+
+@pytest.mark.parametrize("script", list(HOOKS))
+def test_other_callers_are_allowed_when_a_lib_is_cut_before_a_required_function(script, tmp_path):
+    names = required_functions(script)
+    for i, name in enumerate((names[0], names[len(names) // 2], names[-1])):
+        work = tmp_path / str(i)
+        work.mkdir()
+        scripts = truncated_copy(work, script, name)
+        assert run_hook(scripts, script, raw_payload(None, "Agent"), tmp_path).stdout == ""
+        assert run_hook(scripts, script, "", tmp_path).stdout == ""
+        for agent in HOOKS[script][1]:
+            assert run_hook(scripts, script, raw_payload(agent, "Agent"), tmp_path).stdout == "", agent
+
+
+def test_complete_libs_do_not_take_the_lib_failure_path(tmp_path):
+    payload = {"agent_type": "executor-fast", "tool_input": {"command": "git reset --hard"}, "cwd": str(tmp_path)}
+    proc = run_hook(SCRIPTS, "executor-guard.sh", json.dumps(payload), tmp_path)
+    hso = json.loads(proc.stdout)["hookSpecificOutput"]
+    assert hso["permissionDecision"] == "deny"
+    assert "failed to load" not in hso["permissionDecisionReason"]

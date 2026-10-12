@@ -5,10 +5,11 @@
 #
 #  1. IRREVERSIBLE-COMMAND DENIAL (all four agents): lib/rules-irreversible.sh. A short list of
 #     irreversible/destructive Bash commands is bounced back to the caller, who must STOP and
-#     return blocked. A SHAPE refusal (a command the guard cannot parse: a leading `(` or `{`, a
-#     wrapper missing its argument, an internal error) is not an irreversible-action denial: its
-#     context says so and tells the caller to rewrite as simpler commands and retry instead of
-#     stopping (see deny() below and lib/messages.sh).
+#     return blocked. A SHAPE refusal (a command the guard cannot parse or classify: a leading `(` or
+#     `{`, a wrapper missing its argument, for lead and judge a function definition, a command word
+#     built at run time or an unquoted heredoc holding `$(`, an internal error) is not an
+#     irreversible-action denial: its context says so and tells the caller to rewrite as simpler
+#     commands and retry instead of stopping (see deny() below and lib/messages.sh).
 #
 #  2. FILE-WRITE DENIAL (executor-lead and executor-judge only): lib/rules-readonly.sh. Both hold
 #     Bash for read-only inspection but must never write, create, move or delete a file via Bash;
@@ -44,12 +45,36 @@ HOOK_NAME="${BASH_SOURCE[0]##*/}"
 GUARDED_AGENTS='executor-fast|executor-smart|executor-lead|executor-judge'
 LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
-# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# A lib cut off at a function boundary sources without error but leaves every later function
+# undefined, and a missing function fails open for the fast executors. REQUIRED_FUNCS lists every
+# function the sourced libs define; a missing one takes the same path as a lib that fails to
+# load. tests/guard/test_missing_lib.py keeps the list equal to what the libs define.
+REQUIRED_FUNCS=(
+  hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
+  msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
+  msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
+  msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
+  _msg_tag_allowed msg_tag_flag msg_tag_name quote_walk split_command unquote_word
+  find_git_subcommand strip_command_wrappers strip_rtk strip_leading_rtk tokenize_segment
+  check_segment_shape heredoc_consumer heredoc_opens_construct skip_heredoc_bodies
+  check_irreversible check_function_definition check_readonly_writes
+  _path_guard_strip_quotes _path_guard_split _path_guard_has_glob _path_guard_join
+  normalize_path is_temp_path
+)
+libs_complete() {
+  local f
+  for f in "${REQUIRED_FUNCS[@]}"; do
+    declare -F "$f" >/dev/null || return 1
+  done
+}
+
+# A lib that is missing, unreadable, has a syntax error or is cut short must not let a guarded
+# agent through.
 # This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
 if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh" \
   && source "$LIB/command-lists.sh" && source "$LIB/parse.sh" && source "$LIB/heredoc.sh" \
   && source "$LIB/rules-irreversible.sh" && source "$LIB/rules-readonly.sh" \
-  && source "$LIB/path-guard.sh"; }; then
+  && source "$LIB/path-guard.sh"; } || ! libs_complete; then
   fallback_input="$(cat 2>/dev/null)"
   fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
   if [[ "$fallback_input" =~ $fallback_re ]]; then
@@ -116,6 +141,10 @@ cwd="$(field .cwd)"
 
 # --- drop heredoc bodies fed to non-shell programs before splitting ---
 cmd="$(skip_heredoc_bodies "$cmd")"
+# status 3: lead/judge, an unquoted-delimiter body holding $( or a backtick (see heredoc.sh)
+if [ $? -eq 3 ]; then
+  deny "$MSG_HEREDOC_SUBST" shape
+fi
 
 # --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
 segments_raw="$(split_command "$cmd")"
@@ -126,6 +155,10 @@ while IFS= read -r segment; do
   [ -z "$segment" ] && continue
 
   tokenize_segment "$segment"
+  [ "${#tokens[@]}" -eq 0 ] && continue
+
+  # rtk is a wrapper for every agent: the checks below see the command it runs
+  strip_leading_rtk
   [ "${#tokens[@]}" -eq 0 ] && continue
 
   check_segment_shape

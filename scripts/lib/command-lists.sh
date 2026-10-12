@@ -10,7 +10,9 @@ SHELLS=(sh bash zsh ksh dash ash)
 INTERPRETERS=(python python2 python3 node nodejs deno bun perl ed xargs)
 
 # Wrappers strip_command_wrappers peels (see parse.sh). Each one needs its own case there.
-WRAPPERS=(env command exec nohup nice time timeout stdbuf)
+# rtk is the output-filtering proxy a user hook rewrites commands through (`rtk proxy <cmd>`
+# runs <cmd> unfiltered, bare `rtk <cmd>` filters it): either way <cmd> is what runs.
+WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk)
 
 # Commands that create, overwrite or move a file; denied for lead and judge.
 WRITE_CMDS=(cp mv install touch mkdir truncate tee patch)
@@ -23,6 +25,16 @@ READONLY_CMDS=(grep "sed -n" "git log" "git diff" jq wc find cat head tail ls di
 # Space-delimited so a membership test is *" $name "*. `git:stdin` is the form
 # heredoc_consumer prints for git commit/tag reading its message from stdin.
 HEREDOC_READERS=" python python3 node cat jq tee wc sort uniq head tail grep diff git:stdin "
+
+# git global options find_git_subcommand (parse.sh) steps over to reach the subcommand. An
+# option in none of the three lists is unrecognized: lead and judge are refused it, the others
+# skip it as a valueless flag.
+#   SHORT_VALUE  the value is the next token (`-C dir`, `-c k=v`); git has no attached form.
+#   VALUE        the value is the next token or attached (`--git-dir dir`, `--git-dir=dir`).
+#   FLAG         takes no value (`--exec-path=dir` is also stepped over: it only prints or sets).
+GIT_OPTS_SHORT_VALUE=(-C -c)
+GIT_OPTS_VALUE=(--git-dir --work-tree --namespace --config-env --super-prefix --attr-source)
+GIT_OPTS_FLAG=(--no-pager -P -p --paginate --bare --no-replace-objects --literal-pathspecs --glob-pathspecs --noglob-pathspecs --icase-pathspecs --no-optional-locks --exec-path --html-path --man-path --info-path --version -v --help -h)
 
 # git subcommands that read their message from stdin with -F - (heredoc.sh).
 GIT_STDIN_MESSAGE_SUBS=(commit tag)

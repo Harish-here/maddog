@@ -1,5 +1,6 @@
 # parse.sh - turn a command line into segments and tokens: the quote-aware walk, the chain
-# split, the wrapper stripper and the shape check. Sourced, never run.
+# split, the command-word unquoter, the wrapper stripper, the git subcommand finder and the shape
+# check. Sourced, never run.
 # Needs deny() from the calling hook, plus hook-io.sh (in_set), messages.sh and
 # command-lists.sh. Bash 3.2.
 
@@ -194,6 +195,59 @@ split_command() {
   quote_walk chain "$1"
 }
 
+# --- the command word, as the shell reads it ---------------------------
+# unquote_word <word>
+# Sets UNQUOTED to the word with every quote mark and backslash removed, so `\git`, `"git"` and
+# `g""it` all read `git`. A guarded binary spelled with quotes is the same binary: every check
+# that names a command compares this form, never the raw token. Text the shell would still expand
+# (`$G`, a backtick) stays visible in it.
+unquote_word() {
+  UNQUOTED="${1//\'/}"
+  UNQUOTED="${UNQUOTED//\"/}"
+  UNQUOTED="${UNQUOTED//\\/}"
+}
+
+# find_git_subcommand
+# tokens[0] is git. Steps over git's global options (the lists in command-lists.sh) to the
+# subcommand and sets, in the caller's globals:
+#   GIT_SUB          the subcommand, unquoted; empty when none follows
+#   GIT_SUB_I        its index in tokens
+#   GIT_OPT_UNKNOWN  the first option in none of the lists, empty when there is none. It is
+#                    stepped over as a valueless flag; a caller that must fail closed (lead and
+#                    judge) refuses it, the rest accept the guess.
+find_git_subcommand() {
+  local i=1 n=${#tokens[@]} t name
+  GIT_SUB=""
+  GIT_SUB_I=0
+  GIT_OPT_UNKNOWN=""
+  while [ "$i" -lt "$n" ]; do
+    unquote_word "${tokens[$i]}"
+    t="$UNQUOTED"
+    case "$t" in
+      -*) : ;;
+      *)
+        GIT_SUB="$t"
+        GIT_SUB_I=$i
+        return 0
+        ;;
+    esac
+    name="${t%%=*}"
+    if in_set "$t" "${GIT_OPTS_SHORT_VALUE[@]}"; then
+      i=$((i + 2))
+    elif [ "$name" != "$t" ] && { in_set "$name" "${GIT_OPTS_VALUE[@]}" || in_set "$name" "${GIT_OPTS_FLAG[@]}"; }; then
+      i=$((i + 1))
+    elif in_set "$t" "${GIT_OPTS_VALUE[@]}"; then
+      i=$((i + 2))
+    elif in_set "$t" "${GIT_OPTS_FLAG[@]}"; then
+      i=$((i + 1))
+    else
+      [ -z "$GIT_OPT_UNKNOWN" ] && GIT_OPT_UNKNOWN="$t"
+      i=$((i + 1))
+    fi
+  done
+  return 0
+}
+
 # --- wrapper/prefix stripping (lead/judge file-write classification) ---
 # Mutates the caller's GLOBAL `tokens`/`tokens_masked` arrays in place
 # (Bash 3.2: no nameref) so a wrapper cannot launder a write-form or
@@ -202,7 +256,9 @@ split_command() {
 # -c 1`), leading `VAR=val` assignments and then one wrapper from the case
 # below (the names are WRAPPERS in command-lists.sh). A flag or argument form
 # outside a wrapper's enumerated set calls deny() directly and exits the whole
-# script from inside this function.
+# script from inside this function. The wrapper name is read unquoted (`\env`, `"timeout"`).
+# rtk is the one wrapper every agent gets: the hook also calls strip_leading_rtk before the
+# irreversible-command checks, so `rtk git push -f` is judged as `git push -f`.
 #
 # The classification that follows runs against the command with the wrappers
 # peeled, so `env python3 -c 1` and `timeout 5 python3 -c 1` are classified as
@@ -214,7 +270,7 @@ split_command() {
 # DENIES immediately instead of falling through with that flag misread as the
 # real command and matching no denial case. When unsure, deny.
 strip_command_wrappers() {
-  local progressed=1 t
+  local progressed=1 t w
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -223,8 +279,14 @@ strip_command_wrappers() {
       progressed=1
       continue
     fi
-    in_set "${tokens[0]##*/}" "${WRAPPERS[@]}" || break
-    case "${tokens[0]##*/}" in
+    unquote_word "${tokens[0]}"
+    w="${UNQUOTED##*/}"
+    in_set "$w" "${WRAPPERS[@]}" || break
+    case "$w" in
+      rtk)
+        strip_rtk
+        progressed=1
+        ;;
       env)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # env's only fully-understood leading form is VAR=val assignments.
@@ -356,6 +418,40 @@ strip_command_wrappers() {
         progressed=1
         ;;
     esac
+  done
+}
+
+# strip_rtk
+# tokens[0] is rtk. Drops it, then `proxy` when that follows, so `rtk proxy bash x` and `rtk git
+# push -f` leave `bash x` and `git push -f`. An option before the command (`rtk -v git ...`) is not
+# understood: lead and judge (deny_writes=1) are refused it, the others have it skipped as a
+# valueless flag. Mutates the global tokens/tokens_masked.
+strip_rtk() {
+  tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+  if [ "${#tokens[@]}" -gt 0 ]; then
+    unquote_word "${tokens[0]}"
+    if [ "$UNQUOTED" = "proxy" ]; then
+      tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+    fi
+  fi
+  while [ "${#tokens[@]}" -gt 0 ]; do
+    unquote_word "${tokens[0]}"
+    [ "${UNQUOTED:0:1}" = "-" ] || break
+    if [ "${deny_writes:-0}" -eq 1 ]; then
+      deny "$(msg_wrapper_flag rtk "${tokens[0]}")"
+    fi
+    tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+  done
+}
+
+# strip_leading_rtk
+# Every agent: peels leading rtk wrappers so the irreversible-command checks see the command rtk
+# runs. Only rtk, not the other wrappers: those stay lead and judge's, in strip_command_wrappers.
+strip_leading_rtk() {
+  while [ "${#tokens[@]}" -gt 0 ]; do
+    unquote_word "${tokens[0]}"
+    [ "${UNQUOTED##*/}" = "rtk" ] || break
+    strip_rtk
   done
 }
 

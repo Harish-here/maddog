@@ -55,9 +55,28 @@ HOOK_NAME="${BASH_SOURCE[0]##*/}"
 GUARDED_AGENTS='executor-judge|executor-smart'
 LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
-# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# A lib cut off at a function boundary sources without error but leaves every later function
+# undefined, and a missing function fails open for the fast executors. REQUIRED_FUNCS lists every
+# function the sourced libs define; a missing one takes the same path as a lib that fails to
+# load. tests/guard/test_missing_lib.py keeps the list equal to what the libs define.
+REQUIRED_FUNCS=(
+  hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
+  msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
+  msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
+  msg_git_option msg_publish msg_shell msg_write_cmd msg_interpreter msg_git_write
+  _msg_tag_allowed msg_tag_flag msg_tag_name
+)
+libs_complete() {
+  local f
+  for f in "${REQUIRED_FUNCS[@]}"; do
+    declare -F "$f" >/dev/null || return 1
+  done
+}
+
+# A lib that is missing, unreadable, has a syntax error or is cut short must not let a guarded
+# agent through.
 # This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
-if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; }; then
+if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; } || ! libs_complete; then
   fallback_input="$(cat 2>/dev/null)"
   fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
   if [[ "$fallback_input" =~ $fallback_re ]]; then
