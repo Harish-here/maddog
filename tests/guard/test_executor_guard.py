@@ -63,6 +63,11 @@ def copy_scripts_with_stub_path_guard(tmp_path: Path) -> Path:
     return scripts
 
 
+# the frozen legacy guard allows this and the live walk reaches the recursive-delete check
+# inside the substitution, so a stubbed is_temp_path in the LIVE library is what fails
+INTERNAL_ERROR_COMMAND = "echo $(rm -r /tmp/x)"
+
+
 def assert_deny(command: str, agent_type: str, cwd: Path):
     proc = run_guard(command, agent_type, cwd)
     assert _is_deny(proc), (
@@ -455,7 +460,7 @@ def test_internal_error_backstop_carries_the_shape_context(ws, tmp_path):
     # guard bug: the recursive-delete check reaches it after the trap is set
     scripts = copy_scripts_with_stub_path_guard(tmp_path)
     for agent in (LEAD, JUDGE):
-        payload = {"agent_type": agent, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
+        payload = {"agent_type": agent, "tool_input": {"command": INTERNAL_ERROR_COMMAND}, "cwd": str(ws)}
         proc = subprocess.run(
             ["bash", str(scripts / "hooks" / "executor-guard.sh")],
             input=json.dumps(payload), capture_output=True, text=True, timeout=10,
@@ -1732,6 +1737,194 @@ def test_a_hash_that_starts_a_real_comment_or_is_part_of_an_expansion_stays_allo
     assert_allow(command, agent, ws)
 
 
+# --- a flag inside a substitution is still a flag: the line is also read as it was typed ----
+
+FLAG_IN_SUBSTITUTION = [
+    "rm -f $(echo -r) /etc",
+    "rm -f `echo -r` /etc",
+    "rm -f $(echo -R) /etc",
+    "rm -f $(echo -fr) /etc",
+    "rm $(echo -rf) /etc",
+    "git push origin $(echo --force-with-lease)",
+    "git push origin $(echo +main)",
+    "git push --force-with-lease=$(echo x)",
+    "git clean -f $(echo -d)",
+    "git clean $(echo -fd)",
+    "git branch $(echo -df) b",
+    "git branch -D $(echo b)",
+    "echo ok; rm -f $(echo -r) /etc",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", FLAG_IN_SUBSTITUTION)
+def test_every_agent_is_denied_a_dangerous_flag_typed_inside_a_substitution(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "git push origin main",
+    "echo $(date)",
+    "git log $(git merge-base main HEAD)..HEAD",
+    "git diff $(git merge-base main HEAD)",
+    "git push origin $(git rev-parse HEAD)",
+    "git push origin $(echo main)",
+])
+def test_substitutions_without_a_dangerous_flag_stay_allowed(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_keep_a_quoted_path_with_a_space(agent, ws):
+    assert_allow('rm -rf "/tmp/a b"', agent, ws)
+
+
+# --- main's 4.3.3 guard runs first: scripts/legacy/ ----------------------------------------
+
+LEGACY = SCRIPTS / "legacy"
+LEGACY_SHA256 = {
+    "hooks/executor-guard.sh": "2fd66d92497b596681ccceb000a3ca23d48cb395f4334756d31e83c3926a5a60",
+    "lib/agents.sh": "f9b2569eb3bea49bb162402ac7dba4a7dd442b506852b098a171a012cf3bf133",
+    "lib/command-lists.sh": "03a249fa8fba4b84bb7ef89a36a9ecc604c683d971d366d3b7f257a9d891c08b",
+    "lib/heredoc.sh": "4ec9e087a932888d94fcdb36867fe25087cef1bd5ea3b356038218b7fe51550b",
+    "lib/hook-io.sh": "76f6de5f7084c794a5b8444d46ab96c693b934ae8831a206466158873edf66a3",
+    "lib/messages.sh": "8e52705e9e645975a2362f356d0e36b8a2418f88e5f9fb58afa34dea306969f8",
+    "lib/parse.sh": "3186fde98e788fee1a9b6fb4153be425f733483625aafd3009a2a1e16d30e5df",
+    "lib/path-guard.sh": "cf430d96220893d972d8dce3d9f27ba164bb8a278e10487f54f5c8e3c0bcb4a9",
+    "lib/rules-irreversible.sh": "c92b14cbc7b17a35ef37b06e97ce890037e7a89826843d07dec9c12a11ed65aa",
+    "lib/rules-readonly.sh": "a3b2916fc5c45002494a3e21cbfe9ad2e8065e9f797eaeb9b5e7cbb980ede486",
+}
+LEGACY_BASE = "1dd7c7f"
+
+
+def _legacy_files():
+    return sorted(str(f.relative_to(LEGACY)) for f in LEGACY.rglob("*") if f.is_file())
+
+
+def test_the_legacy_copy_holds_exactly_the_files_of_the_4_3_3_guard():
+    assert _legacy_files() == sorted(LEGACY_SHA256)
+
+
+@pytest.mark.parametrize("name", sorted(LEGACY_SHA256))
+def test_every_legacy_file_is_byte_identical_to_main_at_1dd7c7f(name):
+    import hashlib
+    data = (LEGACY / name).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == LEGACY_SHA256[name]
+    # and, where the history is available, to the file in git
+    probe = subprocess.run(["git", "cat-file", "-e", LEGACY_BASE], cwd=str(REPO_ROOT), capture_output=True)
+    if probe.returncode == 0:
+        shown = subprocess.run(["git", "show", f"{LEGACY_BASE}:scripts/{name}"], cwd=str(REPO_ROOT), capture_output=True)
+        assert shown.returncode == 0, shown.stderr
+        assert shown.stdout == data
+
+
+@pytest.mark.parametrize("name", sorted(LEGACY_SHA256))
+def test_every_legacy_file_has_valid_bash_syntax(name):
+    proc = subprocess.run(["bash", "-n", str(LEGACY / name)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+
+
+SEVEN = [
+    (FAST, "echo $$'\\'; git push --force origin main; echo ''"),
+    (SMART, "echo $$'\\'; rm -rf /etc; echo ''"),
+    (FAST, 'rm -rf /tmp/x "-etc"'),
+    (FAST, "echo $'\\' ; rm -rf /etc ; '"),
+    (FAST, "rm -$'\\r' /etc"),
+    (FAST, "rtk cat <<EOF\nrm -rf /etc\nEOF"),
+    (JUDGE, "rtk cat <<EOF\nrm -rf /etc\nEOF"),
+]
+
+
+@pytest.mark.parametrize("agent,command", SEVEN)
+def test_what_the_4_3_3_guard_refused_through_a_misread_quote_stays_refused(agent, command):
+    # cwd is the repository: a relative path in the command is not under a temp directory
+    assert_deny(command, agent, REPO_ROOT)
+
+
+MISREADS = [
+    "echo $((1>2))",
+    "echo $(( a > b ))",
+    "echo $((x >> 2))",
+    "echo $(ls 2>&1)",
+    "echo `ls 2>&1`",
+    "cat <(ls 2>&1)",
+    "echo $(ls 2>/dev/null)",
+    "echo $(ls > /dev/null)",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", MISREADS)
+def test_lead_and_judge_are_refused_a_redirect_inside_a_substitution_exactly_as_on_main(agent, command, ws):
+    # the 4.3.3 guard misread these as file writes; it is kept as it was, so they stay refused
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", MISREADS)
+def test_fast_and_smart_are_not_refused_a_redirect_inside_a_substitution(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+def _copy_without_legacy_file(tmp_path, how):
+    scripts = tmp_path / "scripts"
+    shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+    target = scripts / "legacy" / "hooks" / "executor-guard.sh"
+    if how == "missing":
+        target.unlink()
+    elif how == "syntax-error":
+        target.write_text("this is ( not valid bash\nfi fi\n")
+    else:  # a legacy hook that fails without a decision
+        target.write_text("#!/usr/bin/env bash\nexit 7\n")
+    return scripts
+
+
+@pytest.mark.parametrize("how", ["missing", "syntax-error", "exits-nonzero"])
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_a_legacy_hook_that_fails_without_a_decision_denies_the_guarded_agent(how, agent, tmp_path, ws):
+    scripts = _copy_without_legacy_file(tmp_path, how)
+    payload = {"agent_type": agent, "tool_input": {"command": "ls"}, "cwd": str(ws)}
+    proc = subprocess.run(["bash", str(scripts / "hooks" / "executor-guard.sh")], input=json.dumps(payload),
+                          capture_output=True, text=True, timeout=10)
+    assert proc.returncode == 0
+    data = json.loads(proc.stdout)["hookSpecificOutput"]
+    assert data["permissionDecision"] == "deny"
+    assert "internal error" in data["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("agent", ["executor-fast-read", "general-purpose", "researcher"])
+def test_a_caller_the_guard_does_not_cover_is_allowed_even_when_the_legacy_hook_fails(agent, tmp_path, ws):
+    scripts = _copy_without_legacy_file(tmp_path, "missing")
+    payload = {"agent_type": agent, "tool_input": {"command": "git push -f"}, "cwd": str(ws)}
+    proc = subprocess.run(["bash", str(scripts / "hooks" / "executor-guard.sh")], input=json.dumps(payload),
+                          capture_output=True, text=True, timeout=10)
+    assert proc.stdout == ""
+
+
+def test_a_deny_from_the_legacy_hook_is_passed_on_as_it_printed_it(ws, tmp_path):
+    scripts = tmp_path / "scripts"
+    shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+    deny = '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"legacy said no","additionalContext":"x"}}'
+    (scripts / "legacy" / "hooks" / "executor-guard.sh").write_text(f"#!/usr/bin/env bash\ncat >/dev/null\nprintf '%s\\n' '{deny}'\n")
+    payload = {"agent_type": FAST, "tool_input": {"command": "ls"}, "cwd": str(ws)}
+    proc = subprocess.run(["bash", str(scripts / "hooks" / "executor-guard.sh")], input=json.dumps(payload),
+                          capture_output=True, text=True, timeout=10)
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == deny
+
+
+def test_an_exit_2_from_the_legacy_hook_is_passed_on(ws, tmp_path):
+    scripts = tmp_path / "scripts"
+    shutil.copytree(SCRIPTS, scripts, ignore=shutil.ignore_patterns("__pycache__"))
+    (scripts / "legacy" / "hooks" / "executor-guard.sh").write_text("#!/usr/bin/env bash\ncat >/dev/null\necho blocked\nexit 2\n")
+    payload = {"agent_type": LEAD, "tool_input": {"command": "ls"}, "cwd": str(ws)}
+    proc = subprocess.run(["bash", str(scripts / "hooks" / "executor-guard.sh")], input=json.dumps(payload),
+                          capture_output=True, text=True, timeout=10)
+    assert proc.returncode == 2
+    assert proc.stdout.strip() == "blocked"
+
+
 # --- shell script syntax --------------------------------------------------
 
 def test_guard_script_has_valid_bash_syntax():
@@ -1869,7 +2062,7 @@ def test_fast_and_smart_allow_every_git_tag_form(agent, command, ws):
 
 def test_internal_error_backstop_reason_does_not_say_return_blocked(ws, tmp_path):
     scripts = copy_scripts_with_stub_path_guard(tmp_path)
-    payload = {"agent_type": LEAD, "tool_input": {"command": "rm -r x"}, "cwd": str(ws)}
+    payload = {"agent_type": LEAD, "tool_input": {"command": INTERNAL_ERROR_COMMAND}, "cwd": str(ws)}
     proc = subprocess.run(
         ["bash", str(scripts / "hooks" / "executor-guard.sh")],
         input=json.dumps(payload), capture_output=True, text=True, timeout=10,

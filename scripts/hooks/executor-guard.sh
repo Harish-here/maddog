@@ -139,6 +139,32 @@ else
   exit 0
 fi
 
+# --- main's guard first: scripts/legacy/ is a byte-identical copy of the 4.3.3 hook and the libs
+#     it sources (commit 1dd7c7f), frozen so the checks below can only ADD refusals. Whatever it
+#     refuses stays refused, whatever the readers below make of the same text: this hook never
+#     allows a call the 4.3.3 guard denied. It reads the same stdin; a deny it prints (or an exit 2)
+#     is passed on as is (an exit 2 with no output is how bash reports a syntax error, so it is a
+#     failure, below). A legacy hook that fails any other way (missing, non-zero exit with no
+#     decision) denies the call, since the guard could then not be shown to have looked. The
+#     legacy hook scopes itself, so a caller it does not guard is allowed here too. ---
+legacy_hook="$(dirname "${BASH_SOURCE[0]}")/../legacy/hooks/executor-guard.sh"
+legacy_out="$(printf '%s' "$input" | "${BASH:-bash}" "$legacy_hook" 2>/dev/null)"
+legacy_rc=$?
+if [ "$legacy_rc" -eq 2 ] && [ -n "$legacy_out" ]; then
+  printf '%s\n' "$legacy_out"
+  exit 2
+fi
+case "$legacy_out" in
+  *'"permissionDecision":"deny"'*)
+    printf '%s\n' "$legacy_out"
+    exit 0
+    ;;
+esac
+if [ "$legacy_rc" -ne 0 ] || [ -n "$legacy_out" ]; then
+  emit_deny static "$MSG_INTERNAL_ERROR_REASON" "$SHAPE_CONTEXT"
+  exit 0
+fi
+
 # --- fail-closed backstop (lead/judge only) ---
 # Past this point, any unexpected non-zero exit (an unbound variable under `set -u`, a bad
 # substitution, ...) would reach Claude Code as a "non-blocking" hook error and the Bash call would
