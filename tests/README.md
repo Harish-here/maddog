@@ -211,7 +211,7 @@ now matched by the base-or-head `covers:` has no fingerprint.
 
 `.github/validate.sh` holds every pull-request check and is the single thing
 CI runs. It stops at the first failure, in this order: frontmatter, JSON and
-version consistency; `scripts/dev/fragment-check.py`; `bash -n` on every `.sh` under `scripts/`;
+version consistency; `scripts/dev/fragment-check.py`; `bash -n` on every `.sh` in `scripts/hooks/`, `scripts/lib/` and `scripts/dev/`;
 every command path in `hooks/hooks.json` exists; `jq` is installed; the offline
 tests; the gate (`--base ${BASE:-origin/main}`). Run it locally with the test
 venv's python, from a clone that has a local `main`:

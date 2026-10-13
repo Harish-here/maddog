@@ -5,10 +5,11 @@
 #
 #  1. IRREVERSIBLE-COMMAND DENIAL (all four agents): lib/rules-irreversible.sh. A short list of
 #     irreversible/destructive Bash commands is bounced back to the caller, who must STOP and
-#     return blocked. A SHAPE refusal (a command the guard cannot parse: a leading `(` or `{`, a
-#     wrapper missing its argument, an internal error) is not an irreversible-action denial: its
-#     context says so and tells the caller to rewrite as simpler commands and retry instead of
-#     stopping (see deny() below and lib/messages.sh).
+#     return blocked. A SHAPE refusal (a command the guard cannot parse or classify: a leading `(` or
+#     `{`, a wrapper missing its argument, for lead and judge a function definition, a command word
+#     built at run time or an unquoted heredoc holding `$(`, an internal error) is not an
+#     irreversible-action denial: its context says so and tells the caller to rewrite as simpler
+#     commands and retry instead of stopping (see deny() below and lib/messages.sh).
 #
 #  2. FILE-WRITE DENIAL (executor-lead and executor-judge only): lib/rules-readonly.sh. Both hold
 #     Bash for read-only inspection but must never write, create, move or delete a file via Bash;
@@ -16,7 +17,8 @@
 #
 # Layout: this file is the hook; everything it consults is sourced from ../lib (hook-io.sh
 # input and deny JSON, agents.sh name rules, messages.sh every text, command-lists.sh every
-# command-name set, parse.sh and heredoc.sh the command reader, path-guard.sh path confinement).
+# command-name set, parse.sh and heredoc.sh the command reader, path-guard.sh path confinement,
+# command-check.sh the walk over segments and over the commands inside substitutions).
 #
 # Wiring: plugin-level hooks/hooks.json (session-wide, matcher "Bash") fires this script for every
 # agent and the main conversation. Because that wiring is not agent-scoped, scoping is enforced
@@ -44,12 +46,58 @@ HOOK_NAME="${BASH_SOURCE[0]##*/}"
 GUARDED_AGENTS='executor-fast|executor-smart|executor-lead|executor-judge'
 LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
-# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# A lib cut off at a function or variable boundary sources without error but leaves everything
+# after the cut undefined, and a missing function or list fails open for the fast executors.
+# REQUIRED_FUNCS and REQUIRED_VARS list every function and every top-level variable (command
+# lists, refusal texts) the sourced libs define; a missing one takes the same path as a lib that
+# fails to load. tests/guard/test_missing_lib.py keeps both lists equal to what the libs define.
+REQUIRED_FUNCS=(
+  hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
+  msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
+  msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
+  msg_git_config msg_git_config_option msg_git_option msg_unreadable msg_publish msg_shell
+  msg_write_cmd msg_interpreter msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name
+  quote_walk split_command unquote_word unquote_tokens find_git_subcommand
+  find_substitution_end extract_substitutions strip_command_wrappers strip_rtk
+  strip_leading_keywords env_split_string strip_env strip_wrapper_lenient
+  strip_leading_prefixes tokenize_segment check_segment_shape heredoc_consumer
+  heredoc_opens_construct skip_heredoc_bodies check_irreversible check_function_definition
+  check_git_config check_unreadable_words check_readonly_writes _path_guard_strip_quotes
+  _path_guard_split _path_guard_has_glob _path_guard_join normalize_path is_temp_path
+  check_segment check_command_text
+)
+REQUIRED_VARS=(
+  MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE
+  WHY_EXECUTOR_SMART SHAPE_CONTEXT MSG_INTERNAL_ERROR_REASON MSG_SHAPE_PAREN
+  MSG_SHAPE_BRACE MSG_DYNAMIC_COMMAND MSG_SUBST_UNBALANCED MSG_SUBST_TOO_DEEP
+  MSG_FUNCTION_DEF MSG_HEREDOC_SUBST MSG_RM_RECURSIVE MSG_FIND_DELETE MSG_PUSH_FORCE
+  MSG_PUSH_PLUS MSG_CLEAN MSG_RESET_HARD MSG_CHECKOUT_DOT MSG_RESTORE_DOT MSG_BRANCH_D
+  MSG_BRANCH_DELETE_FORCE MSG_MERGE MSG_WORKTREE_REMOVE MSG_WORKTREE_PRUNE MSG_RM_FILE
+  MSG_SED_INPLACE MSG_DD_OUTPUT MSG_AWK_REDIRECT MSG_GIT_RESTORE MSG_GIT_CHECKOUT_PATH
+  MSG_REDIRECT SHELLS INTERPRETERS WRAPPERS SHELL_KEYWORDS SHELL_HEADERS ZSH_PRECOMMANDS
+  WRITE_CMDS READONLY_CMDS HEREDOC_READERS GIT_OPTS_SHORT_VALUE GIT_OPTS_VALUE
+  GIT_OPTS_FLAG GIT_STDIN_MESSAGE_SUBS GIT_WRITE_SUBS GIT_TAG_READ_FORMS
+  GIT_CONFIG_WRITE_FLAGS GIT_CONFIG_WRITE_SUBS GIT_CONFIG_MODE_FLAGS GIT_CONFIG_READ_FLAGS
+  GIT_CONFIG_VALUE_FLAGS GIT_CONFIG_READ_FORMS PUBLISH_CMDS SUBST_MAX_DEPTH CASE_OPEN
+  CASE_EXPECT
+)
+libs_complete() {
+  local f
+  for f in "${REQUIRED_FUNCS[@]}"; do
+    declare -F "$f" >/dev/null || return 1
+  done
+  for f in "${REQUIRED_VARS[@]}"; do
+    declare -p "$f" >/dev/null 2>&1 || return 1
+  done
+}
+
+# A lib that is missing, unreadable, has a syntax error or is cut short must not let a guarded
+# agent through.
 # This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
 if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh" \
   && source "$LIB/command-lists.sh" && source "$LIB/parse.sh" && source "$LIB/heredoc.sh" \
   && source "$LIB/rules-irreversible.sh" && source "$LIB/rules-readonly.sh" \
-  && source "$LIB/path-guard.sh"; }; then
+  && source "$LIB/path-guard.sh" && source "$LIB/command-check.sh"; } || ! libs_complete; then
   fallback_input="$(cat 2>/dev/null)"
   fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
   if [[ "$fallback_input" =~ $fallback_re ]]; then
@@ -91,6 +139,32 @@ else
   exit 0
 fi
 
+# --- main's guard first: scripts/legacy/ is a byte-identical copy of the 4.3.3 hook and the libs
+#     it sources (commit 1dd7c7f), frozen so the checks below can only ADD refusals. Whatever it
+#     refuses stays refused, whatever the readers below make of the same text: this hook never
+#     allows a call the 4.3.3 guard denied. It reads the same stdin; a deny it prints (or an exit 2)
+#     is passed on as is (an exit 2 with no output is how bash reports a syntax error, so it is a
+#     failure, below). A legacy hook that fails any other way (missing, non-zero exit with no
+#     decision) denies the call, since the guard could then not be shown to have looked. The
+#     legacy hook scopes itself, so a caller it does not guard is allowed here too. ---
+legacy_hook="$(dirname "${BASH_SOURCE[0]}")/../legacy/hooks/executor-guard.sh"
+legacy_out="$(printf '%s' "$input" | "${BASH:-bash}" "$legacy_hook" 2>/dev/null)"
+legacy_rc=$?
+if [ "$legacy_rc" -eq 2 ] && [ -n "$legacy_out" ]; then
+  printf '%s\n' "$legacy_out"
+  exit 2
+fi
+case "$legacy_out" in
+  *'"permissionDecision":"deny"'*)
+    printf '%s\n' "$legacy_out"
+    exit 0
+    ;;
+esac
+if [ "$legacy_rc" -ne 0 ] || [ -n "$legacy_out" ]; then
+  emit_deny static "$MSG_INTERNAL_ERROR_REASON" "$SHAPE_CONTEXT"
+  exit 0
+fi
+
 # --- fail-closed backstop (lead/judge only) ---
 # Past this point, any unexpected non-zero exit (an unbound variable under `set -u`, a bad
 # substitution, ...) would reach Claude Code as a "non-blocking" hook error and the Bash call would
@@ -116,23 +190,13 @@ cwd="$(field .cwd)"
 
 # --- drop heredoc bodies fed to non-shell programs before splitting ---
 cmd="$(skip_heredoc_bodies "$cmd")"
+# status 3: lead/judge, an unquoted-delimiter body holding $( or a backtick (see heredoc.sh)
+if [ $? -eq 3 ]; then
+  deny "$MSG_HEREDOC_SUBST" shape
+fi
 
-# --- split into pipeline/chain segments so matches after ;, &&, ||, | are caught ---
-segments_raw="$(split_command "$cmd")"
-
-while IFS= read -r segment; do
-  segment="${segment#"${segment%%[![:space:]]*}"}"
-  segment="${segment%"${segment##*[![:space:]]}"}"
-  [ -z "$segment" ] && continue
-
-  tokenize_segment "$segment"
-  [ "${#tokens[@]}" -eq 0 ] && continue
-
-  check_segment_shape
-  check_irreversible
-  if [ "$deny_writes" -eq 1 ]; then
-    check_readonly_writes
-  fi
-done <<< "$segments_raw"
+# --- check the command line: each pipeline/chain segment, and the command lines inside every
+#     command substitution, backtick pair and process substitution (lib/command-check.sh) ---
+check_command_text "$cmd"
 
 exit 0

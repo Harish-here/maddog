@@ -55,9 +55,42 @@ HOOK_NAME="${BASH_SOURCE[0]##*/}"
 GUARDED_AGENTS='executor-judge|executor-smart'
 LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
-# A lib that is missing, unreadable or has a syntax error must not let a guarded agent through.
+# A lib cut off at a function or variable boundary sources without error but leaves everything
+# after the cut undefined, and a missing function or list fails open for the fast executors.
+# REQUIRED_FUNCS and REQUIRED_VARS list every function and every top-level variable (command
+# lists, refusal texts) the sourced libs define; a missing one takes the same path as a lib that
+# fails to load. tests/guard/test_missing_lib.py keeps both lists equal to what the libs define.
+REQUIRED_FUNCS=(
+  hook_start field emit_deny in_set list_join agent_is agent_target_in agent_raw_re
+  msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
+  msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
+  msg_git_config msg_git_config_option msg_git_option msg_unreadable msg_publish msg_shell
+  msg_write_cmd msg_interpreter msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name
+)
+REQUIRED_VARS=(
+  MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE
+  WHY_EXECUTOR_SMART SHAPE_CONTEXT MSG_INTERNAL_ERROR_REASON MSG_SHAPE_PAREN
+  MSG_SHAPE_BRACE MSG_DYNAMIC_COMMAND MSG_SUBST_UNBALANCED MSG_SUBST_TOO_DEEP
+  MSG_FUNCTION_DEF MSG_HEREDOC_SUBST MSG_RM_RECURSIVE MSG_FIND_DELETE MSG_PUSH_FORCE
+  MSG_PUSH_PLUS MSG_CLEAN MSG_RESET_HARD MSG_CHECKOUT_DOT MSG_RESTORE_DOT MSG_BRANCH_D
+  MSG_BRANCH_DELETE_FORCE MSG_MERGE MSG_WORKTREE_REMOVE MSG_WORKTREE_PRUNE MSG_RM_FILE
+  MSG_SED_INPLACE MSG_DD_OUTPUT MSG_AWK_REDIRECT MSG_GIT_RESTORE MSG_GIT_CHECKOUT_PATH
+  MSG_REDIRECT
+)
+libs_complete() {
+  local f
+  for f in "${REQUIRED_FUNCS[@]}"; do
+    declare -F "$f" >/dev/null || return 1
+  done
+  for f in "${REQUIRED_VARS[@]}"; do
+    declare -p "$f" >/dev/null 2>&1 || return 1
+  done
+}
+
+# A lib that is missing, unreadable, has a syntax error or is cut short must not let a guarded
+# agent through.
 # This fallback uses nothing from the libs: a raw-input match on the guarded agent types, static JSON.
-if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; }; then
+if ! { source "$LIB/hook-io.sh" && source "$LIB/agents.sh" && source "$LIB/messages.sh"; } || ! libs_complete; then
   fallback_input="$(cat 2>/dev/null)"
   fallback_re='"agent_type"[[:space:]]*:[[:space:]]*"([^"]*:)?('"$GUARDED_AGENTS"')"'
   if [[ "$fallback_input" =~ $fallback_re ]]; then

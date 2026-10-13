@@ -279,7 +279,7 @@ tests/
 
 Test files are named for what they check — `handoff.yaml` checks the first
 handoff. The harness is Python, matching the repo's existing
-`scripts/*.py` checks. It runs in a plain virtual environment
+`scripts/dev/*.py` checks. It runs in a plain virtual environment
 (`python3 -m venv`, then `pip install -r tests/requirements.txt`), so no
 extra tool is needed. There is no dashboard for now; revisit once the `agents/` cases
 land, or when comparing a case's lowest passing tier across releases.
