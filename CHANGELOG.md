@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.4.0] - 2026-10-30
+
+### Added
+- `skills/plain-english/SKILL.md` — a "Shape" section: a reply is grouped by content under headings, one short paragraph per point; the form follows the content (paragraph for reasoning, bullets for parallel items, table for values compared across options, numbered one-action steps for what the reader performs); a flow that branches, loops or has four or more hand-offs is drawn as a text diagram of at most 25 lines and 70 columns, top to bottom, with yes/no exits and no crossing lines; a format the user or project set stays the outer form (519f660)
+- `skills/plain-english/SKILL.md` — noun strings of at most three nouns; headings, bullets and table cells may be fragments within the same word limit (519f660)
+
+### Changed
+- `skills/plain-english/SKILL.md` — the description says replies are "worded and shaped" and adds "hard to scan" as a trigger; rule 1 reads the first line of text below the heading; rule 7 says a table or diagram that restates a list breaks it (519f660)
+
+### Removed
+- `skills/plain-english/SKILL.md` — the ban on "not X, but Y" and the one-em-dash limit (519f660)
+
 ## [4.3.4] - 2026-10-12
 
 ### Fixed
