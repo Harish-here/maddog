@@ -41,10 +41,15 @@
 #      `}`, `<` or `>` (a closer or operator that takes the output on).
 # The list is deliberately short; add a reader only if it never executes its
 # input as commands.
+# Lead and judge (deny_writes=1) get one more rule: a skipped body whose delimiter is NOT
+# quoted or escaped (`<<EOF`, not `<<'EOF'`, `<<"EOF"` or `<<\EOF`) is expanded by the shell
+# before the reader sees it, so `$(...)` or a backtick in it runs a command this guard never
+# reads. Such a body makes skip_heredoc_bodies return 3 (the text is still printed), and the
+# hook refuses the command; a quoted delimiter keeps the body inert and is still skipped.
 # Not handled: a heredoc nested inside a body that is kept (its lines are
 # checked as before), and a body written to a file and run later
-# (`cat > s.sh <<EOF` ... `bash s.sh`). `$(...)` inside an unquoted body is
-# not examined.
+# (`cat > s.sh <<EOF` ... `bash s.sh`). For fast and smart, `$(...)` inside an unquoted body
+# is not examined.
 
 # Prints the real command of one segment (wrappers peeled, basename), or "?"
 # when it cannot be identified or is not a plain literal word (leading
@@ -143,6 +148,8 @@ heredoc_opens_construct() {
   return 1
 }
 
+# Returns 3 when lead or judge (deny_writes=1) has an unquoted-delimiter body holding `$(` or a
+# backtick that was skipped; the text is printed all the same. Returns 0 otherwise.
 skip_heredoc_bodies() {
   local text="$1"
   case "$text" in
@@ -150,9 +157,9 @@ skip_heredoc_bodies() {
     *) printf '%s' "$text"; return 0 ;;
   esac
   local line seg segs consumer check cmp l m rest dash i j n k t tl pre has_here owner_seen
-  local active=0 active_delim="" active_dash=0 active_skip=0 pend=0
-  local qn=0 qi=0 q_skip=1
-  local -a out=() held=() lits=() mks=() q_delim=() q_dash=()
+  local active=0 active_delim="" active_dash=0 active_skip=0 active_quoted=1 pend=0
+  local qn=0 qi=0 q_skip=1 unquoted_subst=0 raw_rest body_acc="" trail
+  local -a out=() held=() lits=() mks=() q_delim=() q_dash=() q_quoted=()
   while IFS= read -r line; do
     if [ "$pend" -eq 1 ]; then
       # the line right after a skipped body's last terminator: if it carries
@@ -172,6 +179,10 @@ skip_heredoc_bodies() {
       cmp="$line"
       [ "$active_dash" -eq 1 ] && cmp="${line#"${line%%[!$'\t']*}"}"
       if [ "$cmp" = "$active_delim" ]; then
+        case "$body_acc" in
+          *'$('*|*'`'*) unquoted_subst=1 ;;
+        esac
+        body_acc=""
         # terminator: held with a skipped body, kept with a checked one
         if [ "$active_skip" -eq 1 ]; then
           held+=("$line")
@@ -183,12 +194,27 @@ skip_heredoc_bodies() {
           active=1
           active_delim="${q_delim[$qi]}"
           active_dash="${q_dash[$qi]}"
+          active_quoted="${q_quoted[$qi]}"
           active_skip="$q_skip"
           qi=$((qi + 1))
         elif [ "$active_skip" -eq 1 ]; then
           pend=1
         fi
       elif [ "$active_skip" -eq 1 ]; then
+        if [ "$active_quoted" -eq 0 ] && [ "${deny_writes:-0}" -eq 1 ]; then
+          # a backslash-newline is removed from an unquoted body, so `$\` + `(cmd)` is `$(cmd)`:
+          # lines are joined before they are scanned
+          trail="${line%"${line##*[!\\]}"}"
+          if [ $((${#trail} % 2)) -eq 1 ]; then
+            body_acc+="${line%\\}"
+          else
+            body_acc+="$line"
+            case "$body_acc" in
+              *'$('*|*'`'*) unquoted_subst=1 ;;
+            esac
+            body_acc=""
+          fi
+        fi
         held+=("$line")
       else
         out+=("$line")
@@ -248,6 +274,7 @@ skip_heredoc_bodies() {
             if [ -z "$rest" ] && [ $((j + 1)) -lt "$n" ]; then
               rest="${lits[$((j + 1))]}"
             fi
+            raw_rest="$rest"
             rest="${rest//\'/}"
             rest="${rest//\"/}"
             rest="${rest//\\/}"
@@ -256,6 +283,9 @@ skip_heredoc_bodies() {
             else
               q_delim[$qn]="$rest"
               q_dash[$qn]="$dash"
+              # any quote or backslash in the delimiter word keeps the body from expanding
+              q_quoted[$qn]=0
+              [ "$raw_rest" != "$rest" ] && q_quoted[$qn]=1
               qn=$((qn + 1))
             fi
             break
@@ -297,6 +327,7 @@ skip_heredoc_bodies() {
       active=1
       active_delim="${q_delim[0]}"
       active_dash="${q_dash[0]}"
+      active_quoted="${q_quoted[0]}"
       active_skip="$q_skip"
       qi=1
     fi
@@ -306,4 +337,6 @@ skip_heredoc_bodies() {
     for k in "${held[@]}"; do out+=("$k"); done
   fi
   printf '%s\n' "${out[@]}"
+  [ "$unquoted_subst" -eq 1 ] && return 3
+  return 0
 }
