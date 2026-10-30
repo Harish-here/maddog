@@ -50,8 +50,8 @@ A reply format the user or project has set stays the outer form. These rules
 fill in what it leaves open.
 
 9. Group by content. Give each topic one heading; a reply of a few sentences
-   on one topic needs none. Under a heading, write one short paragraph per
-   point, six sentences at most, main point first.
+   on one topic needs none. Under a heading, write each point in the form
+   rule 10 picks. A paragraph has six sentences at most, main point first.
 
 10. Choose the form by the content's shape:
     - Reasoning where each point depends on the last: a short paragraph.
@@ -61,7 +61,8 @@ fill in what it leaves open.
     - Two or more steps the reader performs: numbered, one action each,
       20 words or fewer, condition first ("If X, do Y").
     - Events in order that the reader does not perform: "A, then B, then C"
-      for three or fewer, a numbered list for more.
+      for three or fewer, a numbered list for more. Rule 11 takes a flow
+      that branches, loops, or has four or more hand-offs.
 
 11. Draw a flow that branches, loops, or has four or more hand-offs. A
     hand-off is work passing from one person, agent, or system to another.
