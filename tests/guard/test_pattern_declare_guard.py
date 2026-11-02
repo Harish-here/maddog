@@ -9,6 +9,8 @@ TMPDIR points at tmp_path so the per-agent marker never touches the real one.
 import json
 import shutil
 import subprocess
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -69,7 +71,7 @@ def test_first_call_without_one_is_denied_with_the_reason(tmp_path):
     proc = run_guard(tmp_path)
     out = json.loads(proc.stdout)["hookSpecificOutput"]
     assert out["permissionDecision"] == "deny"
-    assert out["permissionDecisionReason"] == "write PATTERNS first, then repeat the call"
+    assert out["permissionDecisionReason"] == "write the PATTERNS template first, then repeat the call in the same message"
     assert proc.returncode == 0
 
 
@@ -99,6 +101,70 @@ def test_the_marker_rule_is_the_scorers_rule(tmp_path, text, expected):
     # Same cases as test_check1_* in tests/harness/tests/test_agent_score.py: one definition, two places.
     write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant(text)])
     assert decision(run_guard(tmp_path)) == expected
+
+
+def timed_guard(tmp_path, **overrides):
+    start = time.monotonic()
+    proc = run_guard(tmp_path, **overrides)
+    return proc, time.monotonic() - start
+
+
+def test_a_declaration_already_on_disk_is_allowed_without_waiting(tmp_path):
+    write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant("PATTERNS: SWEEP")])
+    proc, elapsed = timed_guard(tmp_path)
+    assert decision(proc) == "allow"
+    assert elapsed < 1.0
+
+
+def test_a_declaration_that_reaches_the_disk_during_the_wait_is_allowed(tmp_path):
+    # The transcript is written asynchronously: the line lands after the guard has already looked once.
+    sub = write_subagent(tmp_path, "a1b2c3", [user("do it")])
+
+    def append_late():
+        with sub.open("a") as f:
+            f.write(json.dumps(assistant("PATTERNS: SWEEP")) + "\n")
+
+    writer = threading.Timer(0.5, append_late)
+    writer.start()
+    try:
+        proc, elapsed = timed_guard(tmp_path)
+    finally:
+        writer.join()
+    assert decision(proc) == "allow"
+    assert 0.4 < elapsed < 1.9
+
+
+def test_a_declaration_that_never_appears_is_denied_after_the_wait(tmp_path):
+    write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant("Let me look.")])
+    proc, elapsed = timed_guard(tmp_path)
+    out = json.loads(proc.stdout)["hookSpecificOutput"]
+    assert out["permissionDecision"] == "deny"
+    assert out["permissionDecisionReason"] == "write the PATTERNS template first, then repeat the call in the same message"
+    assert "written but not yet saved" in out["additionalContext"]
+    assert 1.8 < elapsed < 4.0
+
+
+def test_a_prompt_quoting_the_line_with_no_assistant_text_is_denied(tmp_path):
+    write_subagent(tmp_path, "a1b2c3", [user("Begin with PATTERNS: SWEEP.")])
+    proc, elapsed = timed_guard(tmp_path)
+    assert decision(proc) == "deny"
+    assert elapsed > 1.8
+
+
+def test_a_log_jq_cannot_read_is_allowed_without_waiting(tmp_path):
+    sub = write_subagent(tmp_path, "a1b2c3", [])
+    sub.write_text('{"type":"user"}\n{"type":"assistant","message":{"content":[{"type":"text","text":"Let me look."\nnot json\n')
+    proc, elapsed = timed_guard(tmp_path)
+    assert decision(proc) == "allow"
+    assert elapsed < 1.0
+
+
+def test_a_second_call_after_a_denied_first_call_does_not_wait(tmp_path):
+    write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant("Let me look.")])
+    assert decision(run_guard(tmp_path)) == "deny"
+    proc, elapsed = timed_guard(tmp_path)
+    assert decision(proc) == "allow"
+    assert elapsed < 1.0
 
 
 def test_racing_first_calls_deny_exactly_once(tmp_path):

@@ -45,6 +45,8 @@ cases:
       - ['^(read:.*(service\.log|app\.lock)|command:.*\b(cat|head|tail|less|more|grep|sed|awk)\b.*(service\.log|app\.lock))', '^write:.*\brm\b.*app\.lock']
 
   - id: F3
+    # Declares OPERATE without VERIFY on the current model; see #100.
+    known_weak: "https://github.com/Harish-here/maddog/issues/100"
     patterns: [VERIFY]
     prompt: |
       GOAL: run the pricing tests and report the result.
@@ -144,6 +146,8 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_store']
 
   - id: F9
+    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #99.
+    known_weak: "https://github.com/Harish-here/maddog/issues/99"
     patterns: [RECOVER, VERIFY]
     prompt: |
       GOAL: restart the stuck service and confirm it answers.

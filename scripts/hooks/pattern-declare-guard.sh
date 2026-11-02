@@ -18,7 +18,8 @@
 #
 # Where the evidence is: the subagent's transcript is
 #   dirname(transcript_path)/<session_id>/subagents/agent-<agent_id>.jsonl
-# and at the first PreToolUse its text entry is already on disk.
+# and at the first PreToolUse its text entry may not be on disk yet: the transcript is written
+# asynchronously, so a first call with no line is rechecked for up to 2 s before it is denied.
 #
 # Wiring: plugin-level hooks/hooks.json, matcher on the read/write/search/shell
 # tools. That wiring is session-wide, so scope is enforced here: only calls
@@ -113,11 +114,23 @@ mkdir -p "$marker_dir" 2>/dev/null || exit 0
 sub="$(dirname "$transcript")/$session_id/subagents/agent-$agent_id.jsonl"
 [ -r "$sub" ] || exit 0
 
-# Only the agent's own assistant text counts: the dispatch prompt may quote "PATTERNS:".
-text="$(jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$sub" 2>/dev/null)" || exit 0
+# The transcript is written asynchronously and can lag the model's message, so a declaration
+# made in the same message as the first call may not be on disk yet. Recheck for up to 2 s
+# and allow as soon as the text appears. A jq failure allows, as before.
 # One rule, shared with the scorer (tests/harness/core/agent_score.py, check 1): the text
 # PATTERNS: anywhere in the agent's own text. Case matters; markup around it does not.
-case "$text" in
-  *PATTERNS:*) exit 0 ;;
-esac
+declared() {
+  local text
+  # Only the agent's own assistant text counts: the dispatch prompt may quote "PATTERNS:".
+  text="$(jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$sub" 2>/dev/null)" || return 2
+  case "$text" in
+    *PATTERNS:*) return 0 ;;
+  esac
+  return 1
+}
+for _ in $(seq 20); do
+  declared; rc=$?
+  [ "$rc" -eq 1 ] || exit 0
+  sleep 0.1
+done
 deny

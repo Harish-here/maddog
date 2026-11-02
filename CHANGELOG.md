@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.1] - 2026-11-02
+
+### Fixed
+- `scripts/hooks/pattern-declare-guard.sh` — the first-call check rechecks the subagent transcript every 0.1 s for up to 2 s before refusing a missing PATTERNS line, because Claude Code writes the transcript asynchronously and a same-message PATTERNS: declaration was refused when it had not reached disk yet (ec91557)
+- `scripts/lib/messages.sh` — the refusal text says the check cannot tell whether the line was written but not yet saved, and asks the agent to write the template and repeat the call in the same message (ec91557)
+- `tests/guard/test_pattern_declare_guard.py` — six tests: declaration already on disk, arriving mid-wait, never arriving, a prompt that only quotes PATTERNS:, an unreadable log, and a second call after a refusal (ec91557)
+
 ## [4.5.0] - 2026-11-02
 
 ### Added
