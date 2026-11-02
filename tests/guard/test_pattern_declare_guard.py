@@ -71,7 +71,7 @@ def test_first_call_without_one_is_denied_with_the_reason(tmp_path):
     proc = run_guard(tmp_path)
     out = json.loads(proc.stdout)["hookSpecificOutput"]
     assert out["permissionDecision"] == "deny"
-    assert out["permissionDecisionReason"] == "return the PATTERNS template first, then repeat the call"
+    assert out["permissionDecisionReason"] == "write the PATTERNS template first, then repeat the call in the same message"
     assert proc.returncode == 0
 
 
@@ -139,7 +139,7 @@ def test_a_declaration_that_never_appears_is_denied_after_the_wait(tmp_path):
     proc, elapsed = timed_guard(tmp_path)
     out = json.loads(proc.stdout)["hookSpecificOutput"]
     assert out["permissionDecision"] == "deny"
-    assert out["permissionDecisionReason"] == "return the PATTERNS template first, then repeat the call"
+    assert out["permissionDecisionReason"] == "write the PATTERNS template first, then repeat the call in the same message"
     assert "written but not yet saved" in out["additionalContext"]
     assert 1.8 < elapsed < 4.0
 
