@@ -79,6 +79,7 @@ pull request.
 | `efficient-md` | Keeps markdown files for agents and people short and well shaped |
 | `plain-english` | Makes Claude's replies clear and direct |
 | `mine-session` | Turns a working session into lessons for next time |
+| `memory-refine` | Audits saved memory notes and tells you what to keep, rewrite or delete |
 
 ## Philosophy
 

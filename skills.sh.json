@@ -4,8 +4,8 @@
   "groupings": [
     {
       "title": "Session discipline",
-      "description": "How a working session is run and worded: holding judgment while delegating the rest, mining the session for reusable lessons, and keeping replies plain.",
-      "skills": ["advisor-mode", "mine-session", "plain-english"]
+      "description": "How a working session is run and worded: holding judgment while delegating the rest, mining the session for reusable lessons, keeping replies plain, and auditing saved memory notes.",
+      "skills": ["advisor-mode", "memory-refine", "mine-session", "plain-english"]
     },
     {
       "title": "Writing for agents",
