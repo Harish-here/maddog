@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.0] - 2026-11-02
+
+### Added
+- `skills/memory-refine/SKILL.md` — audits saved memory notes, returns a keep, rewrite, or delete verdict per note with evidence, and applies the changes the user approves; works with any memory system (e63b9f2, 0b9a92d)
+
+### Docs
+- `README.md` lists memory-refine under More skills
+- `skills.sh.json` groups memory-refine under Session discipline
+
 ## [4.4.0] - 2026-10-30
 
 ### Added
