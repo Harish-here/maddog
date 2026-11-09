@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.2] - 2026-11-09
+
+### Fixed
+- The directory's credential finding (MCP_FORWARDS_CREDENTIAL_ENV): `.claude/scripts/tg-notify.sh`, which read `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` and sent messages through the Telegram API, is removed. The repository no longer ships a script that reads a credential (49dc2f0)
+- `.claude/scripts/setup-watchdog.sh` no longer links a notify script or creates `~/.claude/channels/telegram/`; it wires up the watchdog only (49dc2f0)
+
+### Notes for users
+- If you ran `setup-watchdog.sh` before, `~/.claude/channels/telegram/notify.sh` may be a symlink to the removed script. Replace it with your own script if you use Telegram pings.
+
+### Docs
+- `SECURITY.md` and `PRIVACY.md` — the repository ships no Telegram script; the setup script links the watchdog only (49dc2f0)
+
 ## [4.5.1] - 2026-11-02
 
 ### Fixed
