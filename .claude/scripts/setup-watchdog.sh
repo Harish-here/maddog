@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Wires up the watchdog LaunchAgent + Telegram notify script for unattended
-# sdd-task-loop runs. Optional — run once per machine if you want crash/stall
-# recovery and Telegram pings; nothing else in maddog depends on it.
+# Wires up the watchdog LaunchAgent for unattended sdd-task-loop runs.
+# Optional — run once per machine if you want crash/stall recovery; nothing
+# else in maddog depends on it.
 # Idempotent: existing symlinks are re-pointed; existing REAL files/dirs are
 # backed up to <name>.bak first, never deleted.
 set -euo pipefail
@@ -9,7 +9,7 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 
-mkdir -p "$CLAUDE_DIR/channels/telegram" "$CLAUDE_DIR/watchdogs"
+mkdir -p "$CLAUDE_DIR/watchdogs"
 
 link() {
   local src="$1" dst="$2"
@@ -22,11 +22,6 @@ link() {
   ln -s "$src" "$dst"
   echo "linked: $dst -> $src"
 }
-
-# Checkpoint-ping helper the sdd-task-loop workflow calls by default.
-# Reads TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID from ~/.claude/channels/telegram/.env
-# (never versioned here) — see workflows/sdd-task-loop.js header for the contract.
-link "$REPO_DIR/.claude/scripts/tg-notify.sh" "$CLAUDE_DIR/channels/telegram/notify.sh"
 
 # watchdog-resume: LaunchAgent that relaunches a paused unattended run once its
 # resume time passes. Symlink the script, then generate the plist from the

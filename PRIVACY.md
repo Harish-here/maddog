@@ -25,10 +25,11 @@ steps listed below.
 - **`sdd-task-loop` ship step (opt-in).** When you run the workflow with
   shipping turned on, an agent pushes your branch to your git remote and
   opens a pull request with `gh`.
-- **Telegram notifier (opt-in).** `.claude/scripts/tg-notify.sh` runs only
-  if you set it up with `.claude/scripts/setup-watchdog.sh`. It then sends
-  the progress messages you configure to the Telegram Bot API, using your
-  own bot token and chat ID.
+- **Telegram notifier (not shipped).** The repository contains no Telegram
+  script and reads no bot token. The `sdd-task-loop` workflow can run a
+  notify script you write and keep outside the repository (by default
+  `~/.claude/channels/telegram/notify.sh`). If you write one, it sends what
+  you configure, with your own credentials.
 
 ## Contact
 
