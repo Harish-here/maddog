@@ -17,12 +17,12 @@ application code, server, or network service, though
 `scripts/dev/watchdog-resume.sh` launches detached `tmux` sessions once wired
 up.
 
-Two maintainer-run helpers live in `.claude/scripts/`, not `scripts/`. They
-are in the repository but are not plugin scripts: `.claude/` is repo-internal
-and is never registered as a plugin surface. `.claude/scripts/tg-notify.sh`
-reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from the environment or
-`~/.claude/channels/telegram/.env` and makes an outbound call to the Telegram
-API. `.claude/scripts/setup-watchdog.sh` is the only script you run to
-install anything on your machine (if you choose to) — it symlinks the notify
-script and `scripts/dev/watchdog-resume.sh` into `~/.claude/` and writes a
-LaunchAgent plist; its header comments document what it links and writes.
+One maintainer-run helper lives in `.claude/scripts/`, not `scripts/`. It is
+in the repository but is not a plugin script: `.claude/` is repo-internal
+and is never registered as a plugin surface.
+`.claude/scripts/setup-watchdog.sh` is the only script you run to install
+anything on your machine (if you choose to) — it symlinks
+`scripts/dev/watchdog-resume.sh` into `~/.claude/` and writes a LaunchAgent
+plist; its header comments document what it links and writes. The
+repository ships no notification script and reads no credentials. The
+maintainer's own Telegram notify script lives outside the repository.
