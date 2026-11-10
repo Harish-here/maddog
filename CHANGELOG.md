@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.0] - 2026-11-10
+
+### Changed
+- `skills/efficient-md/SKILL.md` — rewritten. The main file gives the cost of a text (its words multiplied by the times it is loaded), a table of nine kinds of text, and five rules every kind shares: keep test, alarm, link form, position, one whole example (fdd2314)
+- Each kind has its own recipe in `references/`: instruction file, index, description, skill body or agent definition, brief, report, spec, state file, filed record. Each recipe says what to keep, what to move out and where, a size alarm, a finishing check, and one whole example (fdd2314)
+- `references/person-reader.md`, `special-cases.md`, `shipping.md` and `why.md` hold the rules for a text a person reads, rare cases, what a shipped file may cite, and the reasons and evidence (fdd2314)
+
+### Removed
+- The four residency classes (HOT, WARM, COLD, CHANNEL) and their files `references/hot.md`, `warm.md`, `cold.md`, `channel.md` and `model.md`. A kind of text now picks the recipe; how often it loads is one column of the table (fdd2314)
+
+### Notes for users
+- If your own files cite a class by name, cite the kind of text instead.
+
 ## [4.5.2] - 2026-11-09
 
 ### Fixed
