@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # the harness tests and the release gate read main's history
+          fetch-depth: 0  # the harness tests read main's history
       - name: Make a local main branch from origin/main
         run: git rev-parse --verify -q main || git branch main origin/main
       - uses: actions/setup-python@v5

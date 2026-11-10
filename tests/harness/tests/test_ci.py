@@ -45,6 +45,10 @@ def test_the_script_is_valid_bash_and_strict():
 def test_the_script_runs_every_check_in_order():
     text = SCRIPT.read_text()
     order = ["\nVALIDATE\n", "scripts/dev/fragment-check.py", "bash -n", "hooks/hooks.json", "command -v jq",
-             "-m pytest tests/harness tests/guard -q", "tests/gate.py --base"]
+             "-m pytest tests/harness tests/guard -q"]
     positions = [text.index(marker) for marker in order]
     assert positions == sorted(positions)
+
+
+def test_the_script_does_not_run_the_release_gate():
+    assert "tests/gate.py" not in SCRIPT.read_text()
