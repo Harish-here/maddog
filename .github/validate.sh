@@ -106,7 +106,7 @@ for entries in hooks.get('hooks', {}).values():
     for entry in entries:
         for hook in entry.get('hooks', []):
             command = hook.get('command', '')
-            path = Path(command.replace('${CLAUDE_PLUGIN_ROOT}', '.'))
+            path = Path(command.strip('"').replace('${CLAUDE_PLUGIN_ROOT}', '.'))
             if not path.is_file():
                 missing.append(command)
 if missing:
