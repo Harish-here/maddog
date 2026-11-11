@@ -77,8 +77,8 @@ readme = Path('README.md').read_text()
 catalog_names = [p.stem for p in Path('agents').glob('*.md')]
 catalog_names += [p.parent.name for p in Path('skills').glob('*/SKILL.md')]
 for name in catalog_names:
-    if name not in readme:
-        errors.append(f'{name}: not listed in README.md')
+    if f'\n| `{name}` |' not in readme:
+        errors.append(f'{name}: no catalog row in README.md')
 
 if errors:
     for err in errors:
