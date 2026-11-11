@@ -3,11 +3,11 @@ from harness.core.events import Event
 from harness.core.maincache import CacheKey, MainCache, hash_file
 
 CASE = Case("c1", "do it", "Fast", "none", "advisor-mode", "todo-app")
-LADDER = {"low": "haiku", "mid": "sonnet", "high": "opus"}
+LADDER = {"low": "model-low", "mid": "model-mid", "high": "model-high"}
 
 
 def make_cache(tmp_path, **kw):
-    defaults = dict(cache_dir=tmp_path, sha="abc123", runtime="claude-code",
+    defaults = dict(cache_dir=tmp_path, sha="abc123", runtime="rt",
                     model_ladder=LADDER, adapter_hash="deadbeef")
     defaults.update(kw)
     return MainCache(**defaults)
@@ -46,7 +46,7 @@ def test_different_sha_is_a_different_key(tmp_path):
 
 def test_different_adapter_hash_is_a_different_key(tmp_path):
     make_cache(tmp_path).put(CASE, "low", [[Event("handoff", "Fast")]] * 3)
-    other = MainCache(cache_dir=tmp_path, sha="abc123", runtime="claude-code",
+    other = MainCache(cache_dir=tmp_path, sha="abc123", runtime="rt",
                       model_ladder=LADDER, adapter_hash="other-hash")
     assert other.get(CASE, "low", 3) is None
 
@@ -93,7 +93,7 @@ def test_the_cache_key_separates_roles_and_leaves_skill_digests_alone():
 
 
 def test_main_cache_keeps_two_agents_with_one_prompt_apart(tmp_path):
-    cache = MainCache(tmp_path, "sha", "claude-code", {"low": "haiku"}, "hash")
+    cache = MainCache(tmp_path, "sha", "rt", {"low": "model-low"}, "hash")
     a = AgentCase("A", "same prompt", "Fast", "fast-tier", ("VERIFY",), {"kind": ["read"], "target": "."}, {})
     b = AgentCase("B", "same prompt", "Fast-Read", "fast-tier", ("VERIFY",), {"kind": ["read"], "target": "."}, {})
     cache.put(a, "low", [[Event("say", "x")]] * 3)

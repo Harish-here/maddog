@@ -67,7 +67,7 @@ cases:
     no_edits: true
 
   - id: F5
-    # Names a neighbouring pattern or folds the test run on Haiku; see #76.
+    # Names a neighbouring pattern or folds the test run at the low tier; see #76.
     known_weak: "https://github.com/Harish-here/maddog/issues/76"
     patterns: [TRANSFORM, VERIFY]
     prompt: |
@@ -146,7 +146,7 @@ cases:
       - ['^write:', '^command:.*unittest tests\.test_store']
 
   - id: F9
-    # Numbered steps starting with the delete can skip RECOVER's capture on Haiku; see #99.
+    # Numbered steps starting with the delete can skip RECOVER's capture at the low tier; see #99.
     known_weak: "https://github.com/Harish-here/maddog/issues/99"
     patterns: [RECOVER, VERIFY]
     prompt: |

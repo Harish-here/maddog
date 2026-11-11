@@ -7,12 +7,12 @@ def test_right_helper_first_passes():
 
 
 def test_skill_load_and_one_read_before_handoff_pass():
-    events = [Event("skill_load", "efficient-md"), Event("read", "Read"), Event("handoff", "Fast")]
+    events = [Event("skill_load", "efficient-md"), Event("read", "src/todo/store.py"), Event("handoff", "Fast")]
     assert score(events, "Fast").result == "PASS"
 
 
 def test_two_tool_calls_before_handoff_fail():
-    events = [Event("read", "Read"), Event("command", "ls"), Event("handoff", "Fast")]
+    events = [Event("read", "src/todo/store.py"), Event("command", "ls"), Event("handoff", "Fast")]
     v = score(events, "Fast")
     assert v.result == "FAIL" and "more than one" in v.reason
 
@@ -33,7 +33,7 @@ def test_write_before_handoff_fails():
 
 
 def test_no_handoff_fails():
-    v = score([Event("read", "Read")], "Fast")
+    v = score([Event("read", "src/todo/store.py")], "Fast")
     assert v.result == "FAIL" and v.reason == "no handoff"
 
 
@@ -55,11 +55,11 @@ def test_settled_after_a_handoff():
 
 
 def test_settled_after_two_read_or_command_events():
-    assert settled([Event("read", "Read"), Event("command", "ls")]) is True
+    assert settled([Event("read", "src/todo/store.py"), Event("command", "ls")]) is True
 
 
 def test_not_settled_after_one_read_or_command_event():
-    assert settled([Event("read", "Read")]) is False
+    assert settled([Event("read", "src/todo/store.py")]) is False
     assert settled([Event("command", "ls")]) is False
 
 
@@ -73,7 +73,7 @@ def test_a_refusal_alone_does_not_settle_the_run():
 def test_settled_agrees_with_score_on_the_pass_boundary():
     # One skill_load plus one read before a handoff still passes; settled()
     # must not fire before that handoff.
-    events = [Event("skill_load", "efficient-md"), Event("read", "Read")]
+    events = [Event("skill_load", "efficient-md"), Event("read", "src/todo/store.py")]
     assert settled(events) is False
     events.append(Event("handoff", "Fast"))
     assert settled(events) is True
