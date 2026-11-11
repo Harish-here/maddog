@@ -616,10 +616,11 @@ strip_command_wrappers() {
         # whatever env ends up running past this classification.
         while [ "${#tokens[@]}" -gt 0 ]; do
           t="${tokens[0]}"
+          unquote_word "$t"
           if [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
             tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-          elif [ "${t:0:1}" = "-" ]; then
-            deny "$(msg_wrapper_flag env "$t")"
+          elif [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag env "$UNQUOTED")"
           else
             break
           fi
@@ -637,15 +638,21 @@ strip_command_wrappers() {
         ;;
       exec)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag exec "${tokens[0]}")"
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag exec "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
       nohup)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag nohup "${tokens[0]}")"
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag nohup "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
@@ -675,10 +682,15 @@ strip_command_wrappers() {
         ;;
       time)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # Only the bare `-p` is understood. Every other flag, a quoted `-p` included, is read
+        # unquoted and denied: a spelling the guard already refused (`-"p"`) must not become allowed.
         if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]}" = "-p" ]; then
           tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        elif [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag time "${tokens[0]}")"
+        elif [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag time "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
@@ -939,6 +951,9 @@ strip_env() {
       tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
       continue
     fi
+    # a flag is read as the shell reads it: `"-i"`, `'-u'` and `\-0` are flags too
+    unquote_word "$t"
+    t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
     if [ "${deny_writes:-0}" -eq 1 ]; then
       deny "$(msg_wrapper_flag env "$t")"
@@ -1005,7 +1020,9 @@ strip_wrapper_lenient() {
   local w="$1" t
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
-    t="${tokens[0]}"
+    # a flag is read as the shell reads it: `"-i"`, `'-n'` and `\-p` are flags too
+    unquote_word "${tokens[0]}"
+    t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
     case "$w:$t" in
       nice:-n|nice:--adjustment|exec:-a|time:-f|time:-o|time:--format|time:--output|\

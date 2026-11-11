@@ -2262,3 +2262,106 @@ def test_fast_and_smart_read_a_heredoc_behind_sudo_as_before(agent, ws):
     assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
     # sudo is not a reader for them, so a body with a `(` is read as commands and refused, as at 5.0.1
     assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)
+
+
+# --- issue #121: a quoted flag on env, exec, nohup or time -----------------------------------
+# The wrapper cases tested the first character of the raw token for `-`, so `env "-i" rm f` made
+# the flag the command word and no rule matched it. A flag is read as the shell reads it.
+# T is the command behind the wrapper: an irreversible one, so all four executors deny it
+# whatever the wrapper form, and the same answer for the bare flag and the quoted flag.
+
+WRAPPER_FLAG_FORMS = [
+    # env
+    "env -i T",
+    'env "-i" T',
+    "env '-i' T",
+    "env \\-i T",
+    'env -"i" T',
+    'env "-0" T',
+    'env "-u" X T',
+    'env "-i" FOO=1 T',
+    'env FOO=1 "-i" T',
+    'env "--ignore-environment" T',
+    # exec
+    "exec -a foo T",
+    'exec "-a" foo T',
+    "exec '-a' foo T",
+    "exec \\-a foo T",
+    'exec -"a" foo T',
+    'exec "-c" T',
+    # nohup
+    "nohup -x T",
+    'nohup "-x" T',
+    "nohup '-x' T",
+    "nohup \\-x T",
+    # time
+    "time -f %e T",
+    'time "-f" %e T',
+    "time -v T",
+    'time "-v" T',
+    'time "--verbose" T',
+    "time -p T",
+    'time "-p" T',
+    "time '-p' T",
+    "time \\-p T",
+    'time -"p" T',
+    # behind other wrappers
+    'nice env "-i" T',
+    'timeout 5 env "-i" T',
+    'rtk env "-i" T',
+    'FOO=1 env "-i" T',
+    'env "-i" env "-i" T',
+    'time "-p" time "-p" T',
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("form", WRAPPER_FLAG_FORMS)
+def test_a_quoted_wrapper_flag_gets_the_answer_of_the_bare_flag(agent, form, ws):
+    command = form.replace("T", "git push -f")
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# for lead and judge the command behind the wrapper is a write the guard missed
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("form", WRAPPER_FLAG_FORMS)
+def test_lead_and_judge_deny_a_write_behind_a_quoted_wrapper_flag(agent, form, ws):
+    command = form.replace("T", "cp a b")
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# `time -p` is the one wrapper flag lead and judge understand, and only spelled bare: a quoted
+# `-p` is a flag they do not read and is denied (`time -"p" ls` already was, and a denied command
+# must not become allowed). Fast and smart peel it in any spelling.
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["time -p ls", "time -p git status", "time -p git push origin main"])
+def test_every_executor_allows_a_read_behind_a_bare_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+QUOTED_TIME_P_READS = ['time "-p" ls', "time '-p' ls", "time \\-p ls", 'time -"p" ls', 'time "-p" git status']
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", QUOTED_TIME_P_READS)
+def test_fast_and_smart_allow_a_read_behind_a_quoted_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", QUOTED_TIME_P_READS)
+def test_lead_and_judge_deny_a_quoted_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# the wrapper's flag with nothing behind it ends, whatever the quoting
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ['env "-i"', 'exec "-a"', 'nohup "-x"', 'time "-p"', 'time "-f"', 'env "-u"'])
+def test_fast_and_smart_end_on_a_quoted_wrapper_flag_with_nothing_behind_it(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
