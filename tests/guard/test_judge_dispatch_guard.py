@@ -101,11 +101,16 @@ def test_a_lookalike_target_is_denied(tmp_path, caller, target):
     assert verdict(tmp_path, caller, target) == "deny"
 
 
-@pytest.mark.xfail(strict=True, reason="agent_target_in uses grep -Eq, which matches any one line of the target, "
-                   "so a subagent_type whose later line is an allowed hand is allowed")
 @pytest.mark.parametrize("caller", CALLERS)
 def test_a_multi_line_target_is_denied_when_any_line_is_not_a_hand(tmp_path, caller):
     assert verdict(tmp_path, caller, "general-purpose\n" + CALLERS[caller][0]) == "deny"
+
+
+@pytest.mark.parametrize("caller", CALLERS)
+@pytest.mark.parametrize("shape", ["{hand}\ngeneral-purpose", "{hand}\n{hand}", "\n{hand}", "{hand}\n\n{hand}"])
+def test_a_target_with_a_line_break_is_denied_even_when_every_line_is_a_hand_or_empty(tmp_path, caller, shape):
+    hand = CALLERS[caller][0]
+    assert verdict(tmp_path, caller, shape.format(hand=hand)) == "deny"
 
 
 @pytest.mark.parametrize("target", [5, ["executor-fast-read"], {"name": "executor-fast-read"}])

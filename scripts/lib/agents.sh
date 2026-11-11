@@ -18,10 +18,12 @@ agent_is() {
 }
 
 # agent_target_in <target> <name>...  succeeds when target is one of the names, bare or with one
-# "<plugin>:" prefix. grep -E on purpose: it tests each line of the target on its own.
+# "<plugin>:" prefix. A target holding a line break never matches: grep -E tests one line at a
+# time, so a hand on one line would pass the whole target however the other lines read.
 agent_target_in() {
   local target="$1" re
   shift
+  case "$target" in *$'\n'*) return 1 ;; esac
   re="^([^:]+:)?($(list_join '|' "$@"))\$"
   printf '%s' "$target" | grep -Eq "$re"
 }
