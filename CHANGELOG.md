@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.4] - 2026-11-11
+
+### Changed
+- `hooks/hooks.json` — the executor guard and the judge dispatch guard set `"onFailure": "block"`. When either cannot start, times out, or exits with an unexpected code, the call is blocked. Before, the call went ahead unguarded. The pattern guard is unchanged (8e7e5a4, #115)
+
+### Fixed
+- `scripts/lib/agents.sh` — a dispatch target that contains a line break is denied for the judge and smart agents. Before, it passed when any one of its lines named an allowed agent (d7ce1ab, #117)
+- `.github/validate.sh`, `tests/guard/test_hooks_json.py` — every hook command must wrap `${CLAUDE_PLUGIN_ROOT}` in a matched pair of double quotes. Before, one test pinned one of the three commands (ddda085, #116)
+- `tests/harness/tests/test_runtime_names.py` — an offline test fails when a runtime, model or quoted tool name appears in `tests/` outside the allowed paths (9040fe6, #123)
+- `README.md` — the sentence that repeated the `researcher` catalog row is removed (0f3e7bf, #124)
+- `tests/README.md` — says why a change to the executor guard selects no model test (274ecb7, #122)
+
+### Notes for users
+- If a guard script cannot start, the tool calls it guards now stop with an error that includes `failed; blocking because onFailure is "block"`. Reinstall the plugin to repair it. The setting needs Claude Code 2.1.295 or later.
+
 ## [5.0.3] - 2026-11-11
 
 ### Fixed
