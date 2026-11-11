@@ -587,14 +587,20 @@ strip_command_wrappers() {
         progressed=1
         ;;
       sudo)
-        # Lead and judge only: fast and smart keep reading sudo as the command word.
-        [ "${deny_writes:-0}" -eq 1 ] || break
+        # Lead and judge only: fast and smart keep reading sudo as the command word. The
+        # heredoc reader scan (heredoc_consumer) sets HEREDOC_KEEP_SUDO so a `sudo cat <<EOF`
+        # body is still read as before, line by line, and not skipped as cat's input.
+        [ "${deny_writes:-0}" -eq 1 ] && [ "${HEREDOC_KEEP_SUDO:-0}" -eq 0 ] || break
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
         # or take a value, so ANY flag denies, as for env. `sudo VAR=val cmd` is peeled by the
-        # assignment step at the top of this loop.
-        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag sudo "${tokens[0]}")"
+        # assignment step at the top of this loop. The flag is read as the shell reads it, so
+        # `"-u"`, `'-n'` and `\-n` are flags too.
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag sudo "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;

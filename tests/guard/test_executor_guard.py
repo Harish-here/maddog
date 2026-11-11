@@ -2163,3 +2163,67 @@ def test_lead_and_judge_still_allow_read_only_commands_behind_sudo(agent, comman
 @pytest.mark.parametrize("command", ["sudo cp a b", "sudo dd if=a of=b", "sudo -n ls", "sudo ls"])
 def test_fast_and_smart_add_no_refusal_for_sudo(agent, command, ws):
     assert_allow(command, agent, ws)
+
+
+# a sudo flag is read as the shell reads it: quotes and a backslash do not hide it
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    'sudo "-u" root rm f',
+    "sudo \\-n rm f",
+    "sudo '-n' cp a b",
+    'sudo "-u" root dd if=a of=b',
+    "sudo \\-n dd if=a of=b",
+    "sudo '-n' dd if=a 'of=b'",
+    'sudo "-n" ls',
+    'sudo "--" ls',
+    'sudo -"n" ls',
+])
+def test_lead_and_judge_deny_a_quoted_sudo_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# a heredoc behind sudo is not cat's input to skip: its body is checked line by line, as for any
+# command that is not a reader
+SUDO_HEREDOC_BODIES = [
+    "case x in",
+    "coproc x",
+    "noglob ls",
+    "g*t status",
+    "rtk run ls",
+    "echo {a,b}",
+    'dd if=a "of=b"',
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+@pytest.mark.parametrize("prefix", ["sudo ", "nice sudo ", "sudo nice ", "FOO=1 sudo "])
+def test_lead_and_judge_check_the_body_of_a_heredoc_behind_sudo(agent, body, prefix, ws):
+    assert_deny(f"{prefix}cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+# the same bodies, behind a command that is not a reader, were already checked; behind a plain
+# cat or nice cat they are inert input and still skipped
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+def test_lead_and_judge_deny_the_body_of_a_heredoc_behind_an_unknown_command(agent, body, ws):
+    assert_deny(f"foo cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+@pytest.mark.parametrize("prefix", ["", "nice "])
+def test_lead_and_judge_still_skip_the_body_of_a_heredoc_behind_a_plain_cat(agent, body, prefix, ws):
+    assert_allow(f"{prefix}cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_allow_a_harmless_heredoc_body_behind_sudo(agent, ws):
+    assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_read_a_heredoc_behind_sudo_as_before(agent, ws):
+    assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
+    # sudo is not a reader for them, so a body with a `(` is read as commands and refused, as at 5.0.1
+    assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)

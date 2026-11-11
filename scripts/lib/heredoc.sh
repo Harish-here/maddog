@@ -60,6 +60,9 @@
 heredoc_consumer() {
   deny() { printf '?'; exit 0; }
   local k first_word skip_next git_first=0
+  # sudo stays the command word here (it is not a reader), so the body of `sudo cat <<EOF` is
+  # checked line by line, as it was before check_segment began to peel sudo
+  HEREDOC_KEEP_SUDO=1
   tokenize_segment "$1"
   # git counts as the reader only when it is the segment's first word, read
   # BEFORE the wrapper stripper drops any `VAR=val` / env / nice / timeout
