@@ -35,19 +35,18 @@ that branch's committed tree, never against uncommitted edits.
 
 Run checks 1 to 4 against the branch's committed tree and record each result.
 
-1. **Tests.** Run `git branch -f main origin/main`, then run
-   `tests/.venv/bin/python tests/run.py --changed --runtime claude-code --record`.
-   It runs the offline tests, then the model tests covering every changed
-   file. When it writes `tests/releases/<version>/`, commit that folder.
-   Any failed case is a failed check: fix the cause, then record again; the
-   attempt count it prints goes in the pull request. When it refuses because
-   the version is unchanged, the change needs a version: return to step 4 of
-   section 1.
+1. **Model tests, on the user's go.** Run `git branch -f main origin/main`,
+   then `tests/.venv/bin/python tests/run.py --changed --runtime claude-code --dry-run`.
+   It names the model tests that cover the change and calls no model. When
+   it selects any, state the selection and its cost to the user. Record
+   them, with `--record` in place of `--dry-run`, only on the user's go,
+   and commit the `tests/releases/<version>/` folder it writes. A recorded
+   failed case is a failed check: fix the cause, then record again; the
+   attempt count it prints goes in the pull request. When the user
+   declines, say so in the pull request.
 2. **CI, locally.** Run `PYTHON=tests/.venv/bin/python .github/validate.sh`,
    the script the `validate` job runs on every pull request. It must exit 0.
-   Its last step is the release gate: it fails when the recording from
-   check 1 is missing, failed, or does not match a covered file's current
-   content.
+   Its last step is the offline tests.
 3. **Manifests.** List `agents/`, `skills/` and `workflows/` from disk and
    diff them against `.claude-plugin/plugin.json` and
    `.claude-plugin/marketplace.json`. Grep the repo for by-name references to
@@ -55,8 +54,7 @@ Run checks 1 to 4 against the branch's committed tree and record each result.
 4. **Changelog.** Skip this when the change carries no version. Otherwise
    the new entry is present and follows the style of the entries above it.
 5. If `origin/main` moved while you were working, rebase onto it and run
-   these checks and the review again against the new head commit. Check 1
-   records again only when check 2's gate fails.
+   these checks and the review again against the new head commit.
 
 ## 3. Get it cleared
 

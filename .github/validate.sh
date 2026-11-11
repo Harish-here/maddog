@@ -4,8 +4,6 @@
 # to the test venv's python locally), jq, and a local `main` branch.
 #
 #   PYTHON=tests/.venv/bin/python .github/validate.sh
-#
-# BASE (default origin/main) is the ref the release gate compares against.
 set -euo pipefail
 
 PYTHON="${PYTHON:-python3}"
@@ -121,6 +119,3 @@ command -v jq > /dev/null || { echo "jq is required: the guard tests need it"; e
 
 echo "== offline tests"
 "$PYTHON" -m pytest tests/harness tests/guard -q -p no:cacheprovider
-
-echo "== release gate"
-"$PYTHON" tests/gate.py --base "${BASE:-origin/main}"

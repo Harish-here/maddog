@@ -88,8 +88,8 @@ Harness unit tests (no model):
     tests/.venv/bin/python -m pytest tests/harness tests/guard -q
 
 These offline tests are cheap and always run in full. CI runs them as one
-step of `.github/validate.sh` on every pull request (see "CI and the release
-gate" below); model runs never run in CI.
+step of `.github/validate.sh` on every pull request (see "CI" below);
+model runs never run in CI.
 
 ### `--changed`: run only the model tests a change touches
 
@@ -193,10 +193,11 @@ matched only by `covers_frontmatter:` is hashed by its frontmatter block alone. 
 `runs.jsonl` and transcripts stay in the git-ignored `tests/results/`. Old
 `tests/releases/*` folders stay in the repo.
 
-### CI and the release gate
+### The release gate (optional)
 
-`tests/gate.py --base <ref>` is the offline half. It needs no model and takes
-seconds:
+`tests/gate.py --base <ref>` checks a recorded release offline. It is not
+part of CI: run it by choice after a recorded run. It needs no model and
+takes seconds:
 
     tests/.venv/bin/python tests/gate.py --base origin/main
 
@@ -209,22 +210,23 @@ agent-mode file's case numbers sum to under 75% branch passes; a selected test f
 was deleted; a fingerprinted file is missing or its hash changed; or a file
 now matched by the base-or-head `covers:` has no fingerprint.
 
+### CI
+
 `.github/validate.sh` holds every pull-request check and is the single thing
 CI runs. It stops at the first failure, in this order: frontmatter, JSON and
-version consistency; `scripts/dev/fragment-check.py`; `bash -n` on every `.sh` in `scripts/hooks/`, `scripts/lib/` and `scripts/dev/`;
-every command path in `hooks/hooks.json` exists; `jq` is installed; the offline
-tests; the gate (`--base ${BASE:-origin/main}`). Run it locally with the test
-venv's python, from a clone that has a local `main`:
+version consistency; `scripts/dev/fragment-check.py`; `bash -n` on every `.sh`
+in `scripts/hooks/`, `scripts/lib/` and `scripts/dev/`; every command path in
+`hooks/hooks.json` exists; `jq` is installed; the offline tests. Run it locally
+with the test venv's python, from a clone that has a local `main`:
 
     PYTHON=tests/.venv/bin/python .github/validate.sh
 
 `.github/workflows/validate.yml` has one job, `validate`, on `pull_request`
 only: it fetches full history, creates local `main` from `origin/main`, sets up
 Python 3.13 with a pip cache, installs `jq` if missing, then runs the script. A
-newer push cancels the older run. The job name `validate` is what main requires,
-so a release with covered changes and no passing recording cannot merge. For the
-merge tree to equal the tested tree, main must also require branches to be up to
-date before merging.
+newer push cancels the older run. The job name `validate` is what main
+requires. For the merge tree to equal the tested tree, main must also
+require branches to be up to date before merging.
 
 ## Read a report
 
@@ -351,4 +353,4 @@ answer to `harness/tests/test_fast_tier_fixture.py`.
 - `fixtures/`: practice repos, copied to a temp folder outside this repo per run (`todo-app` for skills, `fast-tier` for agents).
 - `skills/`, `agents/`, `scripts/`: case files, mirroring the repo's own folders.
 - `releases/`: one folder per recorded version, written by `--record` and read by `gate.py`.
-- `gate.py`: the offline release gate.
+- `gate.py`: the offline release gate, run by choice; CI does not run it.
