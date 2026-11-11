@@ -7,10 +7,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [5.0.5] - 2026-11-11
 
 ### Fixed
-- `scripts/lib/parse.sh`, `scripts/lib/command-check.sh` — a quoted or backslashed flag on `env`, `exec`, `nohup` or `time` is read as the shell reads it, so `env "-i" rm f` no longer hides the command behind it. For the fast and smart agents, a quoted flag that takes a value is checked both ways (0162749, 60b9968, #121)
-- `scripts/lib/rules-readonly.sh`, `scripts/lib/command-lists.sh` — the lead and judge agents are refused `doas`, `su`, `pkexec` and `busybox` as the command word (28f500b, #119)
-- `scripts/lib/rules-readonly.sh` — the lead and judge agents are refused `dd` when an operand holds `$` or a backtick (ac1a498, #120)
-- `scripts/lib/parse.sh` — for the fast and smart agents, the irreversible-command check looks behind `sudo`: `sudo git push -f` and `sudo rm -rf /` get the same answer as the bare commands. `sudo cp a b` stays allowed (7e97010, 459e0c3, #118)
+- `scripts/lib/parse.sh`, `scripts/lib/command-check.sh` — a quoted or backslashed flag on `env`, `exec`, `nohup` or `time` is read as the shell reads it, so `env "-i" rm f` no longer hides the command behind it. For the fast and smart agents, a quoted flag that takes a value is checked both ways (b7d88bf, a4dea71, #121)
+- `scripts/lib/rules-readonly.sh`, `scripts/lib/command-lists.sh` — the lead and judge agents are refused `doas`, `su`, `pkexec` and `busybox` as the command word (8f59339, #119)
+- `scripts/lib/rules-readonly.sh` — the lead and judge agents are refused `dd` when an operand holds `$` or a backtick (ac9f17b, #120)
+- `scripts/lib/parse.sh` — for the fast and smart agents, the irreversible-command check looks behind `sudo`: `sudo git push -f` and `sudo rm -rf /` get the same answer as the bare commands. `sudo cp a b` stays allowed (501d1ae, 2ff5051, #118)
 
 ### Notes for users
 - The lead and judge agents are now also refused `time "-p" ls` and `dd if=a '$X'`. Write `time -p ls`, and keep `$` out of `dd` operands.
