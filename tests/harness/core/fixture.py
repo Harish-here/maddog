@@ -44,7 +44,7 @@ def make_workdir(name: str, slot_path: Path) -> Path:
 
     slot_path = Path(slot_path).resolve()
     if slot_path.is_relative_to(REPO_ROOT.resolve()):
-        raise RuntimeError(f"slot folder {slot_path} is inside this repo; a repo CLAUDE.md would leak into the session")
+        raise RuntimeError(f"slot folder {slot_path} is inside this repo; a repo instruction file would leak into the session")
 
     workdir = slot_path / name
     shutil.rmtree(workdir, ignore_errors=True)

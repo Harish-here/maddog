@@ -13,8 +13,10 @@ from harness.core.release import (case_verdict, check_gate, dirty_covered, entry
                                   fingerprint_of, fingerprint_paths, plugin_version, slug_of, text_hash)
 from harness.core.runner import CaseResult, RunRecord
 from harness.core.score import Verdict
+from harness.runtimes import ADAPTER_SOURCE
 from harness.tests.test_cases import AGENT_FILE
 
+RUNTIME = next(iter(ADAPTER_SOURCE))  # the first registered runtime, so the name lives only in harness/runtimes/
 SKILL_COVERS = '["skills/s1/**", "agents/a.md"]'
 SKILL_FILE = ("covers: " + SKILL_COVERS + "\nskill: s1\nfixture: todo-app\ncases:\n"
               "  - {id: a, prompt: p, expect: Fast, pressure: none}\n"
@@ -356,7 +358,7 @@ class Fake:
 
 
 def go(*extra):
-    return run.main(["--changed", "--record", "--runtime", "claude-code", *extra])
+    return run.main(["--changed", "--record", "--runtime", RUNTIME, *extra])
 
 
 def bump(repo, version="1.0.1", edit="v2"):
@@ -401,8 +403,9 @@ def test_nothing_in_the_release_folder_names_a_runtime(fake, repo):
     bump(repo)
     assert go() == 0
     ladders = load_ladders()
-    runtime = "claude-code"
-    forbidden = {runtime, *ladders[runtime].values()}
+    forbidden = set()
+    for runtime in ADAPTER_SOURCE:
+        forbidden |= {runtime, *ladders[runtime].values()}
     for f in (repo / "tests/releases").rglob("*"):
         if f.is_file():
             text = f.read_text()

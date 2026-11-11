@@ -8,7 +8,10 @@ import run
 from harness.core.cases import TESTS_DIR, AgentCase, Case
 from harness.core.events import Event, RunOutcome
 from harness.core.fixture import SlotPool as RealSlotPool
+from harness.runtimes import ADAPTER_SOURCE
 from harness.tests.test_cases import AGENT_FILE
+
+RUNTIME = next(iter(ADAPTER_SOURCE))  # the first registered runtime, so the name lives only in harness/runtimes/
 
 
 def worktrees():
@@ -83,7 +86,7 @@ def test_select_cases_raises_on_unknown_id():
 
 def test_ladder_and_tier_together_is_a_parser_error():
     with pytest.raises(SystemExit):
-        run.main(["skills/advisor-mode", "--runtime", "claude-code", "--ladder", "--tier", "low"])
+        run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--ladder", "--tier", "low"])
 
 
 class RecordingAdapter:
@@ -125,7 +128,7 @@ def _patch_run(monkeypatch, adapter, tmp_path):
 def test_default_run_uses_the_cases_own_expected_tier_with_no_climb(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     _patch_run(monkeypatch, adapter, tmp_path)
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--runs", "3"])
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags", "--runs", "3"])
     # list-flags has no case-level tier; the file-level override (mid) applies.
     assert set(adapter.tiers) == {"mid"}
 
@@ -133,7 +136,7 @@ def test_default_run_uses_the_cases_own_expected_tier_with_no_climb(monkeypatch,
 def test_ladder_flag_climbs_from_low(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     _patch_run(monkeypatch, adapter, tmp_path)
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--ladder", "--runs", "3"])
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags", "--ladder", "--runs", "3"])
     # Passes immediately at low (RecordingAdapter always hands off correctly).
     assert set(adapter.tiers) == {"low"}
 
@@ -141,14 +144,14 @@ def test_ladder_flag_climbs_from_low(monkeypatch, tmp_path):
 def test_tier_flag_overrides_expected_tier_for_every_case(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     _patch_run(monkeypatch, adapter, tmp_path)
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--tier", "high", "--runs", "3"])
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags", "--tier", "high", "--runs", "3"])
     assert set(adapter.tiers) == {"high"}
 
 
 def test_fresh_main_flag_is_threaded_to_the_cache(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     captured = _patch_run(monkeypatch, adapter, tmp_path)
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags",
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags",
              "--tier", "low", "--runs", "3", "--fresh-main"])
     assert captured["fresh"] is True
 
@@ -156,7 +159,7 @@ def test_fresh_main_flag_is_threaded_to_the_cache(monkeypatch, tmp_path):
 def test_second_run_reuses_the_cached_main_records(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     _patch_run(monkeypatch, adapter, tmp_path)
-    argv = ["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags", "--tier", "low", "--runs", "3"]
+    argv = ["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags", "--tier", "low", "--runs", "3"]
     run.main(argv)
     first_main_runs = adapter.tiers.count("low")
     assert first_main_runs == 6  # 3 branch + 3 main, nothing cached yet
@@ -171,13 +174,13 @@ def test_second_run_reuses_the_cached_main_records(monkeypatch, tmp_path):
 
 def test_jobs_below_one_is_a_parser_error():
     with pytest.raises(SystemExit):
-        run.main(["skills/advisor-mode", "--runtime", "claude-code", "--jobs", "0"])
+        run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--jobs", "0"])
 
 
 def test_jobs_flag_runs_the_case_concurrently_and_still_writes_every_record(monkeypatch, tmp_path):
     adapter = RecordingAdapter()
     _patch_run(monkeypatch, adapter, tmp_path)
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags",
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags",
              "--tier", "low", "--runs", "3", "--jobs", "3"])
     # Same total work as any other run (3 branch + 3 main); --jobs changes
     # how it's scheduled, never how much of it there is.
@@ -240,7 +243,7 @@ def test_sigterm_during_a_run_removes_slot_folders_under_jobs_too(monkeypatch, t
 
 def test_skill_file_missing_is_a_parser_error():
     with pytest.raises(SystemExit):
-        run.main(["skills/advisor-mode", "--runtime", "claude-code", "--skill-file", "/nonexistent/file.md"])
+        run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--skill-file", "/nonexistent/file.md"])
 
 
 def test_skill_file_with_cases_from_different_skills_raises_error():
@@ -307,7 +310,7 @@ def test_skill_file_folder_removed_after_normal_run(monkeypatch, tmp_path):
     temp_root = Path(tempfile.gettempdir())
     before_count = len(list(temp_root.glob("maddog-skillfile-*")))
 
-    run.main(["skills/advisor-mode", "--runtime", "claude-code", "--case", "list-flags",
+    run.main(["skills/advisor-mode", "--runtime", RUNTIME, "--case", "list-flags",
               "--tier", "low", "--runs", "3", "--skill-file", str(skill_file)])
 
     # Count skillfile folders after
@@ -367,11 +370,11 @@ def test_run_py_loads_patterns_yaml_only_when_asked(monkeypatch, tmp_path):
     monkeypatch.setattr(run, "main_sha", lambda ref: "sha")
     monkeypatch.setattr(run, "run_cases", stop)
     with pytest.raises(RuntimeError, match="stop here"):
-        run.main(["agents/executor-fast", "--runtime", "claude-code", "--patterns", "--case", "X1"])
+        run.main(["agents/executor-fast", "--runtime", RUNTIME, "--patterns", "--case", "X1"])
     assert [c.id for c in seen["cases"]] == ["X1"] and isinstance(seen["cases"][0], AgentCase)
     # Without the flag the same folder runs its handoff.yaml, as before: patterns.yaml is never preferred.
     with pytest.raises(RuntimeError, match="stop here"):
-        run.main(["agents/executor-fast", "--runtime", "claude-code", "--case", "H1"])
+        run.main(["agents/executor-fast", "--runtime", RUNTIME, "--case", "H1"])
     assert [c.id for c in seen["cases"]] == ["H1"] and not isinstance(seen["cases"][0], AgentCase)
 
 
@@ -384,5 +387,5 @@ def test_run_py_refuses_skill_file_for_an_agent_target(monkeypatch, tmp_path, ca
     monkeypatch.setattr(run, "TESTS_DIR", tmp_path)
     monkeypatch.setattr(run, "sweep", lambda root: [])
     with pytest.raises(SystemExit):
-        run.main(["agents/executor-fast", "--runtime", "claude-code", "--patterns", "--skill-file", str(draft)])
+        run.main(["agents/executor-fast", "--runtime", RUNTIME, "--patterns", "--skill-file", str(draft)])
     assert "--skill-file is for skill targets" in capsys.readouterr().err
