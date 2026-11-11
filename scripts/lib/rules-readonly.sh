@@ -10,6 +10,13 @@
 # interpreter forms kept leaking (a stripped `VAR=val` prefix, wrapper flags only partly
 # parsed), so none is kept.
 
+# msg_launcher <command>
+# Defined here, not in messages.sh: every name in messages.sh is also listed by the REQUIRED_FUNCS of
+# the two other hooks that source it, and only the executor guard uses this one.
+msg_launcher() {
+  printf '%s' "${1} runs the command that follows it (as another user, or as a busybox applet) and this guard does not classify that command, so a write could hide behind it — this executor may not run it via Bash (Bash is read-only here). Run the inspection command directly."
+}
+
 # check_function_definition
 # Denies a segment that defines a shell function, in any spelling: `name() ...`, `name () ...`
 # (an unquoted `()` in any token, or a `(` token followed by a `)` token) and `function name ...` (the keyword at the start of a command,
@@ -146,6 +153,11 @@ check_readonly_writes() {
   # the write-form checks and the only safe answer is to deny the shell.
   if in_set "$cmd0" "${SHELLS[@]}"; then
     deny "$(msg_shell "$cmd0")"
+  fi
+  # A launcher runs the command after it, which nothing below classifies: denied by name,
+  # whatever follows, as the shells are.
+  if in_set "$cmd0" "${LAUNCHERS[@]}"; then
+    deny "$(msg_launcher "$cmd0")"
   fi
   if in_set "$cmd0" "${WRITE_CMDS[@]}"; then
     deny "$(msg_write_cmd "$cmd0")"

@@ -2365,3 +2365,99 @@ def test_lead_and_judge_deny_a_quoted_time_p(agent, command, ws):
 def test_fast_and_smart_end_on_a_quoted_wrapper_flag_with_nothing_behind_it(agent, command, ws):
     proc = run_guard_with_env(command, agent, ws, {})
     assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# --- issue #119: doas, su, pkexec and busybox run a command the read-only check never sees ----
+# Lead and judge deny them as the command word, with or without arguments, however they are
+# spelled and behind any wrapper the guard peels. Fast and smart hold write and are not covered.
+
+LAUNCHER_FORMS = [
+    "doas cp a b",
+    'su -c "cp a b"',
+    "su -c 'cp a b'",
+    "pkexec cp a b",
+    "busybox cp a b",
+    # with nothing a write behind them: the launcher itself is the refusal
+    "doas ls",
+    "doas",
+    "su",
+    "su -",
+    "su root",
+    "pkexec ls",
+    "pkexec",
+    "busybox ls",
+    "busybox",
+    "busybox cat f",
+    "busybox sh -c x",
+    # read as the shell reads the word
+    '"doas" cp a b',
+    "'su' -c x",
+    "\\su -c x",
+    'd"oas" cp a b',
+    'p""kexec cp a b',
+    "\\busybox cp a b",
+    "/usr/bin/doas cp a b",
+    "/bin/su -c x",
+    "/usr/bin/pkexec cp a b",
+    "/bin/busybox cp a b",
+    "./busybox cp a b",
+    # behind a wrapper or prefix the guard peels
+    "nice doas cp a b",
+    "FOO=1 doas cp a b",
+    "env FOO=1 su -c x",
+    "env doas cp a b",
+    "timeout 5 su -c x",
+    "nohup pkexec cp a b",
+    "exec busybox cp a b",
+    "time -p busybox cp a b",
+    "command busybox cp a b",
+    "stdbuf -o L pkexec cp a b",
+    "rtk doas cp a b",
+    "rtk proxy su -c x",
+    "sudo doas cp a b",
+    "sudo su -c x",
+    "sudo busybox cp a b",
+    "nice sudo pkexec cp a b",
+    "doas doas cp a b",
+    # after another command, inside a substitution, or after a reserved word
+    "ls && doas cp a b",
+    "ls; su -c x",
+    "ls | busybox cat",
+    "echo $(doas cp a b)",
+    "echo `su -c x`",
+    "if true; then pkexec cp a b; fi",
+    "for x in 1; do busybox cp a b; done",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", LAUNCHER_FORMS)
+def test_lead_and_judge_deny_doas_su_pkexec_and_busybox(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# a launcher name that is not the command word is only text
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "echo doas",
+    "echo su -c x",
+    "grep su f",
+    "grep -n busybox f",
+    "git log --author=su",
+    "ls pkexec",
+    "cat doas",
+    "ls sudoers",
+    "ls suffix",
+    "ls busyboxes",
+    "echo 'doas cp a b'",
+])
+def test_lead_and_judge_allow_a_launcher_name_that_is_not_the_command_word(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart hold write: the launchers are not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["doas cp a b", 'su -c "cp a b"', "pkexec cp a b", "busybox cp a b", "doas ls", "busybox ls"])
+def test_fast_and_smart_are_not_refused_the_launchers(agent, command, ws):
+    assert_allow(command, agent, ws)

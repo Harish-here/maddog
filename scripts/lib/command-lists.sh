@@ -6,6 +6,12 @@
 # -c argument is not parsed as a nested command line.
 SHELLS=(sh bash zsh ksh dash ash)
 
+# Launchers: each runs the command that follows it (doas and pkexec as another user, su with -c,
+# busybox as one of its applets), and this guard does not classify that command. Denied for lead
+# and judge as the command word, with or without arguments. A write behind sudo is already seen,
+# because sudo is a wrapper (below); these are not peeled, since their flags are not understood.
+LAUNCHERS=(doas su pkexec busybox)
+
 # Inline interpreters and scripting tools, denied for lead and judge regardless of arguments.
 INTERPRETERS=(python python2 python3 node nodejs deno bun perl ed xargs)
 
