@@ -113,6 +113,17 @@ def test_a_target_with_a_line_break_is_denied_even_when_every_line_is_a_hand_or_
     assert verdict(tmp_path, caller, shape.format(hand=hand)) == "deny"
 
 
+@pytest.mark.parametrize("caller", CALLERS)
+@pytest.mark.parametrize("shape", ["{hand}\n", "{hand}\n\n", "maddog:{hand}\n", "maddog:{hand}\n\n\n"])
+def test_a_target_that_ends_in_a_line_break_is_denied(tmp_path, caller, shape):
+    # The shell reads the target through $(...), which strips trailing line breaks, so the check
+    # runs on the raw JSON string instead.
+    hand = CALLERS[caller][0]
+    proc = run_guard(tmp_path, dispatch(caller, shape.format(hand=hand)))
+    assert decision(proc) == "deny"
+    assert json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"].startswith("Blocked by judge-dispatch-guard.sh")
+
+
 @pytest.mark.parametrize("target", [5, ["executor-fast-read"], {"name": "executor-fast-read"}])
 def test_a_target_that_is_not_a_string_is_denied(tmp_path, target):
     for caller in CALLERS:

@@ -163,6 +163,13 @@ log_probe "tool_name=${tool_name} agent_type=${agent_type} target=${target:-none
 
 [ -z "$target" ] && deny_no_target
 
+# A target with a line break anywhere is denied. `field` reads through $(...), which strips every
+# trailing line break, so agent_target_in never sees one at the end; ask jq about the raw string.
+# jq's one-word answer is not changed by $(...). A jq failure leaves it empty: not a deny.
+if [ "$(printf '%s' "$input" | jq -r '.tool_input.subagent_type | if type == "string" and contains("\n") then "break" else "ok" end' 2>/dev/null)" = break ]; then
+  deny "$target"
+fi
+
 if agent_target_in "$target" "${allowed[@]}"; then
   exit 0
 fi
