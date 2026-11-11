@@ -234,5 +234,6 @@ def test_hooks_json_wires_the_guard_to_every_tool_the_two_agents_hold():
     matched = set(entries[0]["matcher"].split("|"))
     assert {"Read", "Grep", "Glob", "Edit", "Write", "Bash", "WebFetch", "WebSearch"} <= matched
     command = entries[0]["hooks"][0]["command"]
-    assert command == "${CLAUDE_PLUGIN_ROOT}/scripts/hooks/pattern-declare-guard.sh"
-    assert (REPO_ROOT / command.replace("${CLAUDE_PLUGIN_ROOT}/", "")).exists()
+    # The placeholder is double-quoted so an install path with a space does not split the command.
+    assert command == '"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/pattern-declare-guard.sh"'
+    assert (REPO_ROOT / command.strip('"').replace("${CLAUDE_PLUGIN_ROOT}/", "")).exists()
