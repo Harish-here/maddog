@@ -943,8 +943,12 @@ env_split_string() {
 # The others skip a flag, taking the next word as its value for -u -C -P -a (and the long
 # --unset --chdir --argv0), and read the string of -S / --split-string as a command line; short
 # flags may be clustered (`-iS 'git push -f'`).
+# $1 = reading: "quoted-no-value" makes a flag spelled with a quote or a backslash (`-"u"`) take
+# no value, as origin/main read it; empty reads it as the shell does, value and all. check_segment
+# runs both readings for fast and smart. An argument, not a global, so nothing in the hook's
+# environment can pick the reading.
 strip_env() {
-  local t val rest ch
+  local reading="${1:-}" t raw val rest ch
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
     t="${tokens[0]}"
@@ -953,11 +957,16 @@ strip_env() {
       continue
     fi
     # a flag is read as the shell reads it: `"-i"`, `'-u'` and `\-0` are flags too
+    raw="$t"
     unquote_word "$t"
     t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
     if [ "${deny_writes:-0}" -eq 1 ]; then
       deny "$(msg_wrapper_flag env "$t")"
+    fi
+    if [ "$reading" = "quoted-no-value" ] && [ "$raw" != "$t" ]; then
+      tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+      continue
     fi
     case "$t" in
       --split-string)
@@ -1017,14 +1026,21 @@ strip_env() {
 # checks see the command it runs (`timeout -s KILL 5 git push -f` leaves `git push -f`). Unlike
 # strip_command_wrappers it never denies: a form it misreads only means the check sees a
 # different word, as it did before the peel. Used for fast and smart. Mutates tokens/tokens_masked.
+# $2 = reading, as for strip_env: "quoted-no-value" drops a flag spelled with a quote or a
+# backslash without its value; empty reads it as the shell does.
 strip_wrapper_lenient() {
-  local w="$1" t rest ch n
+  local w="$1" reading="${2:-}" t raw rest ch n
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
     # a flag is read as the shell reads it: `"-i"`, `'-n'` and `\-p` are flags too
-    unquote_word "${tokens[0]}"
+    raw="${tokens[0]}"
+    unquote_word "$raw"
     t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
+    if [ "$reading" = "quoted-no-value" ] && [ "$raw" != "$t" ]; then
+      tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+      continue
+    fi
     case "$w:$t" in
       nice:-n|nice:--adjustment|exec:-a|time:-f|time:-o|time:--format|time:--output|\
       timeout:-s|timeout:-k|timeout:--signal|timeout:--kill-after|\
@@ -1070,8 +1086,10 @@ strip_wrapper_lenient() {
 # not understand; fast and smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1
 # when it dropped an assignment, env or a wrapper (not rtk). Mutates the global
 # tokens/tokens_masked.
+# $1 = reading, for fast and smart (see strip_env): "quoted-no-value", or empty. Lead and judge
+# ignore it.
 strip_leading_prefixes() {
-  local progressed=1 w n_before
+  local reading="${1:-}" progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -1084,7 +1102,15 @@ strip_leading_prefixes() {
     w="${UNQUOTED##*/}"
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
-      env) PEELED_OTHER=1; strip_env; progressed=1 ;;
+      env)
+        PEELED_OTHER=1
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          strip_env
+        else
+          strip_env "$reading"
+        fi
+        progressed=1
+        ;;
       sudo)
         PEELED_OTHER=1
         n_before=${#tokens[@]}
@@ -1094,7 +1120,7 @@ strip_leading_prefixes() {
           # fast and smart: a lenient peel that never refuses, so the irreversible-command
           # checks see `git push -f` behind `sudo git push -f`. They hold write, so sudo itself
           # is no refusal for them.
-          strip_wrapper_lenient sudo
+          strip_wrapper_lenient sudo "$reading"
         fi
         # progress only if the peel removed something, so a sudo it leaves cannot loop
         [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
@@ -1106,7 +1132,7 @@ strip_leading_prefixes() {
         if [ "${deny_writes:-0}" -eq 1 ]; then
           strip_command_wrappers
         else
-          strip_wrapper_lenient "$w"
+          strip_wrapper_lenient "$w" "$reading"
         fi
         progressed=1
         ;;

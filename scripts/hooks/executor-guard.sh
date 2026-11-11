@@ -68,7 +68,7 @@ REQUIRED_FUNCS=(
   heredoc_opens_construct skip_heredoc_bodies check_irreversible check_function_definition
   check_git_config check_unreadable_words check_readonly_writes _path_guard_strip_quotes
   _path_guard_split _path_guard_has_glob _path_guard_join normalize_path is_temp_path
-  check_segment check_command_text
+  check_quoted_flag_reading check_segment check_command_text
 )
 REQUIRED_VARS=(
   MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE

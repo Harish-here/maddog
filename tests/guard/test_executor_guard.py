@@ -2663,3 +2663,80 @@ def test_every_executor_still_checks_a_heredoc_body_behind_a_flagged_wrapper(age
 def test_every_executor_still_skips_a_heredoc_body_behind_a_bare_time_p(agent, ws):
     proc = run_guard_with_env("time -p cat <<'EOF'\n(1+2)\nEOF", agent, ws, {})
     assert not _is_deny(proc), (proc.stdout, proc.stderr)
+
+
+# --- review of #118-#121: a quoted flag that takes a value ------------------------------------
+# For fast and smart, `-"u"` was read on origin/main as a flag with no value, so the next word
+# stayed the command word and `git push -f` was denied. Reading it as `-u` takes that word as the
+# value and hides the push. A flag spelled with a quote or a backslash is now checked both ways:
+# with no value (as on origin/main) and with one (as the shell reads it). A bare flag keeps one
+# reading.
+
+QUOTED_VALUE_FLAG_FORMS = {
+    "time_quoted_o": 'time -"o" git push -f',
+    "time_backslash_o": "time -\\o git push -f",
+    "nice_quoted_n": 'nice -"n" git push -f',
+    "exec_quoted_a": 'exec -"a" git push -f',
+    "stdbuf_quoted_o": 'stdbuf -"o" git push -f',
+    "env_quoted_C": 'env -"C" git push -f',
+    "env_quoted_u": 'env -"u" git push -f',
+    "env_quoted_P": 'env -"P" git push -f',
+    "env_quoted_a": 'env -"a" git push -f',
+    "env_quoted_long_unset": 'env -"-unset" git push -f',
+    # the other reading: the flag takes the next word, and what follows is the command
+    "env_fully_quoted_u_with_value": 'env "-u" X git push -f',
+    "env_single_quoted_u_with_value": "env '-u' X git push -f",
+    "env_quoted_u_with_value": 'env -"u" X git push -f',
+    "time_quoted_o_with_value": 'time -"o" out git push -f',
+    "nice_quoted_n_with_value": 'nice -"n" 5 git push -f',
+    "exec_quoted_a_with_value": 'exec -"a" foo git push -f',
+    "stdbuf_quoted_o_with_value": 'stdbuf -"o" L git push -f',
+    "timeout_quoted_s_with_value": 'timeout -"s" KILL 5 git push -f',
+    "sudo_quoted_u": 'sudo -"u" git push -f',
+    "sudo_quoted_u_with_value": 'sudo -"u" root git push -f',
+    "sudo_backslash_u_with_value": "sudo -\\u root git push -f",
+    "nested_quoted_flags": 'env -"u" nice -"n" git push -f',
+    "env_two_quoted_flags": 'env -"u" -"C" git push -f',
+}
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("name", list(QUOTED_VALUE_FLAG_FORMS))
+def test_a_quoted_flag_that_takes_a_value_is_checked_both_ways(agent, name, ws):
+    command = QUOTED_VALUE_FLAG_FORMS[name]
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (name, command, proc.stdout, proc.stderr)
+
+
+# a bare flag keeps its one reading: the value-taking flag takes the next word
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "env -u git push -f",
+    "env -C git push -f",
+    "env -P git push -f",
+    "env -a git push -f",
+    "time -o git push -f",
+    "nice -n git push -f",
+    "exec -a git push -f",
+    "stdbuf -o git push -f",
+    "sudo -u git push -f",
+])
+def test_fast_and_smart_read_a_bare_value_flag_with_one_reading(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# a quoted value flag in front of a harmless command is not refused
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    'env -"u" X ls',
+    'env -"u" ls',
+    'time -"o" out cp a b',
+    'nice -"n" 5 ls',
+    'exec -"a" foo ls',
+    'sudo -"u" root ls',
+    'sudo -"u" ls',
+])
+def test_fast_and_smart_allow_a_quoted_value_flag_before_a_reversible_command(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
