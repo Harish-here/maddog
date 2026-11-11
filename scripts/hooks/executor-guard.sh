@@ -26,10 +26,13 @@
 # plugin-namespaced, e.g. "maddog:executor-judge"). Every other case, a different agent_type or
 # none (the main conversation), ALLOWS immediately with no output.
 #
-# IMPORTANT: Claude Code hooks FAIL OPEN. If this file is missing, not executable, times out, or
-# emits malformed JSON, the tool call proceeds as if no hook existed. This script is therefore a
-# GUARD, not a security CONTROL: it catches the common irreversible/write patterns, it does not
-# guarantee safety against a determined or unusual command.
+# IMPORTANT: a Claude Code hook fails open unless told otherwise. hooks/hooks.json sets
+# "onFailure": "block" on this hook, so on Claude Code 2.1.295 or later a hook that fails to start
+# (file missing, not executable, no bash), times out, exits other than 0 or 2, or emits malformed
+# JSON blocks the call. On an older version, or without that setting, the call goes ahead as if no
+# hook existed. This script is a GUARD, not a security CONTROL: it catches the common
+# irreversible/write patterns, it does not guarantee safety against a determined or unusual
+# command.
 #
 # Protocol: read the PreToolUse JSON payload from stdin, inspect .tool_input.command, then either
 # print nothing and exit 0 (ALLOW), or print a hookSpecificOutput deny JSON and exit 0 (DENY; exit
@@ -167,8 +170,10 @@ fi
 
 # --- fail-closed backstop (lead/judge only) ---
 # Past this point, any unexpected non-zero exit (an unbound variable under `set -u`, a bad
-# substitution, ...) would reach Claude Code as a "non-blocking" hook error and the Bash call would
-# run UNCHECKED. For the two read-only executors, turn that into a deny instead. Every intended
+# substitution, ...) would reach Claude Code as a failed hook. With "onFailure": "block" on
+# Claude Code 2.1.295 or later that blocks the Bash call with no reason given; on an older version,
+# or without the setting, it is a "non-blocking" error and the call would run UNCHECKED. For the
+# two read-only executors, turn that into a deny with a reason instead. Every intended
 # path exits 0 (allow, or deny() which exits 0 after printing), so a non-zero status here can only
 # be an internal failure. The JSON is built without jq (jq itself may be what failed); it carries
 # the shape-refusal context, as the command is unreadable to the guard, not banned.
