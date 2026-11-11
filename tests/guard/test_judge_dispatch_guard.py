@@ -9,12 +9,14 @@ Covered here, one test group per branch of the script:
   guarded caller, no target               -> deny        guarded caller, allowed target -> allow
   guarded caller, other target            -> deny        deny output shape and text
   probe logging (off by default, never changes the outcome)
-  encode failure while denying            -> allow       wiring in hooks/hooks.json
+  encode failure while denying            -> allow       a failing date in a probe line
+  wiring in hooks/hooks.json
 Without jq, and with a lib that is missing or cut short, are tested in test_missing_jq.py and
 test_missing_lib.py, which already include this script.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -252,37 +254,94 @@ def test_a_log_that_cannot_be_written_does_not_change_the_outcome(tmp_path, targ
     assert decision(proc) == expected
 
 
-# --- a denial that cannot be encoded ---
+# --- a denial that cannot be encoded, and a clock that fails ---
+# Both tests run the guard under a PATH of shims. The jq shim appends a line to `jq-encode-calls`
+# each time it is asked to encode text (-Rs), which only emit_deny does, and fails on the calls
+# numbered in JQ_FAIL_CALLS (1 is the reason, 2 is the context). So the files tell three outcomes
+# apart even though stdout is empty in all of them:
+#   allowed            probe line logged, no encode call
+#   reached emit_deny  probe line logged, encode calls made
+#   field read broke   no probe line, no encode call
 
-@pytest.fixture
-def bin_with_failing_encoder(tmp_path):
-    """A PATH whose jq works for field reads but fails when asked to encode the denial text (-Rs)."""
+
+def shim_bin(tmp_path, date_fails=False):
     bindir = tmp_path / "bin"
     bindir.mkdir()
-    real_jq = shutil.which("jq")
     (bindir / "jq").write_text(
-        '#!/bin/bash\nfor a in "$@"; do [ "$a" = "-Rs" ] && exit 1; done\nexec "%s" "$@"\n' % real_jq)
+        '#!/bin/bash\n'
+        'for a in "$@"; do\n'
+        '  if [ "$a" = "-Rs" ]; then\n'
+        '    echo x >> "$TMPDIR/jq-encode-calls"\n'
+        '    n=$(wc -l < "$TMPDIR/jq-encode-calls")\n'
+        '    for f in $JQ_FAIL_CALLS; do [ "$f" -eq "$n" ] && exit 1; done\n'
+        '  fi\n'
+        'done\n'
+        'exec "%s" "$@"\n' % shutil.which("jq"))
     (bindir / "jq").chmod(0o755)
-    for tool in ["bash", "cat", "dirname", "date", "tr", "grep"]:
+    for tool in ["bash", "cat", "dirname", "tr", "grep", "wc"] + ([] if date_fails else ["date"]):
         (bindir / tool).symlink_to(shutil.which(tool))
+    if date_fails:
+        (bindir / "date").write_text("#!/bin/bash\nexit 1\n")
+        (bindir / "date").chmod(0o755)
     return bindir
 
 
-def test_a_denial_jq_cannot_encode_is_allowed_not_blocked(tmp_path, bin_with_failing_encoder):
-    env = {"PATH": str(bin_with_failing_encoder), "TMPDIR": str(tmp_path)}
-    proc = subprocess.run([str(bin_with_failing_encoder / "bash"), str(GUARD)],
-                          input=json.dumps(dispatch("executor-judge", "general-purpose")),
-                          capture_output=True, text=True, timeout=10, env=env, cwd=str(tmp_path))
-    assert proc.returncode == 0 and proc.stdout == ""
+def run_shimmed(tmp_path, bindir, payload, fail_calls="", probe=True):
+    env = {"PATH": str(bindir), "TMPDIR": str(tmp_path), "JQ_FAIL_CALLS": fail_calls}
+    if probe:
+        env["MADDOG_DISPATCH_PROBE"] = "1"
+    proc = subprocess.run([str(bindir / "bash"), str(GUARD)], input=json.dumps(payload), capture_output=True,
+                          text=True, timeout=10, env=env, cwd=str(tmp_path))
+    assert proc.returncode == 0, proc.stderr
+    log = tmp_path / "maddog-dispatch-probe.log"
+    calls = tmp_path / "jq-encode-calls"
+    return (proc, log.read_text().splitlines() if log.exists() else [],
+            len(calls.read_text().splitlines()) if calls.exists() else 0)
 
 
-def test_the_failing_encoder_still_lets_an_allowed_dispatch_through_untouched(tmp_path, bin_with_failing_encoder):
-    # Control for the test above: the shim is only broken for -Rs, so the field reads work.
-    env = {"PATH": str(bin_with_failing_encoder), "TMPDIR": str(tmp_path)}
-    proc = subprocess.run([str(bin_with_failing_encoder / "bash"), str(GUARD)],
-                          input=json.dumps(dispatch("executor-judge", "executor-fast-read")),
-                          capture_output=True, text=True, timeout=10, env=env, cwd=str(tmp_path))
-    assert proc.returncode == 0 and proc.stdout == ""
+@pytest.mark.parametrize("fail_calls", ["1 2", "1", "2"])
+def test_a_denial_jq_cannot_encode_is_allowed_not_blocked(tmp_path, fail_calls):
+    # Failing the reason, the context, or both: nothing is printed, so the call is allowed.
+    proc, lines, encode_calls = run_shimmed(tmp_path, shim_bin(tmp_path),
+                                            dispatch("executor-judge", "general-purpose"), fail_calls)
+    assert proc.stdout == ""
+    assert len(lines) == 1 and "target=general-purpose" in lines[0]  # the field reads worked
+    assert encode_calls == 2  # emit_deny ran and tried to encode both texts
+
+
+def test_the_working_encoder_denies_the_same_dispatch(tmp_path):
+    # Control: with no encode call failing, the shimmed PATH prints the deny for the same payload.
+    proc, lines, encode_calls = run_shimmed(tmp_path, shim_bin(tmp_path),
+                                            dispatch("executor-judge", "general-purpose"))
+    assert decision(proc) == "deny"
+    assert len(lines) == 1 and encode_calls == 2
+
+
+def test_a_no_target_denial_jq_cannot_encode_is_allowed_not_blocked(tmp_path):
+    proc, lines, encode_calls = run_shimmed(tmp_path, shim_bin(tmp_path),
+                                            dispatch("executor-smart", None), "1 2")
+    assert proc.stdout == ""
+    assert len(lines) == 1 and "target=none" in lines[0]
+    assert encode_calls == 2
+
+
+def test_an_allowed_dispatch_never_reaches_the_encoder(tmp_path):
+    # Control for the tests above: an allowed call under the failing encoder logs its line and
+    # makes no encode call, which a call that reached emit_deny would.
+    proc, lines, encode_calls = run_shimmed(tmp_path, shim_bin(tmp_path),
+                                            dispatch("executor-judge", "executor-fast-read"), "1 2")
+    assert proc.stdout == ""
+    assert len(lines) == 1 and "target=executor-fast-read" in lines[0]
+    assert encode_calls == 0
+
+
+@pytest.mark.parametrize("date_fails, stamp", [(False, r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ"), (True, "unknown")])
+def test_the_probe_line_is_stamped_and_says_unknown_when_date_fails(tmp_path, date_fails, stamp):
+    payload = dispatch("executor-judge", "general-purpose")
+    proc, lines, _ = run_shimmed(tmp_path, shim_bin(tmp_path, date_fails), payload)
+    assert decision(proc) == "deny"  # a failing clock changes nothing about the outcome
+    assert len(lines) == 1
+    assert re.match(stamp + r"\ttool_name=Agent agent_type=executor-judge target=general-purpose ", lines[0])
 
 
 # --- the script and its wiring ---
