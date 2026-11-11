@@ -589,9 +589,10 @@ strip_command_wrappers() {
         progressed=1
         ;;
       sudo)
-        # Lead and judge only: fast and smart keep reading sudo as the command word. The
-        # heredoc reader scan (heredoc_consumer) passes keep-sudo so a `sudo cat <<EOF` body is
-        # still read as before, line by line, and not skipped as cat's input.
+        # Lead and judge only: for fast and smart this case breaks, so sudo stays the command
+        # word in the heredoc reader scan (heredoc_consumer); strip_leading_prefixes peels their
+        # sudo later with strip_wrapper_lenient. The reader scan passes keep-sudo so a
+        # `sudo cat <<EOF` body is still read line by line, and not skipped as cat's input.
         [ "${deny_writes:-0}" -eq 1 ] && [ "$keep_sudo" != "keep-sudo" ] || break
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
@@ -1011,13 +1012,13 @@ strip_env() {
 }
 
 # strip_wrapper_lenient <wrapper>
-# tokens[0] is one of command exec nohup nice time timeout stdbuf. Drops it, its options (and the
-# value of the ones that take one) and, for timeout, the DURATION, so the irreversible-command
+# tokens[0] is one of command exec nohup nice time timeout stdbuf sudo. Drops it, its options (and
+# the value of the ones that take one) and, for timeout, the DURATION, so the irreversible-command
 # checks see the command it runs (`timeout -s KILL 5 git push -f` leaves `git push -f`). Unlike
 # strip_command_wrappers it never denies: a form it misreads only means the check sees a
 # different word, as it did before the peel. Used for fast and smart. Mutates tokens/tokens_masked.
 strip_wrapper_lenient() {
-  local w="$1" t
+  local w="$1" t rest ch n
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
     # a flag is read as the shell reads it: `"-i"`, `'-n'` and `\-p` are flags too
@@ -1027,8 +1028,28 @@ strip_wrapper_lenient() {
     case "$w:$t" in
       nice:-n|nice:--adjustment|exec:-a|time:-f|time:-o|time:--format|time:--output|\
       timeout:-s|timeout:-k|timeout:--signal|timeout:--kill-after|\
-      stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error)
+      stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error|\
+      sudo:--user|sudo:--group|sudo:--chdir|sudo:--host|sudo:--prompt|sudo:--chroot|sudo:--role|\
+      sudo:--type|sudo:--command-timeout|sudo:--other-user|sudo:--close-from)
         tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
+        ;;
+      sudo:-[!-]*)
+        # a cluster of short flags (`-n`, `-nu root`, `-uroot`): the first letter that takes a
+        # value (u g C D h p R r T t U) takes the rest of the word, or the next word when nothing
+        # is left
+        rest="${t:1}"
+        n=1
+        while [ -n "$rest" ]; do
+          ch="${rest:0:1}"
+          rest="${rest:1}"
+          case "$ch" in
+            [ugCDhpRrTtU])
+              [ -z "$rest" ] && n=2
+              break
+              ;;
+          esac
+        done
+        tokens=("${tokens[@]:$n}"); tokens_masked=("${tokens_masked[@]:$n}")
         ;;
       *)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
@@ -1043,12 +1064,12 @@ strip_wrapper_lenient() {
 # strip_leading_prefixes
 # Every agent. Peels what runs another command without being it: leading `NAME=value`
 # assignments and the wrappers `env`, `rtk`, `nice`, `timeout`, `time`, `command`, `exec`,
-# `nohup` and `stdbuf` (and `sudo`, for lead and judge only), in any order, so the
-# irreversible-command checks see the command that
-# runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
-# the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
-# smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
-# assignment, env or a wrapper (not rtk). Mutates the global tokens/tokens_masked.
+# `nohup`, `stdbuf` and `sudo`, in any order, so the irreversible-command checks see the command
+# that runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`, `sudo git push
+# -f`). Lead and judge peel the wrappers with strip_command_wrappers, which denies forms it does
+# not understand; fast and smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1
+# when it dropped an assignment, env or a wrapper (not rtk). Mutates the global
+# tokens/tokens_masked.
 strip_leading_prefixes() {
   local progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
@@ -1065,14 +1086,18 @@ strip_leading_prefixes() {
       rtk) strip_rtk; progressed=1 ;;
       env) PEELED_OTHER=1; strip_env; progressed=1 ;;
       sudo)
-        # lead and judge only (see strip_command_wrappers); fast and smart leave sudo as is
+        PEELED_OTHER=1
+        n_before=${#tokens[@]}
         if [ "${deny_writes:-0}" -eq 1 ]; then
-          PEELED_OTHER=1
-          n_before=${#tokens[@]}
           strip_command_wrappers
-          # progress only if the peel removed something, so a sudo it leaves cannot loop
-          [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
+        else
+          # fast and smart: a lenient peel that never refuses, so the irreversible-command
+          # checks see `git push -f` behind `sudo git push -f`. They hold write, so sudo itself
+          # is no refusal for them.
+          strip_wrapper_lenient sudo
         fi
+        # progress only if the peel removed something, so a sudo it leaves cannot loop
+        [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
         ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
         PEELED_OTHER=1

@@ -19,7 +19,9 @@ INTERPRETERS=(python python2 python3 node nodejs deno bun perl ed xargs)
 # rtk is the output-filtering proxy a user hook rewrites commands through (`rtk proxy <cmd>`
 # runs <cmd> unfiltered, bare `rtk <cmd>` filters it): either way <cmd> is what runs.
 #
-# sudo is peeled for lead and judge only (deny_writes=1); see its case in strip_command_wrappers.
+# sudo is peeled for every agent by strip_leading_prefixes: lead and judge with
+# strip_command_wrappers (deny_writes=1), fast and smart with strip_wrapper_lenient. The heredoc
+# scan (heredoc_consumer) keeps sudo as the command word for all four.
 WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk sudo)
 
 # Reserved words that open or close a compound command. strip_leading_keywords (parse.sh) drops

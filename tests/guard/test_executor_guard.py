@@ -2160,7 +2160,9 @@ def test_lead_and_judge_still_allow_read_only_commands_behind_sudo(agent, comman
     assert_allow(command, agent, ws)
 
 
-# fast and smart keep their old reading of sudo: no refusal is added for them here
+# fast and smart keep reading what is not irreversible as before: sudo adds no refusal for them
+# here, because they hold write (`sudo cp a b`) and these four are not on the irreversible list.
+# Since #118 they do look behind sudo for the irreversible-command check (the #118 block below).
 @pytest.mark.parametrize("agent", [FAST, SMART])
 @pytest.mark.parametrize("command", ["sudo cp a b", "sudo dd if=a of=b", "sudo -n ls", "sudo ls"])
 def test_fast_and_smart_add_no_refusal_for_sudo(agent, command, ws):
@@ -2537,3 +2539,127 @@ def test_lead_and_judge_still_allow_dd_without_an_expansion_and_other_commands_w
 @pytest.mark.parametrize("command", ["dd if=a $X", "dd if=a ${X}", "dd if=a $(echo of=b)", "dd if=a"])
 def test_fast_and_smart_allow_dd_with_an_expansion(agent, command, ws):
     assert_allow(command, agent, ws)
+
+
+# --- issue #118: sudo hides an irreversible command from fast and smart ----------------------
+# Decided: fast and smart get the same look behind sudo as lead and judge, for the
+# irreversible-command check only. They still hold write, so `sudo cp a b` stays allowed.
+# Heredoc handling is unchanged: the last test of this block and the #106 block pin it.
+
+SUDO_IRREVERSIBLE_FORMS = [
+    "sudo rm -rf /",
+    "sudo rm -r /etc",
+    "sudo git push -f",
+    "sudo git push --force",
+    "sudo git push origin +main",
+    "sudo git reset --hard",
+    "sudo git clean -fd",
+    "sudo git branch -D x",
+    "sudo git merge x",
+    "sudo find . -delete",
+    "sudo npm publish",
+    # sudo's own flags are stepped over, and the value of the ones that take one
+    "sudo -n git push -f",
+    "sudo -E git push -f",
+    "sudo -- git push -f",
+    "sudo -u root git push -f",
+    "sudo -g wheel git push -f",
+    "sudo --user root git push -f",
+    "sudo --user=root git push -f",
+    "sudo -nu root git push -f",
+    "sudo -uroot git push -f",
+    'sudo "-u" root git push -f',
+    "sudo '-n' git push -f",
+    "sudo \\-n git push -f",
+    # a wrapper or prefix in front of, or behind, sudo
+    "nice sudo git push -f",
+    "sudo nice git push -f",
+    "FOO=1 sudo git push -f",
+    "sudo FOO=1 git push -f",
+    "sudo env git push -f",
+    'sudo env "-i" git push -f',
+    "sudo time -p git push -f",
+    "rtk sudo git push -f",
+    "sudo sudo git push -f",
+    # sudo is read as the shell reads it
+    "\\sudo git push -f",
+    '"sudo" git push -f',
+    "/usr/bin/sudo git push -f",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", SUDO_IRREVERSIBLE_FORMS)
+def test_fast_and_smart_check_the_irreversible_command_behind_sudo(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "sudo git push",
+    "sudo git push origin main",
+    "sudo git status",
+    "sudo git log",
+    "sudo ls",
+    "sudo -n ls",
+    "sudo -u root ls",
+    "sudo rm f",
+    "sudo cp a b",
+    "sudo dd if=a of=b",
+    "sudo env FOO=1 ls",
+    "sudo (cd x)",
+])
+def test_fast_and_smart_still_allow_what_is_not_irreversible_behind_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# a sudo with nothing behind it, or only flags, ends and is allowed
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["sudo", "sudo -n", "sudo -u", "sudo -nu", "sudo --", "sudo FOO=1", "sudo sudo sudo"])
+def test_fast_and_smart_end_on_a_sudo_with_nothing_behind_it(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# nothing in the hook's environment changes the answer for fast and smart or makes the peel loop
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("value", ["1", "0", "junk", ""])
+@pytest.mark.parametrize("command,denied", [
+    ("sudo git push -f", True),
+    ("sudo rm -rf /", True),
+    ("sudo cp a b", False),
+    ("sudo ls", False),
+])
+def test_fast_and_smart_decide_the_same_behind_sudo_whatever_the_environment_holds(agent, value, command, denied, ws):
+    proc = run_guard_with_env(command, agent, ws, {"HEREDOC_KEEP_SUDO": value})
+    assert _is_deny(proc) is denied, (command, value, proc.stdout, proc.stderr)
+
+
+# the body of a heredoc behind sudo is read as before: line by line, sudo is not a reader
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_heredoc_behind_sudo_is_read_as_before(agent, ws):
+    assert_deny("sudo cat <<'EOF'\ngit push -f\nEOF", agent, ws)
+    assert_allow("sudo cat <<'EOF'\ngit push origin main\nEOF", agent, ws)
+    assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)
+
+
+# Heredoc bodies are checked or skipped as before, for every executor, now that the flag of env,
+# exec, nohup and time is read unquoted (#121): a body that was checked stays checked, and a body
+# behind a bare `time -p cat` is still skipped as cat's input.
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("prefix", [
+    'env "-i" ', "env '-i' ", "env \\-i ", "env -i ",
+    'exec "-a" foo ', "exec -a foo ",
+    'nohup "-x" ', "nohup -x ",
+    'time "-p" ', "time '-p' ", "time \\-p ",
+    'sudo "-u" root ', "sudo -n ",
+])
+def test_every_executor_still_checks_a_heredoc_body_behind_a_flagged_wrapper(agent, prefix, ws):
+    proc = run_guard_with_env(f"{prefix}cat <<'EOF'\n(1+2)\nEOF", agent, ws, {})
+    assert _is_deny(proc), (prefix, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_every_executor_still_skips_a_heredoc_body_behind_a_bare_time_p(agent, ws):
+    proc = run_guard_with_env("time -p cat <<'EOF'\n(1+2)\nEOF", agent, ws, {})
+    assert not _is_deny(proc), (proc.stdout, proc.stderr)
