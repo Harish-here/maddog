@@ -9,7 +9,9 @@ but the workspace is kept so a command can reference a real path where one
 is written into the command string.
 """
 import json
+import os
 import shutil
+import signal
 import subprocess
 from pathlib import Path
 
@@ -2220,6 +2222,39 @@ def test_lead_and_judge_still_skip_the_body_of_a_heredoc_behind_a_plain_cat(agen
 @pytest.mark.parametrize("agent", [LEAD, JUDGE])
 def test_lead_and_judge_allow_a_harmless_heredoc_body_behind_sudo(agent, ws):
     assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
+
+
+def run_guard_with_env(command: str, agent_type: str, cwd: Path, extra_env: dict):
+    """The real hook with extra environment variables, killed (whole process group) after 5s."""
+    payload = {"agent_type": agent_type, "tool_input": {"command": command}, "cwd": str(cwd)}
+    env = dict(os.environ)
+    env.update(extra_env)
+    proc = subprocess.Popen(
+        ["bash", str(GUARD)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, cwd=str(cwd), env=env, start_new_session=True,
+    )
+    try:
+        out, err = proc.communicate(json.dumps(payload), timeout=5)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.communicate()
+        pytest.fail(f"guard hung for {agent_type!r}: {command!r} with env {extra_env!r}")
+    return subprocess.CompletedProcess(proc.args, proc.returncode, out, err)
+
+
+# no value in the hook's environment changes what the guard decides or makes it loop
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("value", ["1", "0", "junk", ""])
+@pytest.mark.parametrize("command,denied", [
+    ("sudo rm f", True),
+    ("sudo cp a b", True),
+    ("sudo dd if=a of=b", True),
+    ("sudo ls", False),
+    ("sudo cat <<'EOF'\ncase x in\nEOF", True),
+])
+def test_lead_and_judge_decide_the_same_whatever_the_environment_holds(agent, value, command, denied, ws):
+    proc = run_guard_with_env(command, agent, ws, {"HEREDOC_KEEP_SUDO": value})
+    assert _is_deny(proc) is denied, (command, value, proc.stdout, proc.stderr)
 
 
 @pytest.mark.parametrize("agent", [FAST, SMART])

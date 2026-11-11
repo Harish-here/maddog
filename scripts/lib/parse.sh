@@ -569,7 +569,9 @@ extract_substitutions() {
 # DENIES immediately instead of falling through with that flag misread as the
 # real command and matching no denial case. When unsure, deny.
 strip_command_wrappers() {
-  local progressed=1 t w
+  # $1 = keep-sudo: leave a leading sudo in place (heredoc_consumer passes it). An argument, not a
+  # global, so nothing in the hook's environment can switch the sudo peel off.
+  local keep_sudo="${1:-}" progressed=1 t w
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -588,9 +590,9 @@ strip_command_wrappers() {
         ;;
       sudo)
         # Lead and judge only: fast and smart keep reading sudo as the command word. The
-        # heredoc reader scan (heredoc_consumer) sets HEREDOC_KEEP_SUDO so a `sudo cat <<EOF`
-        # body is still read as before, line by line, and not skipped as cat's input.
-        [ "${deny_writes:-0}" -eq 1 ] && [ "${HEREDOC_KEEP_SUDO:-0}" -eq 0 ] || break
+        # heredoc reader scan (heredoc_consumer) passes keep-sudo so a `sudo cat <<EOF` body is
+        # still read as before, line by line, and not skipped as cat's input.
+        [ "${deny_writes:-0}" -eq 1 ] && [ "$keep_sudo" != "keep-sudo" ] || break
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
         # or take a value, so ANY flag denies, as for env. `sudo VAR=val cmd` is peeled by the
@@ -1031,7 +1033,7 @@ strip_wrapper_lenient() {
 # smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
 # assignment, env or a wrapper (not rtk). Mutates the global tokens/tokens_masked.
 strip_leading_prefixes() {
-  local progressed=1 w
+  local progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -1049,8 +1051,10 @@ strip_leading_prefixes() {
         # lead and judge only (see strip_command_wrappers); fast and smart leave sudo as is
         if [ "${deny_writes:-0}" -eq 1 ]; then
           PEELED_OTHER=1
+          n_before=${#tokens[@]}
           strip_command_wrappers
-          progressed=1
+          # progress only if the peel removed something, so a sudo it leaves cannot loop
+          [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
         fi
         ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
