@@ -9,7 +9,9 @@ but the workspace is kept so a command can reference a real path where one
 is written into the command string.
 """
 import json
+import os
 import shutil
+import signal
 import subprocess
 from pathlib import Path
 
@@ -2070,3 +2072,193 @@ def test_internal_error_backstop_reason_does_not_say_return_blocked(ws, tmp_path
     reason = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
     assert "return blocked" not in reason
     assert "retry" in reason
+
+
+# --- issue #106: a quoted dd "of=..." and a sudo prefix ---------------------------------------
+# Lead and judge may not write a file via Bash. The dd check read the raw token, so a quoted
+# `of=` word slipped past it; `sudo` was not peeled, so the command behind it was never checked.
+
+DD_WRITE_FORMS = [
+    "dd if=a of=b",
+    'dd if=a "of=b"',
+    "dd if=a 'of=b'",
+    'dd if=a o"f=b"',
+    'dd if=a "o"f=b',
+    "dd if=a \\of=b",
+    'dd if=a of="b c"',
+    "dd of=b if=a",
+    "nice dd if=a 'of=b'",
+    "timeout 5 dd if=a 'of=b'",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_WRITE_FORMS)
+def test_lead_and_judge_deny_dd_with_an_output_file_however_it_is_quoted(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    'dd if=a "bs=1"',
+    "dd if=a 'count=1'",
+    'dd if="a of b"',
+])
+def test_lead_and_judge_still_allow_dd_without_an_output_file(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", DD_WRITE_FORMS)
+def test_fast_and_smart_allow_dd_with_an_output_file(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+SUDO_WRITE_FORMS = [
+    "sudo dd if=a of=b",
+    'sudo dd if=a "of=b"',
+    "sudo rm f",
+    "sudo cp a b",
+    "sudo mv a b",
+    "sudo touch f",
+    "sudo tee f",
+    "sudo sed -i s/a/b/ f",
+    "sudo cat f > out",
+    "sudo git add f",
+    "sudo python3 -c 1",
+    "sudo bash -c x",
+    "sudo env cp a b",
+    "sudo FOO=1 cp a b",
+    "nice sudo cp a b",
+    "sudo nice cp a b",
+    "sudo sudo cp a b",
+    "rtk sudo cp a b",
+    "FOO=1 sudo cp a b",
+    "\\sudo cp a b",
+    '"sudo" cp a b',
+    "/usr/bin/sudo cp a b",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", SUDO_WRITE_FORMS)
+def test_lead_and_judge_check_the_command_behind_sudo(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["sudo -n cp a b", "sudo -u root cp a b", "sudo -- cp a b", "sudo -n ls"])
+def test_lead_and_judge_deny_a_sudo_flag_the_guard_does_not_read(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["sudo ls", "sudo cat f", "sudo git status", "sudo git log", "sudo", "sudo FOO=1"])
+def test_lead_and_judge_still_allow_read_only_commands_behind_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart keep their old reading of sudo: no refusal is added for them here
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["sudo cp a b", "sudo dd if=a of=b", "sudo -n ls", "sudo ls"])
+def test_fast_and_smart_add_no_refusal_for_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# a sudo flag is read as the shell reads it: quotes and a backslash do not hide it
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    'sudo "-u" root rm f',
+    "sudo \\-n rm f",
+    "sudo '-n' cp a b",
+    'sudo "-u" root dd if=a of=b',
+    "sudo \\-n dd if=a of=b",
+    "sudo '-n' dd if=a 'of=b'",
+    'sudo "-n" ls',
+    'sudo "--" ls',
+    'sudo -"n" ls',
+])
+def test_lead_and_judge_deny_a_quoted_sudo_flag(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# a heredoc behind sudo is not cat's input to skip: its body is checked line by line, as for any
+# command that is not a reader
+SUDO_HEREDOC_BODIES = [
+    "case x in",
+    "coproc x",
+    "noglob ls",
+    "g*t status",
+    "rtk run ls",
+    "echo {a,b}",
+    'dd if=a "of=b"',
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+@pytest.mark.parametrize("prefix", ["sudo ", "nice sudo ", "sudo nice ", "FOO=1 sudo "])
+def test_lead_and_judge_check_the_body_of_a_heredoc_behind_sudo(agent, body, prefix, ws):
+    assert_deny(f"{prefix}cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+# the same bodies, behind a command that is not a reader, were already checked; behind a plain
+# cat or nice cat they are inert input and still skipped
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+def test_lead_and_judge_deny_the_body_of_a_heredoc_behind_an_unknown_command(agent, body, ws):
+    assert_deny(f"foo cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("body", SUDO_HEREDOC_BODIES)
+@pytest.mark.parametrize("prefix", ["", "nice "])
+def test_lead_and_judge_still_skip_the_body_of_a_heredoc_behind_a_plain_cat(agent, body, prefix, ws):
+    assert_allow(f"{prefix}cat <<'EOF'\n{body}\nEOF", agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+def test_lead_and_judge_allow_a_harmless_heredoc_body_behind_sudo(agent, ws):
+    assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
+
+
+def run_guard_with_env(command: str, agent_type: str, cwd: Path, extra_env: dict):
+    """The real hook with extra environment variables, killed (whole process group) after 5s."""
+    payload = {"agent_type": agent_type, "tool_input": {"command": command}, "cwd": str(cwd)}
+    env = dict(os.environ)
+    env.update(extra_env)
+    proc = subprocess.Popen(
+        ["bash", str(GUARD)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, cwd=str(cwd), env=env, start_new_session=True,
+    )
+    try:
+        out, err = proc.communicate(json.dumps(payload), timeout=5)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.communicate()
+        pytest.fail(f"guard hung for {agent_type!r}: {command!r} with env {extra_env!r}")
+    return subprocess.CompletedProcess(proc.args, proc.returncode, out, err)
+
+
+# no value in the hook's environment changes what the guard decides or makes it loop
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("value", ["1", "0", "junk", ""])
+@pytest.mark.parametrize("command,denied", [
+    ("sudo rm f", True),
+    ("sudo cp a b", True),
+    ("sudo dd if=a of=b", True),
+    ("sudo ls", False),
+    ("sudo cat <<'EOF'\ncase x in\nEOF", True),
+])
+def test_lead_and_judge_decide_the_same_whatever_the_environment_holds(agent, value, command, denied, ws):
+    proc = run_guard_with_env(command, agent, ws, {"HEREDOC_KEEP_SUDO": value})
+    assert _is_deny(proc) is denied, (command, value, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_read_a_heredoc_behind_sudo_as_before(agent, ws):
+    assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
+    # sudo is not a reader for them, so a body with a `(` is read as commands and refused, as at 5.0.1
+    assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)

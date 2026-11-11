@@ -64,7 +64,9 @@ heredoc_consumer() {
   # git counts as the reader only when it is the segment's first word, read
   # BEFORE the wrapper stripper drops any `VAR=val` / env / nice / timeout
   [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]##*/}" = "git" ] && git_first=1
-  strip_command_wrappers
+  # keep-sudo: sudo stays the command word here (it is not a reader), so the body of
+  # `sudo cat <<EOF` is checked line by line, as it was before check_segment began to peel sudo
+  strip_command_wrappers keep-sudo
   if [ "${#tokens[@]}" -eq 0 ]; then
     printf '?'
     return 0

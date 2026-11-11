@@ -569,7 +569,9 @@ extract_substitutions() {
 # DENIES immediately instead of falling through with that flag misread as the
 # real command and matching no denial case. When unsure, deny.
 strip_command_wrappers() {
-  local progressed=1 t w
+  # $1 = keep-sudo: leave a leading sudo in place (heredoc_consumer passes it). An argument, not a
+  # global, so nothing in the hook's environment can switch the sudo peel off.
+  local keep_sudo="${1:-}" progressed=1 t w
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -584,6 +586,24 @@ strip_command_wrappers() {
     case "$w" in
       rtk)
         strip_rtk
+        progressed=1
+        ;;
+      sudo)
+        # Lead and judge only: fast and smart keep reading sudo as the command word. The
+        # heredoc reader scan (heredoc_consumer) passes keep-sudo so a `sudo cat <<EOF` body is
+        # still read as before, line by line, and not skipped as cat's input.
+        [ "${deny_writes:-0}" -eq 1 ] && [ "$keep_sudo" != "keep-sudo" ] || break
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
+        # or take a value, so ANY flag denies, as for env. `sudo VAR=val cmd` is peeled by the
+        # assignment step at the top of this loop. The flag is read as the shell reads it, so
+        # `"-u"`, `'-n'` and `\-n` are flags too.
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag sudo "$UNQUOTED")"
+          fi
+        fi
         progressed=1
         ;;
       env)
@@ -1006,13 +1026,14 @@ strip_wrapper_lenient() {
 # strip_leading_prefixes
 # Every agent. Peels what runs another command without being it: leading `NAME=value`
 # assignments and the wrappers `env`, `rtk`, `nice`, `timeout`, `time`, `command`, `exec`,
-# `nohup` and `stdbuf`, in any order, so the irreversible-command checks see the command that
+# `nohup` and `stdbuf` (and `sudo`, for lead and judge only), in any order, so the
+# irreversible-command checks see the command that
 # runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
 # the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
 # smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
 # assignment, env or a wrapper (not rtk). Mutates the global tokens/tokens_masked.
 strip_leading_prefixes() {
-  local progressed=1 w
+  local progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -1026,6 +1047,16 @@ strip_leading_prefixes() {
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
       env) PEELED_OTHER=1; strip_env; progressed=1 ;;
+      sudo)
+        # lead and judge only (see strip_command_wrappers); fast and smart leave sudo as is
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          PEELED_OTHER=1
+          n_before=${#tokens[@]}
+          strip_command_wrappers
+          # progress only if the peel removed something, so a sudo it leaves cannot loop
+          [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
+        fi
+        ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
         PEELED_OTHER=1
         # lead and judge: the strict stripper, which denies a form it does not understand;
