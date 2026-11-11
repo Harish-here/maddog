@@ -2160,7 +2160,9 @@ def test_lead_and_judge_still_allow_read_only_commands_behind_sudo(agent, comman
     assert_allow(command, agent, ws)
 
 
-# fast and smart keep their old reading of sudo: no refusal is added for them here
+# fast and smart keep reading what is not irreversible as before: sudo adds no refusal for them
+# here, because they hold write (`sudo cp a b`) and these four are not on the irreversible list.
+# Since #118 they do look behind sudo for the irreversible-command check (the #118 block below).
 @pytest.mark.parametrize("agent", [FAST, SMART])
 @pytest.mark.parametrize("command", ["sudo cp a b", "sudo dd if=a of=b", "sudo -n ls", "sudo ls"])
 def test_fast_and_smart_add_no_refusal_for_sudo(agent, command, ws):
@@ -2262,3 +2264,512 @@ def test_fast_and_smart_read_a_heredoc_behind_sudo_as_before(agent, ws):
     assert_allow("sudo cat <<'EOF'\nhello\nEOF", agent, ws)
     # sudo is not a reader for them, so a body with a `(` is read as commands and refused, as at 5.0.1
     assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)
+
+
+# --- issue #121: a quoted flag on env, exec, nohup or time -----------------------------------
+# The wrapper cases tested the first character of the raw token for `-`, so `env "-i" rm f` made
+# the flag the command word and no rule matched it. A flag is read as the shell reads it.
+# T is the command behind the wrapper: an irreversible one, so all four executors deny it
+# whatever the wrapper form, and the same answer for the bare flag and the quoted flag.
+
+WRAPPER_FLAG_FORMS = [
+    # env
+    "env -i T",
+    'env "-i" T',
+    "env '-i' T",
+    "env \\-i T",
+    'env -"i" T',
+    'env "-0" T',
+    'env "-u" X T',
+    'env "-i" FOO=1 T',
+    'env FOO=1 "-i" T',
+    'env "--ignore-environment" T',
+    # exec
+    "exec -a foo T",
+    'exec "-a" foo T',
+    "exec '-a' foo T",
+    "exec \\-a foo T",
+    'exec -"a" foo T',
+    'exec "-c" T',
+    # nohup
+    "nohup -x T",
+    'nohup "-x" T',
+    "nohup '-x' T",
+    "nohup \\-x T",
+    # time
+    "time -f %e T",
+    'time "-f" %e T',
+    "time -v T",
+    'time "-v" T',
+    'time "--verbose" T',
+    "time -p T",
+    'time "-p" T',
+    "time '-p' T",
+    "time \\-p T",
+    'time -"p" T',
+    # behind other wrappers
+    'nice env "-i" T',
+    'timeout 5 env "-i" T',
+    'rtk env "-i" T',
+    'FOO=1 env "-i" T',
+    'env "-i" env "-i" T',
+    'time "-p" time "-p" T',
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("form", WRAPPER_FLAG_FORMS)
+def test_a_quoted_wrapper_flag_gets_the_answer_of_the_bare_flag(agent, form, ws):
+    command = form.replace("T", "git push -f")
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# for lead and judge the command behind the wrapper is a write the guard missed
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("form", WRAPPER_FLAG_FORMS)
+def test_lead_and_judge_deny_a_write_behind_a_quoted_wrapper_flag(agent, form, ws):
+    command = form.replace("T", "cp a b")
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# `time -p` is the one wrapper flag lead and judge understand, and only spelled bare: a quoted
+# `-p` is a flag they do not read and is denied (`time -"p" ls` already was, and a denied command
+# must not become allowed). Fast and smart peel it in any spelling.
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["time -p ls", "time -p git status", "time -p git push origin main"])
+def test_every_executor_allows_a_read_behind_a_bare_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+QUOTED_TIME_P_READS = ['time "-p" ls', "time '-p' ls", "time \\-p ls", 'time -"p" ls', 'time "-p" git status']
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", QUOTED_TIME_P_READS)
+def test_fast_and_smart_allow_a_read_behind_a_quoted_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", QUOTED_TIME_P_READS)
+def test_lead_and_judge_deny_a_quoted_time_p(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# the wrapper's flag with nothing behind it ends, whatever the quoting
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ['env "-i"', 'exec "-a"', 'nohup "-x"', 'time "-p"', 'time "-f"', 'env "-u"'])
+def test_fast_and_smart_end_on_a_quoted_wrapper_flag_with_nothing_behind_it(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# --- issue #119: doas, su, pkexec and busybox run a command the read-only check never sees ----
+# Lead and judge deny them as the command word, with or without arguments, however they are
+# spelled and behind any wrapper the guard peels. Fast and smart hold write and are not covered.
+
+LAUNCHER_FORMS = [
+    "doas cp a b",
+    'su -c "cp a b"',
+    "su -c 'cp a b'",
+    "pkexec cp a b",
+    "busybox cp a b",
+    # with nothing a write behind them: the launcher itself is the refusal
+    "doas ls",
+    "doas",
+    "su",
+    "su -",
+    "su root",
+    "pkexec ls",
+    "pkexec",
+    "busybox ls",
+    "busybox",
+    "busybox cat f",
+    "busybox sh -c x",
+    # read as the shell reads the word
+    '"doas" cp a b',
+    "'su' -c x",
+    "\\su -c x",
+    'd"oas" cp a b',
+    'p""kexec cp a b',
+    "\\busybox cp a b",
+    "/usr/bin/doas cp a b",
+    "/bin/su -c x",
+    "/usr/bin/pkexec cp a b",
+    "/bin/busybox cp a b",
+    "./busybox cp a b",
+    # behind a wrapper or prefix the guard peels
+    "nice doas cp a b",
+    "FOO=1 doas cp a b",
+    "env FOO=1 su -c x",
+    "env doas cp a b",
+    "timeout 5 su -c x",
+    "nohup pkexec cp a b",
+    "exec busybox cp a b",
+    "time -p busybox cp a b",
+    "command busybox cp a b",
+    "stdbuf -o L pkexec cp a b",
+    "rtk doas cp a b",
+    "rtk proxy su -c x",
+    "sudo doas cp a b",
+    "sudo su -c x",
+    "sudo busybox cp a b",
+    "nice sudo pkexec cp a b",
+    "doas doas cp a b",
+    # after another command, inside a substitution, or after a reserved word
+    "ls && doas cp a b",
+    "ls; su -c x",
+    "ls | busybox cat",
+    "echo $(doas cp a b)",
+    "echo `su -c x`",
+    "if true; then pkexec cp a b; fi",
+    "for x in 1; do busybox cp a b; done",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", LAUNCHER_FORMS)
+def test_lead_and_judge_deny_doas_su_pkexec_and_busybox(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# a launcher name that is not the command word is only text
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "echo doas",
+    "echo su -c x",
+    "grep su f",
+    "grep -n busybox f",
+    "git log --author=su",
+    "ls pkexec",
+    "cat doas",
+    "ls sudoers",
+    "ls suffix",
+    "ls busyboxes",
+    "echo 'doas cp a b'",
+])
+def test_lead_and_judge_allow_a_launcher_name_that_is_not_the_command_word(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart hold write: the launchers are not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["doas cp a b", 'su -c "cp a b"', "pkexec cp a b", "busybox cp a b", "doas ls", "busybox ls"])
+def test_fast_and_smart_are_not_refused_the_launchers(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# --- issue #120: dd with an expansion in an operand ---------------------------------------------
+# `dd if=a $X` with X holding `of=b`: the shell builds the `of=` word when the command runs, so the
+# dd case cannot see it. Lead and judge deny dd when any operand holds a `$` or a backtick, after
+# the word is unquoted. `dd if=a` with no expansion stays allowed. Single-quoted text is not
+# expanded, but the guard does not tell it apart from double-quoted text: it is denied too.
+
+DD_EXPANSION_FORMS = [
+    "dd if=a $X",
+    "dd if=a ${X}",
+    'dd if=a "$X"',
+    'dd if=a "${X}"',
+    "dd if=a $X$Y",
+    "dd if=a of$X",
+    "dd if=a o$Y=b",
+    "dd if=$X",
+    "dd if=${X}",
+    'dd if="$X"',
+    "dd $X",
+    "dd if=a bs=$N",
+    "dd if=a count=$((1+1))",
+    "dd if=a $(echo of=b)",
+    'dd if=a "$(echo of=b)"',
+    "dd if=a `echo of=b`",
+    'dd if=a "`echo of=b`"',
+    "dd if=a $@",
+    'dd if=a "$@"',
+    "dd if=a $*",
+    "dd if=a $1",
+    "dd if=a '$X'",
+    # behind a wrapper or prefix the guard peels
+    "nice dd if=a $X",
+    "timeout 5 dd if=a $X",
+    "env FOO=1 dd if=a $X",
+    "FOO=1 dd if=a $X",
+    "sudo dd if=a $X",
+    "rtk dd if=a $X",
+    "/bin/dd if=a $X",
+    '"dd" if=a $X',
+    "\\dd if=a $X",
+    # after another command, or inside a substitution
+    "ls && dd if=a $X",
+    "echo $(dd if=a $X)",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_EXPANSION_FORMS)
+def test_lead_and_judge_deny_dd_with_an_expansion_in_an_operand(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    'dd if=a "bs=1"',
+    "dd if=a 'count=1'",
+    'dd if="a of b"',
+    "dd if=a skip=1 status=none",
+    "nice dd if=a",
+    "echo $X",
+    "echo $(ls)",
+    "ls $X",
+])
+def test_lead_and_judge_still_allow_dd_without_an_expansion_and_other_commands_with_one(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart hold write: dd is not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["dd if=a $X", "dd if=a ${X}", "dd if=a $(echo of=b)", "dd if=a"])
+def test_fast_and_smart_allow_dd_with_an_expansion(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# --- issue #118: sudo hides an irreversible command from fast and smart ----------------------
+# Decided: fast and smart get the same look behind sudo as lead and judge, for the
+# irreversible-command check only. They still hold write, so `sudo cp a b` stays allowed.
+# Heredoc handling is unchanged: the last test of this block and the #106 block pin it.
+
+SUDO_IRREVERSIBLE_FORMS = [
+    "sudo rm -rf /",
+    "sudo rm -r /etc",
+    "sudo git push -f",
+    "sudo git push --force",
+    "sudo git push origin +main",
+    "sudo git reset --hard",
+    "sudo git clean -fd",
+    "sudo git branch -D x",
+    "sudo git merge x",
+    "sudo find . -delete",
+    "sudo npm publish",
+    # sudo's own flags are stepped over, and the value of the ones that take one
+    "sudo -n git push -f",
+    "sudo -E git push -f",
+    "sudo -- git push -f",
+    "sudo -u root git push -f",
+    "sudo -g wheel git push -f",
+    "sudo --user root git push -f",
+    "sudo --user=root git push -f",
+    "sudo -nu root git push -f",
+    "sudo -uroot git push -f",
+    'sudo "-u" root git push -f',
+    "sudo '-n' git push -f",
+    "sudo \\-n git push -f",
+    # a wrapper or prefix in front of, or behind, sudo
+    "nice sudo git push -f",
+    "sudo nice git push -f",
+    "FOO=1 sudo git push -f",
+    "sudo FOO=1 git push -f",
+    "sudo env git push -f",
+    'sudo env "-i" git push -f',
+    "sudo time -p git push -f",
+    "rtk sudo git push -f",
+    "sudo sudo git push -f",
+    # sudo is read as the shell reads it
+    "\\sudo git push -f",
+    '"sudo" git push -f',
+    "/usr/bin/sudo git push -f",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", SUDO_IRREVERSIBLE_FORMS)
+def test_fast_and_smart_check_the_irreversible_command_behind_sudo(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "sudo git push",
+    "sudo git push origin main",
+    "sudo git status",
+    "sudo git log",
+    "sudo ls",
+    "sudo -n ls",
+    "sudo -u root ls",
+    "sudo rm f",
+    "sudo cp a b",
+    "sudo dd if=a of=b",
+    "sudo env FOO=1 ls",
+    "sudo (cd x)",
+])
+def test_fast_and_smart_still_allow_what_is_not_irreversible_behind_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# a sudo with nothing behind it, or only flags, ends and is allowed
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["sudo", "sudo -n", "sudo -u", "sudo -nu", "sudo --", "sudo FOO=1", "sudo sudo sudo"])
+def test_fast_and_smart_end_on_a_sudo_with_nothing_behind_it(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# nothing in the hook's environment changes the answer for fast and smart or makes the peel loop
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("value", ["1", "0", "junk", ""])
+@pytest.mark.parametrize("command,denied", [
+    ("sudo git push -f", True),
+    ("sudo rm -rf /", True),
+    ("sudo cp a b", False),
+    ("sudo ls", False),
+])
+def test_fast_and_smart_decide_the_same_behind_sudo_whatever_the_environment_holds(agent, value, command, denied, ws):
+    proc = run_guard_with_env(command, agent, ws, {"HEREDOC_KEEP_SUDO": value})
+    assert _is_deny(proc) is denied, (command, value, proc.stdout, proc.stderr)
+
+
+# the body of a heredoc behind sudo is read as before: line by line, sudo is not a reader
+@pytest.mark.parametrize("agent", [FAST, SMART])
+def test_fast_and_smart_heredoc_behind_sudo_is_read_as_before(agent, ws):
+    assert_deny("sudo cat <<'EOF'\ngit push -f\nEOF", agent, ws)
+    assert_allow("sudo cat <<'EOF'\ngit push origin main\nEOF", agent, ws)
+    assert_deny("sudo cat <<'EOF'\n(1+2)\nEOF", agent, ws)
+
+
+# Heredoc bodies are checked or skipped as before, for every executor, now that the flag of env,
+# exec, nohup and time is read unquoted (#121): a body that was checked stays checked, and a body
+# behind a bare `time -p cat` is still skipped as cat's input.
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("prefix", [
+    'env "-i" ', "env '-i' ", "env \\-i ", "env -i ",
+    'exec "-a" foo ', "exec -a foo ",
+    'nohup "-x" ', "nohup -x ",
+    'time "-p" ', "time '-p' ", "time \\-p ",
+    'sudo "-u" root ', "sudo -n ",
+])
+def test_every_executor_still_checks_a_heredoc_body_behind_a_flagged_wrapper(agent, prefix, ws):
+    proc = run_guard_with_env(f"{prefix}cat <<'EOF'\n(1+2)\nEOF", agent, ws, {})
+    assert _is_deny(proc), (prefix, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+def test_every_executor_still_skips_a_heredoc_body_behind_a_bare_time_p(agent, ws):
+    proc = run_guard_with_env("time -p cat <<'EOF'\n(1+2)\nEOF", agent, ws, {})
+    assert not _is_deny(proc), (proc.stdout, proc.stderr)
+
+
+# --- review of #118-#121: a quoted flag that takes a value ------------------------------------
+# For fast and smart, `-"u"` was read on origin/main as a flag with no value, so the next word
+# stayed the command word and `git push -f` was denied. Reading it as `-u` takes that word as the
+# value and hides the push. A flag spelled with a quote or a backslash is now checked both ways:
+# with no value (as on origin/main) and with one (as the shell reads it). A bare flag keeps one
+# reading.
+
+QUOTED_VALUE_FLAG_FORMS = {
+    "time_quoted_o": 'time -"o" git push -f',
+    "time_backslash_o": "time -\\o git push -f",
+    "nice_quoted_n": 'nice -"n" git push -f',
+    "exec_quoted_a": 'exec -"a" git push -f',
+    "stdbuf_quoted_o": 'stdbuf -"o" git push -f',
+    "env_quoted_C": 'env -"C" git push -f',
+    "env_quoted_u": 'env -"u" git push -f',
+    "env_quoted_P": 'env -"P" git push -f',
+    "env_quoted_a": 'env -"a" git push -f',
+    "env_quoted_long_unset": 'env -"-unset" git push -f',
+    # the other reading: the flag takes the next word, and what follows is the command
+    "env_fully_quoted_u_with_value": 'env "-u" X git push -f',
+    "env_single_quoted_u_with_value": "env '-u' X git push -f",
+    "env_quoted_u_with_value": 'env -"u" X git push -f',
+    "time_quoted_o_with_value": 'time -"o" out git push -f',
+    "nice_quoted_n_with_value": 'nice -"n" 5 git push -f',
+    "exec_quoted_a_with_value": 'exec -"a" foo git push -f',
+    "stdbuf_quoted_o_with_value": 'stdbuf -"o" L git push -f',
+    "timeout_quoted_s_with_value": 'timeout -"s" KILL 5 git push -f',
+    "sudo_quoted_u": 'sudo -"u" git push -f',
+    "sudo_quoted_u_with_value": 'sudo -"u" root git push -f',
+    "sudo_backslash_u_with_value": "sudo -\\u root git push -f",
+    "nested_quoted_flags": 'env -"u" nice -"n" git push -f',
+    "env_two_quoted_flags": 'env -"u" -"C" git push -f',
+}
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART, LEAD, JUDGE])
+@pytest.mark.parametrize("name", list(QUOTED_VALUE_FLAG_FORMS))
+def test_a_quoted_flag_that_takes_a_value_is_checked_both_ways(agent, name, ws):
+    command = QUOTED_VALUE_FLAG_FORMS[name]
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (name, command, proc.stdout, proc.stderr)
+
+
+# a bare flag keeps its one reading: the value-taking flag takes the next word
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "env -u git push -f",
+    "env -C git push -f",
+    "env -P git push -f",
+    "env -a git push -f",
+    "time -o git push -f",
+    "nice -n git push -f",
+    "exec -a git push -f",
+    "stdbuf -o git push -f",
+    "sudo -u git push -f",
+])
+def test_fast_and_smart_read_a_bare_value_flag_with_one_reading(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# a quoted value flag in front of a harmless command is not refused
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    'env -"u" X ls',
+    'env -"u" ls',
+    'time -"o" out cp a b',
+    'nice -"n" 5 ls',
+    'exec -"a" foo ls',
+    'sudo -"u" root ls',
+    'sudo -"u" ls',
+])
+def test_fast_and_smart_allow_a_quoted_value_flag_before_a_reversible_command(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# --- review of #118: the value-taking sudo flags ------------------------------------------------
+# Every sudo flag that takes a value, so the word after it is the value and not the command. The
+# first nine short flags and their long forms are the ones `man sudo` documents; r, t, a, c are
+# from sudo builds with SELinux or BSD auth and login classes. An option this does not list is
+# read as a flag with no value (`sudo --unknown X git push -f` is not seen).
+
+SUDO_VALUE_FLAGS = [
+    "-u root", "-g wheel", "-C 3", "-D /tmp", "-h host", "-p prompt", "-R /tmp", "-T 5", "-U root",
+    "-r role", "-t type", "-a bsdauth", "-c staff",
+    "--user root", "--group wheel", "--close-from 3", "--chdir /tmp", "--host host", "--prompt p",
+    "--chroot /tmp", "--other-user root", "--command-timeout 5", "--role r", "--type t",
+    "--auth-type x", "--login-class staff",
+    # clustered with a flag that takes none, and with the value attached
+    "-nu root", "-nc staff", "-na bsdauth", "-ac", "-uroot", "-cstaff", "-aauth",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("flag", SUDO_VALUE_FLAGS)
+def test_fast_and_smart_step_over_a_sudo_flag_and_its_value(agent, flag, ws):
+    proc = run_guard_with_env(f"sudo {flag} git push -f", agent, ws, {})
+    assert _is_deny(proc), (flag, proc.stdout, proc.stderr)
+    proc = run_guard_with_env(f"sudo -n {flag} rm -rf /", agent, ws, {})
+    assert _is_deny(proc), (flag, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("flag", SUDO_VALUE_FLAGS)
+def test_fast_and_smart_allow_a_reversible_command_behind_a_sudo_value_flag(agent, flag, ws):
+    proc = run_guard_with_env(f"sudo {flag} cp a b", agent, ws, {})
+    assert not _is_deny(proc), (flag, proc.stdout, proc.stderr)

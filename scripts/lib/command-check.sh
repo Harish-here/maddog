@@ -36,6 +36,30 @@ SUBST_MAX_DEPTH=8
 CASE_OPEN=0
 CASE_EXPECT=0
 
+# check_quoted_flag_reading
+# Fast and smart. A wrapper flag spelled with a quote or a backslash (`env -"u" git push -f`) is
+# read two ways: as the shell reads it, `-u` takes `git` as its value; and as origin/main read
+# it, a flag with no value, so `git push -f` runs. check_segment peels the first way; this peels
+# and checks the second, on a copy of the tokens it puts back, so a push that either reading
+# exposes is denied. Only the irreversible-command check runs on it: it adds no other refusal.
+# A segment with no quote or backslash has one reading and is skipped.
+check_quoted_flag_reading() {
+  local saved_peeled="$PEELED_OTHER" saved_rtk="$RTK_RUN_TEXT"
+  local -a saved=("${tokens[@]}") saved_masked=("${tokens_masked[@]}")
+  case "${tokens[*]}" in
+    *'"'*|*"'"*|*'\'*) : ;;
+    *) return 0 ;;
+  esac
+  strip_leading_prefixes quoted-no-value
+  if [ "${#tokens[@]}" -gt 0 ]; then
+    check_irreversible
+  fi
+  tokens=("${saved[@]}")
+  tokens_masked=("${saved_masked[@]}")
+  PEELED_OTHER="$saved_peeled"
+  RTK_RUN_TEXT="$saved_rtk"
+}
+
 # check_segment <segment> [depth]
 # The checks for one pipeline/chain segment, in order: the reserved words that open it and the
 # prefixes that run another command (assignments, env, rtk, the wrappers) are peeled, so every
@@ -58,6 +82,9 @@ check_segment() {
   fi
   strip_leading_keywords
   [ "${#tokens[@]}" -eq 0 ] && return 0
+  if [ "$deny_writes" -eq 0 ]; then
+    check_quoted_flag_reading
+  fi
   strip_leading_prefixes
   if [ -n "$RTK_RUN_TEXT" ]; then
     check_command_text "$RTK_RUN_TEXT" $((depth + 1))

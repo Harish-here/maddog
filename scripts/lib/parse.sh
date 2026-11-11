@@ -589,9 +589,10 @@ strip_command_wrappers() {
         progressed=1
         ;;
       sudo)
-        # Lead and judge only: fast and smart keep reading sudo as the command word. The
-        # heredoc reader scan (heredoc_consumer) passes keep-sudo so a `sudo cat <<EOF` body is
-        # still read as before, line by line, and not skipped as cat's input.
+        # Lead and judge only: for fast and smart this case breaks, so sudo stays the command
+        # word in the heredoc reader scan (heredoc_consumer); strip_leading_prefixes peels their
+        # sudo later with strip_wrapper_lenient. The reader scan passes keep-sudo so a
+        # `sudo cat <<EOF` body is still read line by line, and not skipped as cat's input.
         [ "${deny_writes:-0}" -eq 1 ] && [ "$keep_sudo" != "keep-sudo" ] || break
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
@@ -616,10 +617,11 @@ strip_command_wrappers() {
         # whatever env ends up running past this classification.
         while [ "${#tokens[@]}" -gt 0 ]; do
           t="${tokens[0]}"
+          unquote_word "$t"
           if [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
             tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-          elif [ "${t:0:1}" = "-" ]; then
-            deny "$(msg_wrapper_flag env "$t")"
+          elif [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag env "$UNQUOTED")"
           else
             break
           fi
@@ -637,15 +639,21 @@ strip_command_wrappers() {
         ;;
       exec)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag exec "${tokens[0]}")"
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag exec "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
       nohup)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag nohup "${tokens[0]}")"
+        if [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag nohup "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
@@ -675,10 +683,15 @@ strip_command_wrappers() {
         ;;
       time)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # Only the bare `-p` is understood. Every other flag, a quoted `-p` included, is read
+        # unquoted and denied: a spelling the guard already refused (`-"p"`) must not become allowed.
         if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]}" = "-p" ]; then
           tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
-        elif [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
-          deny "$(msg_wrapper_flag time "${tokens[0]}")"
+        elif [ "${#tokens[@]}" -gt 0 ]; then
+          unquote_word "${tokens[0]}"
+          if [ "${UNQUOTED:0:1}" = "-" ]; then
+            deny "$(msg_wrapper_flag time "$UNQUOTED")"
+          fi
         fi
         progressed=1
         ;;
@@ -930,8 +943,12 @@ env_split_string() {
 # The others skip a flag, taking the next word as its value for -u -C -P -a (and the long
 # --unset --chdir --argv0), and read the string of -S / --split-string as a command line; short
 # flags may be clustered (`-iS 'git push -f'`).
+# $1 = reading: "quoted-no-value" makes a flag spelled with a quote or a backslash (`-"u"`) take
+# no value, as origin/main read it; empty reads it as the shell does, value and all. check_segment
+# runs both readings for fast and smart. An argument, not a global, so nothing in the hook's
+# environment can pick the reading.
 strip_env() {
-  local t val rest ch
+  local reading="${1:-}" t raw val rest ch
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
     t="${tokens[0]}"
@@ -939,9 +956,17 @@ strip_env() {
       tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
       continue
     fi
+    # a flag is read as the shell reads it: `"-i"`, `'-u'` and `\-0` are flags too
+    raw="$t"
+    unquote_word "$t"
+    t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
     if [ "${deny_writes:-0}" -eq 1 ]; then
       deny "$(msg_wrapper_flag env "$t")"
+    fi
+    if [ "$reading" = "quoted-no-value" ] && [ "$raw" != "$t" ]; then
+      tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+      continue
     fi
     case "$t" in
       --split-string)
@@ -996,22 +1021,54 @@ strip_env() {
 }
 
 # strip_wrapper_lenient <wrapper>
-# tokens[0] is one of command exec nohup nice time timeout stdbuf. Drops it, its options (and the
-# value of the ones that take one) and, for timeout, the DURATION, so the irreversible-command
+# tokens[0] is one of command exec nohup nice time timeout stdbuf sudo. Drops it, its options (and
+# the value of the ones that take one) and, for timeout, the DURATION, so the irreversible-command
 # checks see the command it runs (`timeout -s KILL 5 git push -f` leaves `git push -f`). Unlike
 # strip_command_wrappers it never denies: a form it misreads only means the check sees a
 # different word, as it did before the peel. Used for fast and smart. Mutates tokens/tokens_masked.
+# $2 = reading, as for strip_env: "quoted-no-value" drops a flag spelled with a quote or a
+# backslash without its value; empty reads it as the shell does.
 strip_wrapper_lenient() {
-  local w="$1" t
+  local w="$1" reading="${2:-}" t raw rest ch n
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
   while [ "${#tokens[@]}" -gt 0 ]; do
-    t="${tokens[0]}"
+    # a flag is read as the shell reads it: `"-i"`, `'-n'` and `\-p` are flags too
+    raw="${tokens[0]}"
+    unquote_word "$raw"
+    t="$UNQUOTED"
     [ "${t:0:1}" = "-" ] || break
+    if [ "$reading" = "quoted-no-value" ] && [ "$raw" != "$t" ]; then
+      tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+      continue
+    fi
     case "$w:$t" in
       nice:-n|nice:--adjustment|exec:-a|time:-f|time:-o|time:--format|time:--output|\
       timeout:-s|timeout:-k|timeout:--signal|timeout:--kill-after|\
-      stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error)
+      stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error|\
+      sudo:--user|sudo:--group|sudo:--chdir|sudo:--host|sudo:--prompt|sudo:--chroot|sudo:--role|\
+      sudo:--type|sudo:--command-timeout|sudo:--other-user|sudo:--close-from|\
+      sudo:--auth-type|sudo:--login-class)
         tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
+        ;;
+      sudo:-[!-]*)
+        # a cluster of short flags (`-n`, `-nu root`, `-uroot`): the first letter that takes a
+        # value takes the rest of the word, or the next word when nothing is left. The letters are
+        # the ones `man sudo` documents (u g C D h p R T U), plus r and t (SELinux role and type)
+        # and a and c (BSD auth type and login class) from sudo builds that have them. A long
+        # option this does not list is read as a flag with no value.
+        rest="${t:1}"
+        n=1
+        while [ -n "$rest" ]; do
+          ch="${rest:0:1}"
+          rest="${rest:1}"
+          case "$ch" in
+            [ugCDhpRTUrtac])
+              [ -z "$rest" ] && n=2
+              break
+              ;;
+          esac
+        done
+        tokens=("${tokens[@]:$n}"); tokens_masked=("${tokens_masked[@]:$n}")
         ;;
       *)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
@@ -1026,14 +1083,16 @@ strip_wrapper_lenient() {
 # strip_leading_prefixes
 # Every agent. Peels what runs another command without being it: leading `NAME=value`
 # assignments and the wrappers `env`, `rtk`, `nice`, `timeout`, `time`, `command`, `exec`,
-# `nohup` and `stdbuf` (and `sudo`, for lead and judge only), in any order, so the
-# irreversible-command checks see the command that
-# runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
-# the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
-# smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
-# assignment, env or a wrapper (not rtk). Mutates the global tokens/tokens_masked.
+# `nohup`, `stdbuf` and `sudo`, in any order, so the irreversible-command checks see the command
+# that runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`, `sudo git push
+# -f`). Lead and judge peel the wrappers with strip_command_wrappers, which denies forms it does
+# not understand; fast and smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1
+# when it dropped an assignment, env or a wrapper (not rtk). Mutates the global
+# tokens/tokens_masked.
+# $1 = reading, for fast and smart (see strip_env): "quoted-no-value", or empty. Lead and judge
+# ignore it.
 strip_leading_prefixes() {
-  local progressed=1 w n_before
+  local reading="${1:-}" progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do
     progressed=0
     if [[ "${tokens[0]}" =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]]; then
@@ -1046,16 +1105,28 @@ strip_leading_prefixes() {
     w="${UNQUOTED##*/}"
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
-      env) PEELED_OTHER=1; strip_env; progressed=1 ;;
-      sudo)
-        # lead and judge only (see strip_command_wrappers); fast and smart leave sudo as is
+      env)
+        PEELED_OTHER=1
         if [ "${deny_writes:-0}" -eq 1 ]; then
-          PEELED_OTHER=1
-          n_before=${#tokens[@]}
-          strip_command_wrappers
-          # progress only if the peel removed something, so a sudo it leaves cannot loop
-          [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
+          strip_env
+        else
+          strip_env "$reading"
         fi
+        progressed=1
+        ;;
+      sudo)
+        PEELED_OTHER=1
+        n_before=${#tokens[@]}
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          strip_command_wrappers
+        else
+          # fast and smart: a lenient peel that never refuses, so the irreversible-command
+          # checks see `git push -f` behind `sudo git push -f`. They hold write, so sudo itself
+          # is no refusal for them.
+          strip_wrapper_lenient sudo "$reading"
+        fi
+        # progress only if the peel removed something, so a sudo it leaves cannot loop
+        [ "${#tokens[@]}" -lt "$n_before" ] && progressed=1
         ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
         PEELED_OTHER=1
@@ -1064,7 +1135,7 @@ strip_leading_prefixes() {
         if [ "${deny_writes:-0}" -eq 1 ]; then
           strip_command_wrappers
         else
-          strip_wrapper_lenient "$w"
+          strip_wrapper_lenient "$w" "$reading"
         fi
         progressed=1
         ;;

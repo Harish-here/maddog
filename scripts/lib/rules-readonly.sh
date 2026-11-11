@@ -10,6 +10,13 @@
 # interpreter forms kept leaking (a stripped `VAR=val` prefix, wrapper flags only partly
 # parsed), so none is kept.
 
+# msg_launcher <command>
+# Defined here, not in messages.sh: every name in messages.sh is also listed by the REQUIRED_FUNCS of
+# the two other hooks that source it, and only the executor guard uses this one.
+msg_launcher() {
+  printf '%s' "${1} runs the command that follows it (as another user, or as a busybox applet) and this guard does not classify that command, so a write could hide behind it — this executor may not run it via Bash (Bash is read-only here). Run the inspection command directly."
+}
+
 # check_function_definition
 # Denies a segment that defines a shell function, in any spelling: `name() ...`, `name () ...`
 # (an unquoted `()` in any token, or a `(` token followed by a `)` token) and `function name ...` (the keyword at the start of a command,
@@ -147,6 +154,11 @@ check_readonly_writes() {
   if in_set "$cmd0" "${SHELLS[@]}"; then
     deny "$(msg_shell "$cmd0")"
   fi
+  # A launcher runs the command after it, which nothing below classifies: denied by name,
+  # whatever follows, as the shells are.
+  if in_set "$cmd0" "${LAUNCHERS[@]}"; then
+    deny "$(msg_launcher "$cmd0")"
+  fi
   if in_set "$cmd0" "${WRITE_CMDS[@]}"; then
     deny "$(msg_write_cmd "$cmd0")"
   fi
@@ -166,11 +178,15 @@ check_readonly_writes() {
       done
       ;;
     dd)
-      # each operand is read as the shell reads it, so `"of=b"`, `'of=b'` and `o"f"=b` are `of=b`
+      # each operand is read as the shell reads it, so `"of=b"`, `'of=b'` and `o"f"=b` are `of=b`.
+      # A `$` or backtick left in an operand means the shell builds the word when the command runs
+      # (`dd if=a $X` with X=of=b), which cannot be read here: refused. Single-quoted text is not
+      # expanded, but this reads it the same way, so `'$X'` is refused too.
       for tok in "${tokens[@]:1}"; do
         unquote_word "$tok"
         case "$UNQUOTED" in
           of=*) deny "$MSG_DD_OUTPUT" ;;
+          *'$'*|*'`'*) deny "$(msg_unreadable "an expansion in a dd operand")" shape ;;
         esac
       done
       ;;

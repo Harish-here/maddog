@@ -60,7 +60,7 @@ REQUIRED_FUNCS=(
   msg_jq_missing_context msg_dispatch_reason msg_dispatch_context msg_no_target_reason
   msg_no_target_context msg_blocked_context msg_wrapper_flag msg_wrapper_missing
   msg_git_config msg_git_config_option msg_git_option msg_unreadable msg_publish msg_shell
-  msg_write_cmd msg_interpreter msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name
+  msg_launcher msg_write_cmd msg_interpreter msg_git_write _msg_tag_allowed msg_tag_flag msg_tag_name
   quote_walk split_command unquote_word unquote_tokens find_git_subcommand
   find_substitution_end extract_substitutions strip_command_wrappers strip_rtk
   strip_leading_keywords env_split_string strip_env strip_wrapper_lenient
@@ -68,7 +68,7 @@ REQUIRED_FUNCS=(
   heredoc_opens_construct skip_heredoc_bodies check_irreversible check_function_definition
   check_git_config check_unreadable_words check_readonly_writes _path_guard_strip_quotes
   _path_guard_split _path_guard_has_glob _path_guard_join normalize_path is_temp_path
-  check_segment check_command_text
+  check_quoted_flag_reading check_segment check_command_text
 )
 REQUIRED_VARS=(
   MSG_JQ_MISSING_REASON MSG_PATTERN_REASON MSG_PATTERN_CONTEXT WHY_EXECUTOR_JUDGE
@@ -78,7 +78,7 @@ REQUIRED_VARS=(
   MSG_PUSH_PLUS MSG_CLEAN MSG_RESET_HARD MSG_CHECKOUT_DOT MSG_RESTORE_DOT MSG_BRANCH_D
   MSG_BRANCH_DELETE_FORCE MSG_MERGE MSG_WORKTREE_REMOVE MSG_WORKTREE_PRUNE MSG_RM_FILE
   MSG_SED_INPLACE MSG_DD_OUTPUT MSG_AWK_REDIRECT MSG_GIT_RESTORE MSG_GIT_CHECKOUT_PATH
-  MSG_REDIRECT SHELLS INTERPRETERS WRAPPERS SHELL_KEYWORDS SHELL_HEADERS ZSH_PRECOMMANDS
+  MSG_REDIRECT SHELLS LAUNCHERS INTERPRETERS WRAPPERS SHELL_KEYWORDS SHELL_HEADERS ZSH_PRECOMMANDS
   WRITE_CMDS READONLY_CMDS HEREDOC_READERS GIT_OPTS_SHORT_VALUE GIT_OPTS_VALUE
   GIT_OPTS_FLAG GIT_STDIN_MESSAGE_SUBS GIT_WRITE_SUBS GIT_TAG_READ_FORMS
   GIT_CONFIG_WRITE_FLAGS GIT_CONFIG_WRITE_SUBS GIT_CONFIG_MODE_FLAGS GIT_CONFIG_READ_FLAGS
