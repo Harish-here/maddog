@@ -97,20 +97,23 @@ done
 echo "== hook command paths exist"
 "$PYTHON" - << 'HOOKS'
 import json
+import re
 import sys
 from pathlib import Path
 
+# Same pattern as tests/guard/test_hooks_json.py: the placeholder path is wrapped in one matched pair of double quotes.
+QUOTED = re.compile(r'"\$\{CLAUDE_PLUGIN_ROOT\}/([^"]*)"')
 missing = []
 hooks = json.loads(Path('hooks/hooks.json').read_text())
 for entries in hooks.get('hooks', {}).values():
     for entry in entries:
         for hook in entry.get('hooks', []):
             command = hook.get('command', '')
-            path = Path(command.strip('"').replace('${CLAUDE_PLUGIN_ROOT}', '.'))
-            if not path.is_file():
+            match = QUOTED.fullmatch(command)
+            if match is None or not Path(match.group(1)).is_file():
                 missing.append(command)
 if missing:
-    print('hooks.json names missing files: ' + ', '.join(missing))
+    print('hooks.json names missing files or a command not wrapped in a matched pair of double quotes: ' + ', '.join(missing))
     sys.exit(1)
 HOOKS
 
