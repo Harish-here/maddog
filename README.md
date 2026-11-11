@@ -68,6 +68,7 @@ pull request.
 | `product-be` | The backend plan |
 | `product-ui` | The frontend plan |
 | `product-qa` | A verified build and the pull request (needs [Playwright MCP](https://github.com/microsoft/playwright-mcp)) |
+| `researcher` | Web research, returned as cited findings |
 
 `researcher` runs web searches for the pipeline and returns cited findings.
 
@@ -75,6 +76,8 @@ pull request.
 
 | Skill | What it does |
 |---|---|
+| `advisor-mode` | Runs your session as an advisor that plans the work, hands each piece to the right team member and checks what comes back |
+| `product-engineering` | Takes one feature from idea to pull request |
 | `section-by-section` | Reviews a skill or agent file with you, one section at a time |
 | `efficient-md` | Keeps markdown files for agents and people short and well shaped |
 | `plain-english` | Makes Claude's replies clear and direct |
