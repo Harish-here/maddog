@@ -70,8 +70,6 @@ pull request.
 | `product-qa` | A verified build and the pull request (needs [Playwright MCP](https://github.com/microsoft/playwright-mcp)) |
 | `researcher` | Web research, returned as cited findings |
 
-`researcher` runs web searches for the pipeline and returns cited findings.
-
 ### More skills
 
 | Skill | What it does |

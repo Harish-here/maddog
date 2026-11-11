@@ -128,6 +128,13 @@ apply to every selected file.
 files, and each one's case count and runs x sides, then exits without calling
 a model. Nothing selected prints that and exits 0.
 
+A change to `scripts/hooks/executor-guard.sh` or to its rule libraries under
+`scripts/lib/` (such as `parse.sh` and `rules-readonly.sh`) selects no model
+test, and a release that reads "no covered changes" for it is as expected. The
+offline tests under `tests/guard/` check each decision the guard makes, and no
+model test's `covers:` list names those files. The exceptions are `hook-io.sh`,
+`agents.sh` and `messages.sh`, which the pattern guard's tests also cover.
+
 ### `--changed --record`: record a release
 
     tests/.venv/bin/python tests/run.py --changed --record --runtime claude-code

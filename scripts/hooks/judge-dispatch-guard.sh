@@ -45,7 +45,11 @@
 #   - print a hookSpecificOutput deny JSON and exit 0 (DENY, exit 2 would
 #     also block but gives the model no reason — always use the JSON form).
 # Any failure to parse input ALLOWS the call — never block on our own
-# inability to inspect the payload. Missing jq, or a lib that fails to load, denies only a
+# inability to inspect the payload. That is the script's own answer; a failure of the hook itself
+# (it cannot start, times out or exits other than 0 or 2) is Claude Code's: hooks/hooks.json sets
+# "onFailure": "block" here, so on Claude Code 2.1.295 or later such a failure blocks the dispatch,
+# and an older version does not have the setting: what it does with the key is not documented, so
+# assume the dispatch goes ahead there. Missing jq, or a lib that fails to load, denies only a
 # payload whose raw text names a guarded agent_type; every other caller still ALLOWS. A
 # logging failure must never change the allow/deny outcome either.
 
@@ -162,6 +166,13 @@ target="$(field .tool_input.subagent_type)"
 log_probe "tool_name=${tool_name} agent_type=${agent_type} target=${target:-none} raw_payload=$(printf '%s' "$input" | tr '\n' ' ')"
 
 [ -z "$target" ] && deny_no_target
+
+# A target with a line break anywhere is denied. `field` reads through $(...), which strips every
+# trailing line break, so agent_target_in never sees one at the end; ask jq about the raw string.
+# jq's one-word answer is not changed by $(...). A jq failure leaves it empty: not a deny.
+if [ "$(printf '%s' "$input" | jq -r '.tool_input.subagent_type | if type == "string" and contains("\n") then "break" else "ok" end' 2>/dev/null)" = break ]; then
+  deny "$target"
+fi
 
 if agent_target_in "$target" "${allowed[@]}"; then
   exit 0
