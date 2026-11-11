@@ -27,7 +27,9 @@ BOUNDED     → Smart         implementation choice, criteria review,
                             diagnosis with a known evidence surface
 EVOLVING    → Lead          next action depends on discovery
 GATE        → Judge         verdict before an action that changes state
-                            others depend on
+                            others depend on, or on a plan, spec, or
+                            blueprint whose execution leads to such
+                            an action
 GLOBAL      → Advisor       outcome, scope, routing, acceptance
 ```
 
@@ -45,7 +47,7 @@ carried byte-identically. Thirteen fragments:
 |---|---|---|
 | FAMILY LAWS | completion is a state; never retry blindly; durable state off by default; authority for hard-to-reverse actions, instruction-file edits, and scope or intent changes (exact action or standing grant; silence grants nothing). Hard-to-reverse includes anything seen outside the workspace or changing state others depend on, even if it can be undone; inside a user-named workspace a change is reversible unless it discards work or data that exists nowhere else | all six |
 | CORE PRECEDENCE | no core law licenses what a Family Law forbids; among core laws the earlier wins | all six |
-| ROUTE | route by shape; mechanical work ALWAYS to the Fast tiers (Fast-Read to read, Fast to change or run); once a hand owns a slice, never do its next step yourself, but wait for its return or stop it and REROUTE; no more authority than held; the shape table ending at the GATE row (verdict before an action that changes state others depend on; never a hand that can edit what it judges), each carrier adding its own EVOLVING row | Advisor, Lead |
+| ROUTE | route by shape; mechanical work ALWAYS to the Fast tiers (Fast-Read to read, Fast to change or run); once a hand owns a slice, never do its next step yourself, but wait for its return or stop it and REROUTE; no more authority than held; the shape table ending at the GATE row (verdict before an action that changes state others depend on, or on a plan, spec, or blueprint whose execution leads to such an action; never a hand that can edit what it judges), each carrier adding its own EVOLVING row | Advisor, Lead |
 | CONTRACT | GOAL, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
 | VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence; redoing the work is not verification; a claim you or a Judge already cleared needs no second pass; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
 | PATTERNS | ALWAYS CLASSIFY before the first tool call; a named pattern is a hint; hold each pattern's law; core laws outrank pattern laws; work that fits none is returned | all five executors |

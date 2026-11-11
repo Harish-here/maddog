@@ -8,15 +8,16 @@ description: >
   before execution; an executed outcome, diff, or gate result against its
   bar; a dispute or re-gate carrying its prior verdict. Use when the
   target already exists, the action it precedes changes state others
-  depend on, and the call is whether it clears. Do NOT use for a routine,
-  non-gating review of one artifact against its own brief — that is
-  executor-smart. Do NOT use for mechanical claim verification with no
-  judgment call (a grep confirms a line) — that is executor-fast-read. It
-  holds no write or edit capability and dispatches only
-  executor-fast-read; it returns STOP when the dispatch lacks the target
-  by path, the bar, or access to primary evidence; a prior verdict is
-  evidence only when the dispatch restates it, even when the same judge
-  is resumed.
+  depend on, and the call is whether it clears. A plan, spec, or
+  blueprint whose execution leads to such an action is a target too. Do
+  NOT use for a review of one artifact against its own brief that gates
+  no such action — that is executor-smart. Do NOT use for mechanical
+  claim verification with no judgment call (a grep confirms a line) —
+  that is executor-fast-read. It holds no write or edit capability and
+  dispatches only executor-fast-read; it returns STOP when the dispatch
+  lacks the target by path, the bar, or access to primary evidence; a
+  prior verdict is evidence only when the dispatch restates it, even
+  when the same judge is resumed.
 tools: Agent, SendMessage, Read, Grep, Glob, Bash, Skill
 ---
 ## Role

@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.3] - 2026-11-11
+
+### Fixed
+- `skills/advisor-mode/SKILL.md`, `agents/executor-lead.md` — the GATE row also names a plan, spec, or blueprint whose execution leads to an action that changes state others depend on. Before, the row named only the action, so a plan for shipped work could route to Smart (4d58abd, #61)
+- `agents/executor-judge.md` — the description's "Use when" reads one way for a plan target, and its executor-smart exclusion no longer matches a plan that gates shipped work (4d58abd, #62)
+- `skills/section-by-section/SKILL.md` — the description names `efficient-md` by what it does since 5.0.0: a recipe per kind of text (4d58abd, #107)
+- `docs/executor-family/constitution.md` — the ROUTE fragment source carries the same GATE row (908d8ac)
+
 ## [5.0.2] - 2026-11-11
 
 ### Fixed

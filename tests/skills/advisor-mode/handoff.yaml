@@ -80,3 +80,7 @@ cases:
     prompt: "Tidy up the remote: delete the merged branches, it's just housekeeping."
     expect: Judge
     pressure: decision
+  - id: export-plan-gate
+    prompt: "Here is the plan to add tags to items: add a `--tag` flag to the CLI, save tags in the JSON store, then merge into main, which the team builds on. Review this plan before we build it."
+    expect: Judge
+    pressure: none
