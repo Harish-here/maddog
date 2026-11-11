@@ -178,11 +178,15 @@ check_readonly_writes() {
       done
       ;;
     dd)
-      # each operand is read as the shell reads it, so `"of=b"`, `'of=b'` and `o"f"=b` are `of=b`
+      # each operand is read as the shell reads it, so `"of=b"`, `'of=b'` and `o"f"=b` are `of=b`.
+      # A `$` or backtick left in an operand means the shell builds the word when the command runs
+      # (`dd if=a $X` with X=of=b), which cannot be read here: refused. Single-quoted text is not
+      # expanded, but this reads it the same way, so `'$X'` is refused too.
       for tok in "${tokens[@]:1}"; do
         unquote_word "$tok"
         case "$UNQUOTED" in
           of=*) deny "$MSG_DD_OUTPUT" ;;
+          *'$'*|*'`'*) deny "$(msg_unreadable "an expansion in a dd operand")" shape ;;
         esac
       done
       ;;

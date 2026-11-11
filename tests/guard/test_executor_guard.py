@@ -2461,3 +2461,79 @@ def test_lead_and_judge_allow_a_launcher_name_that_is_not_the_command_word(agent
 @pytest.mark.parametrize("command", ["doas cp a b", 'su -c "cp a b"', "pkexec cp a b", "busybox cp a b", "doas ls", "busybox ls"])
 def test_fast_and_smart_are_not_refused_the_launchers(agent, command, ws):
     assert_allow(command, agent, ws)
+
+
+# --- issue #120: dd with an expansion in an operand ---------------------------------------------
+# `dd if=a $X` with X holding `of=b`: the shell builds the `of=` word when the command runs, so the
+# dd case cannot see it. Lead and judge deny dd when any operand holds a `$` or a backtick, after
+# the word is unquoted. `dd if=a` with no expansion stays allowed. Single-quoted text is not
+# expanded, but the guard does not tell it apart from double-quoted text: it is denied too.
+
+DD_EXPANSION_FORMS = [
+    "dd if=a $X",
+    "dd if=a ${X}",
+    'dd if=a "$X"',
+    'dd if=a "${X}"',
+    "dd if=a $X$Y",
+    "dd if=a of$X",
+    "dd if=a o$Y=b",
+    "dd if=$X",
+    "dd if=${X}",
+    'dd if="$X"',
+    "dd $X",
+    "dd if=a bs=$N",
+    "dd if=a count=$((1+1))",
+    "dd if=a $(echo of=b)",
+    'dd if=a "$(echo of=b)"',
+    "dd if=a `echo of=b`",
+    'dd if=a "`echo of=b`"',
+    "dd if=a $@",
+    'dd if=a "$@"',
+    "dd if=a $*",
+    "dd if=a $1",
+    "dd if=a '$X'",
+    # behind a wrapper or prefix the guard peels
+    "nice dd if=a $X",
+    "timeout 5 dd if=a $X",
+    "env FOO=1 dd if=a $X",
+    "FOO=1 dd if=a $X",
+    "sudo dd if=a $X",
+    "rtk dd if=a $X",
+    "/bin/dd if=a $X",
+    '"dd" if=a $X',
+    "\\dd if=a $X",
+    # after another command, or inside a substitution
+    "ls && dd if=a $X",
+    "echo $(dd if=a $X)",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_EXPANSION_FORMS)
+def test_lead_and_judge_deny_dd_with_an_expansion_in_an_operand(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    'dd if=a "bs=1"',
+    "dd if=a 'count=1'",
+    'dd if="a of b"',
+    "dd if=a skip=1 status=none",
+    "nice dd if=a",
+    "echo $X",
+    "echo $(ls)",
+    "ls $X",
+])
+def test_lead_and_judge_still_allow_dd_without_an_expansion_and_other_commands_with_one(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart hold write: dd is not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["dd if=a $X", "dd if=a ${X}", "dd if=a $(echo of=b)", "dd if=a"])
+def test_fast_and_smart_allow_dd_with_an_expansion(agent, command, ws):
+    assert_allow(command, agent, ws)
