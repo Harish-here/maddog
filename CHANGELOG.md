@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.1] - 2026-11-11
+
+### Fixed
+- `hooks/hooks.json` — each of the three guard commands now wraps `${CLAUDE_PLUGIN_ROOT}` in double quotes. An install path containing a space split the unquoted command, the guard could not start, and the tool call went ahead unguarded (f00cb91, #110)
+- `.github/validate.sh` and `tests/guard/test_pattern_declare_guard.py` — both strip the quotes before checking that each hook script exists (f00cb91)
+
 ## [5.0.0] - 2026-11-10
 
 ### Changed
