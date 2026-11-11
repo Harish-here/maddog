@@ -53,3 +53,25 @@ def test_hook_command_wraps_the_plugin_root_in_matched_double_quotes(command):
 )
 def test_the_pattern_rejects_a_command_that_is_not_one_matched_pair(command):
     assert QUOTED.fullmatch(command) is None
+
+
+def hook_for(script):
+    hooks = json.loads(HOOKS.read_text())["hooks"]
+    found = [hook for entries in hooks.values() for entry in entries for hook in entry["hooks"] if script in hook["command"]]
+    assert len(found) == 1
+    return found[0]
+
+
+@pytest.mark.parametrize("script", ["executor-guard.sh", "judge-dispatch-guard.sh"])
+def test_the_two_guards_that_hold_the_no_write_rule_block_the_call_when_they_fail_to_start(script):
+    # The hooks reference: a hook that fails to start is a non-blocking error and the call goes ahead,
+    # unless the hook sets onFailure to "block". Without it a missing file, a lost execute bit or a
+    # missing bash drops the no-write rule with no sign.
+    assert hook_for(script).get("onFailure") == "block"
+
+
+def test_the_pattern_guard_does_not_block_when_it_fails_to_start():
+    # Deliberate (#115): this guard nudges an agent to declare its patterns; it holds no no-write rule,
+    # and the script is written to fail open. Blocking on a start failure would stop every tool call
+    # its matcher names, for every agent, to save a missed nudge.
+    assert "onFailure" not in hook_for("pattern-declare-guard.sh")

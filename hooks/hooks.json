@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/executor-guard.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/executor-guard.sh\"",
+            "onFailure": "block"
           }
         ]
       },
@@ -15,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/judge-dispatch-guard.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/judge-dispatch-guard.sh\"",
+            "onFailure": "block"
           }
         ]
       },
