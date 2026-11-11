@@ -78,3 +78,12 @@ def test_usage_from_missing_keys_are_null_not_zero():
     assert usage_from({"input_tokens": 3}) == {
         "input_tokens": 3, "output_tokens": None, "cache_read_tokens": None, "cache_creation_tokens": None,
     }
+
+
+def test_the_registry_lists_every_tool_the_adapter_maps():
+    # harness/tests/test_runtime_names.py reads TOOL_IDENTIFIERS; a tool missing here escapes its check.
+    from harness.runtimes import ADAPTER_SOURCE, TOOL_IDENTIFIERS
+    from harness.runtimes.claude_code import HANDOFF_TOOLS, READ_TOOLS, SKILL_TOOLS, STOP_TOOLS, WRITE_TOOLS
+    assert set(TOOL_IDENTIFIERS) == set(ADAPTER_SOURCE)
+    mapped = HANDOFF_TOOLS | READ_TOOLS | SKILL_TOOLS | STOP_TOOLS | WRITE_TOOLS | {"Bash"}
+    assert mapped <= set(TOOL_IDENTIFIERS["claude-code"])

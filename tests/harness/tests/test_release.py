@@ -16,7 +16,7 @@ from harness.core.score import Verdict
 from harness.runtimes import ADAPTER_SOURCE
 from harness.tests.test_cases import AGENT_FILE
 
-RUNTIME = next(iter(ADAPTER_SOURCE))  # the first registered runtime, so the name lives only in harness/runtimes/
+RUNTIME = next(iter(ADAPTER_SOURCE))  # any registered runtime serves these tests; none depends on which one
 SKILL_COVERS = '["skills/s1/**", "agents/a.md"]'
 SKILL_FILE = ("covers: " + SKILL_COVERS + "\nskill: s1\nfixture: todo-app\ncases:\n"
               "  - {id: a, prompt: p, expect: Fast, pressure: none}\n"
@@ -68,7 +68,7 @@ def select(repo, base="main"):
 
 # --- R0: selection ---
 
-def test_selecting_files_drops_tests_and_claude_folders_only():
+def test_selecting_files_drops_tests_and_repo_internal_folders_only():
     files = ["tests/run.py", "tests/releases/1.0.0/manifest.json", ".claude/plans/x.md", ".claude-plugin/plugin.json",
              "agents/a.md", "testsuite.md"]
     assert selecting_files(files) == [".claude-plugin/plugin.json", "agents/a.md", "testsuite.md"]
@@ -86,7 +86,7 @@ def test_tests_only_changes_select_nothing(repo):
     assert names(select(repo)) == []
 
 
-def test_claude_folder_changes_select_nothing_even_when_covered(repo):
+def test_repo_internal_folder_changes_select_nothing_even_when_covered(repo):
     write(repo, "tests/skills/s1/handoff.yaml", SKILL_FILE.replace(SKILL_COVERS, '["**"]'))
     commit(repo, "widen covers on base")
     git(repo, "branch", "-f", "main"), git(repo, "checkout", "-q", "main"), git(repo, "checkout", "-q", "-B", "feat")

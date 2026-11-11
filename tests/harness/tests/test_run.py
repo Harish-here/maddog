@@ -11,7 +11,7 @@ from harness.core.fixture import SlotPool as RealSlotPool
 from harness.runtimes import ADAPTER_SOURCE
 from harness.tests.test_cases import AGENT_FILE
 
-RUNTIME = next(iter(ADAPTER_SOURCE))  # the first registered runtime, so the name lives only in harness/runtimes/
+RUNTIME = next(iter(ADAPTER_SOURCE))  # any registered runtime serves these tests; none depends on which one
 
 
 def worktrees():
