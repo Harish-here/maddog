@@ -166,8 +166,10 @@ check_readonly_writes() {
       done
       ;;
     dd)
+      # each operand is read as the shell reads it, so `"of=b"`, `'of=b'` and `o"f"=b` are `of=b`
       for tok in "${tokens[@]:1}"; do
-        case "$tok" in
+        unquote_word "$tok"
+        case "$UNQUOTED" in
           of=*) deny "$MSG_DD_OUTPUT" ;;
         esac
       done

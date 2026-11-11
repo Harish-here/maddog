@@ -12,7 +12,9 @@ INTERPRETERS=(python python2 python3 node nodejs deno bun perl ed xargs)
 # Wrappers strip_command_wrappers peels (see parse.sh). Each one needs its own case there.
 # rtk is the output-filtering proxy a user hook rewrites commands through (`rtk proxy <cmd>`
 # runs <cmd> unfiltered, bare `rtk <cmd>` filters it): either way <cmd> is what runs.
-WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk)
+#
+# sudo is peeled for lead and judge only (deny_writes=1); see its case in strip_command_wrappers.
+WRAPPERS=(env command exec nohup nice time timeout stdbuf rtk sudo)
 
 # Reserved words that open or close a compound command. strip_leading_keywords (parse.sh) drops
 # them from the front of a segment so the command after them is the one classified:

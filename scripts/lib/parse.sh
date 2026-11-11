@@ -586,6 +586,18 @@ strip_command_wrappers() {
         strip_rtk
         progressed=1
         ;;
+      sudo)
+        # Lead and judge only: fast and smart keep reading sudo as the command word.
+        [ "${deny_writes:-0}" -eq 1 ] || break
+        tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
+        # sudo's flags (-u, -n, -E, -s, -i, --, ...) change who runs what and some run a shell
+        # or take a value, so ANY flag denies, as for env. `sudo VAR=val cmd` is peeled by the
+        # assignment step at the top of this loop.
+        if [ "${#tokens[@]}" -gt 0 ] && [ "${tokens[0]:0:1}" = "-" ]; then
+          deny "$(msg_wrapper_flag sudo "${tokens[0]}")"
+        fi
+        progressed=1
+        ;;
       env)
         tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
         # env's only fully-understood leading form is VAR=val assignments.
@@ -1006,7 +1018,8 @@ strip_wrapper_lenient() {
 # strip_leading_prefixes
 # Every agent. Peels what runs another command without being it: leading `NAME=value`
 # assignments and the wrappers `env`, `rtk`, `nice`, `timeout`, `time`, `command`, `exec`,
-# `nohup` and `stdbuf`, in any order, so the irreversible-command checks see the command that
+# `nohup` and `stdbuf` (and `sudo`, for lead and judge only), in any order, so the
+# irreversible-command checks see the command that
 # runs (`FOO=1 git push -f`, `env -i git push -f`, `timeout 5 git push -f`). Lead and judge peel
 # the wrappers with strip_command_wrappers, which denies forms it does not understand; fast and
 # smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1 when it dropped an
@@ -1026,6 +1039,14 @@ strip_leading_prefixes() {
     case "$w" in
       rtk) strip_rtk; progressed=1 ;;
       env) PEELED_OTHER=1; strip_env; progressed=1 ;;
+      sudo)
+        # lead and judge only (see strip_command_wrappers); fast and smart leave sudo as is
+        if [ "${deny_writes:-0}" -eq 1 ]; then
+          PEELED_OTHER=1
+          strip_command_wrappers
+          progressed=1
+        fi
+        ;;
       command|exec|nohup|nice|time|timeout|stdbuf)
         PEELED_OTHER=1
         # lead and judge: the strict stripper, which denies a form it does not understand;

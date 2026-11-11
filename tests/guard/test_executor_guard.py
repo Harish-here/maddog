@@ -2070,3 +2070,96 @@ def test_internal_error_backstop_reason_does_not_say_return_blocked(ws, tmp_path
     reason = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
     assert "return blocked" not in reason
     assert "retry" in reason
+
+
+# --- issue #106: a quoted dd "of=..." and a sudo prefix ---------------------------------------
+# Lead and judge may not write a file via Bash. The dd check read the raw token, so a quoted
+# `of=` word slipped past it; `sudo` was not peeled, so the command behind it was never checked.
+
+DD_WRITE_FORMS = [
+    "dd if=a of=b",
+    'dd if=a "of=b"',
+    "dd if=a 'of=b'",
+    'dd if=a o"f=b"',
+    'dd if=a "o"f=b',
+    "dd if=a \\of=b",
+    'dd if=a of="b c"',
+    "dd of=b if=a",
+    "nice dd if=a 'of=b'",
+    "timeout 5 dd if=a 'of=b'",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_WRITE_FORMS)
+def test_lead_and_judge_deny_dd_with_an_output_file_however_it_is_quoted(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    'dd if=a "bs=1"',
+    "dd if=a 'count=1'",
+    'dd if="a of b"',
+])
+def test_lead_and_judge_still_allow_dd_without_an_output_file(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", DD_WRITE_FORMS)
+def test_fast_and_smart_allow_dd_with_an_output_file(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+SUDO_WRITE_FORMS = [
+    "sudo dd if=a of=b",
+    'sudo dd if=a "of=b"',
+    "sudo rm f",
+    "sudo cp a b",
+    "sudo mv a b",
+    "sudo touch f",
+    "sudo tee f",
+    "sudo sed -i s/a/b/ f",
+    "sudo cat f > out",
+    "sudo git add f",
+    "sudo python3 -c 1",
+    "sudo bash -c x",
+    "sudo env cp a b",
+    "sudo FOO=1 cp a b",
+    "nice sudo cp a b",
+    "sudo nice cp a b",
+    "sudo sudo cp a b",
+    "rtk sudo cp a b",
+    "FOO=1 sudo cp a b",
+    "\\sudo cp a b",
+    '"sudo" cp a b',
+    "/usr/bin/sudo cp a b",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", SUDO_WRITE_FORMS)
+def test_lead_and_judge_check_the_command_behind_sudo(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["sudo -n cp a b", "sudo -u root cp a b", "sudo -- cp a b", "sudo -n ls"])
+def test_lead_and_judge_deny_a_sudo_flag_the_guard_does_not_read(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["sudo ls", "sudo cat f", "sudo git status", "sudo git log", "sudo", "sudo FOO=1"])
+def test_lead_and_judge_still_allow_read_only_commands_behind_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# fast and smart keep their old reading of sudo: no refusal is added for them here
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["sudo cp a b", "sudo dd if=a of=b", "sudo -n ls", "sudo ls"])
+def test_fast_and_smart_add_no_refusal_for_sudo(agent, command, ws):
+    assert_allow(command, agent, ws)
