@@ -1046,20 +1046,23 @@ strip_wrapper_lenient() {
       timeout:-s|timeout:-k|timeout:--signal|timeout:--kill-after|\
       stdbuf:-i|stdbuf:-o|stdbuf:-e|stdbuf:--input|stdbuf:--output|stdbuf:--error|\
       sudo:--user|sudo:--group|sudo:--chdir|sudo:--host|sudo:--prompt|sudo:--chroot|sudo:--role|\
-      sudo:--type|sudo:--command-timeout|sudo:--other-user|sudo:--close-from)
+      sudo:--type|sudo:--command-timeout|sudo:--other-user|sudo:--close-from|\
+      sudo:--auth-type|sudo:--login-class)
         tokens=("${tokens[@]:2}"); tokens_masked=("${tokens_masked[@]:2}")
         ;;
       sudo:-[!-]*)
         # a cluster of short flags (`-n`, `-nu root`, `-uroot`): the first letter that takes a
-        # value (u g C D h p R r T t U) takes the rest of the word, or the next word when nothing
-        # is left
+        # value takes the rest of the word, or the next word when nothing is left. The letters are
+        # the ones `man sudo` documents (u g C D h p R T U), plus r and t (SELinux role and type)
+        # and a and c (BSD auth type and login class) from sudo builds that have them. A long
+        # option this does not list is read as a flag with no value.
         rest="${t:1}"
         n=1
         while [ -n "$rest" ]; do
           ch="${rest:0:1}"
           rest="${rest:1}"
           case "$ch" in
-            [ugCDhpRrTtU])
+            [ugCDhpRTUrtac])
               [ -z "$rest" ] && n=2
               break
               ;;

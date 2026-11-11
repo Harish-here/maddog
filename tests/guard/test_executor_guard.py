@@ -2740,3 +2740,36 @@ def test_fast_and_smart_read_a_bare_value_flag_with_one_reading(agent, command, 
 def test_fast_and_smart_allow_a_quoted_value_flag_before_a_reversible_command(agent, command, ws):
     proc = run_guard_with_env(command, agent, ws, {})
     assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# --- review of #118: the value-taking sudo flags ------------------------------------------------
+# Every sudo flag that takes a value, so the word after it is the value and not the command. The
+# first nine short flags and their long forms are the ones `man sudo` documents; r, t, a, c are
+# from sudo builds with SELinux or BSD auth and login classes. An option this does not list is
+# read as a flag with no value (`sudo --unknown X git push -f` is not seen).
+
+SUDO_VALUE_FLAGS = [
+    "-u root", "-g wheel", "-C 3", "-D /tmp", "-h host", "-p prompt", "-R /tmp", "-T 5", "-U root",
+    "-r role", "-t type", "-a bsdauth", "-c staff",
+    "--user root", "--group wheel", "--close-from 3", "--chdir /tmp", "--host host", "--prompt p",
+    "--chroot /tmp", "--other-user root", "--command-timeout 5", "--role r", "--type t",
+    "--auth-type x", "--login-class staff",
+    # clustered with a flag that takes none, and with the value attached
+    "-nu root", "-nc staff", "-na bsdauth", "-ac", "-uroot", "-cstaff", "-aauth",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("flag", SUDO_VALUE_FLAGS)
+def test_fast_and_smart_step_over_a_sudo_flag_and_its_value(agent, flag, ws):
+    proc = run_guard_with_env(f"sudo {flag} git push -f", agent, ws, {})
+    assert _is_deny(proc), (flag, proc.stdout, proc.stderr)
+    proc = run_guard_with_env(f"sudo -n {flag} rm -rf /", agent, ws, {})
+    assert _is_deny(proc), (flag, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("flag", SUDO_VALUE_FLAGS)
+def test_fast_and_smart_allow_a_reversible_command_behind_a_sudo_value_flag(agent, flag, ws):
+    proc = run_guard_with_env(f"sudo {flag} cp a b", agent, ws, {})
+    assert not _is_deny(proc), (flag, proc.stdout, proc.stderr)
