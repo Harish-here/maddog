@@ -48,7 +48,8 @@
 # inability to inspect the payload. That is the script's own answer; a failure of the hook itself
 # (it cannot start, times out or exits other than 0 or 2) is Claude Code's: hooks/hooks.json sets
 # "onFailure": "block" here, so on Claude Code 2.1.295 or later such a failure blocks the dispatch,
-# and on an older version it goes ahead. Missing jq, or a lib that fails to load, denies only a
+# and an older version does not have the setting: what it does with the key is not documented, so
+# assume the dispatch goes ahead there. Missing jq, or a lib that fails to load, denies only a
 # payload whose raw text names a guarded agent_type; every other caller still ALLOWS. A
 # logging failure must never change the allow/deny outcome either.
 

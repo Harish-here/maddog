@@ -29,8 +29,9 @@
 # IMPORTANT: a Claude Code hook fails open unless told otherwise. hooks/hooks.json sets
 # "onFailure": "block" on this hook, so on Claude Code 2.1.295 or later a hook that fails to start
 # (file missing, not executable, no bash), times out, exits other than 0 or 2, or emits malformed
-# JSON blocks the call. On an older version, or without that setting, the call goes ahead as if no
-# hook existed. This script is a GUARD, not a security CONTROL: it catches the common
+# JSON blocks the call. Without that setting, the call goes ahead as if no hook existed. An older
+# version does not have the setting, and what it does with the key is not documented; assume the
+# call goes ahead there. This script is a GUARD, not a security CONTROL: it catches the common
 # irreversible/write patterns, it does not guarantee safety against a determined or unusual
 # command.
 #
@@ -171,9 +172,10 @@ fi
 # --- fail-closed backstop (lead/judge only) ---
 # Past this point, any unexpected non-zero exit (an unbound variable under `set -u`, a bad
 # substitution, ...) would reach Claude Code as a failed hook. With "onFailure": "block" on
-# Claude Code 2.1.295 or later that blocks the Bash call with no reason given; on an older version,
-# or without the setting, it is a "non-blocking" error and the call would run UNCHECKED. For the
-# two read-only executors, turn that into a deny with a reason instead. Every intended
+# Claude Code 2.1.295 or later that blocks the Bash call with no reason given; without the setting
+# it is a "non-blocking" error and the call would run UNCHECKED. An older version does not have the
+# setting, and what it does with the key is not documented; assume the call runs unchecked there.
+# For the two read-only executors, turn that into a deny with a reason instead. Every intended
 # path exits 0 (allow, or deny() which exits 0 after printing), so a non-zero status here can only
 # be an internal failure. The JSON is built without jq (jq itself may be what failed); it carries
 # the shape-refusal context, as the command is unreadable to the guard, not banned.
