@@ -7,8 +7,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [5.0.2] - 2026-11-11
 
 ### Fixed
-- `scripts/lib/rules-readonly.sh` — for the lead and judge agents, the guard now denies `dd` with an output file however the `of=` word is quoted (`"of=b"`, `'of=b'`, `o"f=b"`, `\of=b`). Only the unquoted form was denied before (b104f63, #106)
-- `scripts/lib/parse.sh`, `scripts/lib/command-lists.sh` — for the lead and judge agents, the guard now checks the command behind `sudo`. `sudo rm f` and `sudo dd if=a of=b` passed before (b104f63, #106)
+- `scripts/lib/rules-readonly.sh` — for the lead and judge agents, the guard now denies `dd` with an output file however the `of=` word is quoted (`"of=b"`, `'of=b'`, `o"f=b"`, `\of=b`). Only the unquoted form was denied before (4fce3ba, #106)
+- `scripts/lib/parse.sh`, `scripts/lib/command-lists.sh`, `scripts/lib/heredoc.sh` — for the lead and judge agents, the guard now checks the command behind `sudo`. `sudo rm f` and `sudo dd if=a of=b` passed before (4fce3ba, aeb1420, 3b05f65, #106)
 
 ### Notes for users
 - The lead and judge agents are refused any `sudo` flag, so `sudo -n ls` is denied. `sudo ls` still passes.
