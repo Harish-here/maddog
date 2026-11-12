@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.6] - 2026-11-12
+
+### Fixed
+- `scripts/lib/rules-readonly.sh` — the lead and judge agents are refused `dd` when an operand holds `*`, `?` or `[` (134523f, #131)
+- `scripts/lib/parse.sh`, `scripts/lib/command-check.sh`, `scripts/hooks/executor-guard.sh` — for the fast and smart agents, a long `sudo` option the guard does not list is checked both ways, so `sudo --us root git push -f` is denied. `sudo cp a b` stays allowed (b487d4b, #132)
+
+### Notes for users
+- The lead and judge agents are now also refused `dd if=a of*`. Keep `*`, `?` and `[` out of `dd` operands.
+
 ## [5.0.5] - 2026-11-11
 
 ### Fixed
