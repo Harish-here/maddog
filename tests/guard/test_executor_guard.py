@@ -2773,3 +2773,82 @@ def test_fast_and_smart_step_over_a_sudo_flag_and_its_value(agent, flag, ws):
 def test_fast_and_smart_allow_a_reversible_command_behind_a_sudo_value_flag(agent, flag, ws):
     proc = run_guard_with_env(f"sudo {flag} cp a b", agent, ws, {})
     assert not _is_deny(proc), (flag, proc.stdout, proc.stderr)
+
+
+# --- issue #131: dd with a glob in an operand ---------------------------------------------------
+# `dd if=a of*` and `dd if=a o[f]=b` expand to `of=b` when a file of that name exists in the
+# working directory, so the dd case cannot see the `of=` word. Lead and judge deny dd when any
+# operand holds `*`, `?` or `[`, after the word is unquoted. Quoted text is not expanded, but the
+# guard does not tell it apart from bare text (as for `$` in #120): it is denied too.
+
+DD_GLOB_FORMS = [
+    "dd if=a o[f]=b",
+    "dd if=a of*",
+    "dd if=a of?b",
+    "dd if=a o?=b",
+    "dd if=a *",
+    "dd if=a ?f=b",
+    "dd if=a [o]f=b",
+    "dd if=a [!x]f=b",
+    "dd if=*",
+    "dd if=a?",
+    "dd if=[a]",
+    "dd if=a bs=1*",
+    "dd if=a count=?",
+    "dd *",
+    "dd if=a 'of*'",
+    'dd if=a "of*"',
+    'dd if=a o"["f]=b',
+    "dd if=a of\\*",
+    # behind a wrapper or prefix the guard peels
+    "nice dd if=a of*",
+    "timeout 5 dd if=a of*",
+    "env FOO=1 dd if=a of*",
+    "FOO=1 dd if=a of*",
+    "sudo dd if=a of*",
+    "rtk dd if=a of*",
+    "/bin/dd if=a of*",
+    '"dd" if=a of*',
+    "\\dd if=a of*",
+    # after another command, or inside a substitution
+    "ls && dd if=a of*",
+    "echo $(dd if=a of*)",
+    "echo `dd if=a of*`",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_GLOB_FORMS)
+def test_lead_and_judge_deny_dd_with_a_glob_in_an_operand(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    "dd if=a skip=1 status=none",
+    "nice dd if=a",
+    # a glob in a command that is not dd is not this check's concern
+    "ls *",
+    "ls of?b",
+    "cat [ab]",
+    "echo of*",
+])
+def test_lead_and_judge_still_allow_dd_without_a_glob_and_other_commands_with_one(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# dd with the output written plainly is still denied, glob or not
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["dd if=a of=b", 'dd if=a "of=b"', "dd if=a o\"f\"=b"])
+def test_lead_and_judge_still_deny_dd_output(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# fast and smart hold write: dd is not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["dd if=a of*", "dd if=a o[f]=b", "dd if=a of?b", "dd if=a"])
+def test_fast_and_smart_allow_dd_with_a_glob(agent, command, ws):
+    assert_allow(command, agent, ws)
