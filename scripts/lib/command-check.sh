@@ -60,6 +60,28 @@ check_quoted_flag_reading() {
   RTK_RUN_TEXT="$saved_rtk"
 }
 
+# check_long_option_reading
+# Fast and smart. sudo accepts an abbreviated long option (`sudo --us root git push -f` is
+# `--user root`), and the peel knows only the long options it lists. An unlisted long option with no
+# `=` is read two ways: with no value, as check_segment peels it, so `root` is the command; and
+# with the next word as its value, so `git push -f` is. check_segment peels the first way; this
+# peels and checks the second, on a copy of the tokens it puts back, so a push that either reading
+# exposes is denied. Only the irreversible-command check runs on it, and only when the peel
+# guessed at a long option (LONG_OPTION_GUESSED): a segment with none has one reading.
+check_long_option_reading() {
+  local saved_peeled="$PEELED_OTHER" saved_rtk="$RTK_RUN_TEXT"
+  local -a saved=("${tokens[@]}") saved_masked=("${tokens_masked[@]}")
+  LONG_OPTION_GUESSED=0
+  strip_leading_prefixes long-value
+  if [ "$LONG_OPTION_GUESSED" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; then
+    check_irreversible
+  fi
+  tokens=("${saved[@]}")
+  tokens_masked=("${saved_masked[@]}")
+  PEELED_OTHER="$saved_peeled"
+  RTK_RUN_TEXT="$saved_rtk"
+}
+
 # check_segment <segment> [depth]
 # The checks for one pipeline/chain segment, in order: the reserved words that open it and the
 # prefixes that run another command (assignments, env, rtk, the wrappers) are peeled, so every
@@ -84,6 +106,7 @@ check_segment() {
   [ "${#tokens[@]}" -eq 0 ] && return 0
   if [ "$deny_writes" -eq 0 ]; then
     check_quoted_flag_reading
+    check_long_option_reading
   fi
   strip_leading_prefixes
   if [ -n "$RTK_RUN_TEXT" ]; then
