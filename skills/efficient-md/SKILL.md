@@ -16,13 +16,13 @@ description: >
 A text costs its words multiplied by the number of times it is loaded.
 Save three ways:
 
-- Cut a line the reader would act the same without. Each recipe gives
+- Cut what the reader would act the same without. Each recipe gives
   this as its keep test.
-- Move detail only some readers need to a file one link away, in the
-  link form: the link names the file, what it holds, and when to read
-  it, and never loads it automatically.
-- Give a path in place of text the reader can open, and nothing in
-  place of text it already holds.
+- Move what only some readers need to a file one link away.
+- Point to what a file already holds: give its path, never a copy.
+
+The link form: a link names the file, what it holds, and when to read
+it, and never loads it automatically.
 
 Put what the reader acts on first at the top, and prohibitions and any
 finish condition at the bottom.

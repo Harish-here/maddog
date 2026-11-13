@@ -35,7 +35,7 @@ Rules of the earlier version left out on purpose:
 ## What the main file holds
 
 The core that every kind shares, then the routing table: cost, the three
-ways to save, the link form inside the second way, and the order rule.
+ways to save, the link form, and the order rule.
 Every recipe sits one link away, most-used first, so brief and report
 lead and the index comes last.
 
