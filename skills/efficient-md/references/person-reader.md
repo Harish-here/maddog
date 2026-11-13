@@ -14,7 +14,7 @@ even when people also read it.
   behind a link.
 - Narrative and history may stay when they are what the person came for.
   The agent recipes' rules against them do not apply.
-- No agent alarm applies.
+- No agent size rule applies.
 
 ## A person and an agent both read it
 
@@ -60,4 +60,4 @@ adding a file.
 
 ## Never
 
-Never hold a person's document to an agent's alarm.
+Never hold a person's document to an agent's size rule.

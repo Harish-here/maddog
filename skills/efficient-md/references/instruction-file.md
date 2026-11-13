@@ -1,7 +1,8 @@
 # Instruction file
 
-Loaded every session, by every agent that works in the folder (an
-AGENTS.md or its equivalent). Alarm: 400 words.
+Loaded every session, by every agent that works in the folder (an AGENTS.md
+or its equivalent). At 400 words, run the keep test on each line again; the
+file may stay longer only when every line passes.
 
 ## Keep
 

@@ -1,7 +1,8 @@
 # Skill body or agent definition
 
-Loaded when the skill or agent is triggered, and it then stays for the
-whole session. Alarm: 150 lines.
+Loaded when the skill or agent is triggered, and it then stays for the whole
+session. At 150 lines, run the keep test on each line again; the body may
+stay longer only when every line passes.
 
 ## Keep
 
