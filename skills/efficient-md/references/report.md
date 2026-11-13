@@ -28,7 +28,7 @@ instructions name other labels, use those instead.
 | CHANGED | names a path changed or created |
 | ACTIONS | gives a command that changed state, or a dispatch, with its SHA, link, exit code or result |
 | RESULT | gives text the brief asked you to write: a plan or a draft |
-| CHECKED | gives a check or search run and its outcome; each CHECK-FIRST item as confirmed, ruled out, or untested |
+| CHECKED | gives a check or search run and its outcome; each CHECK-FIRST item and each claim of your own as confirmed, ruled out, or untested |
 | FINDINGS | gives a conclusion: a finding against a criterion the brief set, or a cause, with its evidence |
 | DECISIONS | gives a choice or assumption you made, and what decided it |
 | DETAIL | gives the path to long output: logs, diffs, full tables |
@@ -40,16 +40,12 @@ and FINDINGS.
 
 ## Move out: what leaves the report
 
-- Logs, diffs and full tables go to a file, named under DETAIL. A
-  writer that cannot write files keeps only the rows the caller's
-  next step needs.
-- Drop how the work was done, unless a step went wrong in a way that
-  changed the result; that goes under ALERTS.
-- Drop what the caller holds or can work out for itself: a list or
-  boundary the brief gave you, a command it could write. Name an item
-  from the brief only when the caller must know something about it.
-- A claim you did not test is marked untested under CHECKED, never
-  stated as fact.
+- How the work was done.
+- What the caller holds or can work out for itself: a list or boundary
+  the brief gave you, a command it could write. Name an item from the
+  brief only when the caller must know something about it.
+- Long output: it goes to a file, named under DETAIL. A writer that
+  cannot write files keeps only the rows the caller's next step needs.
 
 ## Example
 
