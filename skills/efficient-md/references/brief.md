@@ -1,33 +1,79 @@
 # Brief or prompt
 
 Loaded once by the receiver; it stays in the caller's context all
-session. Alarm: 300 words.
+session. At 300 words, run the keep test on each line again; the
+brief may stay longer only when every line passes.
 
-- **Keep:** the goal in one sentence; the boundary; a finish condition
-  the receiver can check; decisions already made; known facts with path
-  and line; what to report and in what form. A brief for a mechanical
-  task makes every choice itself, down to the exact command or name.
-- **Move out:** file contents and background become paths, background
-  marked optional. Drop what the receiver's own definition says. A filed
-  record goes by path, or quoted exactly where the receiver must have its
-  words. An earlier verdict or ruling that has no file is quoted exactly
-  too, never summarised.
-- **Keep test:** would the receiver do the task differently without this
-  line?
+## Keep test
 
-An example. Use the labels the receiver's own definition names;
-otherwise any clear labels do.
+Would the receiver do the task differently without this line? Every
+line in the brief must pass, whatever label it takes.
+
+## Keep: sort each line under a label
+
+Write the lines the receiver needs first, then give each line the
+first row that fits. Every new brief carries GOAL, BOUNDARY and
+DONE-WHEN; add only the other labels the task yields. Write the
+labels in the table's order. Where the caller's instructions or the
+receiver's description name other labels, use those instead.
+
+| Label | Holds a line that |
+|---|---|
+| GOAL | names the task in one sentence, and why it matters |
+| DECIDED | closes a choice about how the task is done; to leave the receiver none, close every one, down to the exact command |
+| CRITERIA | leaves a choice open and says how to judge it, in priority order |
+| FACTS | is a claim with a source: path and line, SHA, or command output |
+| CHECK-FIRST | is a claim with no source, or a guess; for a branch, PR or file, names where to check |
+| READ-IF | is optional reading: a path and when to open it |
+| FORMAT | shapes the receiver's answer, with one example line |
+| AUTHORITY | grants an action that changes shared state: which one, and who approved it |
+| BOUNDARY | says where the receiver may work and what it must not do |
+| DONE-WHEN | is the check: the symptom or result, never a guessed fix |
+
+A line that passes the keep test but fits no label goes under
+BOUNDARY if it limits the receiver, else under FACTS.
+
+## Reasons
+
+A line carries its reason when, without it, the receiver could make a
+wrong but plausible choice.
+
+## Move out: what leaves the brief
+
+- File contents and background become READ-IF paths.
+- Drop what the receiver already holds, as far as its description or
+  the caller's instructions show.
+- Leave the diagnosis to the receiver; a guess at the cause stays only
+  as a CHECK-FIRST line.
+- A record kept in a file, such as a ticket or a review, goes by path,
+  or quoted exactly where the receiver must have its words. An earlier
+  review verdict with no file is quoted exactly, never summarised.
+- On a resume, send what changed and name the rest "as before". A
+  note that changes nothing needs no labels.
+
+## Example
+
+This brief needs every label; most need only a few.
 
 ```text
-GOAL: Quote every retry clause under services/, with file and line.
-DECIDED: A retry clause is any call to retry() or any backoff setting.
-FACTS: services/queue/client.py:41 holds one; use it as the model.
-OPTIONAL: services/README.md, for the layout.
-REPORT: one line per clause, like this one:
-  services/queue/client.py:41 retry(max=5, backoff=2)
-Then anything blocked.
-BOUNDARY: Read-only. services/ only.
-DONE-WHEN: every service has its clause quoted, or "none found".
+GOAL: Make the order summary show only the current account's items,
+  so a user never checks out items from another account.
+DECIDED: Keep the summary's props as they are; two screens pass them.
+CRITERIA: Prefer the fix that touches fewer files, then the one that
+  matches the patterns in src/cart/.
+FACTS: Repro in docs/bugs/412.md:3: add 2 items, switch account, open
+  the summary; the old items remain.
+CHECK-FIRST: The item list's memo may miss selectedIds.
+READ-IF: docs/state.md, if the fix touches the query cache.
+FORMAT: The cause, then the fix, one line each, like:
+  src/x/List.tsx:40 effect reads a stale prop
+AUTHORITY: One local commit once tests pass; the user approved it.
+BOUNDARY: Edit only src/summary/. No push.
+DONE-WHEN: The repro shows the new account's items, with a test that
+  follows the repro, so the test fails without the fix.
 ```
 
-**Finishing check:** the receiver can start without asking a question.
+## Finishing check
+
+The receiver can start without asking a question, and every path it
+may read exists.
