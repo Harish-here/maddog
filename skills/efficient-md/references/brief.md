@@ -54,28 +54,6 @@ wrong but plausible choice.
 - On a resume, send what changed and name the rest "as before". A
   note that changes nothing needs no labels.
 
-## Example
-
-This brief needs every label; most need only a few.
-
-```text
-GOAL: Make the order summary show only the current account's items,
-  so a user never checks out items from another account.
-DECIDED: Keep the summary's props as they are; two screens pass them.
-CRITERIA: Prefer the fix that touches fewer files, then the one that
-  matches the patterns in src/cart/.
-FACTS: Repro in docs/bugs/412.md:3: add 2 items, switch account, open
-  the summary; the old items remain.
-CHECK-FIRST: The item list's memo may miss selectedIds.
-READ-IF: docs/state.md, if the fix touches the query cache.
-FORMAT: The cause, then the fix, one line each, like:
-  src/x/List.tsx:40 effect reads a stale prop
-AUTHORITY: One local commit once tests pass; the user approved it.
-BOUNDARY: Edit only src/summary/. No push.
-DONE-WHEN: The repro shows the new account's items, with a test that
-  follows the repro, so the test fails without the fix.
-```
-
 ## Finishing check
 
 The receiver can start without asking a question, and every path it

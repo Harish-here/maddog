@@ -49,28 +49,13 @@ and FINDINGS.
 
 ## Example
 
-This report answers a brief to stop an order summary showing another
-account's items. Its CHECK-FIRST guessed the memo, its CRITERIA
-preferred fewer files, and its DONE-WHEN asked for a clean repro and
-a test. A clean report needs STATUS and two more.
+A clean report needs STATUS and two more.
 
 ```text
-STATUS: blocked — the summary now shows only the current account's
-  items; the test is not written and nothing is committed.
-BLOCKED-ON: a grant — the test needs a second account in
-  test/fixtures/accounts.ts, outside src/summary/.
-NOT DONE: the test that follows the repro — not reached: blocked above.
-ALERTS: src/summary/Total.test.tsx failed before my change; I left it.
-CHANGED: src/summary/ItemList.tsx
+STATUS: done — all 14 guide pages the brief named use the new error shape.
+CHANGED: the 14 pages the brief named.
 CHECKED:
-  repro shows the new account's items — confirmed, docs/bugs/412.md:3.
-  the memo misses selectedIds — confirmed, src/summary/ItemList.tsx:40.
-  query cache keeps no old items — untested: the fix did not touch it.
-FINDINGS:
-  src/summary/ItemList.tsx:40 memo leaves out selectedIds
-  src/summary/ItemList.tsx:40 selectedIds added to the memo's inputs
-DECISIONS: fixed the memo, not the query cache: one file against three.
-NEXT: src/cart/Mini.tsx:22 memoises the same way; worth the same check.
+  scripts/check-docs.sh exits 0 — confirmed.
 ```
 
 ## Finishing check
