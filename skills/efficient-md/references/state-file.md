@@ -1,8 +1,9 @@
 # State file
 
-Loaded at the start of each session that resumes the work (progress
-notes, a handover file). It is rewritten in place; that is its job.
-Alarm: 400 words.
+Loaded at the start of each session that resumes the work (progress notes, a
+handover file). It is rewritten in place; that is its job. At 400 words, run
+the keep test on each line again; the file may stay longer only when every
+line passes.
 
 ## Keep
 

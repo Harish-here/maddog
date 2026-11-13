@@ -1,7 +1,7 @@
 # Filed record
 
-Loaded only when a reader follows a link to it (a ruling, a post-mortem,
-a transcript, a decision ledger entry). No alarm: a record is as long as
+Loaded only when a reader follows a link to it (a ruling, a post-mortem, a
+transcript, a decision ledger entry). No size rule: a record is as long as
 what happened.
 
 ## Keep

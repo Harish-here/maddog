@@ -1,7 +1,8 @@
 # Spec, plan or blueprint
 
 Loaded per task, usually one section at a time, by each agent that builds
-from it. Alarm: 500 words per section.
+from it. At 500 words in a section, run the keep test on each of its lines
+again; the section may stay longer only when every line passes.
 
 ## Keep
 

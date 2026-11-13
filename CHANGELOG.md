@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.1.0] - 2026-11-13
+
+### Changed
+- `skills/efficient-md/references/brief.md` — rewritten. A brief sorts each line under one of ten labels and always carries GOAL, BOUNDARY and DONE-WHEN. The writer writes the lines first and adds only the labels the task yields. A brief that lists files or steps asks back only for the ones that went differently. The example is gone (c4a2a8c, 7953403, 94afd7f, 9047d41)
+- `skills/efficient-md/references/report.md` — rewritten to mirror the brief. A report opens with STATUS, sorts each line under one of thirteen labels, and accounts for every DONE-WHEN item under CHECKED or NOT DONE. It drops what the caller holds or can work out for itself. The example is four lines (c4a2a8c, 7953403, e83915d, 94afd7f)
+- `skills/efficient-md/SKILL.md` — the main file holds the core rules, then routes. The core is cost, three ways to save (cut, move, point), the link form and the order rule. Recipes are listed most-used first, and the writer states which recipe it read. The keep-test, alarm and one-whole-example rules leave the main file (21ded7e, c26411c)
+- `skills/efficient-md/references/` — `index.md`, `instruction-file.md`, `skill-body.md`, `spec.md` and `state-file.md` spell out their size sentence in place of "Alarm: N"; `record.md`, `special-cases.md` and `person-reader.md` say "size rule" (21ded7e)
+- `skills/efficient-md/references/why.md` — the reasons and test evidence for the changes above (c1187be)
+
+### Notes for users
+- Briefs and reports written with `efficient-md` now use fixed labels. An agent whose own definition fixes a report block keeps that block (#135).
+- The word "alarm" is gone from the skill. Each recipe states its size and what to do at it.
+
 ## [5.0.6] - 2026-11-12
 
 ### Fixed

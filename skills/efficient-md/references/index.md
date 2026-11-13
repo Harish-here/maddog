@@ -1,7 +1,8 @@
 # Index
 
-Loaded every session (a memory index, a catalogue of files). Limit: 30
-words per entry. Alarm: 150 lines for the whole index.
+Loaded every session (a memory index, a catalogue of files). Limit: 30 words
+per entry. At 150 lines for the whole index, run the keep test on each entry
+again; the index may stay longer only when every entry passes.
 
 ## Keep
 
