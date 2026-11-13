@@ -45,7 +45,9 @@ and FINDINGS.
   next step needs.
 - Drop how the work was done, unless a step went wrong in a way that
   changed the result; that goes under ALERTS.
-- Drop any restating of the brief.
+- Drop what the caller holds or can work out for itself: a list or
+  boundary the brief gave you, a command it could write. Name an item
+  from the brief only when the caller must know something about it.
 - A claim you did not test is marked untested under CHECKED, never
   stated as fact.
 

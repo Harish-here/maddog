@@ -33,6 +33,9 @@ receiver's description name other labels, use those instead.
 A line that passes the keep test but fits no label goes under
 BOUNDARY if it limits the receiver, else under FACTS.
 
+Where the brief lists files or steps, a FORMAT line asks back only
+for the ones that went differently.
+
 ## Reasons
 
 A line carries its reason when, without it, the receiver could make a
