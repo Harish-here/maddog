@@ -43,16 +43,12 @@ wrong but plausible choice.
 
 ## Move out: what leaves the brief
 
-- File contents and background become READ-IF paths.
-- Drop what the receiver already holds, as far as its description or
-  the caller's instructions show.
-- Leave the diagnosis to the receiver; a guess at the cause stays only
-  as a CHECK-FIRST line.
-- A record kept in a file, such as a ticket or a review, goes by path,
-  or quoted exactly where the receiver must have its words. An earlier
-  review verdict with no file is quoted exactly, never summarised.
-- On a resume, send what changed and name the rest "as before". A
-  note that changes nothing needs no labels.
+- What the receiver already holds: its own description, and on a
+  resume everything but what changed, named "as before". A note that
+  changes nothing needs no labels.
+- What the receiver can open: file contents and background go by path.
+  A verdict or record goes by path too, or quoted exactly where it has
+  no file or the receiver must have its words; never summarised.
 
 ## Finishing check
 
