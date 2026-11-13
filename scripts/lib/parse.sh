@@ -1027,7 +1027,9 @@ strip_env() {
 # strip_command_wrappers it never denies: a form it misreads only means the check sees a
 # different word, as it did before the peel. Used for fast and smart. Mutates tokens/tokens_masked.
 # $2 = reading, as for strip_env: "quoted-no-value" drops a flag spelled with a quote or a
-# backslash without its value; empty reads it as the shell does.
+# backslash without its value; "long-value" takes the next word as the value of a long sudo
+# option this does not list and that has no `=` (see below), and sets LONG_OPTION_GUESSED=1 when
+# it does; empty reads it as the shell does.
 strip_wrapper_lenient() {
   local w="$1" reading="${2:-}" t raw rest ch n
   tokens=("${tokens[@]:1}"); tokens_masked=("${tokens_masked[@]:1}")
@@ -1055,7 +1057,9 @@ strip_wrapper_lenient() {
         # value takes the rest of the word, or the next word when nothing is left. The letters are
         # the ones `man sudo` documents (u g C D h p R T U), plus r and t (SELinux role and type)
         # and a and c (BSD auth type and login class) from sudo builds that have them. A long
-        # option this does not list is read as a flag with no value.
+        # option this does not list is read as a flag with no value (empty reading), or with the
+        # next word as its value (long-value reading): sudo accepts an abbreviated long option
+        # (`--us root` is `--user root`), and the list cannot hold every abbreviation.
         rest="${t:1}"
         n=1
         while [ -n "$rest" ]; do
@@ -1068,6 +1072,19 @@ strip_wrapper_lenient() {
               ;;
           esac
         done
+        tokens=("${tokens[@]:$n}"); tokens_masked=("${tokens_masked[@]:$n}")
+        ;;
+      sudo:--*)
+        n=1
+        if [ "$reading" = "long-value" ]; then
+          case "$t" in
+            # `--`, an option with its value attached, and the long options that take none
+            --|--*=*|--askpass|--background|--bell|--edit|--help|--list|--login|--no-update|\
+            --non-interactive|--preserve-env|--preserve-groups|--remove-timestamp|\
+            --reset-timestamp|--set-home|--shell|--stdin|--validate|--version) ;;
+            *) n=2; LONG_OPTION_GUESSED=1 ;;
+          esac
+        fi
         tokens=("${tokens[@]:$n}"); tokens_masked=("${tokens_masked[@]:$n}")
         ;;
       *)
@@ -1089,8 +1106,8 @@ strip_wrapper_lenient() {
 # not understand; fast and smart with strip_wrapper_lenient, which only peels. Sets PEELED_OTHER=1
 # when it dropped an assignment, env or a wrapper (not rtk). Mutates the global
 # tokens/tokens_masked.
-# $1 = reading, for fast and smart (see strip_env): "quoted-no-value", or empty. Lead and judge
-# ignore it.
+# $1 = reading, for fast and smart (see strip_env and strip_wrapper_lenient): "quoted-no-value",
+# "long-value", or empty. Lead and judge ignore it.
 strip_leading_prefixes() {
   local reading="${1:-}" progressed=1 w n_before
   while [ "$progressed" -eq 1 ] && [ "${#tokens[@]}" -gt 0 ]; do

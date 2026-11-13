@@ -2773,3 +2773,183 @@ def test_fast_and_smart_step_over_a_sudo_flag_and_its_value(agent, flag, ws):
 def test_fast_and_smart_allow_a_reversible_command_behind_a_sudo_value_flag(agent, flag, ws):
     proc = run_guard_with_env(f"sudo {flag} cp a b", agent, ws, {})
     assert not _is_deny(proc), (flag, proc.stdout, proc.stderr)
+
+
+# --- issue #131: dd with a glob in an operand ---------------------------------------------------
+# `dd if=a of*` and `dd if=a o[f]=b` expand to `of=b` when a file of that name exists in the
+# working directory, so the dd case cannot see the `of=` word. Lead and judge deny dd when any
+# operand holds `*`, `?` or `[`, after the word is unquoted. Quoted text is not expanded, but the
+# guard does not tell it apart from bare text (as for `$` in #120): it is denied too.
+
+DD_GLOB_FORMS = [
+    "dd if=a o[f]=b",
+    "dd if=a of*",
+    "dd if=a of?b",
+    "dd if=a o?=b",
+    "dd if=a *",
+    "dd if=a ?f=b",
+    "dd if=a [o]f=b",
+    "dd if=a [!x]f=b",
+    "dd if=*",
+    "dd if=a?",
+    "dd if=[a]",
+    "dd if=a bs=1*",
+    "dd if=a count=?",
+    "dd *",
+    "dd if=a 'of*'",
+    'dd if=a "of*"',
+    'dd if=a o"["f]=b',
+    "dd if=a of\\*",
+    # behind a wrapper or prefix the guard peels
+    "nice dd if=a of*",
+    "timeout 5 dd if=a of*",
+    "env FOO=1 dd if=a of*",
+    "FOO=1 dd if=a of*",
+    "sudo dd if=a of*",
+    "rtk dd if=a of*",
+    "/bin/dd if=a of*",
+    '"dd" if=a of*',
+    "\\dd if=a of*",
+    # after another command, or inside a substitution
+    "ls && dd if=a of*",
+    "echo $(dd if=a of*)",
+    "echo `dd if=a of*`",
+]
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", DD_GLOB_FORMS)
+def test_lead_and_judge_deny_dd_with_a_glob_in_an_operand(agent, command, ws):
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", [
+    "dd if=a",
+    "dd if=a bs=1 count=1",
+    "dd if=a skip=1 status=none",
+    "nice dd if=a",
+    # a glob in a command that is not dd is not this check's concern
+    "ls *",
+    "ls of?b",
+    "cat [ab]",
+    "echo of*",
+])
+def test_lead_and_judge_still_allow_dd_without_a_glob_and_other_commands_with_one(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# dd with the output written plainly is still denied, glob or not
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["dd if=a of=b", 'dd if=a "of=b"', "dd if=a o\"f\"=b"])
+def test_lead_and_judge_still_deny_dd_output(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# fast and smart hold write: dd is not refused for them
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", ["dd if=a of*", "dd if=a o[f]=b", "dd if=a of?b", "dd if=a"])
+def test_fast_and_smart_allow_dd_with_a_glob(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# --- issue #132: an unlisted long sudo option hides the command from fast and smart -------------
+# `sudo --version` is accepted as `sudo --vers` on sudo 1.9.17p2 (`sudo --vers` prints the version;
+# checked on the machine this was written on), so sudo takes abbreviated long options and the peel
+# cannot list every spelling. A long option it does not list, with no `=`, is read both ways, as a
+# quoted wrapper flag is since #121: with no value (the next word is the command) and with the next
+# word as its value (what follows is the command). The command is denied if either reading
+# reveals an irreversible one. Lead and judge deny any sudo flag, so they are not touched.
+
+SUDO_UNLISTED_LONG_FORMS = [
+    "sudo --us root T",
+    "sudo --unknown x T",
+    "sudo --unknown T",
+    "sudo --use root T",
+    "sudo --gr wheel T",
+    "sudo --ch /tmp T",
+    "sudo --pro p T",
+    "sudo -n --us root T",
+    "sudo --us root -n T",
+    "sudo --us root --unknown y T",
+    "sudo --us root -u root T",
+    "sudo --unknown x -- T",
+    'sudo "--us" root T',
+    "sudo '--us' root T",
+    "sudo \\--us root T",
+    "sudo --us root FOO=1 T",
+    # behind other wrappers, and chained
+    "env sudo --us root T",
+    "env FOO=1 sudo --us root T",
+    "nice sudo --us root T",
+    "timeout 5 sudo --us root T",
+    "rtk sudo --us root T",
+    "FOO=1 sudo --us root T",
+    "sudo --us root sudo --them x T",
+    "sudo --us root env FOO=1 T",
+    "sudo --us root nice -n 5 T",
+    "command sudo --us root T",
+]
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("form", SUDO_UNLISTED_LONG_FORMS)
+@pytest.mark.parametrize("payload", ["git push -f", "git push --force origin main", "rm -rf /"])
+def test_fast_and_smart_see_an_irreversible_command_behind_an_unlisted_long_sudo_option(agent, form, payload, ws):
+    command = form.replace("T", payload)
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+# lead and judge deny the flag itself
+@pytest.mark.parametrize("agent", [LEAD, JUDGE])
+@pytest.mark.parametrize("command", ["sudo --us root git push -f", "sudo --unknown x cp a b", "sudo --us root ls"])
+def test_lead_and_judge_still_deny_an_unlisted_long_sudo_option(agent, command, ws):
+    assert_deny(command, agent, ws)
+
+
+# a reversible command behind the same options, and the options the peel lists, stay allowed
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("form", SUDO_UNLISTED_LONG_FORMS)
+@pytest.mark.parametrize("payload", ["cp a b", "ls", "git push origin main"])
+def test_fast_and_smart_allow_a_reversible_command_behind_an_unlisted_long_sudo_option(agent, form, payload, ws):
+    command = form.replace("T", payload)
+    proc = run_guard_with_env(command, agent, ws, {})
+    assert not _is_deny(proc), (command, proc.stdout, proc.stderr)
+
+
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "sudo cp a b",
+    "sudo --unknown x cp a b",
+    "sudo --user=root cp a b",
+    "sudo --us=root cp a b",
+    "sudo --user root cp a b",
+    "sudo -- cp a b",
+    # long options that take no value: the next word is the command, in the one reading
+    "sudo --login echo git push -f",
+    "sudo --non-interactive echo git push -f",
+    "sudo --preserve-env echo git push -f",
+    "sudo --shell echo git push -f",
+    "sudo --stdin echo git push -f",
+    "sudo --set-home echo git push -f",
+    "sudo --login cp a b",
+    "sudo --non-interactive --preserve-env cp a b",
+])
+def test_fast_and_smart_allow_these_sudo_forms(agent, command, ws):
+    assert_allow(command, agent, ws)
+
+
+# a listed value option and an option with `=` keep their one reading: the push stays visible
+@pytest.mark.parametrize("agent", [FAST, SMART])
+@pytest.mark.parametrize("command", [
+    "sudo --user root git push -f",
+    "sudo --user=root git push -f",
+    "sudo --us=root git push -f",
+    "sudo --login git push -f",
+    "sudo --non-interactive git push -f",
+    "sudo -- git push -f",
+])
+def test_fast_and_smart_still_see_an_irreversible_command_behind_a_listed_sudo_option(agent, command, ws):
+    assert_deny(command, agent, ws)
