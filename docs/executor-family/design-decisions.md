@@ -195,7 +195,7 @@ three kept things, the Verify seam, the Verdict table with "Uncertainty is
 STOP, never FAIL" and five STOP causes (a missing Bar input; unreachable
 evidence, including a command the shell cannot run; a target that differs;
 authority not granted, including any command that would change state; work
-that fits no pattern), and a return by the report recipe that opens with VERDICT. The description's trigger is
+that fits no pattern), and a return by the report recipe that opens with VERDICT, and the dispatch may rename the verdicts. The description's trigger is
 the GATE row's. Body 981 words raw, up from 928.
 
 ## Fast and Fast-Read

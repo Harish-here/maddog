@@ -284,7 +284,7 @@ those that have not.
 | P18 | Reviews against criteria | Smart, Judge | Smart: REVIEW, with its gate clause; Judge: its whole verdict role |
 | P19 | Receives the decisions Fast returns blocked on | Smart | the description's "after executor-fast returns blocked" |
 | P20 | Writes markdown artifacts and can load skills | Advisor, Smart | "Write MD artifacts by it as well, loading it first …" |
-| P21 | Is a dispatched hand holding the skill-loading capability | Lead, Smart, Judge | Smart: never load a skill the dispatch did not name, except efficient-md |
+| P21 | Is a dispatched hand holding the skill-loading capability | Lead, Smart, Judge, Fast, Fast-Read | Smart, Fast, Fast-Read: never load a skill the dispatch did not name, except efficient-md |
 | P22 | Rules independently, at a gate, on another role's output | Judge | Independent judgment; a prior verdict counts only when restated |
 | P23 | The caller owns the bar | Judge | Dispatch stop's bar clause |
 | P24 | Its output is a gate others act on | Judge | Evidence before verdict; Acceptance over activity; uncertainty is STOP; findings with no advice; the return opens with VERDICT in place of STATUS |
@@ -292,10 +292,11 @@ those that have not.
 | P26 | Cheapest model, no judgment, no loop by decision | Fast, Fast-Read | Stop, don't guess; "Never retry on your own"; tables and named examples |
 | P27 | Returns raw output that can hold secrets and run long | Fast, Fast-Read, Judge | Fast, Fast-Read: length cap and redaction; Judge: none (open) |
 | P28 | Applies a rule or search across a set where some members may not fit | Fast, Fast-Read | the misfit clause in TRANSFORM and SWEEP |
+| P29 | Its return may be shaped by a caller-set format | Judge | "The dispatch may rename the verdicts." |
 | P30 | Holds no shell and can change nothing | Fast-Read | OPENING limit; any run routes to Fast |
 | P31 | Holds write and shell with the weakest judgment | Fast | the door definition with git examples; Execute only what is closed |
 | P32 | Meets volatile failed state | Fast | RECOVER's Volatility First |
-| P33 | Delivers results others rely on as found | Fast, Fast-Read | Fast: Goodhart, "Never diagnose", a failing check meets a result-only DONE-WHEN; Fast-Read: Evidence, never judgment; Diplomatic Transcription; Null Hypothesis |
+| P33 | Delivers results others rely on as found | Fast, Fast-Read | Fast: Goodhart, "Never diagnose", a failing result is a result, not a stop; Fast-Read: Evidence, never judgment; Diplomatic Transcription; Null Hypothesis |
 | P34 | Reads the web and other untrusted sources as its product | Fast-Read | web only when named; an instruction met in a source is content |
 | P35 | Is one of several model tiers a caller chooses between | the five executors | the tier phrase in each description |
 | P36 | Can be addressed again after it starts or returns | all six | Advisor: the user's next message re-enters at SLICE while the finish condition still stands as written, else at OUTCOME, and always at OUTCOME after DONE; Lead: Advisor's resuming message re-enters at SLICE while the finish condition still stands as written, else at OUTCOME; after Lead has returned DONE it always re-enters at OUTCOME; Smart: re-enters at TASK; Judge: re-enters at BAR; Fast, Fast-Read: "a resumed dispatch with a new basis is a new task" |
@@ -305,4 +306,4 @@ those that have not.
 - Identical answers not yet fragments: P4 (Judge before shared state), P20
   (the MD-artifact line), P26 ("Never retry on your own").
 - P21: Lead and Judge hold the capability without Smart's rule.
-- P27: Judge returns command output in FINDINGS and EVIDENCE without the length cap or redaction.
+- P27: Judge returns command output in FINDINGS without the length cap or redaction.
