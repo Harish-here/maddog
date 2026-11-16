@@ -1,6 +1,6 @@
 import pytest
 from harness.core.agent_score import (
-    declared_patterns, normalize_command, result_field, score_agent,
+    declared_patterns, normalize_command, score_agent, without_not_done,
 )
 from harness.core.cases import AgentCase, Case
 from harness.core.events import Event
@@ -276,7 +276,7 @@ def test_return_quotes_pass_and_fail():
     assert bad.checks["4"] is False and "return lacks" in bad.reason
 
 
-def test_return_lacks_reads_the_result_field_only():
+def test_return_lacks_ignores_the_not_done_block():
     case = make_case(return_lacks=["def parse_money_cents(text: str) -> int:"])
     assert score_agent(run_with(DECLARE, SEARCH, Event("final", RETURN)), case).checks["4"] is True  # it is in NOT DONE
     leaked = RETURN.replace("RESULT: src/a.py:3", "RESULT: def parse_money_cents(text: str) -> int:\nsrc/a.py:3")
@@ -298,14 +298,15 @@ def test_label_check_reads_a_result_field_wrapped_in_markdown():
     case = make_case(label="CONTRADICTED")
     bold = "**RESULT:**\n\n**CONTRADICTED**\n\nThe file sets `max_upload_mb = 25`.\n\nNOT DONE: none"
     assert score_agent(run_with(DECLARE, SEARCH, Event("final", bold)), case).checks["4"] is True
-    assert result_field(bold).strip().startswith("**CONTRADICTED**")
+    assert without_not_done(bold).strip().endswith("`max_upload_mb = 25`.")
 
 
-def test_label_check_fails_when_the_return_has_no_result_field():
+def test_label_check_reads_a_return_that_has_no_result_field():
     case = make_case(label="CONTRADICTED")
     no_field = "## Claim Assessment\n\n**CONTRADICTED**\n\nNOT DONE: none"
-    assert score_agent(run_with(DECLARE, SEARCH, Event("final", no_field)), case).checks["4"] is False
-    assert result_field(no_field) == ""
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", no_field)), case).checks["4"] is True
+    no_label = "## Claim Assessment\n\nThe file sets `max_upload_mb = 25`.\n\nNOT DONE: none"
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", no_label)), case).checks["4"] is False
 
 
 def test_label_check_still_fails_on_a_wrong_label_inside_markdown():
@@ -317,7 +318,58 @@ def test_label_check_still_fails_on_a_wrong_label_inside_markdown():
 
 
 def test_no_label_check_ignores_labels_in_not_done():
-    assert result_field("RESULT: a\nNOT DONE: NO EVIDENCE for b").strip() == "a"
+    assert without_not_done("RESULT: a\nNOT DONE: NO EVIDENCE for b").strip() == "RESULT: a"
+
+
+# A recipe-shaped return (skills/efficient-md/references/report.md): STATUS, NOT DONE, then the work
+# labels. There is no RESULT field, and NOT DONE sits before the work.
+
+RECIPE = """STATUS: partial -- the claim is contradicted; one other claim has no evidence.
+
+NOT DONE:
+- NO EVIDENCE: `retries` is read from env; searched `src/` for `getenv`, found none.
+- misfit left: `max_upload_mb = 99`
+
+LOCATED:
+- `config/limits.toml:3`
+- Exact line: `max_upload_mb = 25`
+
+CHECKED:
+- CONTRADICTED: the file sets `max_upload_mb = 25`, not 50."""
+
+
+def test_without_not_done_cuts_the_block_at_the_next_label_line():
+    kept = without_not_done(RECIPE)
+    assert "STATUS: partial" in kept and "LOCATED:" in kept and "CHECKED:" in kept
+    assert "NOT DONE" not in kept and "getenv" not in kept and "max_upload_mb = 99" not in kept
+    assert without_not_done("STATUS: done\nRESULT: a\nNOT DONE: b\nNOTES: c") == "STATUS: done\nRESULT: a\nNOTES: c"
+
+
+def test_label_check_reads_a_recipe_shaped_return():
+    case = make_case(label="CONTRADICTED")
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", RECIPE)), case).checks["4"] is True  # the NO EVIDENCE under NOT DONE is not counted
+    wrong = RECIPE.replace("CHECKED:\n- CONTRADICTED:", "CHECKED:\n- CONFIRMED:")
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", wrong)), case).checks["4"] is False
+    both = RECIPE.replace("STATUS: partial", "STATUS: partial, CONFIRMED elsewhere")
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", both)), case).checks["4"] is False
+
+
+def test_return_lacks_reads_a_recipe_shaped_return():
+    case = make_case(return_lacks=["max_upload_mb = 99"])
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", RECIPE)), case).checks["4"] is True  # it is in NOT DONE
+    leaked = RECIPE.replace("- Exact line: `max_upload_mb = 25`", "- Exact line: `max_upload_mb = 99`")
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", leaked)), case).checks["4"] is False
+    in_checked = RECIPE.replace("not 50.", "not `max_upload_mb = 99`.")
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", in_checked)), case).checks["4"] is False
+
+
+def test_return_quotes_reads_a_recipe_shaped_return_and_counts_not_done():
+    under_located = make_case(return_quotes=["max_upload_mb = 25"])
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", RECIPE)), under_located).checks["4"] is True
+    only_in_not_done = make_case(return_quotes=["max_upload_mb = 99"])  # the quotes check reads the whole return
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", RECIPE)), only_in_not_done).checks["4"] is True
+    absent = make_case(return_quotes=["max_upload_mb = 10"])
+    assert score_agent(run_with(DECLARE, SEARCH, Event("final", RECIPE)), absent).checks["4"] is False
 
 
 # ---- whole-run behaviour

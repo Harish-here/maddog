@@ -309,7 +309,11 @@ A run passes only if all four checks pass:
 4. the law check for that case: files changed or left alone (read from git
    after the session, committed edits included), the order of calls, the
    command run, and, for Fast-Read, the exact quotes and the `CONFIRMED` /
-   `CONTRADICTED` / `NO EVIDENCE` label in its return
+   `CONTRADICTED` / `NO EVIDENCE` label in its return. The label and the
+   must-not-appear quotes are read from the whole return except its NOT DONE
+   block (cut at the next label line), so both the old shape (STATUS, RESULT,
+   NOT DONE, NOTES) and the report-recipe shape (no RESULT field) score; the
+   required quotes are read from the whole return, NOT DONE included
 
 `main` has no declaration rule, so checks 1 and 2 fail there by design; compare
 checks 3 and 4 between branch and `main`. The report adds a "Checks (branch /
