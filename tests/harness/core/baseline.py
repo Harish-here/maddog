@@ -1,4 +1,4 @@
-"""Plugin copies to compare: this working tree and main. Names no runtime."""
+"""Plugin copies to compare (this working tree and main), and a skills-only plugin copy. Names no runtime."""
 import shutil
 import subprocess
 import tempfile
@@ -39,6 +39,26 @@ def branch_with_skill(skill_file: Path, skill_id: str) -> Path:
     skill_md.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(skill_file, skill_md)
 
+    return plugin
+
+
+def skills_only_plugin(source: Path, skill_ids: tuple[str, ...]) -> Path:
+    """Create a temporary plugin folder holding only the named skills of `source`.
+
+    Same temp-folder pattern as branch_with_skill (maddog-skills- prefix, sweep
+    marker, plugin under `<root>/plugin`), but nothing else is copied: no hooks,
+    agents, scripts or commands, so a run that loads this plugin can load those
+    skills and fire nothing from the repo. A skill `source` lacks is skipped.
+    The caller removes `plugin.parent` after the run."""
+    root = Path(tempfile.mkdtemp(prefix="maddog-skills-")).resolve()
+    sweep.write_marker(root)
+    plugin = root / "plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin" / "plugin.json").write_text('{"name": "maddog"}\n')  # the name skills are loaded under: maddog:<skill>
+    for skill_id in skill_ids:
+        src = Path(source) / "skills" / skill_id
+        if src.is_dir():
+            shutil.copytree(src, plugin / "skills" / skill_id)
     return plugin
 
 

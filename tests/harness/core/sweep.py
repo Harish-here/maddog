@@ -14,7 +14,7 @@ from pathlib import Path
 
 MARKER_NAME = ".maddog-owner-pid"
 RUN_SLOT_PREFIX = "maddog-run-"
-PREFIXES = (RUN_SLOT_PREFIX, "maddog-test-", "maddog-baseline-", "maddog-skillfile-")
+PREFIXES = (RUN_SLOT_PREFIX, "maddog-test-", "maddog-baseline-", "maddog-skillfile-", "maddog-skills-")
 STALE_AGE_SECONDS = 24 * 60 * 60
 
 
@@ -61,7 +61,7 @@ def _deregister_worktree(repo_root: Path, folder: Path) -> None:
 
 def sweep(repo_root: Path, base: Path | None = None) -> list[Path]:
     """Removes every abandoned `maddog-run-*` / `maddog-test-*` /
-    `maddog-baseline-*` folder directly under `base` (default: the system
+    `maddog-baseline-*` / `maddog-skillfile-*` / `maddog-skills-*` folder directly under `base` (default: the system
     temp dir), deregistering any git worktree registered at it first.
     Returns the folders removed, so the caller can report them."""
     base = Path(base) if base is not None else Path(tempfile.gettempdir())
