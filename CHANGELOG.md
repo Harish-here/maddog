@@ -7,13 +7,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [6.0.0] - 2026-11-16
 
 ### Changed
-- `agents/executor-fast.md`, `agents/executor-fast-read.md`, `agents/executor-smart.md`, `agents/executor-judge.md`, `agents/executor-lead.md` — each executor writes its return by the `efficient-md` report recipe. The return opens with STATUS, or VERDICT for the judge, and carries only the labels the work yields. The fast and fast-read definitions hold the same Return section, word for word (51b74ef, #135)
+- `agents/executor-fast.md`, `agents/executor-fast-read.md`, `agents/executor-smart.md`, `agents/executor-judge.md`, `agents/executor-lead.md` — each executor writes its return by the `efficient-md` report recipe. The return opens with STATUS, or VERDICT for the judge, and carries only the labels the work yields. The fast and fast-read definitions hold the same Return section, word for word (51b74ef, d884144, #135)
 - `agents/executor-fast.md`, `agents/executor-fast-read.md` — both can now load a skill, and load `efficient-md` just before they return. A core law in each limits them to `efficient-md` and any skill the dispatch names (51b74ef, #135)
 - `agents/executor-smart.md` — the reasons to stop and return blocked move from Return to the loop sentence under Operate (51b74ef)
 - `skills/efficient-md/SKILL.md` — the writer no longer states which recipe it read. In live runs a fast agent wrote that line inside its return, once ahead of STATUS (3da83b5)
 - `tests/harness/core/agent_score.py` — the verdict-label check and the must-not-appear check read the whole return except its NOT DONE block (18dbaf2)
 - `tests/harness/runtimes/claude_code.py`, `tests/harness/core/baseline.py` — an agent-mode run loads a throwaway plugin holding only `skills/efficient-md`, taken from the same tree as the agent file, so no hook from this repo fires. A skill load is recorded as `skill_load`, which the four checks skip (bdf36f3)
-- `scripts/dev/fragment-check.py`, `docs/executor-family/constitution.md` — RETURN is the fourteenth checked fragment, carried by the fast and fast-read definitions (465e17f)
+- `scripts/dev/fragment-check.py`, `docs/executor-family/constitution.md` — RETURN is the fourteenth checked fragment, carried by the fast and fast-read definitions (465e17f, 82cd1f7)
 
 ### Removed
 - The fixed `Return exactly` block in the five executor definitions. With it go the fields RESULT, NOTES, DELEGATION LOG and EVIDENCE, every "none" line, each executor's own list of what done, blocked and partial mean, and the sentence that a dispatch shapes RESULT only (51b74ef, #135)
