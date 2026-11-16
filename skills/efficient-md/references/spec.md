@@ -28,5 +28,5 @@ line must pass.
 
 ## Finishing check
 
-A builder handed one section by path can build it without opening
-another, and nothing undecided reads as decided.
+A builder handed one section by path can build it from that section
+and the ones it names, and nothing undecided reads as decided.
