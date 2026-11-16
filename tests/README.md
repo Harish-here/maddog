@@ -282,9 +282,13 @@ agent's own file as the main session, to completion, in a copy of the
 `fast-tier` fixture: the file's body is the system prompt, its `tools:` line
 the tool set, its `effort:` line the effort. This is a main-session proxy for
 a real dispatch, good for comparing this branch with `main`, not a replica of
-a subagent (Claude Code adds its own wrapper text to those). No plugin loads,
-so nothing from this repo's `hooks/` can fire: the cases measure the agent
-text alone. The only hook is the harness's own fence: file tools may not write
+a subagent (Claude Code adds its own wrapper text to those). The one plugin
+that loads is a skills-only copy holding `efficient-md` (the skill the agent
+files load before returning), taken from the same tree as the agent file, so
+nothing from this repo's `hooks/` can fire: the cases measure the agent text
+alone. A `Skill` call is recorded as `skill_load`, which checks 3 and 4 skip.
+The copy sits in a `maddog-skills-*` temp folder, removed after each run and
+covered by the startup sweep. The only hook is the harness's own fence: file tools may not write
 outside the workdir and the shell may not reach out (curl, ssh, sudo, git
 push); a hit voids and reruns the run. It is not a sandbox, because a shell
 command can still write outside the workdir. The branch run reads the agent
@@ -309,7 +313,11 @@ A run passes only if all four checks pass:
 4. the law check for that case: files changed or left alone (read from git
    after the session, committed edits included), the order of calls, the
    command run, and, for Fast-Read, the exact quotes and the `CONFIRMED` /
-   `CONTRADICTED` / `NO EVIDENCE` label in its return
+   `CONTRADICTED` / `NO EVIDENCE` label in its return. The label and the
+   must-not-appear quotes are read from the whole return except its NOT DONE
+   block (cut at the next label line), so both the old shape (STATUS, RESULT,
+   NOT DONE, NOTES) and the report-recipe shape (no RESULT field) score; the
+   required quotes are read from the whole return, NOT DONE included
 
 `main` has no declaration rule, so checks 1 and 2 fail there by design; compare
 checks 3 and 4 between branch and `main`. The report adds a "Checks (branch /

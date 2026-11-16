@@ -1,12 +1,18 @@
 """Agent mode in the Claude Code adapter: pure helpers and option building. No model."""
+import json
+import shutil
+from pathlib import Path
+
 import anyio
 import pytest
 from claude_agent_sdk import AssistantMessage, TextBlock, ToolResultBlock, ToolUseBlock, UserMessage
 
 from harness.core.cases import TESTS_DIR, AgentCase
+from harness.core.baseline import skills_only_plugin
 from harness.core.events import Event
+from harness.core.sweep import PREFIXES, MARKER_NAME
 from harness.runtimes.claude_code import (
-    AGENT_MAX_TURNS, ClaudeCodeAdapter, agent_events_from, agent_file_stem, confine_hook, confinement_problem,
+    AGENT_MAX_TURNS, AGENT_SKILLS, ClaudeCodeAdapter, agent_events_from, agent_file_stem, confine_hook, confinement_problem,
     parse_agent_file, to_agent_event,
 )
 
@@ -33,6 +39,10 @@ def test_to_agent_event_sorts_shell_commands_into_command_and_write():
     assert to_agent_event("Bash", {"command": "rm var/app.lock"}).kind == "write"
     assert to_agent_event("Bash", {"command": "tail -n 3 var/service.log > var/crash.log"}).kind == "write"
     assert to_agent_event("Bash", {"command": "grep -rn add_item src 2>/dev/null"}).kind == "command"
+
+
+def test_a_skill_call_is_a_skill_load_not_a_call():
+    assert to_agent_event("Skill", {"skill": "efficient-md"}) == Event("skill_load", "efficient-md")
 
 
 def test_text_comes_before_the_call_in_one_message():
@@ -82,28 +92,98 @@ def test_a_role_maps_to_its_agent_file():
 
 
 @pytest.mark.parametrize("role, tools", [
-    ("Fast", ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]),
-    ("Fast-Read", ["Read", "Glob", "Grep", "WebSearch", "WebFetch"]),
+    ("Fast", ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "Skill"]),
+    ("Fast-Read", ["Read", "Glob", "Grep", "WebSearch", "WebFetch", "Skill"]),
 ])
-def test_agent_options_run_the_agent_file_with_no_plugin_and_only_the_harness_fence(role, tools, tmp_path):
-    options = ClaudeCodeAdapter({"low": "haiku-model"}).agent_options(make_case(role), REPO, tmp_path, "low", [])
-    assert options.plugins == []                                 # no repo hook can fire
-    assert list(options.hooks) == ["PreToolUse"]                 # only the harness's own fence
-    assert "Bash" in options.hooks["PreToolUse"][0].matcher and "Read" not in options.hooks["PreToolUse"][0].matcher
-    assert options.setting_sources == [] and options.strict_mcp_config is True
-    assert options.tools == tools
-    assert options.effort == "high"                              # from the agent file's frontmatter
-    assert options.model == "haiku-model" and options.max_turns == AGENT_MAX_TURNS
-    assert options.system_prompt.startswith("## Role")           # the body, not the frontmatter
-    assert "You are EXECUTOR-" in options.system_prompt
-    assert options.cwd == str(tmp_path)
+def test_agent_options_run_the_agent_file_with_a_skills_only_plugin_and_only_the_harness_fence(role, tools, tmp_path):
+    skills = skills_only_plugin(REPO, AGENT_SKILLS)
+    try:
+        options = ClaudeCodeAdapter({"low": "haiku-model"}).agent_options(make_case(role), REPO, tmp_path, "low", [], skills)
+        assert options.plugins == [{"type": "local", "path": str(skills)}]   # the one plugin: skills only
+        assert list(options.hooks) == ["PreToolUse"]                 # only the harness's own fence
+        assert "Bash" in options.hooks["PreToolUse"][0].matcher and "Read" not in options.hooks["PreToolUse"][0].matcher
+        assert options.setting_sources == [] and options.strict_mcp_config is True
+        assert options.tools == tools                                # the agent file's `tools:` line, as written
+        assert options.effort == "high"                              # from the agent file's frontmatter
+        assert options.model == "haiku-model" and options.max_turns == AGENT_MAX_TURNS
+        assert options.system_prompt.startswith("## Role")           # the body, not the frontmatter
+        assert "You are EXECUTOR-" in options.system_prompt
+        assert options.cwd == str(tmp_path)
+    finally:
+        shutil.rmtree(skills.parent, ignore_errors=True)
 
 
 def test_agent_options_read_the_agent_file_from_the_plugin_path_given(tmp_path):
     (tmp_path / "agents").mkdir()
     (tmp_path / "agents" / "executor-fast.md").write_text("---\ntools: Read\n---\nOLD BODY\n")
-    options = ClaudeCodeAdapter({"low": "m"}).agent_options(make_case(), tmp_path, tmp_path, "low", [])
+    options = ClaudeCodeAdapter({"low": "m"}).agent_options(make_case(), tmp_path, tmp_path, "low", [], tmp_path)
     assert options.system_prompt == "OLD BODY\n" and options.tools == ["Read"] and options.effort is None
+
+
+# ---- the skills-only plugin
+
+def test_the_skills_only_plugin_holds_the_trees_skill_and_nothing_that_fires():
+    plugin = skills_only_plugin(REPO, AGENT_SKILLS)
+    try:
+        assert json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())["name"] == "maddog"
+        tree = REPO / "skills" / "efficient-md"
+        copy = plugin / "skills" / "efficient-md"
+        files = sorted(p.relative_to(tree) for p in tree.rglob("*") if p.is_file())
+        assert (Path("references") / "report.md") in files
+        assert all((copy / f).read_bytes() == (tree / f).read_bytes() for f in files)   # same tree, byte for byte
+        assert sorted(p.name for p in plugin.iterdir()) == [".claude-plugin", "skills"]  # no hooks/, agents/, scripts/, .mcp.json
+        assert [p.name for p in (plugin / "skills").iterdir()] == ["efficient-md"]
+        assert (plugin.parent / MARKER_NAME).exists() and plugin.parent.name.startswith(PREFIXES)  # the startup sweep covers it
+    finally:
+        shutil.rmtree(plugin.parent, ignore_errors=True)
+
+
+def test_the_skills_only_plugin_comes_from_the_source_given(tmp_path):
+    (tmp_path / "skills" / "efficient-md").mkdir(parents=True)
+    (tmp_path / "skills" / "efficient-md" / "SKILL.md").write_text("MAIN SIDE\n")
+    plugin = skills_only_plugin(tmp_path, AGENT_SKILLS)
+    try:
+        assert (plugin / "skills" / "efficient-md" / "SKILL.md").read_text() == "MAIN SIDE\n"
+    finally:
+        shutil.rmtree(plugin.parent, ignore_errors=True)
+
+
+def test_a_source_without_the_skill_gives_a_plugin_without_it(tmp_path):
+    plugin = skills_only_plugin(tmp_path, AGENT_SKILLS)
+    try:
+        assert not (plugin / "skills").exists()
+    finally:
+        shutil.rmtree(plugin.parent, ignore_errors=True)
+
+
+def test_an_agent_run_removes_its_skills_folder_after_the_session_and_after_a_crash(tmp_path, monkeypatch):
+    seen = []
+
+    class Boom(Exception):
+        pass
+
+    class FakeClient:
+        def __init__(self, options):
+            seen.append(Path(options.plugins[0]["path"]))
+            assert seen[-1].is_dir()                    # there while the session runs
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *exc):
+            return False
+        async def query(self, prompt):
+            if len(seen) == 2:
+                raise Boom()
+        async def receive_response(self):
+            return
+            yield
+
+    monkeypatch.setattr("harness.runtimes.claude_code.ClaudeSDKClient", FakeClient)
+    monkeypatch.setattr("harness.runtimes.claude_code.changed_files", lambda workdir: [])
+    adapter = ClaudeCodeAdapter({"low": "m"})
+    adapter.run(make_case(), REPO, tmp_path, "low")
+    with pytest.raises(Boom):
+        adapter.run(make_case(), REPO, tmp_path, "low")
+    assert len(seen) == 2 and not any(p.parent.exists() for p in seen)
 
 
 # ---- the fence

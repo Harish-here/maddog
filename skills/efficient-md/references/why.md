@@ -51,8 +51,13 @@ read. In one test a fast-tier model opened the right recipe in 4 of 4
 runs on the new main file; one run that read the old main file skipped
 the recipe and wrote unlabelled prose. The stated line appeared in 2 of
 the 4 and never in the form shown, so the heading and the routing
-sentence do most of the work. The line stays as something a caller can
-look for.
+sentence do most of the work.
+
+The stated line left the main file on 2026-11-16. In four live runs a
+fast-tier agent loaded this skill to write its return. All four opened
+the report recipe, and two wrote the stated line inside the return, once
+ahead of STATUS. A subagent's last message is its return, so the line
+had nowhere else to go.
 
 The precedence line stays in the main file until every recipe carries
 its own, as brief and report do.

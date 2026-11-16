@@ -48,9 +48,13 @@ CHECK_NAMES = {"1": "PATTERNS line before the first call", "2": "declared patter
 PATTERNS_LINE = re.compile(r"^.*?PATTERNS:[ \t]*(.*)$", re.MULTILINE)  # the line holding the marker; the rest of it is the names
 SETUP_STEP = re.compile(r"^(cd|pushd|popd|pwd)(\s|$)|^set\s+[-+]|^(export|unset)\s+\w+|^\w+=\S*$"
                         r"|^echo(\s|$)(?![^\n]*[>|])|^git rev-parse --show-toplevel$")  # echo: no redirect or pipe
-# A model may wrap a field name in markdown (`**RESULT:**`, `## RESULT:`, `- RESULT:`); it is still the field.
+# A model may wrap a field name in markdown (`**NOT DONE:**`, `## NOT DONE:`, `- NOT DONE:`); it is still the field.
 MARK = r"[ \t>#*_`-]*"
-RESULT_FIELD = re.compile(rf"^{MARK}RESULT[ \t]*:[*_` \t]*(.*?)(?=^{MARK}NOT DONE[ \t]*:|\Z)", re.MULTILINE | re.DOTALL)
+# NOT DONE block: from its line to the next label line (STATUS:, NOTES:, LOCATED:, ...) or the end. An old-shape
+# return puts it after RESULT, a recipe-shaped one before the work labels. A verdict label at a line start
+# (`NO EVIDENCE: claim`) is a claim listed inside the block, not the next label.
+NOT_DONE_BLOCK = re.compile(rf"^{MARK}NOT DONE[ \t]*:.*?(?=^[ \t>#*_`]*(?!CONFIRMED|CONTRADICTED|NO EVIDENCE)[A-Z][A-Z -]+[ \t]*:|\Z)",
+                            re.MULTILINE | re.DOTALL)
 LABEL = re.compile(r"CONFIRMED|CONTRADICTED|NO EVIDENCE")
 
 
@@ -144,9 +148,9 @@ def final_text(events: list[Event]) -> str:
     return next((e.detail for e in reversed(events) if e.kind == "final"), "")
 
 
-def result_field(text: str) -> str:
-    match = RESULT_FIELD.search(text)
-    return match.group(1) if match else ""
+def without_not_done(text: str) -> str:
+    """The return with its NOT DONE block cut out; the rest is where the work is reported."""
+    return NOT_DONE_BLOCK.sub("", text)
 
 
 def law_problems(events: list[Event], calls: list[Event], checks: dict, fixture: str) -> list[str]:
@@ -154,7 +158,7 @@ def law_problems(events: list[Event], calls: list[Event], checks: dict, fixture:
     changed = [e.detail for e in events if e.kind == "changed"]
     rendered = [f"{e.kind}:{e.detail}" for e in calls]  # what `before` and `then` patterns match
     text = final_text(events)
-    result = result_field(text)
+    reported = without_not_done(text)
 
     for path in checks.get("edits_include", []):
         if path not in changed:
@@ -186,9 +190,9 @@ def law_problems(events: list[Event], calls: list[Event], checks: dict, fixture:
         if quote not in text:
             problems.append(f"return lacks: {quote}")
     for quote in checks.get("return_lacks", []):
-        if quote in result:
-            problems.append(f"RESULT holds a line it should not: {quote}")
+        if quote in reported:
+            problems.append(f"return holds a line it should not: {quote}")
     label = checks.get("label")
-    if label and set(LABEL.findall(result)) != {label}:
-        problems.append(f"RESULT labels are {sorted(set(LABEL.findall(result)))}, expected only {label}")
+    if label and set(LABEL.findall(reported)) != {label}:
+        problems.append(f"return labels are {sorted(set(LABEL.findall(reported)))}, expected only {label}")
     return problems

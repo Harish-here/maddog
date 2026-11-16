@@ -33,11 +33,7 @@ any recipe.
 ## Read the recipe before you write
 
 These rules are the base; the recipe holds the rest. Find your text in
-the table, read its recipe, then state which one you read:
-
-```text
-brief → references/brief.md
-```
+the table and read its recipe before you write.
 
 | You are writing | Recipe |
 |---|---|
@@ -70,5 +66,5 @@ description and its body are two units.
 - Never rewrite or shorten a filed record, or pass on a summary in its
   place.
 
-Finished when you have stated the recipe you read, every line passes its
-keep test, and the recipe's finishing check holds.
+Finished when every line passes its keep test and the recipe's finishing
+check holds.

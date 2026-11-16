@@ -1,6 +1,7 @@
 """Claude Code adapter. The only file that knows Claude Code's tools, agent IDs,
 models, and SDK. Runs one case and returns its event log."""
 import re
+import shutil
 from pathlib import Path
 
 import anyio
@@ -10,6 +11,7 @@ from claude_agent_sdk import (
     ResultMessage, TextBlock, ToolResultBlock, ToolUseBlock, UserMessage,
 )
 
+from harness.core.baseline import skills_only_plugin
 from harness.core.cases import AgentCase
 from harness.core.events import Event, RunOutcome
 from harness.core.fixture import changed_files
@@ -35,6 +37,7 @@ STOP_TOOLS = HANDOFF_TOOLS | WRITE_TOOLS | WORK_START_TOOLS  # the session ends 
 STOP_REASON = "maddog-test: session stopped here by the test harness"
 MAX_TURNS = 20           # bounds a session that never hands off
 AGENT_MAX_TURNS = 40     # bounds an agent-mode session that never returns
+AGENT_SKILLS = ("efficient-md",)  # the skills an agent file loads; the only ones an agent-mode run can reach
 SESSION_TIMEOUT = 600    # seconds; bounds a session that stalls without taking turns
 
 # Shell commands that change files or git state count as the advisor doing the work.
@@ -82,6 +85,8 @@ def to_agent_event(tool_name: str, tool_input: dict) -> Event:
         return Event("read", tool_input.get("url", ""))
     if tool_name == "WebSearch":
         return Event("read", tool_input.get("query", ""))
+    if tool_name in SKILL_TOOLS:
+        return Event("skill_load", tool_input.get("skill", ""))  # not a call: checks 3 and 4 skip it
     if tool_name == "Bash":
         command = tool_input.get("command", "")
         writes = SHELL_WRITE.search(HARMLESS_REDIRECTS.sub("", command))
@@ -216,19 +221,21 @@ class ClaudeCodeAdapter:
         return anyio.run(self._run, case, plugin_path, workdir, tier)
 
     def agent_options(self, case: AgentCase, plugin_path: Path, workdir: Path, tier: str,
-                      events: list[Event]) -> ClaudeAgentOptions:
+                      events: list[Event], skills_plugin: Path) -> ClaudeAgentOptions:
         """Run the agent file as the main session: its body is the system prompt,
         its frontmatter `tools:` line is the tool set and `effort:` line the effort.
-        No plugin is loaded, so no hook from this repo can fire: the cases measure
-        the agent text alone. The only hook is the harness's own fence
-        (`confine_hook`). `plugin_path` only says where the agent file is read
-        from (this tree for the branch, the worktree for main)."""
+        The one plugin loaded is `skills_plugin`, a skills-only copy (see
+        `skills_only_plugin`), so the agent can load its skills but no hook from this
+        repo can fire: the cases measure the agent text alone. The only hook is the
+        harness's own fence (`confine_hook`). `plugin_path` says where the agent file
+        is read from (this tree for the branch, the worktree for main)."""
         meta, body = parse_agent_file(Path(plugin_path) / "agents" / f"{agent_file_stem(case.expect)}.md")
         return ClaudeAgentOptions(
             model=self.ladder[tier],
             cwd=str(workdir),
             system_prompt=body,
             tools=[name.strip() for name in meta["tools"].split(",")],
+            plugins=[{"type": "local", "path": str(skills_plugin)}],
             effort=meta.get("effort"),
             setting_sources=[],       # explicit isolation: no user, project, or local settings
             strict_mcp_config=True,   # and no MCP server from anywhere
@@ -242,20 +249,24 @@ class ClaudeCodeAdapter:
         events: list[Event] = []
         cost_usd: float | None = None
         usage: dict | None = None
-        options = self.agent_options(case, plugin_path, workdir, tier, events)
-        # On timeout, move_on_after cancels the session; the events captured so
-        # far still score (a run with no `final` event fails its return checks).
-        with anyio.move_on_after(SESSION_TIMEOUT):
-            async with ClaudeSDKClient(options=options) as client:
-                await client.query(case.prompt)
-                async for message in client.receive_response():
-                    if isinstance(message, ResultMessage):
-                        cost_usd = message.total_cost_usd
-                        usage = usage_from(message.usage)
-                        last_say = next((e.detail for e in reversed(events) if e.kind == "say"), "")
-                        events.append(Event("final", message.result or last_say))
-                        break
-                    events.extend(agent_events_from(message))
+        skills_plugin = skills_only_plugin(plugin_path, AGENT_SKILLS)
+        try:
+            options = self.agent_options(case, plugin_path, workdir, tier, events, skills_plugin)
+            # On timeout, move_on_after cancels the session; the events captured so
+            # far still score (a run with no `final` event fails its return checks).
+            with anyio.move_on_after(SESSION_TIMEOUT):
+                async with ClaudeSDKClient(options=options) as client:
+                    await client.query(case.prompt)
+                    async for message in client.receive_response():
+                        if isinstance(message, ResultMessage):
+                            cost_usd = message.total_cost_usd
+                            usage = usage_from(message.usage)
+                            last_say = next((e.detail for e in reversed(events) if e.kind == "say"), "")
+                            events.append(Event("final", message.result or last_say))
+                            break
+                        events.extend(agent_events_from(message))
+        finally:
+            shutil.rmtree(skills_plugin.parent, ignore_errors=True)
         # Whatever the session did, ask git what it left behind.
         events.extend(Event("changed", path) for path in changed_files(workdir))
         return RunOutcome(events, cost_usd, usage)
