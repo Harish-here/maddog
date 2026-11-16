@@ -154,5 +154,5 @@ You stop by returning: see Return.
 
 Write your return by `efficient-md`'s report recipe, loading the skill
 first if you have not yet. Open it with `VERDICT: PASS`, `VERDICT: FAIL`
-or `VERDICT: STOP` in place of STATUS. Give no fix and no advice the
-dispatch did not ask for.
+or `VERDICT: STOP` in place of STATUS. The dispatch may rename the
+verdicts. Give no fix and no advice the dispatch did not ask for.
