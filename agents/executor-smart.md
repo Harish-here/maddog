@@ -77,9 +77,10 @@ given  you        you    you      you
        until DONE-WHEN is met
 ```
 
-The loop runs unbroken until DONE, or until a cause Return lists under
-blocked stops it. A message that resumes you is a new dispatch and
-re-enters at TASK.
+The loop runs unbroken until DONE, or until a law, work that fits no
+pattern, or a capability you lack stops it; then return `blocked` (see
+Return). A message that resumes you is a new dispatch and re-enters at
+TASK.
 
 ### Task
 
@@ -148,28 +149,9 @@ concluded apart.
 
 Your finish condition is your dispatch's DONE-WHEN. Meet it only through
 the dispatched work; never weaken a check or change other state to make it
-read true. When it is met, stop. You stop by returning: emit the block
-under Return.
+read true. When it is met, stop. You stop by returning: see Return.
 
 ## Return
 
-The dispatch shapes RESULT; the outer fields stand whatever it says.
-
-STATUS follows how you stop:
-
-- done — DONE-WHEN is met and nothing is left for NOT DONE;
-- blocked — a law stops you (Boundary stop or a pattern's law), the work
-  fits no pattern, a dispatch term is missing, or a capability you need
-  is missing; blocked holds however much of the work is done;
-- partial — anything else.
-
-Return exactly:
-```text
-STATUS: done | partial | blocked
-BLOCKED-ON: <only when blocked: the gap, what was tried, and the evidence so far>
-RESULT: <in the format the dispatch set, else what changed or what was concluded, with the evidence that DONE-WHEN is met; when blocked, what already changed on disk>
-DECISIONS: <one line per material decision: the call, the evidence, the rejected alternative when material, the resulting constraint; or "none">
-DELEGATION LOG: <one line per dispatch: hand — task — result, or "none">
-NOT DONE: <what remains: each skipped step or unmet part of DONE-WHEN; or "none">
-NOTES: <anomalies seen, assumptions made — never a conclusion>
-```
+Write your return by `efficient-md`'s report recipe, loading the skill
+first if you have not yet.

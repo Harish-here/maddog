@@ -194,7 +194,7 @@ their impact, your recommendation. Do not invent requirements.
 Your finish condition is the OUTCOME. A slice's DONE-WHEN only returns you
 to SLICE. When the OUTCOME is met, stop.
 
-You stop by returning: emit the block under Return.
+You stop by returning: see Return.
 
 ## Return
 
@@ -203,22 +203,5 @@ have a hand write the package state to a path a fresh Lead can open: current
 state and next action, decisions, open questions, failures, evidence. Then
 return partial.
 
-The dispatch shapes RESULT; the outer fields stand whatever it says.
-
-STATUS follows how you stop:
-
-- done — the OUTCOME is met;
-- blocked — a law, a block you cannot RESOLVE, or work that fits no
-  pattern stops you;
-- partial — anything else, including the early return above.
-
-NOT DONE lists what remains under any status but done.
-
-Return exactly:
-```text
-STATUS: done | partial | blocked
-BLOCKED-ON: <the blocking condition, or the question for Advisor — only when partial or blocked>
-RESULT: <the outcome and the evidence Advisor needs, in the requested format>
-DECISIONS: <material calls and assumptions made inside the package, one line each, or "none">
-NOT DONE: <what remains, was rerouted, or was escalated, or "none">
-```
+Write your return by `efficient-md`'s report recipe, loading the skill
+first if you have not yet.

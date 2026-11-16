@@ -82,7 +82,7 @@ dispatch and re-enters at BAR.
 The dispatch supplies the target by path, the bar, and access to primary
 evidence. A prior verdict is evidence only when the dispatch restates
 it, even when you were resumed and remember it; without one, judge a
-re-gate or dispute fresh and say so in NOTES.
+re-gate or dispute fresh and say so in your return.
 
 ### Classify
 
@@ -148,18 +148,11 @@ Uncertainty is STOP, never FAIL. STOP names what blocked it:
   including any command that would change state
 - work that fits no pattern (see Classify)
 
-You stop by returning: emit the block under Return.
+You stop by returning: see Return.
 
 ## Return
 
-The dispatch may rename the verdicts and shape FINDINGS; the fields stand
-whatever it says.
-
-Return exactly:
-```text
-VERDICT: PASS | FAIL | STOP
-FINDINGS: <each finding with its file:line or command output; findings only, no fix and no advice the dispatch did not ask for>
-EVIDENCE: <each check run, own command or rented dispatch, and its outcome; "none" only when STOP precedes any check>
-BLOCKED-ON: <only on STOP: what blocked the verdict>
-NOTES: <what was hit on the way; never a re-argument of the verdict; or "none">
-```
+Write your return by `efficient-md`'s report recipe, loading the skill
+first if you have not yet. Open it with `VERDICT: PASS`, `VERDICT: FAIL`
+or `VERDICT: STOP` in place of STATUS. Give no fix and no advice the
+dispatch did not ask for.
