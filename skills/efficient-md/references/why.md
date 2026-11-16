@@ -4,7 +4,8 @@ Read only when changing this skill. A writer never needs this file.
 
 Sections: the model; what the main file holds; why a size sentence;
 evidence of 2026-11-10; evidence of 2026-11-13; why brief and report
-mirror each other; where the sizes come from; published sources.
+mirror each other; evidence of 2026-11-16; where the sizes come from;
+published sources.
 
 ## The model
 
@@ -140,6 +141,37 @@ and RESULT was added, for a plan or a draft the brief asked for. Those
 agents keep their own blocks for now; the recipe says an agent's own
 labels win.
 
+## Evidence of 2026-11-16: the spec rebuild
+
+A fast-tier model wrote a spec, plan or blueprint from five sets of
+planning notes, about 380 words each. Three sets came with a format a
+planning skill would set. Each set hid an open choice, a rejected
+option, a debate, a fact one section needs from another, and an exact
+interface. A second agent scored the texts without knowing which
+recipe wrote which. Each count is five texts from one run, so a single
+fault is a hint, not proof.
+
+| Question | Result | What the recipe does now |
+|---|---|---|
+| Is the recipe needed beside a planning format? | With no spec recipe: 0 of 5 texts listed the open choice with who decides, 3 of 5 writers opened the brief recipe in its place, and 3 of 5 argued the rejected option out | The recipe stays |
+| Does the open-choice rule fire? | 5 of 5 in four runs that carried it, 4 of 5 in the fifth | Kept |
+| Do writers invent who decides? | "Each with who decides": 6, 7 and 9 invented deciders in three runs, such as "Callum (proposed)". With "or no one named": 0 in two runs | The phrase is in the rule |
+| Is the example needed? | Without it: the same open-choice lists and interfaces, and fewer rejected options argued out | The recipe has no example |
+| Is the interfaces line needed? | Without it: exact name, path and format kept in 15 of 15 | Cut |
+| Is the research row needed? | No text of 30 carried the debate, with or without a recipe | Cut |
+| Is the dependency clause needed? | With it: 0 of 15 texts dropped the fact one section needs from another. Without it: 1 of 15 | Kept, on a hint |
+| Can the recipe add a finish condition to a format with no place for one? | A contracts format of four fixed lines: written in 1 of 4 runs that asked for it, under three wordings | The recipe asks only where the format has a place, and adds only the list of open choices |
+| Does the size sentence matter? | Not tested alone. Average text: 629 and 589 words with it, 590, 563 and 579 without | Cut; a set format decides the length |
+
+Lessons taken:
+
+- A recipe cannot beat a format that fixes its parts. It can append a
+  list; it cannot add a line inside a fixed block.
+- Asking for a name invites an invented one. Give the writer the words
+  for "none".
+- With no recipe for a kind, a writer opens the nearest recipe and
+  writes that kind instead.
+
 ## Where the sizes come from
 
 Measured in the repo this skill was written in, then set beside
@@ -153,7 +185,7 @@ published figures. They are starting points; adjust them after use.
 | Skill body | typical 118 lines | under 500 lines | 150 lines |
 | Brief | 61 to 297 words | no number | 300 words |
 | Report | about 450 words, one sample | often 1,000 to 2,000 tokens | 500 words |
-| Spec section | typical 198 words | no number | 500 words |
+| Spec section | typical 198 words | no number | none since 2026-11-16; a set format decides the length |
 | State file | no sound sample | no number | 400 words, a guess |
 
 ## Published sources
