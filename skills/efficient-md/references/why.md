@@ -4,8 +4,8 @@ Read only when changing this skill. A writer never needs this file.
 
 Sections: the model; what the main file holds; why a size sentence;
 evidence of 2026-11-10; evidence of 2026-11-13; why brief and report
-mirror each other; evidence of 2026-11-16; where the sizes come from;
-published sources.
+mirror each other; evidence of 2026-11-16 for spec and for instruction
+file; where the sizes come from; published sources.
 
 ## The model
 
@@ -148,8 +148,8 @@ planning notes, about 380 words each. Three sets came with a format a
 planning skill would set. Each set hid an open choice, a rejected
 option, a debate, a fact one section needs from another, and an exact
 interface. A second agent scored the texts without knowing which
-recipe wrote which. Each count is five texts from one run, so a single
-fault is a hint, not proof.
+recipe wrote which. Each run is five texts, so a single fault is a
+hint, not proof.
 
 | Question | Result | What the recipe does now |
 |---|---|---|
@@ -171,6 +171,36 @@ Lessons taken:
   for "none".
 - With no recipe for a kind, a writer opens the nearest recipe and
   writes that kind instead.
+
+## Evidence of 2026-11-16: the instruction-file rebuild
+
+A fast-tier model rewrote five overlong instruction files, 708 to 784
+words each, for invented repos. Each file hid one item for every Keep
+bullet and Move-out row, and a rule for one subfolder; three repeated
+a rule from a parent file. Writers could create other files. A second
+agent scored where each item went, without knowing which recipe wrote
+which. Each run is five rewrites, so a single fault is a hint, not
+proof.
+
+| Question | Result | What the recipe does now |
+|---|---|---|
+| Is the recipe needed? | With none: a main file of 533 words on average, against 263 to 282 with one. The overview stayed in 5 of 5, and procedures, references and history stayed in the main file in 11 of 15 cases | The recipe stays |
+| Is the example needed? | Without it: no count worse by more than one, and 282 words against 263 | The recipe has no example |
+| Do links hold? | 39 links under three versions of the recipe: all gave path, contents and when to read; none named a missing file; none loaded automatically | The link form is spelled out in the Keep list |
+| Is the parent row needed? | With no recipe, the rule repeated from a parent file was cut in 3 of 3 | Cut; the main file's Never list covers it |
+| Do writers use a subfolder's own file? | With no row for it: 0 of 15 rewrites. With the row: 4 subfolder files in 3 of 5 rewrites, and no harm rule moved | The row is in the table, with its harm exception |
+| Is content lost on the way out? | With only a table of homes: a procedure vanished in 1 of 5 and history in 1 or 2 of 5. With the test "moves when you can name the task or folder that needs it; when you cannot, cut it": none vanished | The paragraph above the table |
+| Do prohibitions reach the bottom? | 3 of 5 as a finishing check, and 3 of 5 as "Commands go first, prohibitions last" | Kept as the sentence; unsolved |
+| Do writers invent rules? | 0 and 1 under the earlier versions, 2 with no recipe, 4 under the final text | Unsolved; watch it |
+
+Lessons taken:
+
+- A home with no row is never used. No writer made a subfolder file
+  until the table named one.
+- A table of homes does not say whether to move a line or cut it. One
+  question does: can you name the task or folder that needs it?
+- Writers keep harm rules, facts and the daily command with no recipe
+  at all. The recipe's work is in what leaves the file.
 
 ## Where the sizes come from
 
@@ -224,3 +254,13 @@ Paraphrased. Recheck each against its page before quoting it.
   (arxiv.org/abs/2307.03172).
 - Accuracy falls as the number of instructions rises
   (arxiv.org/abs/2507.11538).
+- A subfolder can hold its own instruction file, and the nearest file
+  applies to work there (agents.md; the same is described for four
+  agent tools in their own docs).
+- In a study of over 2,500 agent files, the good ones put runnable
+  commands early and stated boundaries; vague files failed
+  (github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories).
+- Other size guidance is looser than this skill's: under 200 lines,
+  under 300 lines, two pages (code.claude.com/docs/en/memory;
+  humanlayer.dev/blog/writing-a-good-claude-md; docs.github.com,
+  repository custom instructions).
