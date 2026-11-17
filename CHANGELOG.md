@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.1.0] - 2026-11-16
+
+### Changed
+- `skills/efficient-md/references/spec.md` — rewritten. Where another skill or the repo sets the format, that format stands and the recipe adds only the list of open choices. An open choice names who decides, or "no one named". Each section names any other section it depends on, and a builder builds from that section and the ones it names. The size sentence, the example, the interfaces line and the research row are gone (3fbef84, b7900d1, #136)
+- `skills/efficient-md/references/instruction-file.md` — rewritten. A line that fails the keep test moves when a task or folder that needs it can be named, and is cut otherwise, with one file for each "when". A rule for one subfolder goes to that folder's own instruction file unless its breach causes harm. The link form is spelled out, and the recipe states whose rules win. The example and the parent-file row are gone (1bed105, #136)
+- `skills/efficient-md/references/why.md` — the test evidence for both rebuilds, three more published sources, and no size for a spec (6476f5c, b7900d1, 037ccf1)
+
+### Notes for users
+- A spec, plan or blueprint written with `efficient-md` no longer follows a 500-word section size or the recipe's example layout. A planning skill's format decides both.
+- An instruction file rewritten with `efficient-md` may now gain instruction files inside subfolders, each holding rules for that folder only.
+
 ## [6.0.0] - 2026-11-16
 
 ### Changed
