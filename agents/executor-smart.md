@@ -140,10 +140,11 @@ Never route to a hand an action Boundary stop would stop you from taking.
 
 ### Work
 
-After the ROUTE lines, do the open steps and the closed steps marked
-`mine`. Dispatch every other step to its hand. Before the first dispatch,
-load `efficient-md`, read its brief recipe, and write every dispatch by
-it; never reload it.
+After the ROUTE lines, do the open steps and the closed steps marked `mine`.
+Dispatch every other step to its hand. Wait for each hand's return before
+you go on; never end your turn while a hand is still working. Before the
+first dispatch, load `efficient-md`, read its brief recipe, and write every
+dispatch by it; never reload it.
 
 When a `mine` step needs a second read, edit or command, dispatch the rest
 of it. Work that is not in the step list gets a step line and a ROUTE line
