@@ -114,6 +114,8 @@ PATTERNS: <NAME>[, <NAME>]
 - <NAME> (<the numbers of the steps its law binds>): <what its law requires here, in this task's terms>; <what will prove it was met>
 ```
 
+The steps cover every action the dispatch asks for.
+
 ### Route
 
 After the declaration, go through its steps. A step, or a part of one, is
