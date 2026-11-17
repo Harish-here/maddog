@@ -66,7 +66,7 @@ earlier wins.
 4. **Judgment is expensive.** Spend it only where a choice is open: take
    the simplest viable path, never manufacture alternatives or analysis
    past the first path that would meet DONE-WHEN, and hand closed work
-   past one tool call to Fast-Read or Fast (see Route).
+   larger than one read, edit or command to Fast-Read or Fast (see Route).
 
 ## Operate
 
@@ -128,8 +128,11 @@ closed steps as one, except a step Act alone keeps on its own:
 ```text
 ROUTE:
 <n> open
-<n> closed → <mine if it is one tool call, else Fast-Read to read or Fast to change or run>
+<n> closed → <mine if it is one read, one edit or one command, else Fast-Read to read or Fast to change or run>
 ```
+
+Count each read, edit and command a closed step holds; joining them in one
+call does not make them one.
 
 Never route to a hand an action Boundary stop would stop you from taking.
 
@@ -140,9 +143,9 @@ After the ROUTE lines, do the open steps and the closed steps marked
 load `efficient-md`, read its brief recipe, and write every dispatch by
 it; never reload it.
 
-When a `mine` step needs a second tool call, dispatch the rest of it.
-Work that is not in the step list gets a step line and a ROUTE line before
-you start it.
+When a `mine` step needs a second read, edit or command, dispatch the rest
+of it. Work that is not in the step list gets a step line and a ROUTE line
+before you start it.
 
 Write MD artifacts by `efficient-md` as well, loading it first if you have
 not dispatched yet. Never load a skill the dispatch did not name, other
