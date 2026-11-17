@@ -191,14 +191,14 @@ def test_the_main_conversation_is_allowed(tmp_path):
     assert decision(run_guard(tmp_path, agent_type=None, agent_id=None)) == "allow"
 
 
-@pytest.mark.parametrize("agent_type", ["maddog:executor-smart", "executor-lead", "general-purpose", "executor-fast-reader"])
+@pytest.mark.parametrize("agent_type", ["executor-lead", "general-purpose", "executor-fast-reader"])
 def test_other_agents_are_allowed_without_a_line(tmp_path, agent_type):
     write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant("Let me look.")])
     assert decision(run_guard(tmp_path, agent_type=agent_type)) == "allow"
 
 
-@pytest.mark.parametrize("agent_type", ["executor-fast", "maddog:executor-fast", "executor-fast-read", "maddog:executor-fast-read"])
-def test_both_fast_agents_are_checked_bare_or_namespaced(tmp_path, agent_type):
+@pytest.mark.parametrize("agent_type", ["executor-fast", "maddog:executor-fast", "executor-fast-read", "maddog:executor-fast-read", "executor-smart", "maddog:executor-smart"])
+def test_guarded_agents_are_checked_bare_or_namespaced(tmp_path, agent_type):
     write_subagent(tmp_path, "a1b2c3", [user("do it"), assistant("Let me look.")])
     assert decision(run_guard(tmp_path, agent_type=agent_type)) == "deny"
 
