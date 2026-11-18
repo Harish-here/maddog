@@ -228,6 +228,11 @@ marked `[redacted: <what it is, never any part of its value>]`, and the
 marker is its only trace. Both hold the skill capability, and a core law
 limits it to efficient-md and any skill the dispatch names.
 
+Both put the pattern table directly under the classify paragraph, then write
+a PATTERNS declaration before the first tool call (2026-11-18): the names,
+then one bullet per pattern holding its steps and what its law requires in
+the task's terms. In Fast a pattern with no law carries its steps alone.
+
 Fast (2026-09-24): four core laws (Boundary stop, opening with the BOUNDARY
 STOP fragment and then defining a door and the copy-first procedure; Act
 alone; Stop, don't guess as a list with the TRANSFORM-misfit carve-out;
@@ -675,6 +680,39 @@ commands, not tool calls (c1d369d); the steps cover every action the dispatch
 asks for (13f78a4); Smart waits for each hand's return (e86890e).
 
 This section is a record; the Smart section above states what holds now.
+
+## Fast and Fast-Read declaration pass, 2026-11-18
+
+Section-by-section review of the Action Patterns section of
+agents/executor-fast.md, scoped to two changes; the verdicts and observations
+O1 to O7 are in `.claude/reviews/executor-fast.ledger.md`. The same changes
+were mirrored to agents/executor-fast-read.md on the user's instruction, with
+its text shown and approved first. What changed, for a reader of the older
+passes:
+
+- The declaration bullet asks what a pattern's law requires in the task's
+  terms. It replaced "what you act on first" (Fast-Read: "read first") and
+  "where its evidence will show in your return". In 24 sampled declarations,
+  runs listed every target or restated the action, named the evidence and
+  added "in the return", and stated a law only when they volunteered it. The
+  return format is loaded only at Return and has no label called evidence.
+- A Fast pattern with no law (CHANGE, OPERATE) carries its name and steps and
+  nothing after them. Every Fast-Read pattern has a law, so its bullet has no
+  optional part.
+- No proof part, unlike Smart's declaration: neither file has a stage that
+  reads one, and their laws already say what to report.
+- The steps placeholder says what it holds; the sentence that explained
+  `<steps>` is gone.
+- The pattern table sits directly under the classify paragraph, which asks
+  "which patterns below does the work hold?". Its words were not reviewed.
+
+Not measured: the pattern tests score the first tool call, and they were not
+recorded for this change, by the user's ruling of 2026-11-18. Since
+2026-11-01, all 371 Fast runs and all 83 Fast-Read runs wrote `PATTERNS:`
+before their first tool call.
+
+This section is a record; the Fast and Fast-Read section above states what
+holds now.
 
 ## Non-Decisions
 
