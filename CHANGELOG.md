@@ -10,11 +10,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `agents/executor-smart.md` — before its first tool call, and each time its loop returns to CLASSIFY, the agent writes a `PATTERNS:` declaration: numbered steps that cover every action the dispatch asks for, and for each pattern what its law requires in the task's own terms and what will prove it was met (6dc3f8c, 13f78a4)
 - `agents/executor-smart.md` — a ROUTE stage. Every step gets a line, `open` or `closed`. A closed step that is one read, one edit or one command stays with the agent; a larger one goes to executor-fast-read or executor-fast, and joined commands count one by one. Core Law 4 carries the same duty, and the agent waits for each hand's return before going on (6dc3f8c, c1d369d, e86890e)
 - `agents/executor-smart.md` — a fifth pattern, OBSERVE, for work that ends with a record of how something behaves or whether it can be done. Its law, Observer Effect: observe without steering, report what was covered and what was not, and keep what was seen apart from what is concluded (6dc3f8c)
-- `scripts/hooks/pattern-declare-guard.sh` — covers executor-smart by the same rule as executor-fast and executor-fast-read: a first tool call with no `PATTERNS:` in the agent's own text is refused once. The guard tests list executor-smart as guarded. Its refusal text asks for the declaration the agent's own definition gives. (8311cde, 86e2ec4)
+- `scripts/hooks/pattern-declare-guard.sh` — covers executor-smart by the same rule as executor-fast and executor-fast-read: a first tool call with no `PATTERNS:` in the agent's own text is refused once. The guard tests list executor-smart as guarded. Its refusal text asks for the declaration the agent's own definition gives (8311cde, 86e2ec4)
 
 ### Changed
 - `agents/executor-smart.md` — the pattern table recognises work by what the task ends with, and its example lists are gone. REVIEW takes its criteria from the dispatch or, where the dispatch gives none, from criteria the agent states first. The loop is TASK, CLASSIFY, ROUTE, WORK, VERIFY, RETURN. Verify holds every check: each hand's return, each pattern's law against the proof the declaration named, and the result against DONE-WHEN. Done is merged into Return, and Contract into Work, which sends dispatch writing to `efficient-md`'s brief recipe. Task says that what the dispatch decides is closed. The description's list of work ends "review against criteria, or observe how something behaves". The agent no longer carries the CONTRACT and VERIFY fragments (6dc3f8c)
-- `skills/advisor-mode/SKILL.md`, `agents/executor-lead.md` — the BOUNDED row of the routing table states its test, "the goal and boundary are fixed, how to get there is not", in place of a list of kinds of work (6dc3f8c)
+- `skills/advisor-mode/SKILL.md`, `agents/executor-lead.md` — the BOUNDED row of the routing table adds a fourth kind of work to its list, "observation by a method the hand designs" (6dc3f8c, d98b7bd)
 
 ### Docs
 - `docs/executor-family/constitution.md`, `docs/executor-family/design-decisions.md`, `docs/executor-family/local-work.md` — brought in line with the new executor-smart text, with a dated entry for the review that produced it (6dc3f8c, 86e2ec4)
@@ -23,7 +23,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ### Notes for users
 - A dispatched `executor-smart` now opens with a declaration and ROUTE lines, and hands closed steps of more than one read, edit or command to `executor-fast` or `executor-fast-read`. Runs may show sub-agent calls where there were none before.
 - The guard refuses `executor-smart`'s first tool call once when it has not written `PATTERNS:`. This holds wherever the agent is dispatched, including by the `sdd-task-loop` workflow and the product agents.
-- The advisor and `executor-lead` now send work to `executor-smart` by one test: the goal and boundary are fixed, and how to get there is not.
+- The advisor and `executor-lead` can now send observing work to `executor-smart`: finding out how something behaves, by a method the agent designs.
 
 ## [6.1.0] - 2026-11-16
 
