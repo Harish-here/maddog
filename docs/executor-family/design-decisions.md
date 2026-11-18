@@ -25,8 +25,9 @@ subject.
 ```text
 READ        → Fast-Read     facts as found; no judgment
 MECHANICAL  → Fast          decisions all closed
-BOUNDED     → Smart         the goal and boundary are fixed,
-                            how to get there is not
+BOUNDED     → Smart         implementation choice, criteria review,
+                            diagnosis with a known evidence surface,
+                            observation by a method the hand designs
 EVOLVING    → Lead          next action depends on discovery
 GATE        → Judge         verdict before an action that changes state
                             others depend on, or on a plan, spec, or
