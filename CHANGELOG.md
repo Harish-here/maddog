@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.2.1] - 2026-11-18
+
+### Changed
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — the declaration's bullet asks what each pattern's law requires in the task's own terms, in place of what the agent acts on or reads first and where its evidence will show in the return. In executor-fast a pattern with no law carries its name and steps alone. The steps placeholder says what it holds, and the sentence that explained it is gone (f53afa1, c8df220)
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — the pattern table sits directly under the paragraph that asks which patterns the work holds, above the declaration template; its words are unchanged (f53afa1, c8df220)
+
+### Docs
+- `docs/executor-family/design-decisions.md` — a dated entry for the change, and the section on Fast and Fast-Read names the declaration (c8df220)
+
+### Notes for users
+- A dispatched `executor-fast` or `executor-fast-read` still opens with `PATTERNS:`. Its bullets are shorter: each names its steps, and a pattern with a law states that law for the task.
+
 ## [6.2.0] - 2026-11-17
 
 ### Added
