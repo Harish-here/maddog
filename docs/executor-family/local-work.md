@@ -2,6 +2,10 @@
 
 STATUS: SUPERSEDED 2026-09-11 by design-decisions.md. Kept as design history; the locked schema in Part II no longer governs agents/executor-smart.md.
 
+NOTE 2026-11-17: executor-smart's loop, pattern table and hand-off rule were
+rewritten after this document; see design-decisions.md, "Smart declaration
+pass, 2026-11-17". Read the text below as the 2026-09-11 reasoning.
+
 This document is for someone meeting the local-judgment tier for the first
 time: a reader who knows Claude Code and agents, and wants to understand,
 review, or re-author `agents/executor-smart.md`. Part I explains why the

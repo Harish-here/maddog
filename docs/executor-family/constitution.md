@@ -9,8 +9,8 @@ verbatim. Edit a fragment here, then propagate; never edit a copy in place.
 | FAMILY LAWS | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | CORE PRECEDENCE | advisor-mode, executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | ROUTE | advisor-mode, executor-lead |
-| CONTRACT | advisor-mode, executor-lead, executor-smart, executor-judge |
-| VERIFY | advisor-mode, executor-lead, executor-smart, executor-judge |
+| CONTRACT | advisor-mode, executor-lead, executor-judge |
+| VERIFY | advisor-mode, executor-lead, executor-judge |
 | PATTERNS | executor-lead, executor-smart, executor-judge, executor-fast, executor-fast-read |
 | LOOP | advisor-mode, executor-lead |
 | DONE | advisor-mode, executor-lead |
@@ -93,7 +93,7 @@ Pass a hand no more authority than held.
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | every decision already made, by the task or an earlier return, none by you |
-| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
+| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface, observation by a method the hand designs |
 | GATE | Judge | verdict before an action that changes state others depend on, or on a plan, spec, or blueprint whose execution leads to such an action; never a hand that can edit what it judges |
 
 ## CONTRACT
@@ -253,7 +253,7 @@ those that have not.
 | Core Laws numbered and named, opening with CORE PRECEDENCE | all six |
 | Authority as law 1 | every role that can act on authority: all but Fast-Read (P30) |
 | A pattern table (Pattern, a recognition column, Law) under PATTERNS | the five executors |
-| Where a returning role finishes, "You stop by returning: see Return." | the five executors (Done, or Judge's Verdict) |
+| Where a returning role finishes, "You stop by returning: see Return." | Lead, Judge, Fast, Fast-Read (Done, or Judge's Verdict); Smart's loop ends at its Return stage |
 | A Return section that has the role write its return by efficient-md's report recipe, adding no fixed block and no status list of its own | the five executors |
 | LOOP DISCIPLINE: the loop runs unbroken until its end stage or a stop, said in the role's own stage names | roles with a loop: Advisor, Lead, Smart, Judge |
 | Under a loop heading, each child heading is a loop stage | roles with a loop: Advisor, Lead, Smart, Judge |
@@ -273,14 +273,14 @@ those that have not.
 | P7 | Work whose next step depends on discovery | Lead | PLAN, CAMPAIGN, DIAGNOSE, DELIVER; the after-PLAN rule |
 | P8 | Can exhaust context mid-package with state worth keeping | Lead | early return with a state file |
 | P9 | Holds no write capability (guard-enforced) | Lead, Judge | Lead: ROUTE LINE's one look, every change to a hand; Judge: the kept single read or read-only command, fixes nothing |
-| P10 | Sends work to hands | Advisor, Lead, Smart, Judge | CONTRACT, VERIFY |
+| P10 | Sends work to hands | Advisor, Lead, Smart, Judge | CONTRACT, VERIFY (Smart: its own Work dispatch rule and Verify check 1) |
 | P11 | Receives authority only through a dispatch | Lead, Smart, Judge, Fast, Fast-Read | Lead, Smart, Fast: BOUNDARY STOP; Judge: Dispatch stop; Fast-Read: none, since it can change nothing (P30) |
 | P12 | Runs or dispatches hard-to-reverse actions | Advisor, Lead, Smart, Fast | Act alone, worded per holder |
 | P13 | Is dispatched and finishes by returning, with no exchange mid-task | Lead, Smart, Judge, Fast, Fast-Read | Lead: "you answer only to Advisor, through your return"; Smart, Judge, Fast, Fast-Read: "you finish by returning"; Smart, Fast, Fast-Read: "cannot ask" |
-| P14 | Does its own judged work; hands take only mechanical slices | Smart, Judge | Smart: Work's rent rule; Judge: Gather's keep list |
-| P15 | Owns one dispatched unit of judgment, iterated against evidence | Lead, Smart, Judge | Lead: the shared LOOP (P4); Smart: TASK…DONE; Judge: BAR…VERDICT |
+| P14 | Does its own judged work; hands take only mechanical slices | Smart, Judge | Smart: Route's closed-step test and Work's dispatch rule; Judge: Gather's keep list |
+| P15 | Owns one dispatched unit of judgment, iterated against evidence | Lead, Smart, Judge | Lead: the shared LOOP (P4); Smart: TASK…RETURN; Judge: BAR…VERDICT |
 | P16 | Decides open choices and writes inside one task | Smart | the caller-decision list in Boundary stop; Evidence before choice; Judgment is expensive |
-| P17 | Writes toward a DONE-WHEN it could make read true falsely | Smart, Fast | Done: "Meet it only through the dispatched work …" |
+| P17 | Writes toward a DONE-WHEN it could make read true falsely | Smart, Fast | Smart: Verify check 3, "Never weaken a check …"; Fast: Done, "Meet it only through the dispatched work …" |
 | P18 | Reviews against criteria | Smart, Judge | Smart: REVIEW, with its gate clause; Judge: its whole verdict role |
 | P19 | Receives the decisions Fast returns blocked on | Smart | the description's "after executor-fast returns blocked" |
 | P20 | Writes markdown artifacts and can load skills | Advisor, Smart | "Write MD artifacts by it as well, loading it first …" |

@@ -7,16 +7,16 @@ steps listed below.
 
 ## What runs, and what it touches
 
-- **Hooks.** `scripts/hooks/executor-guard.sh`, `scripts/hooks/judge-dispatch-guard.sh`
-  and `scripts/hooks/pattern-declare-guard.sh` read the pending tool call that
+- **Hooks.** `scripts/hooks/executor-guard.sh`,
+  `scripts/hooks/judge-dispatch-guard.sh` and
+  `scripts/hooks/pattern-declare-guard.sh` read the pending tool call that
   Claude Code passes them, and answer allow or deny. The first two keep
   nothing. The third also reads the calling agent's own session transcript on
-  your machine, and leaves one empty file per executor-fast or
-  executor-fast-read run in `maddog-pattern-declare/` under `$TMPDIR` (or
-  `/tmp`). When you set `MADDOG_DISPATCH_PROBE`, the
-  dispatch guard appends every agent dispatch it sees, including the full
-  prompt text, to `maddog-dispatch-probe.log` in `$TMPDIR` (or `/tmp`) on
-  your machine.
+  your machine, and leaves one empty file per executor-fast,
+  executor-fast-read or executor-smart run in `maddog-pattern-declare/` under
+  `$TMPDIR` (or `/tmp`). When you set `MADDOG_DISPATCH_PROBE`, the dispatch
+  guard appends every agent dispatch it sees, including the full prompt text,
+  to `maddog-dispatch-probe.log` in `$TMPDIR` (or `/tmp`) on your machine.
 - **Agents and skills.** These are instructions that Claude Code loads. Your
   prompts and files go to Anthropic through Claude Code, under Anthropic's
   terms. Some agents use Claude Code's web and browser tools: `researcher`

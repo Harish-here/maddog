@@ -12,7 +12,7 @@ msg_jq_missing_context() {
 
 # --- pattern-declare-guard.sh ---
 MSG_PATTERN_REASON="write the PATTERNS template first, then repeat the call in the same message"
-MSG_PATTERN_CONTEXT="Blocked by pattern-declare-guard.sh: no PATTERNS: line was found in your first message, and this check cannot tell whether it was written but not yet saved. Your first message must hold the pattern template before your first tool call: PATTERNS: <NAME>[, <NAME>], then one line per pattern that has a law. Write that template now, then repeat this call in the same message. If you already wrote it, write it once more; this check runs only on your first call."
+MSG_PATTERN_CONTEXT="Blocked by pattern-declare-guard.sh: no PATTERNS: line was found in your first message, and this check cannot tell whether it was written but not yet saved. Your first message must hold the whole declaration your definition asks for, starting PATTERNS: <NAME>[, <NAME>], before your first tool call. Write that declaration now, then repeat this call in the same message. If you already wrote it, write it once more; this check runs only on your first call."
 
 # --- judge-dispatch-guard.sh ---
 WHY_EXECUTOR_JUDGE="this executor is fix-less by design and may only dispatch executor-fast-read or researcher, never a hand that changes anything — renting any hand to make a change is not permitted for executor-judge at all"

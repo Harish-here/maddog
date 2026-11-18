@@ -3,7 +3,8 @@
 STATUS: ADOPTED 2026-09-16, current-state sections rewritten 2026-09-23;
 Smart, Fast and the BOUNDARY STOP fragment updated 2026-09-24; Fast-Read and
 the shared Fast/Fast-Read Return updated 2026-09-25; every Return moved to the
-report recipe, and the RETURN fragment added, 2026-11-16.
+report recipe, and the RETURN fragment added, 2026-11-16; Smart's loop, Route,
+Verify and Return reworked 2026-11-17.
 Supersedes the 2026-09-11 record and the locked schemas in mechanical-work.md
 and local-work.md. The production bodies under agents/ and
 skills/advisor-mode/ carry fourteen shared fragments, canonical in
@@ -25,7 +26,8 @@ subject.
 READ        → Fast-Read     facts as found; no judgment
 MECHANICAL  → Fast          decisions all closed
 BOUNDED     → Smart         implementation choice, criteria review,
-                            diagnosis with a known evidence surface
+                            diagnosis with a known evidence surface,
+                            observation by a method the hand designs
 EVOLVING    → Lead          next action depends on discovery
 GATE        → Judge         verdict before an action that changes state
                             others depend on, or on a plan, spec, or
@@ -49,8 +51,8 @@ carried byte-identically. Fourteen fragments:
 | FAMILY LAWS | completion is a state; never retry blindly; durable state off by default; authority for hard-to-reverse actions, instruction-file edits, and scope or intent changes (exact action or standing grant; silence grants nothing). Hard-to-reverse includes anything seen outside the workspace or changing state others depend on, even if it can be undone; inside a user-named workspace a change is reversible unless it discards work or data that exists nowhere else | all six |
 | CORE PRECEDENCE | no core law licenses what a Family Law forbids; among core laws the earlier wins | all six |
 | ROUTE | route by shape; mechanical work ALWAYS to the Fast tiers (Fast-Read to read, Fast to change or run); once a hand owns a slice, never do its next step yourself, but wait for its return or stop it and REROUTE; no more authority than held; the shape table ending at the GATE row (verdict before an action that changes state others depend on, or on a plan, spec, or blueprint whose execution leads to such an action; never a hand that can edit what it judges), each carrier adding its own EVOLVING row | Advisor, Lead |
-| CONTRACT | GOAL, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Smart, Judge |
-| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence; redoing the work is not verification; a claim you or a Judge already cleared needs no second pass; keep observed, produced, concluded apart | Advisor, Lead, Smart, Judge |
+| CONTRACT | GOAL, BOUNDARY, DONE-WHEN; add only what is useful; cite by path; capped returns; load efficient-md before the first dispatch and never reload it | Advisor, Lead, Judge |
+| VERIFY | a return is evidence, not proof; check against DONE-WHEN; verify load-bearing claims at cited evidence; redoing the work is not verification; a claim you or a Judge already cleared needs no second pass; keep observed, produced, concluded apart | Advisor, Lead, Judge |
 | PATTERNS | ALWAYS CLASSIFY before the first tool call; a named pattern is a hint; hold each pattern's law; core laws outrank pattern laws; work that fits none is returned | all five executors |
 | LOOP | the fenced flow OUTCOME → SLICE → CLASSIFY → DISPATCH → EVALUATE → DONE with its actor row | Advisor, Lead |
 | DONE | the finish condition is the OUTCOME; a slice's DONE-WHEN only returns you to SLICE | Advisor, Lead |
@@ -103,11 +105,11 @@ Decisions that fix the mechanism:
   command whose short output decides its next step. Lead: a single read or
   read-only command, every change to a hand. Judge: the evidence the verdict
   rests on, commands the bar needs that change nothing, and a single read or
-  read-only command. Smart: its task's choices, changes, and the checks that
-  prove them, plus the evidence it judges and a single read or command; closed
-  many-file slices go to the Fast tiers.
-- Every role that finishes by returning says so at Done: "You stop by
-  returning: see Return."
+  read-only command. Smart: its open steps, plus a closed step that is one
+  read, one edit or one command; every other closed step goes to the Fast
+  tiers.
+- Every role but Smart that finishes by returning says so at Done: "You stop
+  by returning: see Return." Smart's loop ends at its Return stage.
 - Every executor writes its return by efficient-md's report recipe, which
   owns the status meanings; Return names the recipe and adds only what the
   recipe lacks. No executor holds a return layout or a status list of its
@@ -135,7 +137,7 @@ Decisions that fix the mechanism:
 |---|---|---|
 | Advisor, Lead | the LOOP fragment | they cut and dispatch slices |
 | Judge | BAR → CLASSIFY → GATHER → VERIFY → VERDICT, own text | the judgment is never dispatched; the back-edge is evidence-driven, VERIFY → GATHER |
-| Smart | TASK → CLASSIFY → WORK → VERIFY → DONE, own text, added 2026-09-23 | a doer with judgment: VERIFY checks its own result against DONE-WHEN and loops back to WORK; resumable, so it re-enters at TASK |
+| Smart | TASK → CLASSIFY → ROUTE → WORK → VERIFY → RETURN, own text, added 2026-09-23, reshaped 2026-11-17 | a doer with judgment: VERIFY checks its own result against DONE-WHEN and loops back to CLASSIFY; resumable, so it re-enters at TASK |
 | Fast, Fast-Read | none, by decision | a back-edge would contradict "never retry on your own" and invite the dirty-tree revert; the unbroken-run, re-entry, and done-return duties are already stated in their Role and Done |
 
 Each file holding a loop states the unbroken-loop rule and, where the role can
@@ -169,21 +171,34 @@ section (the early-return paragraph, then the report recipe). Body 1,453 words r
 
 ## Smart
 
-Smart's own text (2026-09-24): Role and family sentence (hands Fast-Read and
-Fast, by short name), four core laws (Boundary stop, opening with the
-BOUNDARY STOP fragment and naming product, architectural, and cross-task
-calls as outside the boundary; Act alone; Evidence before choice, which
-records what evidence cannot resolve in DECISIONS; Judgment is expensive,
-bounded by the first path that would meet DONE-WHEN), its own loop with Task,
-Classify (Pattern | Applies when | Law; rows written as conditions on the
-task; a behaviour-preserving refactor sits only under TRANSFORM; REVIEW says a
-gating review is Judge's), Work, Verify, Done (DONE-WHEN met only through the
-dispatched work, never by weakening a check), and Return, which sends the return to
-the report recipe; a law, work that fits no pattern, or a missing capability
-stops the loop with `blocked`, said in Operate. Smart
-does not carry ROUTE or DISPATCH FIRST: the doer never rents out its own job.
-Its description separates it from Fast by "how to reach the goal is not yet
-decided". Body about 1,380 words raw.
+Smart's own text (2026-11-17): Role and family sentence (hands Fast-Read and
+Fast, by short name), four core laws (Boundary stop, opening with the BOUNDARY
+STOP fragment and stopping at product, architectural, and cross-task
+decisions; Act alone; Evidence before choice, which records what evidence
+cannot resolve in DECISIONS; Judgment is expensive, bounded by the first path
+that would meet DONE-WHEN, and sending closed work larger than one read, edit
+or command to Fast-Read or Fast), its own loop TASK → CLASSIFY → ROUTE → WORK
+→ VERIFY → RETURN, with Task, Classify (Pattern | The task ends with | Law;
+five patterns, BUILD, TRANSFORM, DIAGNOSE, REVIEW, OBSERVE, each recognised by
+what the task ends with; REVIEW says a gating review is Judge's; each pass
+writes a PATTERNS declaration of numbered steps and, per pattern, what its law
+requires and what will prove it met; the steps cover every action the dispatch
+asks for), Route (a step is closed when what to do and what comes back can be
+stated before it starts; one ROUTE line per step; a closed step of one read,
+one edit or one command stays Smart's, joined commands counted one by one, a
+larger one goes to Fast-Read or Fast; every open step is Smart's), Work (the
+open steps and the `mine` steps; every other step dispatched, each dispatch
+written by efficient-md's brief recipe, Smart waiting for each hand's return),
+Verify (three checks in order: each hand's return, each pattern's law against
+the proof its declaration named, the result against DONE-WHEN, never weakening
+a check; a failed check or new steps lead back to CLASSIFY), and Return
+(reached when every check passes, or early as `blocked`; the return goes to
+the report recipe). A law, work that fits no pattern, or a missing capability
+stops the loop with `blocked`, said in Operate. Smart carries neither the
+ROUTE nor the DISPATCH FIRST fragment: its Route section hands off only closed
+steps past one read, edit or command, and the open steps stay its own. Its
+description separates it from Fast by "how to reach the goal is not yet
+decided". Body about 1,330 words raw.
 
 ## Judge
 
@@ -635,6 +650,31 @@ Residuals: an absence read as CONTRADICTED, and a TRACE blocking at a dead
 end, each about 1 run in 3 on both files; a cut-only return called partial
 3/6. Product agents keep their own RECON step labels and name SWEEP at the
 dispatch.
+
+## Smart declaration pass, 2026-11-17
+
+Section-by-section review of agents/executor-smart.md; rulings R1-R7 and the
+evidence behind them (418 Smart runs, 14 of which handed work off) are in
+`.claude/reviews/executor-smart.ledger.md`. What changed, for a reader of the
+older passes:
+
+- The loop gained ROUTE and ends at RETURN; Done and the Contract heading are
+  gone. CLASSIFY lists steps with no open or closed label; ROUTE marks which
+  are closed and who does each. Verify holds every check and the loop-back;
+  Return holds the stopping.
+- Smart stopped carrying the CONTRACT and VERIFY fragments: dispatches follow
+  efficient-md's brief recipe, and Verify is its own text.
+- The pattern table's middle column became "The task ends with", and OBSERVE
+  was added; as written, 59 of 318 dispatches since 2026-10-01 fit a row only
+  by stretching it.
+- Smart writes a PATTERNS declaration each pass.
+
+After a probe of the applied text (ledger observations O8 to O10), three
+wording fixes followed the same day: the hand-off count is of reads, edits and
+commands, not tool calls (c1d369d); the steps cover every action the dispatch
+asks for (13f78a4); Smart waits for each hand's return (e86890e).
+
+This section is a record; the Smart section above states what holds now.
 
 ## Non-Decisions
 

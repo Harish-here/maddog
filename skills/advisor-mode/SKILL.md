@@ -90,7 +90,7 @@ Pass a hand no more authority than held.
 |---|---|---|
 | READ | Fast-Read | facts as found; no judgment |
 | MECHANICAL | Fast | every decision already made, by the task or an earlier return, none by you |
-| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface |
+| BOUNDED | Smart | local judgment: implementation choice, criteria review, diagnosis with a known evidence surface, observation by a method the hand designs |
 | GATE | Judge | verdict before an action that changes state others depend on, or on a plan, spec, or blueprint whose execution leads to such an action; never a hand that can edit what it judges |
 | EVOLVING | Lead | next action depends on discovery, including when you would have to look around to know what the work touches |
 

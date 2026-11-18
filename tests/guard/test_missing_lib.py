@@ -32,8 +32,8 @@ HOOKS = {
         ["executor-fast", "executor-fast-read", "executor-lead", "general-purpose"],
     ),
     "pattern-declare-guard.sh": (
-        ["executor-fast", "executor-fast-read"],
-        ["executor-smart", "executor-lead", "executor-judge", "general-purpose"],
+        ["executor-fast", "executor-fast-read", "executor-smart"],
+        ["executor-lead", "executor-judge", "general-purpose"],
     ),
 }
 

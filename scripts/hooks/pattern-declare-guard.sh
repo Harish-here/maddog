@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# pattern-declare-guard.sh — PreToolUse guard for executor-fast and executor-fast-read.
+# pattern-declare-guard.sh — PreToolUse guard for executor-fast, executor-fast-read and executor-smart.
 #
-# Purpose: both agents must write a `PATTERNS:` line in their first message,
+# Purpose: every guarded agent must write a `PATTERNS:` line in its first message,
 # before their first tool call. Instruction text alone does not make that
 # happen every time, so this hook refuses a first call that has no such line.
 #
@@ -23,7 +23,7 @@
 #
 # Wiring: plugin-level hooks/hooks.json, matcher on the read/write/search/shell
 # tools. That wiring is session-wide, so scope is enforced here: only calls
-# whose payload agent_type is executor-fast or executor-fast-read (bare or
+# whose payload agent_type is executor-fast, executor-fast-read or executor-smart (bare or
 # plugin-namespaced) are inspected. The main conversation has no agent_id and
 # is always allowed.
 #
@@ -31,7 +31,7 @@
 # to ALLOW, or print a hookSpecificOutput deny JSON and exit 0 to DENY (the JSON
 # form gives the model the reason; exit 2 would not). Hooks fail open: an unreadable
 # payload ALLOWS. A missing jq, or a lib that fails to load, denies only a payload whose
-# raw text names one of the two agent types; every other caller ALLOWS.
+# raw text names one of the guarded agent types; every other caller ALLOWS.
 #
 # State: one empty marker file per agent_id under ${TMPDIR:-/tmp}/maddog-pattern-declare/.
 # The marker is created on the agent's first call, whatever the decision, so a
@@ -40,11 +40,11 @@
 set -uo pipefail
 
 HOOK_NAME="${BASH_SOURCE[0]##*/}"
-GUARDED_AGENTS='executor-fast|executor-fast-read'
+GUARDED_AGENTS='executor-fast|executor-fast-read|executor-smart'
 LIB="$(dirname "${BASH_SOURCE[0]}")/../lib"
 
 # A lib cut off at a function or variable boundary sources without error but leaves everything
-# after the cut undefined, and a missing function or list fails open for the fast executors.
+# after the cut undefined, and a missing function or list fails open for the guarded agents.
 # REQUIRED_FUNCS and REQUIRED_VARS list every function and every top-level variable (command
 # lists, refusal texts) the sourced libs define; a missing one takes the same path as a lib that
 # fails to load. tests/guard/test_missing_lib.py keeps both lists equal to what the libs define.
@@ -94,7 +94,7 @@ deny() {
 
 hook_start "$HOOK_NAME" "$GUARDED_AGENTS"
 
-agent_is "$(field .agent_type)" executor-fast executor-fast-read || exit 0
+agent_is "$(field .agent_type)" executor-fast executor-fast-read executor-smart || exit 0
 
 agent_id="$(field .agent_id)"
 session_id="$(field .session_id)"
