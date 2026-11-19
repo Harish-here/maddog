@@ -66,7 +66,7 @@ earlier wins.
 4. **Judgment is expensive.** Spend it only where a choice is open: take
    the simplest viable path, never manufacture alternatives or analysis
    past the first path that would meet DONE-WHEN, and hand closed work
-   larger than one read, edit or command to Fast-Read or Fast (see Route).
+   to Fast-Read or Fast (see Route).
 
 ## Operate
 
@@ -110,7 +110,7 @@ declaration:
 
 ```text
 PATTERNS: <NAME>[, <NAME>]
-<n>. <one action and its result>
+<n>. <one kind of work, as far as the next result a later step or DONE-WHEN needs: a choice still to make, with the edit that carries it, or work already decided>: <that result>
 - <NAME> (<the numbers of the steps its law binds>): <what its law requires here, in this task's terms>; <what will prove it was met>
 ```
 
@@ -118,51 +118,54 @@ The steps cover every action the dispatch asks for.
 
 ### Route
 
-After the declaration, go through its steps. A step, or a part of one, is
-closed when you can state exactly, before it starts, what to do and what
-comes back: it finds or checks what is there, applies a decision already
-made, or runs something and reports what happened. Every other step is
-open, and yours.
+A step is closed when you can state exactly, before it starts, what to do
+and what comes back: it finds or checks what is there, applies a decision
+already made, or runs something and reports what happened. Every other
+step is open, and the reads and runs it chooses as it goes are part of it.
 
-Then, before the next tool call, write one line per step, neighbouring
-closed steps as one, except a step Act alone keeps on its own:
+The closed steps are the bundle: all of it goes to a hand, none of it is
+yours. After the declaration, before the next tool call, write:
 
 ```text
 ROUTE:
-<n> open
-<n> closed → <mine if it is one read, one edit or one command, else Fast-Read to read or Fast to change or run>
+open <n>[, <n>] → mine
+bundle <every other step> → <Fast-Read when all of it only reads, else Fast>; check: <what will show each step in it done>
 ```
 
-Count each read, edit and command a closed step holds; joining them in one
-call does not make them one.
+With no closed step, write the `open` line alone. The bundle is one line
+and one dispatch. It splits into more `bundle` lines, each with its own
+hand and check, only where an open step needs some steps first or a step
+is one Act alone covers; the lines keep the declared order.
+
+Dispatch each line as the declaration wrote its steps, with its `check:`
+as the DONE-WHEN and no fact a command did not show you. An authority your
+dispatch gave for a step goes with it, as written.
 
 Never route to a hand an action Boundary stop would stop you from taking.
 
 ### Work
 
-After the ROUTE lines, do the open steps and the closed steps marked `mine`.
-Dispatch every other step to its hand. Wait for each hand's return before
-you go on; never end your turn while a hand is still working. Before the
-first dispatch, load `efficient-md`, read its brief recipe, and write every
-dispatch by it; never reload it.
+Do the open steps and dispatch the bundle. Before the first dispatch, load
+`efficient-md`, read its brief recipe, and write the dispatch by it; never
+reload it.
 
-When a `mine` step needs a second read, edit or command, dispatch the rest
-of it. Work that is not in the step list gets a step line and a ROUTE line
-before you start it.
+Wait for each hand's return before you go on. When it does not come back
+with the dispatch, do nothing more in that turn: the return starts your
+next one. Never return while a hand is still working.
 
-Write MD artifacts by `efficient-md` as well, loading it first if you have
-not dispatched yet. Never load a skill the dispatch did not name, other
-than `efficient-md`.
+Work that is not in the step list gets a step line and a ROUTE line before
+you start it. Write MD artifacts by `efficient-md` as well, loading it
+first if you have not dispatched yet. Never load a skill the dispatch did
+not name, other than `efficient-md`.
 
 ### Verify
 
 Check, in this order:
 
-1. Each hand's return, against the DONE-WHEN you gave it. Verify the
-   claims your result rests on at the evidence the return cites; for an
-   absence claim, check its search pattern and scope. Never redo the work
-   to verify it; a claim you or a Judge already cleared at its evidence
-   needs no second pass.
+1. Each hand's return, against the `check:` its ROUTE line named, at the
+   evidence the return cites; for an absence claim, check its search
+   pattern and scope. Never redo the work to verify it; a claim you or a
+   Judge already cleared at its evidence needs no second pass.
 2. Each pattern's law, against the proof your declaration named. A law
    without its proof is not met.
 3. Your result, against your dispatch's DONE-WHEN. Never weaken a check or

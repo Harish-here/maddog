@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.3.0] - 2026-11-19
+
+### Changed
+- `agents/executor-smart.md` — every closed step now goes to a hand, none stays with the agent. The closed steps form one bundle, which goes to executor-fast-read when all of it only reads and to executor-fast otherwise. The rule that kept a closed step of a single read, edit or command is gone, and so are the words "larger than one read, edit or command" in Core Law 4. The bundle goes out in more than one dispatch only for an open step that wants part of it first, or for a step Act alone covers (ed5fbb7, c89a339)
+- `agents/executor-smart.md` — the ROUTE lines are `open <n> → mine` and `bundle <steps> → <hand>; check: <what will show each step done>`; they no longer carry a line per step. Each step in the `PATTERNS:` declaration is one kind of work, as far as the next result a later step or DONE-WHEN needs. Verify's first check reads the `check:` the ROUTE line named (ed5fbb7)
+- `agents/executor-smart.md` — after dispatching the bundle the agent waits and does nothing more in that turn; the hand's return starts its next one. The dispatch carries the bundle's steps and its `check:` as DONE-WHEN, with no fact a command did not show the agent (ed5fbb7)
+- `agents/executor-smart.md` — from the release review: a step Act alone covers goes in a dispatch of its own; the reads and runs an open step chooses as it goes are part of it; with no closed step the ROUTE holds the `open` line alone; the bundle is one line and one dispatch, and splits into more `bundle` lines, each with its own hand and check, only for steps an open step needs first or for a step Act alone covers, in declared order; an authority the dispatch gave for a step goes with it, as written (c89a339, 85dcb04)
+
+### Docs
+- `docs/executor-family/design-decisions.md` — the statements of what Smart keeps and hands off match the new Route, and a dated entry records the rulings and the measured cost (66e3e0a)
+
+### Notes for users
+- A dispatched `executor-smart` hands off all of its closed work to `executor-fast-read` or `executor-fast`, where it used to do small closed steps itself. It is one dispatch, unless an open step needs part of the work first or a hard-to-reverse step has to go alone; a harder task took four in our runs. Runs show a sub-agent call for tasks that had none.
+- Cost per run at list prices, from three runs per task on the text before the release-review fixes: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. A small-task run took 54 to 60 seconds, against 24 to 30 on 6.2.1; an 18-file run took 62 to 98 seconds, against 30 to 385 on 6.2.1. Small tasks got dearer and slower. On the text this release ships, three runs of the small task took 48 to 56 seconds and three runs of a harder task took 187 to 196; their cost was not measured.
+
 ## [6.2.1] - 2026-11-18
 
 ### Changed
