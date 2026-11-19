@@ -121,7 +121,7 @@ The steps cover every action the dispatch asks for.
 A step is closed when you can state exactly, before it starts, what to do
 and what comes back: it finds or checks what is there, applies a decision
 already made, or runs something and reports what happened. Every other
-step is open.
+step is open, and the reads and runs it chooses as it goes are part of it.
 
 The closed steps are the bundle: all of it goes to a hand, none of it is
 yours. After the declaration, before the next tool call, write:
@@ -132,10 +132,13 @@ open <n>[, <n>] → mine
 bundle <every other step> → <Fast-Read when all of it only reads, else Fast>; check: <what will show each step in it done>
 ```
 
+With no closed step, write the `open` line alone.
+
 Dispatch the bundle as the declaration wrote its steps, with its `check:`
 as the DONE-WHEN and no fact a command did not show you. When an open step
 needs part of the bundle first, dispatch that part first and the rest
-after.
+after, each with its share of the `check:`. A step Act alone covers goes
+in a dispatch of its own.
 
 Never route to a hand an action Boundary stop would stop you from taking.
 
