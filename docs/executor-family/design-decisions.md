@@ -738,16 +738,17 @@ a reader of the older passes:
   because the record added work for Smart (R5).
 - After a dispatch Smart waits and does nothing more in that turn, so the
   return starts the next one (R7). On the shipped text, 2 of 3 runs polled after
-  dispatching the 18-file step (O2); no draft run polled (O4 to O6).
+  dispatching the 18-file step (O2); no draft run polled in a loop (O4 to O6).
 - Bundle guidance sits in Route; Work holds only the order of doing (R9). No
   list of Never lines that restate a stated rule (R10).
 
-Measured, six runs per task on the final draft (O6): one dispatch to Fast in
-6 of 6, no polling. Cost per run at list prices: the small task rose from
-$0.112 to $0.178, the 18-file task fell from $0.216 to $0.189. Small tasks got
-dearer, because work Smart used to do itself now goes to a hand. The ledger
-records no timings. The hand's test command was re-run by Smart in 2 of 6
-runs, and one brief held a wrong file count, harmless.
+Measured, three runs per task on the final draft (O6, O7): one dispatch to
+Fast in 6 of 6, no polling. Cost per run at list prices: the small task rose
+from $0.112 to $0.178, the 18-file task fell from $0.216 to $0.189. A
+small-task run took 54 to 60 seconds, against 24 to 30 on the shipped text.
+Small tasks got dearer and slower, because work Smart used to do itself now
+goes to a hand. The hand's test command was re-run by Smart in 2 of 6 runs,
+and one brief held a wrong file count, harmless.
 
 This section is a record; the Smart section above states what holds now.
 

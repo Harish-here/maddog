@@ -16,7 +16,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Notes for users
 - A dispatched `executor-smart` hands off all of its closed work as one dispatch to `executor-fast-read` or `executor-fast`, where it used to do small closed steps itself. Runs show a sub-agent call for tasks that had none.
-- Cost per run at list prices, in six runs per task on the final draft: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. Small tasks got dearer, and each now has a hand-off in front of it; the measurements record no timings.
+- Cost per run at list prices, from three runs per task on the final draft: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. A small-task run took 54 to 60 seconds, against 24 to 30 before; an 18-file run took 62 to 98 seconds, against 30 to 385. Small tasks got dearer and slower.
 
 ## [6.2.1] - 2026-11-18
 
