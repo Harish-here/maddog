@@ -185,8 +185,11 @@ asks for), Route (a step is closed when what to do and what comes back can be
 stated before it starts; the closed steps form one bundle that goes to
 Fast-Read when all of it only reads, else to Fast, none of it kept; the ROUTE
 lines are `open` (mine) and `bundle`, which names its hand and a `check:`
-showing each step done; a split needs an open step that wants part of the
-bundle first; each CLASSIFY step is one kind of work, as far as the next
+showing each step done; the bundle goes out in more than one dispatch only for
+an open step that wants part of it first, each part with its share of the
+`check:`, or for a step Act alone covers; with no closed step the ROUTE holds
+the `open` line alone; the reads and runs an open step chooses as it goes are
+part of it; each CLASSIFY step is one kind of work, as far as the next
 result a later step or DONE-WHEN needs), Work (the open steps done and the
 bundle dispatched, written by efficient-md's brief recipe; Smart waits for each
 hand's return and, when it does not come with the dispatch, does nothing more
@@ -719,9 +722,9 @@ holds now.
 ## Smart route pass, 2026-11-19
 
 Review of the declaration, Route, Work and Verify sections of
-agents/executor-smart.md (ed5fbb7); rulings R1 to R10 and observations O1 to
-O6 are in `.claude/reviews/executor-smart-route.ledger.md`. What changed, for
-a reader of the older passes:
+agents/executor-smart.md (ed5fbb7, c89a339); rulings R1 to R11 and
+observations O1 to O9 are in `.claude/reviews/executor-smart-route.ledger.md`.
+What changed, for a reader of the older passes:
 
 - Every closed step goes to a hand; Smart keeps its open steps, each with the
   edit that carries its choice. The keep rule for a closed step of one read,
@@ -729,9 +732,10 @@ a reader of the older passes:
   edit or command" in Core Law 4 (R1, R8). On the shipped text, two
   neighbouring closed steps were kept in 3 of 3 runs, and an 18-file closed
   step was handed off in 2 of 3 (O1, O2).
-- The closed steps form one bundle. A split needs an open step that wants part
-  of the bundle first (R6). Four of six runs on the first draft split closed
-  steps into one-step bundles and kept them (O4).
+- The closed steps form one bundle. It goes out in more than one dispatch only
+  for an open step that wants part of it first, or for a step Act alone covers
+  (R6, R11). Four of six runs on the first draft split closed steps into
+  one-step bundles and kept them (O4).
 - The ROUTE lines are `open` (mine) and `bundle`; the bundle line names its
   hand and a `check:`. Step lines carry no open or closed mark (R2).
   Verify's first check reads that `check:`; no written verification record,
@@ -741,6 +745,12 @@ a reader of the older passes:
   dispatching the 18-file step (O2); no draft run polled in a loop (O4 to O6).
 - Bundle guidance sits in Route; Work holds only the order of doing (R9). No
   list of Never lines that restate a stated rule (R10).
+- The release review blocked the first commit: the rewrite had dropped Route's
+  exception for a step Act alone covers. It is back, with three clarifications
+  the same review asked for: an open step's own reads and runs, the ROUTE with
+  no closed step, and the check for a part sent first (R11). A harder task
+  exercised them in three runs: the lookup went to Fast-Read before the fix,
+  the deletion went alone, and no closed step stayed with Smart (O9).
 
 Measured, three runs per task on the final draft (O6, O7): one dispatch to
 Fast in 6 of 6, no polling. Cost per run at list prices: the small task rose
