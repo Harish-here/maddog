@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.4.0] - 2026-11-19
+
+### Changed
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — the pinned reasoning effort is `low`; it was `high` (4566216)
+- `agents/executor-smart.md` — the pinned reasoning effort is `medium`; it was `high` (4566216)
+- `tests/harness/runtimes/ladders.yaml` — the low tier runs `claude-haiku-5-5`, the model the `haiku` alias resolves to and the first Haiku that honours an effort value; it ran `claude-haiku-4-5-20251001` (d0ad17c)
+
+### Docs
+- `docs/executor-family/effort-primitives.md` — new: a definition of effort and five questions a dispatcher answers about handed work, as the base for later rules on choosing effort per dispatch (7df47e5, c9b91b9)
+- `docs/testing/spec.md` — the ladder names the new low-tier model (d0ad17c)
+
+### Notes for users
+- `executor-fast` and `executor-fast-read` now run at low effort and `executor-smart` at medium. `executor-judge` and `executor-lead` stay at high. An effort value passed on a single dispatch still overrides the pinned one.
+- Why: in live dispatches on the 6.3.0 text, with the effort passed per dispatch, the answers did not change with effort on closed work. `executor-fast` was correct at low, medium and high in 48 runs of four tasks, the hardest a 15-step runbook with six traps; high used 1.4 to 3 times the output tokens of low and 1.2 to 2 times the time, more on the larger tasks. `executor-fast-read` scored the same at all three levels in 45 runs of sweeps, exact quotes, claims with traps and multi-hop traces, apart from one formatting slip at low; high used 1.25 to 2.6 times the output tokens. `executor-smart` scored the same at all three levels on two fix-and-extend tasks whose briefs stated the stakes; high used about twice the output tokens and time of medium.
+- Where lower effort did worse, so you can brief around it: asked to delete a stale lock, with no look-first step in the brief, `executor-fast` at low deleted without reading the lock or the log in 3 of 4 runs, and at high read them first in 4 of 4. A brief that wrote the step out ("first save the log, then remove the lock") was followed at low. When a step cannot be undone, write the check into the brief or pass a higher effort on that dispatch.
+- `executor-smart` at low fell short where the checking was left to it: one of three builds whose brief did not state the stakes scored 43 of 49 hidden checks, against 49 in all three at medium, and two open reviews found 8 and 9 of 10 planted defects, against 9 and 10 at medium and 10 and 10 at high. That is why Smart is pinned at medium and not low. These figures come from two or three runs per level.
+
 ## [6.3.0] - 2026-11-19
 
 ### Changed

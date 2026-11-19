@@ -1,7 +1,7 @@
 ---
 name: executor-fast-read
 model: haiku
-effort: high
+effort: low
 description: >
   Runs fully-specified READ-ONLY MECHANICAL tasks on a cheap, fast model:
   where something lives, where a reference leads, what the source says

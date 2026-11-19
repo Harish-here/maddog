@@ -1,7 +1,7 @@
 ---
 name: executor-smart
 model: sonnet
-effort: high
+effort: medium
 description: >
   Runs ONE delegated task that needs LOCAL JUDGMENT inside a fixed boundary,
   on a mid-tier model: build, transform an existing structure while

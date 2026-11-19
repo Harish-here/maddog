@@ -52,7 +52,7 @@ def test_invocation():
 def test_registry_builds_the_adapter_with_its_ladder():
     adapter = get_adapter("claude-code", load_ladders())
     assert isinstance(adapter, ClaudeCodeAdapter)
-    assert adapter.ladder["low"] == "claude-haiku-4-5-20251001"
+    assert adapter.ladder["low"] == "claude-haiku-5-5"
 
 
 def test_work_starting_tools_stop_the_session():
