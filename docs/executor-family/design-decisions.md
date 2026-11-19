@@ -185,9 +185,10 @@ asks for), Route (a step is closed when what to do and what comes back can be
 stated before it starts; the closed steps form one bundle that goes to
 Fast-Read when all of it only reads, else to Fast, none of it kept; the ROUTE
 lines are `open` (mine) and `bundle`, which names its hand and a `check:`
-showing each step done; the bundle goes out in more than one dispatch only for
-an open step that wants part of it first, each part with its share of the
-`check:`, or for a step Act alone covers; with no closed step the ROUTE holds
+showing each step done; the bundle is one line and one dispatch, and splits
+into more `bundle` lines, each with its own hand and check, only for steps an
+open step needs first or for a step Act alone covers, in declared order; an
+authority the dispatch gave for a step goes with it; with no closed step the ROUTE holds
 the `open` line alone; the reads and runs an open step chooses as it goes are
 part of it; each CLASSIFY step is one kind of work, as far as the next
 result a later step or DONE-WHEN needs), Work (the open steps done and the
@@ -722,14 +723,14 @@ holds now.
 ## Smart route pass, 2026-11-19
 
 Review of the declaration, Route, Work and Verify sections of
-agents/executor-smart.md (ed5fbb7, c89a339); rulings R1 to R11 and
-observations O1 to O9 are in `.claude/reviews/executor-smart-route.ledger.md`.
+agents/executor-smart.md (ed5fbb7, c89a339, 85dcb04); rulings R1 to R12 and
+observations O1 to O10 are in `.claude/reviews/executor-smart-route.ledger.md`.
 What changed, for a reader of the older passes:
 
 - Every closed step goes to a hand; Smart keeps its open steps, each with the
   edit that carries its choice. The keep rule for a closed step of one read,
   one edit or one command is gone, and so are the words "larger than one read,
-  edit or command" in Core Law 4 (R1, R8). On the shipped text, two
+  edit or command" in Core Law 4 (R1, R8). On the 6.2.1 text, two
   neighbouring closed steps were kept in 3 of 3 runs, and an 18-file closed
   step was handed off in 2 of 3 (O1, O2).
 - The closed steps form one bundle. It goes out in more than one dispatch only
@@ -741,7 +742,7 @@ What changed, for a reader of the older passes:
   Verify's first check reads that `check:`; no written verification record,
   because the record added work for Smart (R5).
 - After a dispatch Smart waits and does nothing more in that turn, so the
-  return starts the next one (R7). On the shipped text, 2 of 3 runs polled after
+  return starts the next one (R7). On the 6.2.1 text, 2 of 3 runs polled after
   dispatching the 18-file step (O2); no draft run polled in a loop (O4 to O6).
 - Bundle guidance sits in Route; Work holds only the order of doing (R9). No
   list of Never lines that restate a stated rule (R10).
@@ -751,17 +752,25 @@ What changed, for a reader of the older passes:
   no closed step, and the check for a part sent first (R11). A harder task
   exercised them in three runs: the lookup went to Fast-Read before the fix,
   the deletion went alone, and no closed step stayed with Smart (O9).
+- A second review pass found the notes overstated and three gaps in how a
+  split is written. Route now says the bundle is one line and one dispatch,
+  and splits into more `bundle` lines, each with its own hand and check, only
+  for steps an open step needs first or for a step Act alone covers, in
+  declared order; an authority the dispatch gave for a step goes with it
+  (R12). Six more runs held: one line and one dispatch on the small task, and
+  on the harder task four lines in declared order with the approval passed on (O10).
 
 Measured, three runs per task on the text before the review fixes (O6, O7):
 one dispatch to
 Fast in 6 of 6, no polling. Cost per run at list prices: the small task rose
 from $0.112 to $0.178, the 18-file task fell from $0.216 to $0.189. A
-small-task run took 54 to 60 seconds, against 24 to 30 on the shipped text.
+small-task run took 54 to 60 seconds, against 24 to 30 on the 6.2.1 text.
 Small tasks got dearer and slower, because work Smart used to do itself now
 goes to a hand. The hand's test command was re-run by Smart in 2 of 6 runs,
-and one brief held a wrong file count, harmless. On the shipped text, three
-runs of the small task took 58 to 64 seconds, with one bundle line and one
-dispatch each; their cost was not measured (O8).
+and one brief held a wrong file count, harmless. On the text this release
+ships, three runs of the small task took 48 to 56 seconds, with one bundle
+line and one dispatch each, and three runs of the harder task took 187 to
+196; their cost was not measured (O10).
 
 This section is a record; the Smart section above states what holds now.
 
