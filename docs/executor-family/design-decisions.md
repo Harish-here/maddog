@@ -105,9 +105,8 @@ Decisions that fix the mechanism:
   command whose short output decides its next step. Lead: a single read or
   read-only command, every change to a hand. Judge: the evidence the verdict
   rests on, commands the bar needs that change nothing, and a single read or
-  read-only command. Smart: its open steps, plus a closed step that is one
-  read, one edit or one command; every other closed step goes to the Fast
-  tiers.
+  read-only command. Smart: its open steps, each with the edit that carries its
+  choice; every closed step goes to the Fast tiers in one bundle.
 - Every role but Smart that finishes by returning says so at Done: "You stop
   by returning: see Return." Smart's loop ends at its Return stage.
 - Every executor writes its return by efficient-md's report recipe, which
@@ -171,34 +170,37 @@ section (the early-return paragraph, then the report recipe). Body 1,453 words r
 
 ## Smart
 
-Smart's own text (2026-11-17): Role and family sentence (hands Fast-Read and
+Smart's own text (2026-11-17; Route reworked 2026-11-19): Role and family sentence (hands Fast-Read and
 Fast, by short name), four core laws (Boundary stop, opening with the BOUNDARY
 STOP fragment and stopping at product, architectural, and cross-task
 decisions; Act alone; Evidence before choice, which records what evidence
 cannot resolve in DECISIONS; Judgment is expensive, bounded by the first path
-that would meet DONE-WHEN, and sending closed work larger than one read, edit
-or command to Fast-Read or Fast), its own loop TASK → CLASSIFY → ROUTE → WORK
+that would meet DONE-WHEN, and sending closed work to Fast-Read or Fast), its own loop TASK → CLASSIFY → ROUTE → WORK
 → VERIFY → RETURN, with Task, Classify (Pattern | The task ends with | Law;
 five patterns, BUILD, TRANSFORM, DIAGNOSE, REVIEW, OBSERVE, each recognised by
 what the task ends with; REVIEW says a gating review is Judge's; each pass
 writes a PATTERNS declaration of numbered steps and, per pattern, what its law
 requires and what will prove it met; the steps cover every action the dispatch
 asks for), Route (a step is closed when what to do and what comes back can be
-stated before it starts; one ROUTE line per step; a closed step of one read,
-one edit or one command stays Smart's, joined commands counted one by one, a
-larger one goes to Fast-Read or Fast; every open step is Smart's), Work (the
-open steps and the `mine` steps; every other step dispatched, each dispatch
-written by efficient-md's brief recipe, Smart waiting for each hand's return),
-Verify (three checks in order: each hand's return, each pattern's law against
+stated before it starts; the closed steps form one bundle that goes to
+Fast-Read when all of it only reads, else to Fast, none of it kept; the ROUTE
+lines are `open` (mine) and `bundle`, which names its hand and a `check:`
+showing each step done; a split needs an open step that wants part of the
+bundle first; each CLASSIFY step is one kind of work, as far as the next
+result a later step or DONE-WHEN needs), Work (the open steps done and the
+bundle dispatched, written by efficient-md's brief recipe; Smart waits for each
+hand's return and, when it does not come with the dispatch, does nothing more
+in that turn),
+Verify (three checks in order: each hand's return against the `check:` its ROUTE line named, each pattern's law against
 the proof its declaration named, the result against DONE-WHEN, never weakening
 a check; a failed check or new steps lead back to CLASSIFY), and Return
 (reached when every check passes, or early as `blocked`; the return goes to
 the report recipe). A law, work that fits no pattern, or a missing capability
 stops the loop with `blocked`, said in Operate. Smart carries neither the
-ROUTE nor the DISPATCH FIRST fragment: its Route section hands off only closed
-steps past one read, edit or command, and the open steps stay its own. Its
+ROUTE nor the DISPATCH FIRST fragment: its Route section hands off every
+closed step, and the open steps stay its own. Its
 description separates it from Fast by "how to reach the goal is not yet
-decided". Body about 1,330 words raw.
+decided". Body about 1,340 words raw.
 
 ## Judge
 
@@ -713,6 +715,41 @@ before their first tool call.
 
 This section is a record; the Fast and Fast-Read section above states what
 holds now.
+
+## Smart route pass, 2026-11-19
+
+Review of the declaration, Route, Work and Verify sections of
+agents/executor-smart.md (ed5fbb7); rulings R1 to R10 and observations O1 to
+O6 are in `.claude/reviews/executor-smart-route.ledger.md`. What changed, for
+a reader of the older passes:
+
+- Every closed step goes to a hand; Smart keeps its open steps, each with the
+  edit that carries its choice. The keep rule for a closed step of one read,
+  one edit or one command is gone, and so are the words "larger than one read,
+  edit or command" in Core Law 4 (R1, R8). On the shipped text, two
+  neighbouring closed steps were kept in 3 of 3 runs, and an 18-file closed
+  step was handed off in 2 of 3 (O1, O2).
+- The closed steps form one bundle. A split needs an open step that wants part
+  of the bundle first (R6). Four of six runs on the first draft split closed
+  steps into one-step bundles and kept them (O4).
+- The ROUTE lines are `open` (mine) and `bundle`; the bundle line names its
+  hand and a `check:`. Step lines carry no open or closed mark (R2).
+  Verify's first check reads that `check:`; no written verification record,
+  because the record added work for Smart (R5).
+- After a dispatch Smart waits and does nothing more in that turn, so the
+  return starts the next one (R7). On the shipped text, 2 of 3 runs polled after
+  dispatching the 18-file step (O2); no draft run polled (O4 to O6).
+- Bundle guidance sits in Route; Work holds only the order of doing (R9). No
+  list of Never lines that restate a stated rule (R10).
+
+Measured, six runs per task on the final draft (O6): one dispatch to Fast in
+6 of 6, no polling. Cost per run at list prices: the small task rose from
+$0.112 to $0.178, the 18-file task fell from $0.216 to $0.189. Small tasks got
+dearer, because work Smart used to do itself now goes to a hand. The ledger
+records no timings. The hand's test command was re-run by Smart in 2 of 6
+runs, and one brief held a wrong file count, harmless.
+
+This section is a record; the Smart section above states what holds now.
 
 ## Non-Decisions
 
