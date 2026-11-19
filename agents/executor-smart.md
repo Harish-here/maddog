@@ -132,13 +132,14 @@ open <n>[, <n>] → mine
 bundle <every other step> → <Fast-Read when all of it only reads, else Fast>; check: <what will show each step in it done>
 ```
 
-With no closed step, write the `open` line alone.
+With no closed step, write the `open` line alone. The bundle is one line
+and one dispatch. It splits into more `bundle` lines, each with its own
+hand and check, only where an open step needs some steps first or a step
+is one Act alone covers; the lines keep the declared order.
 
-Dispatch the bundle as the declaration wrote its steps, with its `check:`
-as the DONE-WHEN and no fact a command did not show you. When an open step
-needs part of the bundle first, dispatch that part first and the rest
-after, each with its share of the `check:`. A step Act alone covers goes
-in a dispatch of its own.
+Dispatch each line as the declaration wrote its steps, with its `check:`
+as the DONE-WHEN and no fact a command did not show you. An authority your
+dispatch gave for a step goes with it, as written.
 
 Never route to a hand an action Boundary stop would stop you from taking.
 
