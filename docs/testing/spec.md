@@ -104,7 +104,7 @@ that config is `tests/harness/runtimes/ladders.yaml`:
 ```yaml
 # Tier → model for each runtime. Cases name only tiers.
 claude-code:
-  low:  claude-haiku-4-5-20251001
+  low:  claude-haiku-5-5
   mid:  claude-sonnet-5
   high: claude-opus-5-5
 # Pressure kind → the tier a case is expected to pass at.
