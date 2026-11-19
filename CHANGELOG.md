@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.3.0] - 2026-11-19
+
+### Changed
+- `agents/executor-smart.md` — every closed step now goes to a hand, none stays with the agent. The closed steps form one bundle, which goes to executor-fast-read when all of it only reads and to executor-fast otherwise. The rule that kept a closed step of a single read, edit or command is gone, and so are the words "larger than one read, edit or command" in Core Law 4. A split needs an open step that wants part of the bundle first (ed5fbb7)
+- `agents/executor-smart.md` — the ROUTE lines are `open <n> → mine` and `bundle <steps> → <hand>; check: <what will show each step done>`; they no longer carry a line per step. Each step in the `PATTERNS:` declaration is one kind of work, as far as the next result a later step or DONE-WHEN needs. Verify's first check reads the `check:` the ROUTE line named (ed5fbb7)
+- `agents/executor-smart.md` — after dispatching the bundle the agent waits and does nothing more in that turn; the hand's return starts its next one. The dispatch carries the bundle's steps and its `check:` as DONE-WHEN, with no fact a command did not show the agent (ed5fbb7)
+
+### Docs
+- `docs/executor-family/design-decisions.md` — the statements of what Smart keeps and hands off match the new Route, and a dated entry records the rulings and the measured cost (66e3e0a)
+
+### Notes for users
+- A dispatched `executor-smart` hands off all of its closed work as one dispatch to `executor-fast-read` or `executor-fast`, where it used to do small closed steps itself. Runs show a sub-agent call for tasks that had none.
+- Cost per run at list prices, in six runs per task on the final draft: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. Small tasks got dearer, and each now has a hand-off in front of it; the measurements record no timings.
+
 ## [6.2.1] - 2026-11-18
 
 ### Changed
