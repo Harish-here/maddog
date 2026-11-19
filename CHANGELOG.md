@@ -16,8 +16,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `docs/executor-family/design-decisions.md` — the statements of what Smart keeps and hands off match the new Route, and a dated entry records the rulings and the measured cost (66e3e0a)
 
 ### Notes for users
-- A dispatched `executor-smart` hands off all of its closed work as one dispatch to `executor-fast-read` or `executor-fast`, where it used to do small closed steps itself. Runs show a sub-agent call for tasks that had none.
-- Cost per run at list prices, from three runs per task on the final draft: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. A small-task run took 54 to 60 seconds, against 24 to 30 before; an 18-file run took 62 to 98 seconds, against 30 to 385. Small tasks got dearer and slower.
+- A dispatched `executor-smart` hands off all of its closed work to `executor-fast-read` or `executor-fast`, where it used to do small closed steps itself. It is one dispatch, unless an open step needs part of the work first or a hard-to-reverse step has to go alone; a harder task took four in our runs. Runs show a sub-agent call for tasks that had none.
+- Cost per run at list prices, from three runs per task on the text before the release-review fixes: a small task rose from $0.112 to $0.178; an 18-file edit fell from $0.216 to $0.189. A small-task run took 54 to 60 seconds, against 24 to 30 before; an 18-file run took 62 to 98 seconds, against 30 to 385. Small tasks got dearer and slower. On the shipped text, three runs of the small task took 58 to 64 seconds; their cost was not measured.
 
 ## [6.2.1] - 2026-11-18
 

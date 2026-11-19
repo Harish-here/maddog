@@ -752,13 +752,16 @@ What changed, for a reader of the older passes:
   exercised them in three runs: the lookup went to Fast-Read before the fix,
   the deletion went alone, and no closed step stayed with Smart (O9).
 
-Measured, three runs per task on the final draft (O6, O7): one dispatch to
+Measured, three runs per task on the text before the review fixes (O6, O7):
+one dispatch to
 Fast in 6 of 6, no polling. Cost per run at list prices: the small task rose
 from $0.112 to $0.178, the 18-file task fell from $0.216 to $0.189. A
 small-task run took 54 to 60 seconds, against 24 to 30 on the shipped text.
 Small tasks got dearer and slower, because work Smart used to do itself now
 goes to a hand. The hand's test command was re-run by Smart in 2 of 6 runs,
-and one brief held a wrong file count, harmless.
+and one brief held a wrong file count, harmless. On the shipped text, three
+runs of the small task took 58 to 64 seconds, with one bundle line and one
+dispatch each; their cost was not measured (O8).
 
 This section is a record; the Smart section above states what holds now.
 
