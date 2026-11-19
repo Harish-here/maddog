@@ -104,7 +104,7 @@ def test_agent_options_run_the_agent_file_with_a_skills_only_plugin_and_only_the
         assert "Bash" in options.hooks["PreToolUse"][0].matcher and "Read" not in options.hooks["PreToolUse"][0].matcher
         assert options.setting_sources == [] and options.strict_mcp_config is True
         assert options.tools == tools                                # the agent file's `tools:` line, as written
-        assert options.effort == "high"                              # from the agent file's frontmatter
+        assert options.effort == "low"                               # from the agent file's frontmatter
         assert options.model == "haiku-model" and options.max_turns == AGENT_MAX_TURNS
         assert options.system_prompt.startswith("## Role")           # the body, not the frontmatter
         assert "You are EXECUTOR-" in options.system_prompt

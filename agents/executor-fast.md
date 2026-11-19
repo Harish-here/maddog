@@ -1,7 +1,7 @@
 ---
 name: executor-fast
 model: haiku
-effort: high
+effort: low
 description: >
   Runs fully-specified MECHANICAL tasks on a cheap, fast model: a decided
   edit, one rule across many files, test and build runs, git and service
