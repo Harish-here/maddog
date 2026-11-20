@@ -78,8 +78,8 @@ that fits none is not yours: return it.
 
 | Pattern | Applies when | Law |
 |---|---|---|
-| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. An edit that applies one rule at every place it fits is TRANSFORM. | — |
-| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. A step that checks whether an operation worked is VERIFY. | — |
+| CHANGE | the task applies a closed decision to a specified state change: code or file edits, configuration, test updates, or an artifact from a frozen brief. An edit that applies one rule at every place it fits is TRANSFORM. | Postcondition: a change is done only when its target, observed after your last change by a read, listing or diff, shows it, not when its command succeeds. A target that does not goes in NOT DONE; an unintended change, in ALERTS. |
+| OPERATE | the task runs a specified operation against repository, system, or external state: stage, commit, branch, tag, push, install, start, stop. A step that checks whether an operation worked is VERIFY. | Observed State: an operation is done only when what it produced shows it: read its contents (the files a commit holds, the version installed), not just that it exists or the command exited. What it holds that you did not ask for goes in ALERTS. |
 | TRANSFORM | the task applies one closed rule across an affected set, whether the dispatch lists the set or you must find it. | Totality: find the complete affected set before applying the rule. A member the rule may not fit is a misfit: list it in NOT DONE and leave it, never a stop. If the set cannot be established and the dispatch sets no partial boundary, `blocked`. |
 | RECOVER | the task runs a known recovery action against a failed or volatile state: clear a lock, kill a process, reset data, restart a service. | Volatility First: capture volatile state (pid, stack, handles, log tail) before the recovery step; never improvise a recovery step. If safe capture or the prescribed path is unavailable, `blocked` before the state gets harder to recover. |
 | VERIFY | the task, or a step of it, checks a result and reports what it found: named tests, lint, build, acceptance commands, or a confirmation that a service, file, or remote is in the stated state. A run to learn whether a specified failure happens is REPRODUCE. A check that is also hard-to-reverse is a door, not a check (see Boundary stop). | Goodhart: run the check exactly as specified; never weaken a threshold, change an input, alter a snapshot, skip a failing case, or call a failure a success. A failing result is a result, not a stop. |
@@ -88,12 +88,11 @@ that fits none is not yours: return it.
 In your first message, before any tool call, write:
 ```text
 PATTERNS: <NAME>[, <NAME>]
-- <NAME> (<its step numbers in the dispatch, or a short phrase per action when it numbers none>)[: <for a pattern with a law, what the law requires here, in this task's terms>]
+- <NAME> (<its step numbers in the dispatch, or a short phrase per action when it numbers none>): <what its law requires here, in this task's terms>
 ```
 One bullet per pattern; every name stays on the `PATTERNS:` line.
 Every action the dispatch asks for falls in exactly one pattern's steps, and that pattern's law binds them all.
 Add no step except one a law requires, such as RECOVER's capture.
-A step that fits a pattern with a law and one whose law is "—" goes to the one with the law.
 Check a pattern the dispatch names against the table.
 If none fits, make no tool call and return `blocked` (BLOCKED-ON: fits no pattern).
 
@@ -109,9 +108,9 @@ task.
 
 ## Return
 
-Before writing your return, load `efficient-md` and write the return by
-its report recipe. When no pattern fits, skip the load and return STATUS
-and BLOCKED-ON alone.
+Before your first tool call, load `efficient-md` and open its
+`references/report.md`; write your return by that file. When no pattern
+fits, skip the load and return STATUS and BLOCKED-ON alone.
 
 - Mark each cut `[omitted: N lines]` where it falls, and list it in
   NOT DONE.

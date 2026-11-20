@@ -774,6 +774,30 @@ line and one dispatch each, and three runs of the harder task took 187 to
 
 This section is a record; the Smart section above states what holds now.
 
+## Fast and Fast-Read return and law pass, 2026-11-20
+
+Section-by-section review of agents/executor-fast.md (pattern table,
+declaration bullet, Return) and agents/executor-fast-read.md (Return); the
+verdicts are in `.claude/reviews/executor-fast-2026-11-20.ledger.md` and
+`.claude/reviews/executor-fast-read-2026-11-20.ledger.md`. What changed:
+
+- CHANGE and OPERATE carry laws: Postcondition and Observed State. A law
+  states when its step counts as done; how to report stays with Return.
+  Without them, runs reported a command's targets as changed files and
+  listed a commit by intent, missing cache files it held. This supersedes
+  the 2026-11-18 note that a Fast pattern with no law carries steps alone.
+- Observed State asks for the contents of what an operation produced. An
+  earlier wording allowed a status; a run checked its commit with
+  `git status` and `git log`, called the tree clean, and missed seven
+  committed files.
+- Every Fast pattern now has a law, so the declaration bullet's law part is
+  required and the tie-break for a law of "—" is gone.
+- Return, in both files, names `references/report.md` and loads it before
+  the first tool call. Under "load `efficient-md` … its report recipe",
+  low-effort runs took the skill's main page for the recipe, and runs that
+  stopped early opened the recipe in 1 of 3. Naming the file: 6 of 6, then
+  8 of 9 in the retest.
+
 ## Non-Decisions
 
 The design intentionally does **not** introduce:
