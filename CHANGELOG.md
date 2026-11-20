@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file, reconstructed
 from git history. Each line is traceable to a commit (short sha in parentheses).
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.5.0] - 2026-11-20
+
+### Changed
+- `agents/executor-fast.md` — CHANGE and OPERATE carry laws. Postcondition: a change is done only when its target, read back after the last change, shows it; a target that does not goes in NOT DONE, an unintended change in ALERTS. Observed State: an operation is done only when the contents of what it produced show it, not when it exists or its command exits; what it holds beyond the ask goes in ALERTS (efb12b3)
+- `agents/executor-fast.md` — every pattern now has a law, so the `PATTERNS:` bullet's law part is required and the tie-break for a law of "—" is gone (efb12b3)
+- `agents/executor-fast.md`, `agents/executor-fast-read.md` — Return: load `efficient-md` and open its `references/report.md` before the first tool call, and write the return by that file; it said to load the skill before writing the return and follow "its report recipe" (efb12b3)
+
+### Docs
+- `docs/executor-family/constitution.md`, `docs/executor-family/design-decisions.md` — the shared RETURN fragment and its summary row carry the new line; a dated note records why CHANGE and OPERATE gained laws, superseding the 2026-11-18 note that a Fast pattern with no law carries its steps alone (efb12b3, 6ae6946)
+
+### Notes for users
+- Why: in live runs of a ten-step release task, `executor-fast` reported what it meant to change rather than what changed: files a rename command aimed at but never altered, and a commit listed without the seven cache files it held. With the laws, a read-back caught a failed import edit before the tests ran, and runs that committed stray files reported them under ALERTS.
+- The recipe: at low effort `executor-fast` often took the skill's main page for the recipe. Under the old line it opened `references/report.md` in 0 of 3 runs that finished the task and 2 of 3 that stopped early; naming the file got 6 of 6, then 8 of 9 across Fast and Fast-Read in the retest.
+- Stopping did not change: on a brief whose steps conflicted with the repo, every run on the new text (12 of 12) stopped before editing and named a conflict.
+- What the laws do not cover: claims about what a file contains. Runs still misread files at times (a function called missing that exists, a match count off by a few). Check such a claim when it decides your next step.
+
 ## [6.4.0] - 2026-11-19
 
 ### Changed
