@@ -193,9 +193,9 @@ their impact, your recommendation. Do not invent requirements.
 
 ## RETURN
 
-Before writing your return, load `efficient-md` and write the return by
-its report recipe. When no pattern fits, skip the load and return STATUS
-and BLOCKED-ON alone.
+Before your first tool call, load `efficient-md` and open its
+`references/report.md`; write your return by that file. When no pattern
+fits, skip the load and return STATUS and BLOCKED-ON alone.
 
 - Mark each cut `[omitted: N lines]` where it falls, and list it in
   NOT DONE.
